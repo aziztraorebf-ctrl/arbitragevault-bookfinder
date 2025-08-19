@@ -9,7 +9,7 @@ from alembic import context
 
 # Import your models here
 from app.models.base import Base
-from app.models import User, RefreshToken
+from app.models import User, RefreshToken, Batch, Analysis
 from app.core.settings import get_settings
 
 # Alembic Config object

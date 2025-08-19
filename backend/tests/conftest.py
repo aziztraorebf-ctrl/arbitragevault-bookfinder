@@ -49,6 +49,19 @@ def db_session(test_engine) -> Session:
 
 
 @pytest.fixture
+def user_data():
+    """Sample user data for testing."""
+    from uuid import uuid4
+    return {
+        "id": str(uuid4()),
+        "email": f"test-{uuid4().hex[:8]}@example.com",
+        "password_hash": "hashed_password_123",
+        "first_name": "Test",
+        "last_name": "User"
+    }
+
+
+@pytest.fixture
 def batch_data():
     """Sample batch data for testing."""
     return {

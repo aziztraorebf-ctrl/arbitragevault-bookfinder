@@ -107,6 +107,10 @@ class Analysis(Base):
         """Check if analysis shows positive profit."""
         return self.profit > 0
 
+    def meets_roi_threshold(self, threshold: Decimal) -> bool:
+        """Check if analysis meets minimum ROI threshold."""
+        return self.roi_percent >= threshold
+
     @property
     def risk_level(self) -> str:
         """Calculate risk level based on velocity score and ROI."""

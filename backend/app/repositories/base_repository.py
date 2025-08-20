@@ -127,7 +127,8 @@ class BaseRepository(Generic[ModelType]):
         limit: int = 100,
         sort_by: Optional[List[str]] = None,
         sort_order: Optional[List[SortOrder]] = None,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
+        query_options: Optional[List[Any]] = None
     ) -> Page[ModelType]:
         """
         List records with advanced pagination, sorting, and filtering.
@@ -165,6 +166,10 @@ class BaseRepository(Generic[ModelType]):
             # Apply sorting and pagination
             query = self._apply_sorting(query, sort_by, sort_order)
             query = query.offset(offset).limit(limit)
+            
+            # Apply query options (like eager loading)
+            if query_options:
+                query = query.options(*query_options)
 
             # Execute query
             result = await self.db.execute(query)

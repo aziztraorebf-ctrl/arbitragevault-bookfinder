@@ -34,3 +34,12 @@ class InvalidFilterFieldError(AppException):
             message=f"Field '{field}' not allowed for filtering/sorting. Allowed: {allowed_fields}",
             details={"field": field, "allowed_fields": allowed_fields}
         )
+
+
+class InvalidTransitionError(AppException):
+    """Raised when trying to perform invalid state transition."""
+    def __init__(self, message: str, from_state: str = None, to_state: str = None):
+        super().__init__(
+            message=message,
+            details={"from_state": from_state, "to_state": to_state}
+        )

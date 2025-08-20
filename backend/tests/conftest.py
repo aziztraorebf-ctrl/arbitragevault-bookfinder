@@ -78,8 +78,8 @@ async def async_db_session(async_test_engine) -> AsyncGenerator[AsyncSession, No
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     
-    # Create session
-    async_session = AsyncSessionClass(bind=async_test_engine)
+    # Create session with expire_on_commit=False to avoid lazy loading issues
+    async_session = AsyncSessionClass(bind=async_test_engine, expire_on_commit=False)
     
     yield async_session
     
@@ -301,3 +301,28 @@ def analysis_data():
             "bsr": 15000
         }
     }
+
+
+@pytest_asyncio.fixture
+async def make_repo(async_db_session):
+    """Factory fixture to create repositories with proper model signature."""
+    from app.models.batch import Batch
+    from app.models.user import User
+    from app.models.analysis import Analysis
+    from app.repositories.batch_repository import BatchRepository
+    from app.repositories.user_repository import UserRepository
+    from app.repositories.analysis_repository import AnalysisRepository
+    
+    def _make_repo(model_cls):
+        """Create a repository instance for the given model class."""
+        repo_map = {
+            Batch: BatchRepository,
+            User: UserRepository, 
+            Analysis: AnalysisRepository
+        }
+        repo_cls = repo_map.get(model_cls)
+        if not repo_cls:
+            raise ValueError(f"No repository mapped for model: {model_cls}")
+        return repo_cls(async_db_session, model_cls)
+    
+    return _make_repo

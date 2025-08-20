@@ -73,14 +73,14 @@ class DatabaseManager:
     @asynccontextmanager
     async def session(self) -> AsyncGenerator[AsyncSession, None]:
         """Context manager for database sessions."""
-        async with self.get_session() as session:
-            try:
-                yield session
-            except Exception:
-                await session.rollback()
-                raise
-            finally:
-                await session.close()
+        session = await self.get_session()
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
     async def health_check(self) -> bool:
         """Check database connectivity."""

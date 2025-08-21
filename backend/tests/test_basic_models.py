@@ -5,44 +5,40 @@ import pytest
 from decimal import Decimal
 from app.models.batch import Batch, BatchStatus
 from app.models.analysis import Analysis
-from app.repositories.batch_repository import BatchRepository
-from app.repositories.analysis_repository import AnalysisRepository
 
 
-def test_basic_batch_creation(db_session):
+async def test_basic_batch_creation(make_repo):
     """Test création basique d'un batch."""
-    batch_repo = BatchRepository(db_session)
+    batch_repo = make_repo(Batch)
     
-    batch = Batch(
+    created = await batch_repo.create(
         user_id="test-user-123",
         name="Test Batch",
         items_total=10,
         strategy_snapshot={"test": "data"}
     )
     
-    created = batch_repo.create(batch)
     assert created.id is not None
     assert created.name == "Test Batch"
     assert created.items_total == 10
     assert created.status == BatchStatus.PENDING
 
 
-def test_basic_analysis_creation(db_session):
+async def test_basic_analysis_creation(make_repo):
     """Test création basique d'une analysis."""
-    batch_repo = BatchRepository(db_session)
-    analysis_repo = AnalysisRepository(db_session)
+    batch_repo = make_repo(Batch)
+    analysis_repo = make_repo(Analysis)
     
     # Créer un batch d'abord
-    batch = Batch(
+    created_batch = await batch_repo.create(
         user_id="test-user-123",
         name="Test Batch",
         items_total=10,
         strategy_snapshot={"test": "data"}
     )
-    created_batch = batch_repo.create(batch)
     
     # Créer une analysis
-    analysis = Analysis(
+    created = await analysis_repo.create(
         batch_id=created_batch.id,
         isbn_or_asin="9781234567890",
         buy_price=Decimal("15.00"),
@@ -54,7 +50,6 @@ def test_basic_analysis_creation(db_session):
         raw_keepa={"title": "Test Book"}
     )
     
-    created = analysis_repo.create(analysis)
     assert created.id is not None
     assert created.isbn_or_asin == "9781234567890"
     assert created.profit == Decimal("6.50")
@@ -68,39 +63,36 @@ def test_batch_status_enum():
     assert BatchStatus.FAILED.value == "failed"
 
 
-def test_constraint_positive_items(db_session):
+async def test_constraint_positive_items(make_repo):
     """Test la contrainte CHECK sur items_total."""
-    batch_repo = BatchRepository(db_session)
+    batch_repo = make_repo(Batch)
     
     # Test avec items_total négatif - doit échouer
-    batch = Batch(
-        user_id="test-user-123",
-        name="Invalid Batch",
-        items_total=-5,
-        strategy_snapshot={"test": "data"}
-    )
-    
     with pytest.raises(Exception):  # IntegrityError attendu
-        batch_repo.create(batch)
+        await batch_repo.create(
+            user_id="test-user-123",
+            name="Invalid Batch",
+            items_total=-5,
+            strategy_snapshot={"test": "data"}
+        )
 
 
-def test_batch_analysis_relationship(db_session):
+async def test_batch_analysis_relationship(make_repo):
     """Test la relation batch-analysis."""
-    batch_repo = BatchRepository(db_session)
-    analysis_repo = AnalysisRepository(db_session)
+    batch_repo = make_repo(Batch)
+    analysis_repo = make_repo(Analysis)
     
     # Créer batch
-    batch = Batch(
+    created_batch = await batch_repo.create(
         user_id="test-user-123",
         name="Relationship Test",
         items_total=3,
         strategy_snapshot={"test": "data"}
     )
-    created_batch = batch_repo.create(batch)
     
     # Créer plusieurs analyses
     for i in range(3):
-        analysis = Analysis(
+        await analysis_repo.create(
             batch_id=created_batch.id,
             isbn_or_asin=f"978{i:010d}",
             buy_price=Decimal("10.00"),
@@ -111,8 +103,7 @@ def test_batch_analysis_relationship(db_session):
             velocity_score=Decimal("5.0"),
             raw_keepa={"book": f"Book {i}"}
         )
-        analysis_repo.create(analysis)
     
     # Vérifier qu'on peut récupérer toutes les analyses du batch
-    batch_analyses = analysis_repo.get_by_batch_id(created_batch.id)
-    assert len(batch_analyses) == 3
+    batch_analyses_page = await analysis_repo.list(filters={"batch_id": created_batch.id})
+    assert len(batch_analyses_page.items) == 3

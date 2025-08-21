@@ -1,0 +1,86 @@
+{
+  "timestamp": "2025-08-20T16:38:12.407792",
+  "summary": {
+    "total_tests": 6,
+    "passed": 3,
+    "failed": 3,
+    "duration_seconds": 14.62
+  },
+  "tests": [
+    {
+      "category": "repository",
+      "duration": 7.982846975326538,
+      "results": {
+        "passed": 1,
+        "failed": 2,
+        "details": [
+          {
+            "file": "test_user_repository.py",
+            "success": false,
+            "output": ""
+          },
+          {
+            "file": "test_batch_repository.py",
+            "success": false,
+            "output": ""
+          },
+          {
+            "file": "test_analysis_repository.py",
+            "success": true,
+            "output": "============================= test session starts =============================\nplatform win32 -- Python 3.11.13, pytest-7.4.4, pluggy-1.6.0\nrootdir: C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\nconfigfile: pyproject.toml\nplugins: anyio-3.7.1, Faker-37.5.3, asyncio-0.23.8\nasyncio: mode=Mode.AUTO\ncollected 20 items\n\ntests\\test_analysis_repository.py ....................                   [100%]\n\n============================= 20 passed in 1.26s ==============================\n"
+          }
+        ]
+      }
+    },
+    {
+      "category": "models",
+      "duration": 3.9001989364624023,
+      "results": {
+        "passed": 1,
+        "failed": 1,
+        "details": [
+          {
+            "file": "test_basic_models.py",
+            "success": false,
+            "output": ""
+          },
+          {
+            "file": "test_models_simple.py",
+            "success": true,
+            "output": "============================= test session starts =============================\nplatform win32 -- Python 3.11.13, pytest-7.4.4, pluggy-1.6.0\nrootdir: C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\nconfigfile: pyproject.toml\nplugins: anyio-3.7.1, Faker-37.5.3, asyncio-0.23.8\nasyncio: mode=Mode.AUTO\ncollected 6 items\n\ntests\\test_models_simple.py ......                                       [100%]\n\n============================== 6 passed in 0.28s ==============================\n"
+          }
+        ]
+      }
+    },
+    {
+      "category": "performance",
+      "duration": 2.7381458282470703,
+      "results": {
+        "passed": 1,
+        "failed": 0,
+        "details": [
+          {
+            "file": "test_base_repository_performance.py",
+            "success": true,
+            "output": "============================= test session starts =============================\nplatform win32 -- Python 3.11.13, pytest-7.4.4, pluggy-1.6.0\nrootdir: C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\nconfigfile: pyproject.toml\nplugins: anyio-3.7.1, Faker-37.5.3, asyncio-0.23.8\nasyncio: mode=Mode.AUTO\ncollected 5 items\n\ntests\\test_base_repository_performance.py .....                          [100%]\n\n============================== 5 passed in 1.16s ==============================\n"
+          }
+        ]
+      }
+    }
+  ],
+  "metrics": {
+    "system_health": {
+      "core_repositories": true,
+      "core_models": true,
+      "performance_baseline": true
+    },
+    "readiness_indicators": {
+      "ready_for_keepa_integration": false
+    },
+    "passed_test_files": [
+      "test_analysis_repository.py",
+      "test_models_simple.py",
+      "test_base_repository_performance.py"
+    ]
+  }
+}

@@ -26,7 +26,8 @@ def calculate_roi_metrics(
     current_price: Decimal,
     estimated_buy_cost: Decimal,
     product_weight_lbs: Decimal = Decimal("1.0"),
-    category: str = "books"
+    category: str = "books",
+    config: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Calculate ROI and profitability metrics.
@@ -48,7 +49,8 @@ def calculate_roi_metrics(
             sell_price=current_price,
             buy_cost=estimated_buy_cost,
             weight_lbs=product_weight_lbs,
-            category=category
+            category=category,
+            config=config
         )
         
         # Add additional ROI-specific fields
@@ -68,7 +70,7 @@ def calculate_roi_metrics(
         }
 
 
-def calculate_velocity_score(velocity_data: VelocityData, window_days: int = 30) -> Dict[str, Any]:
+def calculate_velocity_score(velocity_data: VelocityData, window_days: int = 30, config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Calculate velocity score (0-100) based on sales rank patterns and market activity.
     
@@ -91,7 +93,7 @@ def calculate_velocity_score(velocity_data: VelocityData, window_days: int = 30)
         recent_offers = [item for item in velocity_data.offers_history if item[0] >= cutoff_date]
         
         # Component 1: BSR Percentile Trend (0-30 points)
-        rank_percentile_30d = _calculate_rank_percentile(recent_bsr, velocity_data.category)
+        rank_percentile_30d = _calculate_rank_percentile(recent_bsr, velocity_data.category, config)
         rank_percentile_score = min(rank_percentile_30d * 0.3, 30)
         
         # Component 2: BSR Improvement Frequency (0-25 points) 
@@ -135,7 +137,7 @@ def calculate_velocity_score(velocity_data: VelocityData, window_days: int = 30)
                 "offers_points": len(recent_offers)
             },
             "timestamp": datetime.now().isoformat(),
-            "velocity_tier": _get_velocity_tier(velocity_score)
+            "velocity_tier": _get_velocity_tier(velocity_score, config)
         }
         
     except Exception as e:
@@ -147,7 +149,7 @@ def calculate_velocity_score(velocity_data: VelocityData, window_days: int = 30)
         }
 
 
-def _calculate_rank_percentile(bsr_history: List[Tuple[datetime, int]], category: str) -> float:
+def _calculate_rank_percentile(bsr_history: List[Tuple[datetime, int]], category: str, config: Optional[Dict[str, Any]] = None) -> float:
     """Calculate BSR percentile compared to category average."""
     if not bsr_history:
         return 0.0
@@ -159,15 +161,19 @@ def _calculate_rank_percentile(bsr_history: List[Tuple[datetime, int]], category
     
     avg_bsr = statistics.mean(bsr_values)
     
-    # Category-specific benchmarks (rough estimates)
-    category_benchmarks = {
-        "books": 100000,      # Books category median
-        "media": 50000,       # Media category median  
-        "default": 150000     # Conservative default
-    }
+    # Get benchmarks from config or use defaults
+    if config and "velocity" in config and "benchmarks" in config["velocity"]:
+        benchmarks = config["velocity"]["benchmarks"]
+    else:
+        # Default benchmarks
+        benchmarks = {
+            "books": 100000,      # Books category median
+            "media": 50000,       # Media category median  
+            "default": 150000     # Conservative default
+        }
     
     category_key = category.lower()
-    benchmark = category_benchmarks.get(category_key, category_benchmarks["default"])
+    benchmark = benchmarks.get(category_key, benchmarks.get("default", 150000))
     
     # Calculate percentile (lower BSR = higher percentile)
     if avg_bsr <= benchmark * 0.1:  # Top 10%
@@ -252,13 +258,25 @@ def _assess_roi_confidence(current_price: Decimal, estimated_buy_cost: Decimal) 
         return "low"
 
 
-def _get_velocity_tier(velocity_score: float) -> str:
-    """Categorize velocity score into tiers."""
-    if velocity_score >= 80:
+def _get_velocity_tier(velocity_score: float, config: Optional[Dict[str, Any]] = None) -> str:
+    """Categorize velocity score into tiers using config thresholds."""
+    
+    # Get thresholds from config or use defaults
+    if config and "velocity" in config:
+        velocity_config = config["velocity"]
+        fast = velocity_config.get("fast_threshold", 80.0)
+        medium = velocity_config.get("medium_threshold", 60.0)
+        slow = velocity_config.get("slow_threshold", 40.0)
+    else:
+        fast = 80.0
+        medium = 60.0
+        slow = 40.0
+    
+    if velocity_score >= fast:
         return "fast"
-    elif velocity_score >= 60:
+    elif velocity_score >= medium:
         return "medium"
-    elif velocity_score >= 40:
+    elif velocity_score >= slow:
         return "slow"
     else:
         return "very_slow"
@@ -297,35 +315,43 @@ def create_combined_analysis(
         # Velocity Analysis  
         "velocity_analysis": velocity_metrics,
         
-        # Combined Scoring
-        "combined_score": _calculate_combined_score(roi_metrics, velocity_metrics),
-        "recommendation": _generate_recommendation(roi_metrics, velocity_metrics)
+        # Combined Scoring (with config)
+        "combined_score": _calculate_combined_score(roi_metrics, velocity_metrics, config),
+        "recommendation": _generate_recommendation(roi_metrics, velocity_metrics, config)
     }
     
     return analysis
 
 
-def _calculate_combined_score(roi_metrics: Dict, velocity_metrics: Dict) -> Dict[str, Any]:
+def _calculate_combined_score(roi_metrics: Dict, velocity_metrics: Dict, config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Calculate weighted combined score from ROI and velocity."""
     try:
         roi_score = min(max(float(roi_metrics.get("roi_percentage", 0)), 0), 100)
         velocity_score = float(velocity_metrics.get("velocity_score", 0))
         
-        # Weighted average (ROI 60%, Velocity 40%)
-        combined_score = (roi_score * 0.6) + (velocity_score * 0.4)
+        # Get weights from config or use defaults
+        if config and "combined_score" in config:
+            roi_weight = config["combined_score"].get("roi_weight", 0.6)
+            velocity_weight = config["combined_score"].get("velocity_weight", 0.4)
+        else:
+            roi_weight = 0.6
+            velocity_weight = 0.4
+        
+        # Weighted average with config weights
+        combined_score = (roi_score * roi_weight) + (velocity_score * velocity_weight)
         
         return {
             "combined_score": round(combined_score, 2),
-            "roi_weight": 0.6,
-            "velocity_weight": 0.4,
-            "roi_contribution": round(roi_score * 0.6, 2),
-            "velocity_contribution": round(velocity_score * 0.4, 2)
+            "roi_weight": roi_weight,
+            "velocity_weight": velocity_weight,
+            "roi_contribution": round(roi_score * roi_weight, 2),
+            "velocity_contribution": round(velocity_score * velocity_weight, 2)
         }
     except:
         return {"combined_score": 0, "error": "Score calculation failed"}
 
 
-def _generate_recommendation(roi_metrics: Dict, velocity_metrics: Dict) -> str:
+def _generate_recommendation(roi_metrics: Dict, velocity_metrics: Dict, config: Optional[Dict[str, Any]] = None) -> str:
     """Generate business recommendation based on combined analysis."""
     try:
         roi_pct = float(roi_metrics.get("roi_percentage", 0))
@@ -335,14 +361,30 @@ def _generate_recommendation(roi_metrics: Dict, velocity_metrics: Dict) -> str:
         if not is_profitable:
             return "PASS - Not profitable"
         
-        if roi_pct >= 30 and velocity_score >= 70:
-            return "STRONG BUY - High profit, fast moving"
-        elif roi_pct >= 20 and velocity_score >= 50:
-            return "BUY - Good opportunity"  
-        elif roi_pct >= 15 or velocity_score >= 60:
-            return "CONSIDER - Monitor for better entry"
+        # Use config recommendation rules if available
+        if config and "recommendation_rules" in config:
+            rules = config["recommendation_rules"]
+            
+            for rule in rules:
+                min_roi = rule.get("min_roi", 0)
+                min_velocity = rule.get("min_velocity", 0)
+                
+                if roi_pct >= min_roi and velocity_score >= min_velocity:
+                    label = rule.get("label", "UNKNOWN")
+                    description = rule.get("description", "")
+                    return f"{label} - {description}" if description else label
+            
+            return "PASS - Below configured thresholds"
         else:
-            return "PASS - Low profit/slow moving"
+            # Default fallback rules
+            if roi_pct >= 30 and velocity_score >= 70:
+                return "STRONG BUY - High profit, fast moving"
+            elif roi_pct >= 20 and velocity_score >= 50:
+                return "BUY - Good opportunity"  
+            elif roi_pct >= 15 or velocity_score >= 60:
+                return "CONSIDER - Monitor for better entry"
+            else:
+                return "PASS - Low profit/slow moving"
             
     except:
         return "UNKNOWN - Analysis incomplete"

@@ -1,0 +1,112 @@
+{
+  "roi": {
+    "target_pct_default": 30.0,
+    "min_for_buy": 15.0,
+    "excellent_threshold": 50.0,
+    "good_threshold": 30.0,
+    "fair_threshold": 15.0
+  },
+  "combined_score": {
+    "roi_weight": 0.6,
+    "velocity_weight": 0.4
+  },
+  "fees": {
+    "buffer_pct_default": 5.0,
+    "books": {
+      "referral_fee_pct": 15.0,
+      "closing_fee": 1.80,
+      "fba_fee_base": 2.50,
+      "fba_fee_per_lb": 0.40,
+      "inbound_shipping": 0.40,
+      "prep_fee": 0.20
+    },
+    "media": {
+      "referral_fee_pct": 15.0,
+      "closing_fee": 1.80,
+      "fba_fee_base": 2.50,
+      "fba_fee_per_lb": 0.40,
+      "inbound_shipping": 0.35,
+      "prep_fee": 0.15
+    },
+    "default": {
+      "referral_fee_pct": 15.0,
+      "closing_fee": 1.80,
+      "fba_fee_base": 3.00,
+      "fba_fee_per_lb": 0.50,
+      "inbound_shipping": 0.50,
+      "prep_fee": 0.25
+    }
+  },
+  "velocity": {
+    "fast_threshold": 80.0,
+    "medium_threshold": 60.0,
+    "slow_threshold": 40.0,
+    "benchmarks": {
+      "books": 100000,
+      "media": 50000,
+      "default": 150000
+    }
+  },
+  "recommendation_rules": [
+    {
+      "label": "STRONG BUY",
+      "min_roi": 30.0,
+      "min_velocity": 70.0,
+      "description": "High profit, fast moving"
+    },
+    {
+      "label": "BUY",
+      "min_roi": 20.0,
+      "min_velocity": 50.0,
+      "description": "Good opportunity"
+    },
+    {
+      "label": "CONSIDER",
+      "min_roi": 15.0,
+      "min_velocity": 0.0,
+      "description": "Monitor for better entry"
+    },
+    {
+      "label": "PASS",
+      "min_roi": 0.0,
+      "min_velocity": 0.0,
+      "description": "Low profit/slow moving"
+    }
+  ],
+  "demo_asins": [
+    "B00FLIJJSA",
+    "B08N5WRWNW",
+    "B07FNW9FGJ"
+  ],
+  "overrides": {
+    "domain:2": {
+      "roi": {
+        "target_pct_default": 25.0,
+        "comment": "UK marketplace - lower ROI target"
+      }
+    },
+    "category:textbooks": {
+      "roi": {
+        "target_pct_default": 40.0,
+        "min_for_buy": 25.0,
+        "comment": "Textbooks - higher profit margins expected"
+      },
+      "fees": {
+        "buffer_pct_default": 7.0,
+        "comment": "Higher buffer for textbook seasonality"
+      }
+    },
+    "category:media": {
+      "velocity": {
+        "fast_threshold": 85.0,
+        "comment": "Media moves faster, higher threshold"
+      }
+    }
+  },
+  "meta": {
+    "version": "1.0.0",
+    "created_by": "system_seed",
+    "description": "Default business configuration for ArbitrageVault with domain/category overrides",
+    "last_updated": "2025-08-21T14:00:00Z"
+  }
+}

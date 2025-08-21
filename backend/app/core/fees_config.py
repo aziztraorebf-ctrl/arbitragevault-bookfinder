@@ -3,7 +3,7 @@ Amazon Fee Configuration - Books category defaults and calculation logic.
 """
 
 from decimal import Decimal
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from dataclasses import dataclass
 
 
@@ -126,7 +126,8 @@ def calculate_profit_metrics(
     buy_cost: Decimal,
     weight_lbs: Decimal = Decimal("1.0"),
     category: str = "books",
-    buffer_pct: Decimal = Decimal("5.0")
+    buffer_pct: Decimal = Decimal("5.0"),
+    config: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Calculate comprehensive profit metrics.
@@ -141,6 +142,16 @@ def calculate_profit_metrics(
     Returns:
         Complete profit analysis dictionary
     """
+    # Get config parameters (use defaults if not provided)
+    if config:
+        buffer_from_config = config.get("fees", {}).get("buffer_pct_default", float(buffer_pct))
+        buffer_pct = Decimal(str(buffer_from_config))
+        
+        target_roi_from_config = config.get("roi", {}).get("target_pct_default", 30.0)
+        target_roi = Decimal(str(target_roi_from_config))
+    else:
+        target_roi = Decimal("30.0")  # Default fallback
+    
     # Calculate fees
     fees = calculate_total_fees(sell_price, weight_lbs, category)
     total_fees = fees["total_fees"]
@@ -153,9 +164,7 @@ def calculate_profit_metrics(
     roi_percentage = (net_profit / buy_cost * Decimal("100")) if buy_cost > 0 else Decimal("0")
     margin_percentage = (net_profit / sell_price * Decimal("100")) if sell_price > 0 else Decimal("0")
     
-    # Pricing targets
-    # Target buy price for 30% ROI (common target)
-    target_roi = Decimal("30.0")
+    # Pricing targets (using config target ROI)
     target_profit_needed = buy_cost * (target_roi / Decimal("100"))
     target_buy_price = sell_price - total_fees - target_profit_needed - buffer_amount
     
@@ -186,19 +195,40 @@ def calculate_profit_metrics(
         # Status flags
         "is_profitable": net_profit > 0,
         "meets_target_roi": roi_percentage >= target_roi,
-        "profit_tier": _get_profit_tier(roi_percentage)
+        "profit_tier": _get_profit_tier(roi_percentage, config),
+        
+        # Config audit trail
+        "config_applied": {
+            "target_roi_used": float(target_roi),
+            "buffer_pct_used": float(buffer_pct),
+            "config_source": "provided" if config else "default"
+        }
     }
 
 
-def _get_profit_tier(roi_percentage: Decimal) -> str:
-    """Categorize ROI into tiers."""
-    if roi_percentage >= 50:
+def _get_profit_tier(roi_percentage: Decimal, config: Optional[Dict[str, Any]] = None) -> str:
+    """Categorize ROI into tiers using config thresholds."""
+    roi_pct = float(roi_percentage)
+    
+    # Get thresholds from config or use defaults
+    if config and "roi" in config:
+        roi_config = config["roi"]
+        excellent = roi_config.get("excellent_threshold", 50.0)
+        good = roi_config.get("good_threshold", 30.0)
+        fair = roi_config.get("fair_threshold", 15.0)
+    else:
+        # Default thresholds
+        excellent = 50.0
+        good = 30.0
+        fair = 15.0
+    
+    if roi_pct >= excellent:
         return "excellent"
-    elif roi_percentage >= 30:
+    elif roi_pct >= good:
         return "good"
-    elif roi_percentage >= 15:
+    elif roi_pct >= fair:
         return "fair" 
-    elif roi_percentage > 0:
+    elif roi_pct > 0:
         return "poor"
     else:
         return "loss"

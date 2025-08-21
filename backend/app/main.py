@@ -3,7 +3,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api.v1.routers import auth, health, analyses, batches, keepa
+from app.api.v1.routers import auth, health, analyses, batches, keepa, config
 from app.core.cors import configure_cors
 from app.core.db import lifespan
 from app.core.logging import configure_logging, get_logger, log_request_middleware
@@ -44,6 +44,7 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(analyses.router, prefix="/api/v1/analyses", tags=["Analyses"])
 app.include_router(batches.router, prefix="/api/v1/batches", tags=["Batches"])
 app.include_router(keepa.router, prefix="/api/v1/keepa", tags=["Keepa"])
+app.include_router(config.router, prefix="/api/v1", tags=["Configuration"])
 
 
 # Global exception handler

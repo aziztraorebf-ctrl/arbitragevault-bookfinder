@@ -3,15 +3,17 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api.v1.routers import auth, health
+from app.api.v1.routers import auth, health, analyses, batches, keepa
 from app.core.cors import configure_cors
 from app.core.db import lifespan
 from app.core.logging import configure_logging, get_logger, log_request_middleware
 from app.core.settings import get_settings
 
-# Configure logging first
-configure_logging()
-logger = get_logger("main")
+# Configure logging first - DISABLED FOR PHASE 1
+# configure_logging()
+# logger = get_logger("main")
+import logging
+logger = logging.getLogger("main")
 
 # Get settings
 settings = get_settings()
@@ -33,12 +35,15 @@ app = FastAPI(
 # Configure CORS
 configure_cors(app)
 
-# Add request logging middleware
-app.middleware("http")(log_request_middleware)
+# Add request logging middleware - DISABLED FOR PHASE 1
+# app.middleware("http")(log_request_middleware)
 
 # Include routers
 app.include_router(health.router, prefix="/api/v1/health", tags=["Health"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(analyses.router, prefix="/api/v1/analyses", tags=["Analyses"])
+app.include_router(batches.router, prefix="/api/v1/batches", tags=["Batches"])
+app.include_router(keepa.router, prefix="/api/v1/keepa", tags=["Keepa"])
 
 
 # Global exception handler

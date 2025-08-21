@@ -1,12 +1,19 @@
 """User model for authentication and authorization."""
 
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
 from sqlalchemy import Boolean, DateTime, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
+
+
+class UserRole(str, Enum):
+    """User roles for role-based access control."""
+    ADMIN = "ADMIN"
+    SOURCER = "SOURCER"
 
 
 class User(Base):

@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.pool import QueuePool
+# from sqlalchemy.pool import QueuePool  # Not compatible with async
 
 from .settings import get_settings
 
@@ -36,7 +36,7 @@ class DatabaseManager:
 
         self._engine = create_async_engine(
             settings.database_url,
-            poolclass=QueuePool,
+            # QueuePool not compatible with asyncio - removed poolclass
             pool_size=20,
             max_overflow=30,
             pool_pre_ping=True,

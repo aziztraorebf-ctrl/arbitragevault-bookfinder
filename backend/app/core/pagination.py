@@ -1,15 +1,53 @@
 """Pagination utilities and types."""
 
-from typing import Generic, List, TypeVar
+from typing import Generic, List, TypeVar, Optional
+from fastapi import Query
 from pydantic import BaseModel, Field, ConfigDict
 
 T = TypeVar('T')
 
 
-class Page(BaseModel, Generic[T]):
+class PaginatedResponse(BaseModel, Generic[T]):
     """Paginated response container."""
     
-    # Allow arbitrary types (like SQLAlchemy models)
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    
+    items: List[T] = Field(..., description="List of items in this page")
+    total: int = Field(..., description="Total number of items across all pages", ge=0)
+    page: int = Field(..., description="Current page number", ge=1)
+    per_page: int = Field(..., description="Items per page", ge=1)
+    pages: int = Field(..., description="Total number of pages", ge=0)
+
+
+class PaginationParams:
+    """Pagination parameters dependency."""
+    
+    def __init__(
+        self,
+        page: int = Query(1, ge=1, description="Page number"),
+        per_page: int = Query(20, ge=1, le=100, description="Items per page"),
+        sort_by: str = Query("id", description="Sort by field"),
+        sort_order: str = Query("desc", regex="^(asc|desc)$", description="Sort order")
+    ):
+        self.page = page
+        self.per_page = per_page
+        self.sort_by = sort_by
+        self.sort_order = sort_order
+        
+    @property
+    def offset(self) -> int:
+        """Calculate offset from page and per_page."""
+        return (self.page - 1) * self.per_page
+        
+    @property
+    def limit(self) -> int:
+        """Get limit (per_page)."""
+        return self.per_page
+
+
+class Page(BaseModel, Generic[T]):
+    """Legacy paginated response container (kept for compatibility)."""
+    
     model_config = ConfigDict(arbitrary_types_allowed=True)
     
     items: List[T] = Field(..., description="List of items in this page")

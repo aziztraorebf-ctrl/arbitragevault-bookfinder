@@ -269,25 +269,26 @@ class KeepaService:
                 "circuit_breaker_state": self._circuit_breaker.state.value
             }
     
-    async def get_product_data(self, identifier: str, domain: int = 1) -> Optional[Dict[str, Any]]:
+    async def get_product_data(self, identifier: str, domain: int = 1, force_refresh: bool = False) -> Optional[Dict[str, Any]]:
         """
         Get product data from Keepa API.
         
         Args:
             identifier: ASIN or ISBN (will be resolved)
             domain: Keepa domain (1=US, 2=UK, etc.)
+            force_refresh: Skip cache and force fresh API call
         
         Returns:
             Product data dict or None if not found
         """
         
-        # Check cache first
+        # Check cache first (unless force_refresh)
         cache_key = self._get_cache_key('/product', {
             'asin': identifier,
             'domain': domain
         })
         
-        cached_data = self._get_from_cache(cache_key)
+        cached_data = None if force_refresh else self._get_from_cache(cache_key)
         if cached_data:
             return cached_data
         

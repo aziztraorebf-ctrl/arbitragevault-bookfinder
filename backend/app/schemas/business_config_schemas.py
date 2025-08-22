@@ -56,7 +56,7 @@ class VelocityConfigSchema(BaseModel):
     slow_threshold: float = Field(40.0, ge=0, le=100, description="Threshold for slow velocity tier")
     benchmarks: Optional[Dict[str, int]] = Field(None, description="BSR benchmarks by category")
     
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def thresholds_must_be_ordered(cls, values):
         fast = values.get('fast_threshold', 80.0)
         medium = values.get('medium_threshold', 60.0)

@@ -1,0 +1,12 @@
+Phase 2 Step 1: Keepa Service Core implementation
+
+- Add KeepaService with HTTPX async client
+- Implement multi-tier caching (24h meta, 30-60min pricing/BSR)
+- Add throttling (concurrency=3), retry logic, circuit breaker  
+- Token usage tracking and comprehensive metrics
+- Health check and product data endpoints
+- Smoke test validates 1200 tokens available, ASIN resolution working
+- Environment rebuilt clean (pydantic_core issue resolved)
+
+🤖 Generated with [Memex](https://memex.tech)
+Co-Authored-By: Memex <noreply@memex.tech>

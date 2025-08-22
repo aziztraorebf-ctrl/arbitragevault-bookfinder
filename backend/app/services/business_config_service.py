@@ -125,10 +125,12 @@ class BusinessConfigService:
                     return effective_config
                     
             except Exception as e:
-                logger.error(f"Failed to load effective config: {e}")
-                # Return fallback config
-                fallback = await self._load_fallback_config()
-                return fallback
+                logger.warning(f"Failed to load effective config from DB: {e}")
+                
+        # Return fallback config if DB access fails
+        logger.info("Using fallback configuration")
+        fallback = await self._load_fallback_config()
+        return fallback
     
     async def update_config(
         self,

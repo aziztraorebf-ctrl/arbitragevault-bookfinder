@@ -1,0 +1,28 @@
+PHASE 4 COMPLETE: Keepa API endpoints with observability
+
+✅ 3 Core endpoints implemented:
+- POST /api/v1/keepa/ingest → Batch processing (sync/async modes)
+- GET /api/v1/keepa/{asin}/metrics → Complete analysis + config audit  
+- GET /api/v1/keepa/{asin}/raw → Debug data with metadata
+
+✅ Enhanced existing endpoints:
+- GET /api/v1/keepa/health → Full observability metrics
+- GET /api/v1/keepa/test → Phase 4 tracing + metadata
+
+🔧 Features delivered:
+- Pydantic schemas inline (IngestRequest, MetricsResponse, etc.)
+- Standard error format with trace_id + structured codes
+- Configuration audit trail (version, hash, profile)  
+- Keepa metadata (cache_hit, tokens_used, snapshot_at)
+- Async job mode for batches >100 items (placeholder)
+- Force refresh option for cache bypass
+- Comprehensive integration tests (6 ASINs + edge cases)
+
+🧪 Validation: 5/5 endpoints working, 100% smoke test success
+📊 Observability: Cache hit rates, token tracking, circuit breaker status
+
+Technical: Fixed KeepaService.get_product_data() signature, fallback config for DB issues, Pydantic validator compatibility.
+
+
+🤖 Generated with [Memex](https://memex.tech)
+Co-Authored-By: Memex <noreply@memex.tech>

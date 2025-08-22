@@ -136,6 +136,9 @@ def _extract_current_data(raw_data: Dict[str, Any]) -> Dict[str, Any]:
     if buybox_info:
         current_data["buybox_seller_type"] = _determine_seller_type(buybox_info)
     
+    # *** FIX TICKET #001: Determine best current_price from available prices ***
+    current_data["current_price"] = _determine_best_current_price(current_data)
+    
     return current_data
 
 
@@ -144,46 +147,64 @@ def _extract_history_data(raw_data: Dict[str, Any], days_back: int = 90) -> Dict
     history_data = {}
     
     csv_data = raw_data.get("csv", [])
-    if not csv_data:
+    # *** FIX TICKET #002: Robust null checking ***
+    if not csv_data or not isinstance(csv_data, list):
+        logger.warning("CSV data missing or invalid format")
         return history_data
     
     # Calculate cutoff timestamp (Keepa uses minutes since epoch)
     cutoff_date = datetime.now() - timedelta(days=days_back)
     keepa_cutoff = int((cutoff_date.timestamp() * 1000 + 21564000) / 60000)  # Keepa epoch conversion
     
-    # Extract BSR history
-    if len(csv_data) > 3:
+    # Extract BSR history with robust null checking
+    if len(csv_data) > 3 and csv_data[3] is not None:
         bsr_history = []
         sales_ranks = csv_data[3]
         
-        for i in range(0, len(sales_ranks), 2):
-            if i + 1 < len(sales_ranks):
-                timestamp_keepa = sales_ranks[i]
-                rank_value = sales_ranks[i + 1]
-                
-                if timestamp_keepa >= keepa_cutoff and rank_value != -1:
-                    timestamp = _keepa_timestamp_to_datetime(timestamp_keepa)
-                    bsr_history.append((timestamp, int(rank_value)))
+        # *** FIX TICKET #002: Check if sales_ranks is a list and has content ***
+        if isinstance(sales_ranks, list) and len(sales_ranks) > 0:
+            for i in range(0, len(sales_ranks), 2):
+                if i + 1 < len(sales_ranks):
+                    timestamp_keepa = sales_ranks[i]
+                    rank_value = sales_ranks[i + 1]
+                    
+                    if timestamp_keepa and timestamp_keepa >= keepa_cutoff and rank_value != -1:
+                        try:
+                            timestamp = _keepa_timestamp_to_datetime(timestamp_keepa)
+                            bsr_history.append((timestamp, int(rank_value)))
+                        except (ValueError, TypeError) as e:
+                            logger.warning(f"Invalid BSR data point: {e}")
+                            continue
         
         history_data["bsr_history"] = bsr_history
+    else:
+        history_data["bsr_history"] = []
     
-    # Extract price history (using Amazon price)
-    if len(csv_data) > 0:
+    # Extract price history (using Amazon price) with robust null checking
+    if len(csv_data) > 0 and csv_data[0] is not None:
         price_history = []
         amazon_prices = csv_data[0]
         
-        for i in range(0, len(amazon_prices), 2):
-            if i + 1 < len(amazon_prices):
-                timestamp_keepa = amazon_prices[i]
-                price_value = amazon_prices[i + 1]
-                
-                if timestamp_keepa >= keepa_cutoff and price_value != -1:
-                    timestamp = _keepa_timestamp_to_datetime(timestamp_keepa)
-                    price = _keepa_price_to_decimal(price_value)
-                    if price > 0:
-                        price_history.append((timestamp, float(price)))
+        # *** FIX TICKET #002: Check if amazon_prices is a list and has content ***
+        if isinstance(amazon_prices, list) and len(amazon_prices) > 0:
+            for i in range(0, len(amazon_prices), 2):
+                if i + 1 < len(amazon_prices):
+                    timestamp_keepa = amazon_prices[i]
+                    price_value = amazon_prices[i + 1]
+                    
+                    if timestamp_keepa and timestamp_keepa >= keepa_cutoff and price_value != -1:
+                        try:
+                            timestamp = _keepa_timestamp_to_datetime(timestamp_keepa)
+                            price = _keepa_price_to_decimal(price_value)
+                            if price > 0:
+                                price_history.append((timestamp, float(price)))
+                        except (ValueError, TypeError) as e:
+                            logger.warning(f"Invalid price data point: {e}")
+                            continue
         
         history_data["price_history"] = price_history
+    else:
+        history_data["price_history"] = []
     
     return history_data
 
@@ -303,3 +324,33 @@ def parse_identifier_resolution(
             "keepa_domain": 1,
             "error_message": str(e)
         }
+
+
+def _determine_best_current_price(current_data: Dict[str, Any]) -> Optional[Decimal]:
+    """
+    Determine the best current price from available Keepa price sources.
+    Priority: Buy Box > FBA > Amazon > Marketplace (FBM)
+    
+    Args:
+        current_data: Extracted current data with various price fields
+        
+    Returns:
+        Best available price as Decimal or None if no valid price found
+    """
+    # Priority order for price selection
+    price_fields = [
+        "current_buybox_price",
+        "current_fba_price", 
+        "current_amazon_price",
+        "current_fbm_price"
+    ]
+    
+    for field in price_fields:
+        price = current_data.get(field)
+        if price is not None and price > 0:
+            logger.info(f"Selected {field} as current_price: ${price}")
+            return price
+    
+    # No valid price found
+    logger.warning("No valid current price found in any price field")
+    return None

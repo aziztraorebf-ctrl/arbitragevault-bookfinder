@@ -117,24 +117,46 @@ async def analyze_product(
     config: Dict[str, Any],
     keepa_service: KeepaService
 ) -> AnalysisResult:
-    """Analyze a single product with given config."""
+    """
+    Analyze a single product with given config.
+    *** FIXED VERSION - Based on working debug endpoint implementation ***
+    """
     try:
         # Parse Keepa data
         parsed_data = parse_keepa_product(keepa_data)
         
-        # Calculate ROI metrics
-        current_price = Decimal(str(parsed_data.get('current_price', 20.0)))
-        estimated_cost = Decimal(str(parsed_data.get('current_price', 20.0))) * Decimal('0.75')  # Estimate 75% of current price
+        # *** FIX TICKET #001: Robust price handling ***
+        current_price_raw = parsed_data.get('current_price')
+        
+        # Handle case where no valid price is found
+        if current_price_raw is None or current_price_raw <= 0:
+            return AnalysisResult(
+                asin=asin,
+                title=keepa_data.get('title', 'Unknown'),
+                roi={"error": "No valid pricing data available"},
+                velocity={"error": "No pricing data for velocity analysis"},
+                recommendation="PASS",
+                risk_factors=["No valid pricing data"],
+                confidence_score=0.0
+            )
+        
+        # Calculate ROI metrics with valid price - EXACT SAME AS DEBUG ENDPOINT
+        current_price = Decimal(str(current_price_raw))
+        estimated_cost = current_price * Decimal('0.75')
+        
+        # Weight handling - EXACT SAME AS DEBUG ENDPOINT  
+        weight_raw = parsed_data.get('weight', 1.0)
+        weight_decimal = Decimal(str(weight_raw))
         
         roi_result = calculate_roi_metrics(
             current_price=current_price,
             estimated_buy_cost=estimated_cost,
-            product_weight_lbs=Decimal(str(parsed_data.get('weight', 1.0))),
+            product_weight_lbs=weight_decimal,
             category="books",
             config=config
         )
         
-        # Prepare velocity data
+        # Velocity calculation - EXACT SAME AS DEBUG ENDPOINT
         velocity_data = VelocityData(
             current_bsr=parsed_data.get('current_bsr'),
             bsr_history=parsed_data.get('bsr_history', []),
@@ -180,7 +202,7 @@ async def analyze_product(
         )
         
     except Exception as e:
-        logger.error(f"Analysis failed for {asin}: {e}")
+        # No logger calls that might cause issues
         return AnalysisResult(
             asin=asin,
             title=keepa_data.get('title', 'Unknown'),
@@ -461,6 +483,186 @@ async def get_raw_keepa_data(
                 "trace_id": trace_id
             }
         )
+
+
+# === DEBUG ENDPOINTS ===
+
+@router.post("/debug-analyze")
+async def debug_analyze_endpoint(
+    asin: str = "B00FLIJJSA",
+    keepa_service: KeepaService = Depends(get_keepa_service),
+    config_service: BusinessConfigService = Depends(get_business_config_service)
+) -> Dict[str, Any]:
+    """
+    DEBUG ENDPOINT: Trace every step of analyze_product to find the exact error.
+    """
+    import traceback
+    from decimal import Decimal
+    
+    debug_trace = []
+    
+    try:
+        debug_trace.append("=== STEP 1: Getting config ===")
+        
+        try:
+            config = await config_service.get_effective_config(domain_id=1, category="books")
+            debug_trace.append(f"✅ Config loaded: {type(config)}")
+        except Exception as e:
+            config = {"roi": {"target_roi_percent": 30}, "velocity": {"min_velocity_score": 50}}
+            debug_trace.append(f"⚠️ Config fallback: {e}")
+        
+        debug_trace.append("=== STEP 2: Getting Keepa data ===")
+        
+        async with keepa_service:
+            keepa_data = await keepa_service.get_product_data(asin, force_refresh=False)
+            
+            if not keepa_data:
+                return {"error": "No Keepa data", "debug_trace": debug_trace}
+            
+            debug_trace.append(f"✅ Keepa data: {len(keepa_data)} keys")
+            
+            debug_trace.append("=== STEP 3: Parsing Keepa data ===")
+            
+            parsed_data = parse_keepa_product(keepa_data)
+            debug_trace.append(f"✅ Parsing complete: {type(parsed_data)}")
+            
+            # CRITICAL: Examine current_price at this exact moment
+            current_price_raw = parsed_data.get('current_price')
+            debug_trace.append(f"🔍 current_price_raw: {repr(current_price_raw)} (type: {type(current_price_raw)})")
+            
+            if hasattr(current_price_raw, '__len__') and not isinstance(current_price_raw, str):
+                debug_trace.append(f"🚨 current_price_raw has length: {len(current_price_raw)}")
+                if hasattr(current_price_raw, '__getitem__'):
+                    debug_trace.append(f"🔍 current_price_raw content: {list(current_price_raw) if len(current_price_raw) < 10 else 'too long'}")
+            
+            debug_trace.append("=== STEP 4: Price validation ===")
+            
+            if current_price_raw is None:
+                return {"error": "current_price is None", "debug_trace": debug_trace}
+            elif current_price_raw <= 0:
+                return {"error": "current_price <= 0", "debug_trace": debug_trace}
+            
+            debug_trace.append("=== STEP 5: Decimal conversion ===")
+            
+            try:
+                current_price = Decimal(str(current_price_raw))
+                debug_trace.append(f"✅ Decimal conversion: {current_price} (type: {type(current_price)})")
+            except Exception as decimal_error:
+                debug_trace.append(f"❌ Decimal conversion failed: {decimal_error}")
+                debug_trace.append(f"🔍 str(current_price_raw): {repr(str(current_price_raw))}")
+                return {
+                    "error": f"Decimal conversion failed: {decimal_error}",
+                    "debug_trace": debug_trace,
+                    "stack_trace": traceback.format_exc()
+                }
+            
+            debug_trace.append("=== STEP 6: Estimated cost calculation ===")
+            
+            try:
+                estimated_cost = current_price * Decimal('0.75')
+                debug_trace.append(f"✅ Estimated cost: {estimated_cost}")
+            except Exception as mult_error:
+                debug_trace.append(f"❌ MULTIPLICATION ERROR FOUND: {mult_error}")
+                debug_trace.append(f"🔍 current_price type at multiplication: {type(current_price)}")
+                debug_trace.append(f"🔍 current_price value at multiplication: {repr(current_price)}")
+                return {
+                    "error": f"Multiplication failed: {mult_error}",
+                    "debug_trace": debug_trace,
+                    "stack_trace": traceback.format_exc()
+                }
+            
+            debug_trace.append("=== STEP 7: Weight handling ===")
+            
+            weight_raw = parsed_data.get('weight', 1.0)
+            debug_trace.append(f"🔍 weight_raw: {repr(weight_raw)} (type: {type(weight_raw)})")
+            
+            try:
+                weight_decimal = Decimal(str(weight_raw))
+                debug_trace.append(f"✅ Weight decimal: {weight_decimal}")
+            except Exception as weight_error:
+                debug_trace.append(f"❌ Weight conversion failed: {weight_error}")
+                return {
+                    "error": f"Weight conversion failed: {weight_error}",
+                    "debug_trace": debug_trace,
+                    "stack_trace": traceback.format_exc()
+                }
+            
+            debug_trace.append("=== STEP 8: ROI calculation ===")
+            
+            try:
+                roi_result = calculate_roi_metrics(
+                    current_price=current_price,
+                    estimated_buy_cost=estimated_cost,
+                    product_weight_lbs=weight_decimal,
+                    category="books",
+                    config=config
+                )
+                debug_trace.append(f"✅ ROI calculation success: {type(roi_result)}")
+            except Exception as roi_error:
+                debug_trace.append(f"❌ ROI CALCULATION ERROR: {roi_error}")
+                debug_trace.append(f"🔍 Parameters passed to ROI:")
+                debug_trace.append(f"  current_price: {repr(current_price)} ({type(current_price)})")
+                debug_trace.append(f"  estimated_buy_cost: {repr(estimated_cost)} ({type(estimated_cost)})")
+                debug_trace.append(f"  weight_decimal: {repr(weight_decimal)} ({type(weight_decimal)})")
+                debug_trace.append(f"  config: {type(config)}")
+                return {
+                    "error": f"ROI calculation failed: {roi_error}",
+                    "debug_trace": debug_trace,
+                    "stack_trace": traceback.format_exc()
+                }
+            
+            debug_trace.append("=== STEP 9: Velocity data preparation ===")
+            
+            try:
+                velocity_data = VelocityData(
+                    current_bsr=parsed_data.get('current_bsr'),
+                    bsr_history=parsed_data.get('bsr_history', []),
+                    price_history=parsed_data.get('price_history', []),
+                    buybox_history=parsed_data.get('buybox_history', []),
+                    offers_history=parsed_data.get('offers_history', []),
+                    category="books"
+                )
+                debug_trace.append(f"✅ VelocityData created: {type(velocity_data)}")
+            except Exception as vel_data_error:
+                debug_trace.append(f"❌ VelocityData creation failed: {vel_data_error}")
+                return {
+                    "error": f"VelocityData creation failed: {vel_data_error}",
+                    "debug_trace": debug_trace,
+                    "stack_trace": traceback.format_exc()
+                }
+            
+            debug_trace.append("=== STEP 10: Velocity calculation ===")
+            
+            try:
+                velocity_result = calculate_velocity_score(velocity_data, config=config)
+                debug_trace.append(f"✅ Velocity calculation success: {type(velocity_result)}")
+            except Exception as vel_calc_error:
+                debug_trace.append(f"❌ VELOCITY CALCULATION ERROR: {vel_calc_error}")
+                return {
+                    "error": f"Velocity calculation failed: {vel_calc_error}",
+                    "debug_trace": debug_trace,
+                    "stack_trace": traceback.format_exc()
+                }
+            
+            debug_trace.append("=== SUCCESS: All steps completed ===")
+            
+            return {
+                "success": True,
+                "asin": asin,
+                "current_price": float(current_price),
+                "roi_summary": roi_result.get('roi_percentage', 'unknown'),
+                "velocity_summary": velocity_result.get('velocity_score', 'unknown'),
+                "debug_trace": debug_trace
+            }
+            
+    except Exception as e:
+        debug_trace.append(f"❌ UNEXPECTED ERROR: {e}")
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "debug_trace": debug_trace,
+            "stack_trace": traceback.format_exc()
+        }
 
 
 # === BACKGROUND TASKS ===

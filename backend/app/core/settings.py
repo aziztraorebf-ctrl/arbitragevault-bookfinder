@@ -61,6 +61,9 @@ class Settings(BaseSettings):
     # Documentation
     enable_docs: bool = Field(default=True, alias="ENABLE_DOCS")
     enable_redoc: bool = Field(default=True, alias="ENABLE_REDOC")
+    
+    # API Keys
+    keepa_api_key: Optional[str] = Field(default=None, alias="KEEPA_API_KEY")
 
     @validator("cors_allowed_origins", pre=True)
     def parse_cors_origins(cls, v):

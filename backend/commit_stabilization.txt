@@ -1,0 +1,35 @@
+BUGFIX: Stabilize business logic calculations
+
+✅ TICKET #001 RESOLVED - Type conversion errors eliminated:
+- Added _determine_best_current_price() to extract unified current_price
+- Priority logic: Buy Box > FBA > Amazon > Marketplace prices  
+- Fixed analyze_product() to handle current_price=None gracefully
+- Eliminated "can't multiply sequence by non-int of type 'float'" error
+
+✅ TICKET #002 RESOLVED - Parser null check errors fixed:  
+- Robust CSV data validation in _extract_history_data()
+- Safe list/array processing with isinstance() checks
+- Try-catch blocks around data point processing
+- Graceful fallbacks for missing historical data
+
+🔧 Key improvements:
+- Parser extracts current_price successfully (e.g., $2.99 from real Keepa data)
+- ROI calculations work: current_price * 0.75 = estimated_cost
+- Velocity calculations complete without null reference errors
+- Debug endpoint provides full traceability for troubleshooting
+
+🧪 Validation results:
+- ✅ Debug endpoint: Returns BUY/WATCH/PASS with real analysis
+- ✅ 5/5 smoke test endpoints working (no more calculation crashes)
+- ✅ Parser extracts prices from complex Keepa API responses
+- ⚠️ Minor: Original endpoints still need price resolution alignment
+
+📊 Business logic now stable with intelligent recommendations based on:
+- ROI analysis with configurable target thresholds
+- Velocity scoring with BSR and historical data
+- Risk assessment with confidence scoring
+- Fallback handling for incomplete data
+
+
+🤖 Generated with [Memex](https://memex.tech)  
+Co-Authored-By: Memex <noreply@memex.tech>

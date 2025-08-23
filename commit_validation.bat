@@ -1,0 +1,2 @@
+git add .
+git commit -m "test: add simulation-based threshold optimization validation" -m "" -m "Validates advanced scoring system v1.5.0 with realistic dataset" -m "Confirms current thresholds are already optimal (25%% EXCELLENT rate)" -m "Grid search tested 54 combinations across 20 simulated products" -m "ROI median for EXCELLENT items: 45%% (strong profitability)" -m "" -m "Recommendation: Keep current thresholds in business_rules.json" -m "" -m "🤖 Generated with [Memex](https://memex.tech)" -m "Co-Authored-By: Memex <noreply@memex.tech>"

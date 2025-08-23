@@ -103,6 +103,83 @@
       }
     }
   },
+  "advanced_scoring": {
+    "velocity": {
+      "excellent_threshold": 80,
+      "good_threshold": 60,
+      "fair_threshold": 40,
+      "fallback_score": 50,
+      "min_data_points": 10,
+      "window_days": 30
+    },
+    "stability": {
+      "excellent_threshold": 80,
+      "good_threshold": 60,
+      "fair_threshold": 40,
+      "fallback_score": 50,
+      "min_price_points": 10
+    },
+    "confidence": {
+      "excellent_threshold": 85,
+      "good_threshold": 70,
+      "fair_threshold": 50,
+      "fallback_score": 50,
+      "data_freshness_days": 7,
+      "weights": {
+        "freshness": 0.3,
+        "completeness": 0.4,
+        "bsr_availability": 0.3
+      }
+    }
+  },
+  "overall_rating": {
+    "gating_rules": {
+      "EXCELLENT": {
+        "roi_min": 35.0,
+        "velocity_min": 70,
+        "stability_min": 70,
+        "confidence_min": 80
+      },
+      "GOOD": {
+        "roi_min": 25.0,
+        "velocity_min": 50,
+        "stability_min": 50,
+        "confidence_min": 60
+      },
+      "FAIR": {
+        "roi_min": 15.0,
+        "velocity_min": 30,
+        "stability_min": 30,
+        "confidence_min": 40
+      }
+    }
+  },
+  "summary_templates": {
+    "EXCELLENT": "EXCELLENT: {roi}% ROI, fast rotation ({velocity_level}), stable pricing ({stability_level})",
+    "GOOD": "GOOD: {roi}% ROI, decent opportunity ({velocity_level} rotation, {stability_level} stability)", 
+    "FAIR": "FAIR: {roi}% ROI, moderate risk ({confidence_level} confidence, {velocity_level} rotation)",
+    "PASS": "PASS: Below thresholds - {roi}% ROI, {primary_issue}"
+  },
+  "level_flags": {
+    "velocity": {
+      "excellent": 80,
+      "good": 60, 
+      "fair": 40,
+      "poor": 0
+    },
+    "stability": {
+      "excellent": 80,
+      "good": 60,
+      "fair": 40,
+      "poor": 0
+    },
+    "confidence": {
+      "high": 85,
+      "good": 70,
+      "fair": 50,
+      "low": 0
+    }
+  },
   "meta": {
     "version": "1.0.0",
     "created_by": "system_seed",

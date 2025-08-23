@@ -14,7 +14,12 @@ from pydantic import BaseModel, Field, validator
 from app.services.keepa_service import KeepaService, get_keepa_service
 from app.services.business_config_service import BusinessConfigService, get_business_config_service
 from app.services.keepa_parser import parse_keepa_product
-from app.core.calculations import calculate_roi_metrics, calculate_velocity_score, VelocityData
+from app.core.calculations import (
+    calculate_roi_metrics, calculate_velocity_score, VelocityData,
+    compute_advanced_velocity_score, compute_advanced_stability_score, 
+    compute_advanced_confidence_score, compute_overall_rating, 
+    generate_readable_summary
+)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -56,15 +61,33 @@ class KeepaMetadata(BaseModel):
     tokens_remaining: Optional[int]
     data_freshness_hours: Optional[float]
 
+class ScoreBreakdown(BaseModel):
+    """Breakdown of individual score calculation."""
+    score: int
+    raw: float
+    level: str
+    notes: str
+
 class AnalysisResult(BaseModel):
     """Complete analysis result for a product."""
     asin: str
     title: Optional[str]
     roi: Dict[str, Any]
-    velocity: Dict[str, Any] 
+    velocity: Dict[str, Any]
+    
+    # NEW: Advanced Scoring (0-100 scale)
+    velocity_score: int = Field(..., ge=0, le=100, description="Velocity score 0-100")
+    price_stability_score: int = Field(..., ge=0, le=100, description="Price stability score 0-100") 
+    confidence_score: int = Field(..., ge=0, le=100, description="Data confidence score 0-100")
+    overall_rating: str = Field(..., description="EXCELLENT/GOOD/FAIR/PASS")
+    
+    # Score breakdown and summary
+    score_breakdown: Dict[str, ScoreBreakdown] = Field(..., description="Detailed score breakdown")
+    readable_summary: str = Field(..., description="Human-readable summary")
+    
+    # Legacy fields (maintained for compatibility)
     recommendation: str
     risk_factors: List[str]
-    confidence_score: float
 
 class MetricsResponse(BaseModel):
     """Response for product metrics endpoint."""
@@ -135,9 +158,22 @@ async def analyze_product(
                 title=keepa_data.get('title', 'Unknown'),
                 roi={"error": "No valid pricing data available"},
                 velocity={"error": "No pricing data for velocity analysis"},
+                
+                # NEW: Default values for advanced scoring
+                velocity_score=50,  # Neutral fallback
+                price_stability_score=50,  # Neutral fallback
+                confidence_score=10,  # Low confidence due to missing data
+                overall_rating="PASS",
+                score_breakdown={
+                    "velocity": ScoreBreakdown(score=50, raw=0.5, level="unknown", notes="No pricing data"),
+                    "stability": ScoreBreakdown(score=50, raw=0.5, level="unknown", notes="No pricing data"),
+                    "confidence": ScoreBreakdown(score=10, raw=0.1, level="low", notes="No pricing data")
+                },
+                readable_summary="❌ No valid pricing data available",
+                
+                # Legacy fields
                 recommendation="PASS",
-                risk_factors=["No valid pricing data"],
-                confidence_score=0.0
+                risk_factors=["No valid pricing data"]
             )
         
         # Calculate ROI metrics with valid price - EXACT SAME AS DEBUG ENDPOINT
@@ -168,37 +204,94 @@ async def analyze_product(
         
         velocity_result = calculate_velocity_score(velocity_data, config=config)
         
-        # Determine recommendation
+        # *** NEW: ADVANCED SCORING SYSTEM (v1.5.0) ***
+        
+        # Calculate advanced scores using our new functions
+        velocity_raw, velocity_normalized, velocity_level, velocity_notes = compute_advanced_velocity_score(
+            parsed_data.get('bsr_history', []), config
+        )
+        
+        stability_raw, stability_normalized, stability_level, stability_notes = compute_advanced_stability_score(
+            parsed_data.get('price_history', []), config
+        )
+        
+        # Calculate data age for confidence score
+        data_age_days = 1  # Assume recent data for now
+        confidence_raw, confidence_normalized, confidence_level, confidence_notes = compute_advanced_confidence_score(
+            parsed_data.get('price_history', []),
+            parsed_data.get('bsr_history', []),
+            data_age_days,
+            config
+        )
+        
+        # Calculate overall rating
+        roi_percentage = roi_result.get('roi_percentage', 0)
+        overall_rating = compute_overall_rating(
+            roi_percentage, velocity_normalized, stability_normalized, confidence_normalized, config
+        )
+        
+        # Build score breakdown
+        score_breakdown = {
+            "velocity": ScoreBreakdown(
+                score=velocity_normalized,
+                raw=velocity_raw,
+                level=velocity_level,
+                notes=velocity_notes
+            ),
+            "stability": ScoreBreakdown(
+                score=stability_normalized,
+                raw=stability_raw,
+                level=stability_level,
+                notes=stability_notes
+            ),
+            "confidence": ScoreBreakdown(
+                score=confidence_normalized,
+                raw=confidence_raw,
+                level=confidence_level,
+                notes=confidence_notes
+            )
+        }
+        
+        # Generate readable summary
+        scores_dict = {
+            "velocity": velocity_normalized,
+            "stability": stability_normalized,
+            "confidence": confidence_normalized
+        }
+        readable_summary = generate_readable_summary(roi_percentage, overall_rating, scores_dict, config)
+        
+        # Legacy recommendation logic (maintained for compatibility)
         recommendation = "PASS"
         risk_factors = []
         
-        roi_percentage = roi_result.get('roi_percentage', 0)
-        velocity_score = velocity_result.get('velocity_score', 0)
-        target_roi = config.get('roi', {}).get('target_roi_percent', 30)
-        min_velocity = config.get('velocity', {}).get('min_velocity_score', 50)
-        
-        if roi_percentage >= target_roi:
-            if velocity_score >= min_velocity:
-                recommendation = "BUY"
-            else:
-                recommendation = "WATCH"
-                risk_factors.append("Low velocity score")
+        if overall_rating == "EXCELLENT":
+            recommendation = "STRONG BUY"
+        elif overall_rating == "GOOD":
+            recommendation = "BUY"
+        elif overall_rating == "FAIR":
+            recommendation = "WATCH"
+            risk_factors.append("Moderate metrics")
         else:
-            risk_factors.append("Below target ROI")
+            recommendation = "PASS"
+            risk_factors.append("Below thresholds")
             
-        # Calculate confidence
-        roi_confidence = roi_result.get('confidence_level', 0.5)
-        velocity_confidence = velocity_result.get('velocity_score', 0) / 100.0
-        confidence_score = min(roi_confidence * velocity_confidence * 100, 95.0)
-        
         return AnalysisResult(
             asin=asin,
             title=keepa_data.get('title', 'Unknown'),
             roi=roi_result,
             velocity=velocity_result,
+            
+            # NEW: Advanced scoring fields
+            velocity_score=velocity_normalized,
+            price_stability_score=stability_normalized,
+            confidence_score=confidence_normalized,
+            overall_rating=overall_rating,
+            score_breakdown=score_breakdown,
+            readable_summary=readable_summary,
+            
+            # Legacy fields (maintained for compatibility)
             recommendation=recommendation,
-            risk_factors=risk_factors,
-            confidence_score=confidence_score
+            risk_factors=risk_factors
         )
         
     except Exception as e:
@@ -208,9 +301,22 @@ async def analyze_product(
             title=keepa_data.get('title', 'Unknown'),
             roi={"error": str(e)},
             velocity={"error": str(e)},
+            
+            # NEW: Error state for advanced scoring
+            velocity_score=0,
+            price_stability_score=0,
+            confidence_score=0,
+            overall_rating="ERROR",
+            score_breakdown={
+                "velocity": ScoreBreakdown(score=0, raw=0.0, level="error", notes=f"Analysis failed: {str(e)}"),
+                "stability": ScoreBreakdown(score=0, raw=0.0, level="error", notes=f"Analysis failed: {str(e)}"),
+                "confidence": ScoreBreakdown(score=0, raw=0.0, level="error", notes=f"Analysis failed: {str(e)}")
+            },
+            readable_summary=f"❌ Analysis failed: {str(e)}",
+            
+            # Legacy fields
             recommendation="ERROR",
-            risk_factors=["Analysis failed"],
-            confidence_score=0.0
+            risk_factors=["Analysis failed"]
         )
 
 # === ENDPOINTS ===

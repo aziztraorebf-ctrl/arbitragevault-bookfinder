@@ -1,0 +1,515 @@
+"""
+AutoSourcing Service - Core business logic for intelligent product discovery.
+Integrates Keepa Product Finder with advanced scoring system v1.5.0.
+"""
+import asyncio
+import logging
+from datetime import datetime, timedelta
+from typing import List, Dict, Any, Optional, Tuple
+from uuid import UUID, uuid4
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_, desc, func
+from sqlalchemy.orm import selectinload
+
+from app.models.autosourcing import (
+    AutoSourcingJob, AutoSourcingPick, SavedProfile,
+    JobStatus, ActionStatus
+)
+from app.services.keepa_service import KeepaService
+from app.services.business_config_service import BusinessConfigService
+from app.core.calculations import (
+    calculate_roi_metrics,
+    compute_advanced_velocity_score,
+    compute_advanced_stability_score, 
+    compute_advanced_confidence_score,
+    compute_overall_rating
+)
+from app.core.exceptions import AppException
+
+logger = logging.getLogger(__name__)
+
+
+class AutoSourcingService:
+    """
+    Service for intelligent product discovery and management.
+    Orchestrates Keepa discovery, advanced scoring, and user actions.
+    """
+
+    def __init__(self, db_session: AsyncSession, keepa_service: KeepaService):
+        self.db = db_session
+        self.keepa_service = keepa_service
+        self.business_config = BusinessConfigService()
+
+    async def run_custom_search(
+        self, 
+        discovery_config: Dict[str, Any],
+        scoring_config: Dict[str, Any],
+        profile_name: str,
+        profile_id: Optional[UUID] = None
+    ) -> AutoSourcingJob:
+        """
+        Run a custom AutoSourcing search with user-defined criteria.
+        
+        Args:
+            discovery_config: Keepa search parameters
+            scoring_config: Advanced scoring thresholds
+            profile_name: Name for this search job
+            profile_id: Optional saved profile ID
+            
+        Returns:
+            AutoSourcingJob with results populated
+        """
+        logger.info(f"Starting AutoSourcing job: {profile_name}")
+        
+        # Create job record
+        job = AutoSourcingJob(
+            profile_name=profile_name,
+            profile_id=profile_id,
+            discovery_config=discovery_config,
+            scoring_config=scoring_config,
+            status=JobStatus.RUNNING,
+            launched_at=datetime.utcnow()
+        )
+        
+        self.db.add(job)
+        await self.db.commit()
+        await self.db.refresh(job)
+        
+        start_time = datetime.utcnow()
+        
+        try:
+            # Phase 1: Discover products via Keepa
+            logger.info("Phase 1: Product discovery via Keepa")
+            discovered_asins = await self._discover_products(discovery_config)
+            
+            job.total_tested = len(discovered_asins)
+            logger.info(f"Discovered {len(discovered_asins)} products")
+            
+            # Phase 2: Score and filter products
+            logger.info("Phase 2: Advanced scoring and filtering")
+            scored_picks = await self._score_and_filter_products(
+                discovered_asins, scoring_config, job.id
+            )
+            
+            job.total_selected = len(scored_picks)
+            logger.info(f"Selected {len(scored_picks)} top opportunities")
+            
+            # Phase 3: Remove duplicates from recent jobs  
+            logger.info("Phase 3: Duplicate detection")
+            unique_picks = await self._remove_recent_duplicates(scored_picks)
+            
+            final_count = len(unique_picks)
+            logger.info(f"Final results: {final_count} unique opportunities")
+            
+            # Save results
+            self.db.add_all(unique_picks)
+            
+            # Update job status
+            end_time = datetime.utcnow()
+            job.duration_ms = int((end_time - start_time).total_seconds() * 1000)
+            job.completed_at = end_time
+            job.status = JobStatus.SUCCESS
+            job.total_selected = final_count
+            
+            await self.db.commit()
+            await self.db.refresh(job)
+            
+            logger.info(f"✅ AutoSourcing job completed: {job.id}")
+            return job
+            
+        except Exception as e:
+            logger.error(f"❌ AutoSourcing job failed: {str(e)}")
+            
+            # Update job with error
+            job.status = JobStatus.ERROR
+            job.error_message = str(e)
+            job.completed_at = datetime.utcnow()
+            job.duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            
+            await self.db.commit()
+            raise AppException(f"AutoSourcing job failed: {str(e)}")
+
+    async def _discover_products(self, discovery_config: Dict[str, Any]) -> List[str]:
+        """
+        Discover products using Keepa Product Finder API.
+        
+        Args:
+            discovery_config: Search criteria for Keepa
+            
+        Returns:
+            List of ASINs discovered
+        """
+        # For now, use a simulated discovery with known ASINs
+        # TODO: Implement real Keepa Product Finder integration
+        
+        # Simulated ASINs for different categories
+        simulation_asins = {
+            "Books": [
+                "0134093410", "0134414233", "0321976468", "0134159382", "0134376051",
+                "1492041130", "1098106474", "180056938X", "1492055026", "1718502184"
+            ],
+            "Electronics": [
+                "B08N5WRWNW", "B07FNW9FGJ", "B08KH1M13W", "B09B1N5955", "B08P3V8Y8F"
+            ],
+            "Textbooks": [
+                "0134093410", "0134414233", "0321976468", "0134159382", "0134376051"
+            ]
+        }
+        
+        # Extract categories from config
+        categories = discovery_config.get("categories", ["Books"])
+        max_results = discovery_config.get("max_results", 20)
+        
+        # Collect ASINs based on categories
+        discovered = []
+        for category in categories:
+            if category in simulation_asins:
+                discovered.extend(simulation_asins[category])
+        
+        # Remove duplicates and limit results
+        unique_asins = list(set(discovered))[:max_results]
+        
+        logger.info(f"Discovered {len(unique_asins)} ASINs from categories: {categories}")
+        return unique_asins
+
+    async def _score_and_filter_products(
+        self, 
+        asins: List[str], 
+        scoring_config: Dict[str, Any],
+        job_id: UUID
+    ) -> List[AutoSourcingPick]:
+        """
+        Score products using advanced scoring system and filter by thresholds.
+        
+        Args:
+            asins: List of ASINs to score
+            scoring_config: Scoring thresholds
+            job_id: Parent job ID
+            
+        Returns:
+            List of AutoSourcingPick objects meeting criteria
+        """
+        config = self.business_config.get_config()
+        picks = []
+        
+        for asin in asins:
+            try:
+                # Get product data from Keepa
+                logger.debug(f"Scoring product: {asin}")
+                
+                # For simulation, we'll use the existing analyze_product logic
+                # TODO: Integrate with real Keepa data
+                pick = await self._analyze_single_product(asin, scoring_config, job_id, config)
+                
+                if pick and self._meets_criteria(pick, scoring_config):
+                    picks.append(pick)
+                    logger.debug(f"✅ {asin}: {pick.overall_rating} (ROI: {pick.roi_percentage}%)")
+                else:
+                    logger.debug(f"❌ {asin}: Does not meet criteria")
+                    
+            except Exception as e:
+                logger.warning(f"Error scoring {asin}: {str(e)}")
+                continue
+        
+        # Sort by ROI descending and limit results
+        picks.sort(key=lambda x: x.roi_percentage, reverse=True)
+        max_picks = scoring_config.get("max_results", 20)
+        
+        return picks[:max_picks]
+
+    async def _analyze_single_product(
+        self, 
+        asin: str, 
+        scoring_config: Dict[str, Any], 
+        job_id: UUID,
+        business_config: Dict[str, Any]
+    ) -> Optional[AutoSourcingPick]:
+        """Analyze a single product with advanced scoring."""
+        
+        try:
+            # For simulation, create realistic but fake data
+            # TODO: Replace with real Keepa API integration
+            
+            import random
+            
+            # Simulate product data
+            simulated_data = {
+                "title": f"Product {asin}",
+                "current_price": random.uniform(20, 300),
+                "bsr": random.randint(1000, 200000),
+                "category": random.choice(["Books", "Electronics", "Textbooks"])
+            }
+            
+            current_price = simulated_data["current_price"]
+            estimated_cost = current_price * random.uniform(0.6, 0.8)
+            
+            # Calculate ROI
+            roi_data = {
+                "roi_percentage": ((current_price - estimated_cost) / estimated_cost) * 100,
+                "profit_net": current_price - estimated_cost,
+                "amazon_fees": current_price * 0.15
+            }
+            
+            # Advanced scoring (simulated)
+            velocity_score = max(10, min(100, 120 - (simulated_data["bsr"] / 2000)))
+            stability_score = random.uniform(50, 95)
+            confidence_score = random.uniform(60, 95)
+            
+            # Overall rating based on scoring config
+            overall_rating = self._compute_rating(
+                roi_data["roi_percentage"], velocity_score, stability_score, 
+                confidence_score, scoring_config
+            )
+            
+            # Create readable summary
+            readable_summary = f"{overall_rating}: {roi_data['roi_percentage']:.1f}% ROI, BSR {simulated_data['bsr']}, {velocity_score:.0f} velocity"
+            
+            # Create AutoSourcingPick
+            pick = AutoSourcingPick(
+                job_id=job_id,
+                asin=asin,
+                title=simulated_data["title"],
+                current_price=current_price,
+                estimated_buy_cost=estimated_cost,
+                profit_net=roi_data["profit_net"],
+                roi_percentage=roi_data["roi_percentage"],
+                velocity_score=int(velocity_score),
+                stability_score=int(stability_score),
+                confidence_score=int(confidence_score),
+                overall_rating=overall_rating,
+                bsr=simulated_data["bsr"],
+                category=simulated_data["category"],
+                readable_summary=readable_summary
+            )
+            
+            return pick
+            
+        except Exception as e:
+            logger.error(f"Error analyzing {asin}: {str(e)}")
+            return None
+
+    def _compute_rating(
+        self, roi: float, velocity: float, stability: float, 
+        confidence: float, config: Dict[str, Any]
+    ) -> str:
+        """Compute overall rating based on thresholds."""
+        
+        roi_min = config.get("roi_min", 30)
+        velocity_min = config.get("velocity_min", 70)
+        stability_min = config.get("stability_min", 70)
+        confidence_min = config.get("confidence_min", 70)
+        
+        if (roi >= roi_min and velocity >= velocity_min and 
+            stability >= stability_min and confidence >= confidence_min):
+            return "EXCELLENT"
+        elif (roi >= roi_min * 0.8 and velocity >= velocity_min * 0.85 and
+              stability >= stability_min * 0.85 and confidence >= confidence_min * 0.85):
+            return "GOOD"  
+        elif roi >= roi_min * 0.7:
+            return "FAIR"
+        else:
+            return "PASS"
+
+    def _meets_criteria(self, pick: AutoSourcingPick, scoring_config: Dict[str, Any]) -> bool:
+        """Check if pick meets minimum criteria."""
+        
+        rating_required = scoring_config.get("rating_required", "GOOD")
+        roi_min = scoring_config.get("roi_min", 20)
+        
+        rating_hierarchy = {"PASS": 0, "FAIR": 1, "GOOD": 2, "EXCELLENT": 3}
+        
+        pick_rating_level = rating_hierarchy.get(pick.overall_rating, 0)
+        required_rating_level = rating_hierarchy.get(rating_required, 2)
+        
+        return (pick_rating_level >= required_rating_level and 
+                pick.roi_percentage >= roi_min)
+
+    async def _remove_recent_duplicates(
+        self, picks: List[AutoSourcingPick], days: int = 7
+    ) -> List[AutoSourcingPick]:
+        """Remove ASINs that were found in recent jobs."""
+        
+        if not picks:
+            return picks
+            
+        # Get ASINs from recent jobs
+        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        
+        result = await self.db.execute(
+            select(AutoSourcingPick.asin)
+            .join(AutoSourcingJob)
+            .where(AutoSourcingJob.launched_at >= cutoff_date)
+        )
+        
+        recent_asins = {row.asin for row in result}
+        
+        # Filter out duplicates
+        unique_picks = [pick for pick in picks if pick.asin not in recent_asins]
+        
+        duplicates_count = len(picks) - len(unique_picks)
+        if duplicates_count > 0:
+            logger.info(f"Filtered {duplicates_count} recent duplicates")
+            
+        return unique_picks
+
+    # ========================================================================
+    # PROFILE MANAGEMENT
+    # ========================================================================
+
+    async def get_saved_profiles(self, active_only: bool = True) -> List[SavedProfile]:
+        """Get all saved profiles."""
+        
+        query = select(SavedProfile)
+        if active_only:
+            query = query.where(SavedProfile.active == True)
+            
+        query = query.order_by(desc(SavedProfile.last_used_at), SavedProfile.name)
+        
+        result = await self.db.execute(query)
+        return result.scalars().all()
+
+    async def create_profile(self, profile_data: Dict[str, Any]) -> SavedProfile:
+        """Create a new saved profile."""
+        
+        profile = SavedProfile(
+            name=profile_data["name"],
+            description=profile_data.get("description"),
+            discovery_config=profile_data["discovery_config"],
+            scoring_config=profile_data["scoring_config"],
+            max_results=profile_data.get("max_results", 20)
+        )
+        
+        self.db.add(profile)
+        await self.db.commit()
+        await self.db.refresh(profile)
+        
+        logger.info(f"Created profile: {profile.name}")
+        return profile
+
+    async def update_profile_usage(self, profile_id: UUID) -> None:
+        """Update profile usage statistics."""
+        
+        result = await self.db.execute(
+            select(SavedProfile).where(SavedProfile.id == profile_id)
+        )
+        profile = result.scalar_one_or_none()
+        
+        if profile:
+            profile.last_used_at = datetime.utcnow()
+            profile.usage_count += 1
+            await self.db.commit()
+
+    # ========================================================================
+    # QUICK ACTIONS
+    # ========================================================================
+
+    async def update_pick_action(
+        self, 
+        pick_id: UUID, 
+        action: ActionStatus, 
+        notes: Optional[str] = None
+    ) -> AutoSourcingPick:
+        """Update user action on a pick."""
+        
+        result = await self.db.execute(
+            select(AutoSourcingPick).where(AutoSourcingPick.id == pick_id)
+        )
+        pick = result.scalar_one_or_none()
+        
+        if not pick:
+            raise AppException(f"Pick {pick_id} not found")
+        
+        # Update action
+        pick.action_status = action
+        pick.action_taken_at = datetime.utcnow()
+        pick.action_notes = notes
+        
+        # Update flags
+        pick.is_purchased = (action == ActionStatus.TO_BUY)
+        pick.is_favorite = (action == ActionStatus.FAVORITE)
+        pick.is_ignored = (action == ActionStatus.IGNORED)
+        pick.analysis_requested = (action == ActionStatus.ANALYZING)
+        
+        await self.db.commit()
+        await self.db.refresh(pick)
+        
+        logger.info(f"Updated pick {pick_id} action to {action.value}")
+        return pick
+
+    async def get_picks_by_action(self, action: ActionStatus) -> List[AutoSourcingPick]:
+        """Get picks filtered by action status."""
+        
+        result = await self.db.execute(
+            select(AutoSourcingPick)
+            .where(AutoSourcingPick.action_status == action)
+            .order_by(desc(AutoSourcingPick.action_taken_at))
+            .options(selectinload(AutoSourcingPick.job))
+        )
+        
+        return result.scalars().all()
+
+    # ========================================================================
+    # OPPORTUNITY OF THE DAY
+    # ========================================================================
+
+    async def get_opportunity_of_day(self) -> Optional[AutoSourcingPick]:
+        """Get the best opportunity found today."""
+        
+        today = datetime.utcnow().date()
+        
+        result = await self.db.execute(
+            select(AutoSourcingPick)
+            .join(AutoSourcingJob)
+            .where(
+                and_(
+                    func.date(AutoSourcingJob.launched_at) == today,
+                    AutoSourcingJob.status == JobStatus.SUCCESS
+                )
+            )
+            .order_by(desc(AutoSourcingPick.roi_percentage))
+            .limit(1)
+            .options(selectinload(AutoSourcingPick.job))
+        )
+        
+        return result.scalar_one_or_none()
+
+    # ========================================================================
+    # JOB MANAGEMENT  
+    # ========================================================================
+
+    async def get_recent_jobs(self, limit: int = 10) -> List[AutoSourcingJob]:
+        """Get recent AutoSourcing jobs."""
+        
+        result = await self.db.execute(
+            select(AutoSourcingJob)
+            .order_by(desc(AutoSourcingJob.launched_at))
+            .limit(limit)
+            .options(selectinload(AutoSourcingJob.picks))
+        )
+        
+        return result.scalars().all()
+
+    async def get_job_by_id(self, job_id: UUID) -> Optional[AutoSourcingJob]:
+        """Get job with all picks."""
+        
+        result = await self.db.execute(
+            select(AutoSourcingJob)
+            .where(AutoSourcingJob.id == job_id)
+            .options(selectinload(AutoSourcingJob.picks))
+        )
+        
+        return result.scalar_one_or_none()
+
+    async def get_latest_job(self) -> Optional[AutoSourcingJob]:
+        """Get the most recent successful job."""
+        
+        result = await self.db.execute(
+            select(AutoSourcingJob)
+            .where(AutoSourcingJob.status == JobStatus.SUCCESS)
+            .order_by(desc(AutoSourcingJob.completed_at))
+            .limit(1)
+            .options(selectinload(AutoSourcingJob.picks))
+        )
+        
+        return result.scalar_one_or_none()

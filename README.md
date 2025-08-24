@@ -2,10 +2,30 @@
 
 Professional tool for identifying profitable book arbitrage opportunities using advanced Keepa API data analysis and intelligent multi-criteria scoring system.
 
-## 🎯 Project Status - v1.5.0-production ✅ PRODUCTION READY
+## 🎯 Project Status - v1.6.0-autosourcing ✅ PRODUCTION READY
 
-**Current Phase**: Advanced Scoring System Complete ✅  
+**Current Phase**: AutoSourcing Intelligence Module Complete ✅  
 **Next Phase**: Frontend Integration (v2.0.0) 🚀
+
+### ✅ **v1.6.0-autosourcing - Intelligent Product Discovery**
+
+#### **🤖 AutoSourcing Module - NEW**
+- **🔍 Intelligent Discovery**: Automated product finding with Keepa Product Finder API
+- **⚙️ Configurable Search**: User-defined criteria for categories, BSR ranges, ROI thresholds
+- **👤 Profile Management**: Save/reuse search configurations with usage tracking
+- **⚡ Quick Actions**: Buy/Favorite/Ignore/Analyze discovered products
+- **📊 Real-time Analysis**: Advanced scoring v1.5.0 integration for discovered products
+- **📋 REST API Complete**: 13 endpoints covering full discovery workflow
+- **🎯 Opportunity of the Day**: Daily best pick with intelligent prioritization
+
+#### **🚀 AutoSourcing Capabilities**
+- ✅ **Custom Search Engine**: User-defined discovery criteria and scoring thresholds
+- ✅ **Profile System**: 3 default profiles (Conservative, Balanced, Aggressive) + custom profiles
+- ✅ **Action Management**: Complete workflow from discovery to purchase decision
+- ✅ **Duplicate Detection**: Smart filtering to avoid redundant discoveries
+- ✅ **Statistics Dashboard**: Performance insights and profile effectiveness tracking
+- ✅ **Database Persistence**: Full job history and results storage
+- ✅ **Production Ready**: Comprehensive validation and testing completed
 
 ### ✅ **v1.5.0-production - Advanced Scoring System & Optimization**
 
@@ -24,11 +44,13 @@ Professional tool for identifying profitable book arbitrage opportunities using 
 - ✅ **Business Logic Validation**: 25% EXCELLENT rate with 45% median ROI confirmed optimal
 - ✅ **Configuration Management**: Hot-reloadable business rules without code changes
 
-#### **🚀 What Works Now (v1.5.0-production)**
-- ✅ **Enhanced API Endpoints**: 6 advanced endpoints with comprehensive scoring breakdowns
+#### **🚀 What Works Now (v1.6.0-autosourcing)**
+- ✅ **AutoSourcing Intelligence**: 13 new endpoints for automated product discovery
+- ✅ **Enhanced API Endpoints**: 6 advanced scoring endpoints + 13 AutoSourcing endpoints
 - ✅ **Real-Time Analysis**: Keepa API integration with advanced multi-criteria evaluation
-- ✅ **Intelligent Scoring**: Velocity, stability, and confidence scoring with normalization
-- ✅ **Optimal Thresholds**: Simulation-validated business rules for maximum precision
+- ✅ **Intelligent Discovery**: Automated product finding with configurable criteria
+- ✅ **Profile Management**: Save/reuse search configurations with usage tracking
+- ✅ **Action Workflow**: Complete buy/analyze/ignore decision pipeline
 - ✅ **Production Ready**: Comprehensive testing, validation, and configuration management
 - ✅ **Overall Rating System**: Clear EXCELLENT/GOOD/FAIR/PASS classifications
 
@@ -88,7 +110,38 @@ ArbitrageVault employs a sophisticated 4-dimensional scoring system that evaluat
 - **Business Balance**: Maintains selectivity while ensuring sufficient opportunity flow
 - **Configuration**: All thresholds configurable via `business_rules.json` without code changes
 
-## 🔌 **API Endpoints (v1.5.0-production)**
+## 🔌 **API Endpoints (v1.6.0-autosourcing)**
+
+### **🤖 AutoSourcing Discovery Endpoints (NEW)**
+```bash
+# Custom intelligent product discovery
+POST /api/v1/autosourcing/run-custom
+# Body: {"discovery_config": {...}, "scoring_config": {...}, "profile_name": "..."}
+
+# Get latest discovery results
+GET /api/v1/autosourcing/latest
+
+# Daily best opportunity  
+GET /api/v1/autosourcing/opportunity-of-day
+
+# Profile management
+GET /api/v1/autosourcing/profiles
+POST /api/v1/autosourcing/profiles
+PUT /api/v1/autosourcing/profiles/{profile_id}
+
+# Action management on discovered products
+PUT /api/v1/autosourcing/picks/{pick_id}/action
+# Body: {"action": "buy|favorite|ignore|analyzing"}
+
+# Get products by action status
+GET /api/v1/autosourcing/to-buy
+GET /api/v1/autosourcing/favorites
+GET /api/v1/autosourcing/history
+
+# Statistics and insights
+GET /api/v1/autosourcing/stats
+GET /api/v1/autosourcing/jobs/{job_id}
+```
 
 ### **🎯 Primary Analysis Endpoints**
 ```bash
@@ -205,12 +258,37 @@ python -m alembic upgrade head
 }
 ```
 
-### **4. Start API Server**
+### **4. Initialize AutoSourcing Module (NEW v1.6.0)**
+```bash
+# Initialize AutoSourcing database and default profiles
+python init_autosourcing_db.py
+```
+
+### **5. Start API Server**
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### **4. Test Live Endpoint**
+### **6. Test AutoSourcing Discovery (NEW)**
+```bash
+# Test intelligent product discovery
+curl -X POST "http://localhost:8000/api/v1/autosourcing/run-custom" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "discovery_config": {
+      "categories": ["Books", "Textbooks"],
+      "bsr_max": 100000,
+      "price_range": {"min": 10, "max": 100}
+    },
+    "scoring_config": {
+      "roi_min": 25,
+      "velocity_min": 60
+    },
+    "profile_name": "Test Discovery"
+  }'
+```
+
+### **7. Test Live Analysis Endpoint**
 ```bash
 # Test with real ASIN
 curl -X POST "http://localhost:8000/api/v1/keepa/analyze" \
@@ -232,18 +310,23 @@ arbitragevault_bookfinder/
 │   │   ├── models/                # SQLAlchemy models
 │   │   │   ├── user.py           # User management
 │   │   │   ├── batch.py          # Batch processing
-│   │   │   └── analysis.py       # Analysis results
-│   │   ├── api/                  # External integrations
-│   │   │   ├── keepa_integration.py  # ✅ Keepa API client
+│   │   │   ├── analysis.py       # Analysis results
+│   │   │   └── autosourcing.py   # ✅ NEW: AutoSourcing models
+│   │   ├── services/             # Business logic services
+│   │   │   ├── keepa_service.py      # ✅ Keepa API client
+│   │   │   ├── autosourcing_service.py # ✅ NEW: AutoSourcing intelligence
+│   │   │   ├── business_config_service.py # ✅ Configuration management
 │   │   │   ├── openai_service.py     # 🚧 AI-powered insights
 │   │   │   └── google_sheets.py      # 🚧 Export functionality
 │   │   ├── core/                 # Core business logic
 │   │   │   ├── calculations.py   # ✅ ROI/Velocity algorithms
 │   │   │   ├── database.py       # ✅ DB configuration
 │   │   │   └── auth.py           # 🚧 Authentication
-│   │   ├── routers/              # ✅ API route handlers
-│   │   │   ├── analysis.py       # Analysis endpoints
-│   │   │   └── keepa.py          # Keepa integration routes
+│   │   └── api/v1/routers/       # ✅ API route handlers
+│   │       ├── analysis.py       # Analysis endpoints
+│   │       ├── keepa.py          # Keepa integration routes
+│   │       └── autosourcing.py   # ✅ NEW: AutoSourcing discovery endpoints
+│   ├── init_autosourcing_db.py   # ✅ NEW: AutoSourcing database initialization
 │   │   └── config/               # ✅ Configuration management
 │   │       └── settings.py       # Environment settings
 │   ├── tests/                    # ✅ Comprehensive test suite

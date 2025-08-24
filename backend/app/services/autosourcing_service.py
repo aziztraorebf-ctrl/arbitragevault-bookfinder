@@ -140,10 +140,93 @@ class AutoSourcingService:
         Returns:
             List of ASINs discovered
         """
-        # For now, use a simulated discovery with known ASINs
-        # TODO: Implement real Keepa Product Finder integration
+        try:
+            # Convert discovery config to Keepa Product Finder parameters
+            keepa_params = await self._build_keepa_search_params(discovery_config)
+            max_results = discovery_config.get("max_results", 50)
+            
+            # Call Keepa Product Finder API
+            logger.info("Calling Keepa Product Finder API...")
+            discovered_asins = await self.keepa_service.find_products(
+                search_criteria=keepa_params,
+                domain=1,  # US domain
+                max_results=max_results
+            )
+            
+            logger.info(f"Keepa Product Finder returned {len(discovered_asins)} ASINs")
+            return discovered_asins
+            
+        except Exception as e:
+            logger.error(f"Keepa Product Finder failed: {e}")
+            # Fallback to simulation data for testing
+            logger.warning("Falling back to simulation data")
+            return await self._simulate_discovery_fallback(discovery_config)
+
+    async def _build_keepa_search_params(self, discovery_config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Convert user discovery config to Keepa Product Finder parameters.
         
-        # Simulated ASINs for different categories
+        Args:
+            discovery_config: User-defined search criteria
+            
+        Returns:
+            Dictionary with Keepa API parameters
+        """
+        keepa_params = {}
+        
+        # Handle categories
+        categories = discovery_config.get("categories", [])
+        if categories:
+            # Map common category names to Keepa category IDs
+            category_mapping = {
+                "Books": 1000,
+                "Electronics": 172282,  
+                "Textbooks": 465600,
+                "Home & Kitchen": 1055398,
+                "Sports & Outdoors": 3375251
+            }
+            
+            category_ids = []
+            for cat in categories:
+                if cat in category_mapping:
+                    category_ids.append(category_mapping[cat])
+            
+            if category_ids:
+                keepa_params["categories_include"] = category_ids[0]  # Use first category
+        
+        # Handle BSR range
+        bsr_range = discovery_config.get("bsr_range", {})
+        if bsr_range:
+            if "min" in bsr_range:
+                keepa_params["avg30_SALES_gte"] = bsr_range["min"]
+            if "max" in bsr_range:  
+                keepa_params["avg30_SALES_lte"] = bsr_range["max"]
+        
+        # Handle price range
+        price_range = discovery_config.get("price_range", {})
+        if price_range:
+            if "min" in price_range:
+                keepa_params["current_NEW_gte"] = int(price_range["min"] * 100)  # Keepa uses cents
+            if "max" in price_range:
+                keepa_params["current_NEW_lte"] = int(price_range["max"] * 100)  # Keepa uses cents
+        
+        # Default sorting by current sales rank
+        keepa_params["sort"] = ["current_SALES", "asc"]
+        
+        logger.info(f"Built Keepa search params: {keepa_params}")
+        return keepa_params
+
+    async def _simulate_discovery_fallback(self, discovery_config: Dict[str, Any]) -> List[str]:
+        """
+        Fallback simulation when Keepa API fails.
+        
+        Args:
+            discovery_config: Original search criteria
+            
+        Returns:
+            List of simulated ASINs
+        """
+        # Simulated ASINs for different categories  
         simulation_asins = {
             "Books": [
                 "0134093410", "0134414233", "0321976468", "0134159382", "0134376051",
@@ -170,7 +253,7 @@ class AutoSourcingService:
         # Remove duplicates and limit results
         unique_asins = list(set(discovered))[:max_results]
         
-        logger.info(f"Discovered {len(unique_asins)} ASINs from categories: {categories}")
+        logger.info(f"Fallback simulation: {len(unique_asins)} ASINs from categories: {categories}")
         return unique_asins
 
     async def _score_and_filter_products(

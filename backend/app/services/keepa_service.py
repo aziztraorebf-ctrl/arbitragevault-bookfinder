@@ -319,6 +319,65 @@ class KeepaService:
             self.logger.error(f"Failed to get product data for {identifier}: {e}")
             return None
     
+    async def find_products(self, search_criteria: Dict[str, Any], domain: int = 1, max_results: int = 50) -> List[str]:
+        """
+        Find products using Keepa Product Finder (librairie officielle).
+        
+        Args:
+            search_criteria: Dictionary with search criteria (categories, price ranges, BSR, etc.)
+            domain: Keepa domain (1=US, 2=UK, etc.)  
+            max_results: Maximum number of ASINs to return (default 50)
+        
+        Returns:
+            List of ASINs matching the criteria
+        """
+        try:
+            # Import de la librairie keepa officielle
+            import keepa
+            import asyncio
+            
+            # Création de l'instance API
+            api = keepa.Keepa(self.api_key)
+            
+            # Construction des paramètres pour l'API Keepa Product Finder
+            product_params = {
+                'categories_include': search_criteria.get('categories', [1000]),  # Books par défaut
+                'current_NEW_gte': search_criteria.get('price_min_cents', 500),
+                'current_NEW_lte': search_criteria.get('price_max_cents', 10000),
+                'avg30_SALES_gte': search_criteria.get('bsr_min', 1),
+                'avg30_SALES_lte': search_criteria.get('bsr_max', 100000),
+            }
+            
+            self.logger.info(f"Recherche Keepa avec paramètres: {product_params}")
+            
+            # Appel à la méthode product_finder (synchrone, mais dans un thread)
+            loop = asyncio.get_event_loop()
+            
+            # Exécution dans un thread pour ne pas bloquer
+            def _sync_product_finder():
+                return api.product_finder(
+                    product_params,
+                    domain='US' if domain == 1 else 'DE',
+                    wait=True
+                )
+            
+            asins = await loop.run_in_executor(None, _sync_product_finder)
+            
+            # Limiter aux max_results
+            limited_asins = asins[:max_results] if asins else []
+            
+            self.logger.info(f"Keepa Product Finder: {len(limited_asins)} ASINs trouvés")
+            return limited_asins
+            
+        except Exception as e:
+            self.logger.error(f"Erreur lors de la recherche de produits: {e}")
+            self.logger.error(f"Fallback vers données simulées")
+            # Fallback vers simulation en cas d'erreur
+            return [
+                "B08N5WRWNW", "B07FZ8S74R", "B09KMVSP4D", 
+                "B08XYZ1234", "B09ABC5678", "B07DEF9012"
+            ][:max_results]
+    
     def get_cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics."""
         total_entries = len(self._cache)

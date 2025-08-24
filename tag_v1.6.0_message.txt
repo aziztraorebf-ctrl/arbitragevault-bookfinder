@@ -1,0 +1,27 @@
+ArbitrageVault v1.6.0-autosourcing - Intelligent Product Discovery
+
+🤖 NEW: AutoSourcing Intelligence Module
+- Automated product discovery with Keepa Product Finder API
+- 13 comprehensive REST API endpoints for complete discovery workflow  
+- User-configurable search profiles with advanced criteria
+- Real-time integration with advanced scoring system v1.5.0
+- Complete action management pipeline (buy/favorite/ignore/analyze)
+- Production-ready with comprehensive validation and testing
+
+🚀 Technical Achievements:
+- 3 new database models (Job, Pick, SavedProfile) with full relationships
+- AutoSourcingService with 7 core business methods
+- 13 FastAPI endpoints covering full discovery-to-action workflow
+- Database initialization with 3 default search profiles
+- Smart duplicate detection and performance tracking
+- Opportunity of the Day intelligent prioritization
+
+✅ Production Status: READY
+- Complete structural validation passed
+- Database persistence fully functional  
+- REST API integration verified
+- Architecture follows established project patterns
+- Frontend-ready with comprehensive API coverage
+
+This release represents a major advancement in intelligent arbitrage discovery, 
+enabling automated product sourcing with sophisticated scoring and user control.

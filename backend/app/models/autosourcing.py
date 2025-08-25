@@ -127,6 +127,12 @@ class AutoSourcingPick(Base):
     # Advanced analysis data (populated when analysis_requested = True)
     deep_analysis_data = Column(JSON, nullable=True)
     
+    # AutoScheduler Tier Classification (v1.7.0)
+    priority_tier = Column(String(10), nullable=False, default="WATCH", index=True)  # HOT/TOP/WATCH/OTHER
+    tier_reason = Column(Text, nullable=True)                                        # Explication classification
+    is_featured = Column(Boolean, nullable=False, default=False, index=True)         # HOT deals = featured
+    scheduler_run_id = Column(String(50), nullable=True, index=True)                 # ID du run scheduler
+    
     # Metadata
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
     

@@ -350,6 +350,94 @@ async def get_action_stats(
         "engagement_rate": f"{(total_actions / max(stats.get('pending', 1), 1)) * 100:.1f}%"
     }
 
+# ============================================================================  
+# AUTOSCHEDULER TIER SYSTEM (v1.7.0)
+# ============================================================================
+
+@router.get("/jobs/{job_id}/tiers")
+async def get_job_products_by_tier(
+    job_id: str,
+    service: AutoSourcingService = Depends(get_autosourcing_service)
+):
+    """
+    Retourne les produits d'un job organisés par tiers de priorité.
+    Nouveau système de classification pour AutoScheduler.
+    """
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+    from app.models.autosourcing import AutoSourcingPick
+    
+    # Récupération des picks du job avec classification
+    result = await service.db.execute(
+        select(AutoSourcingPick)
+        .where(AutoSourcingPick.job_id == job_id)
+        .order_by(AutoSourcingPick.roi_percentage.desc())
+        .options(selectinload(AutoSourcingPick.job))
+    )
+    
+    picks = result.scalars().all()
+    
+    if not picks:
+        raise HTTPException(status_code=404, detail="Job or picks not found")
+    
+    # Organisation par tiers
+    tiers = {"HOT": [], "TOP": [], "WATCH": [], "OTHER": []}
+    
+    for pick in picks:
+        tier_data = {
+            "id": str(pick.id),
+            "asin": pick.asin,
+            "title": pick.title,
+            "current_price": pick.current_price,
+            "profit_net": pick.profit_net,
+            "roi_percentage": pick.roi_percentage,
+            "velocity_score": pick.velocity_score,
+            "confidence_score": pick.confidence_score,
+            "overall_rating": pick.overall_rating,
+            "tier_reason": pick.tier_reason,
+            "is_featured": pick.is_featured,
+            "bsr": pick.bsr,
+            "category": pick.category,
+            "action_status": pick.action_status.value,
+            "created_at": pick.created_at.isoformat()
+        }
+        
+        # Classement dans le tier approprié
+        tier = getattr(pick, 'priority_tier', 'OTHER')
+        if tier in tiers:
+            tiers[tier].append(tier_data)
+        else:
+            tiers["OTHER"].append(tier_data)
+    
+    # Calcul des statistiques par tier
+    tier_stats = {}
+    for tier_name, tier_products in tiers.items():
+        if tier_products:
+            avg_roi = sum(p['roi_percentage'] for p in tier_products) / len(tier_products)
+            avg_profit = sum(p['profit_net'] or 0 for p in tier_products) / len(tier_products)
+            tier_stats[tier_name] = {
+                "count": len(tier_products),
+                "avg_roi": round(avg_roi, 1),
+                "avg_profit": round(avg_profit, 2)
+            }
+        else:
+            tier_stats[tier_name] = {"count": 0, "avg_roi": 0, "avg_profit": 0}
+    
+    return {
+        "job_id": job_id,
+        "tiers": tiers,
+        "summary": {
+            "total_products": len(picks),
+            "hot_count": len(tiers["HOT"]),
+            "top_count": len(tiers["TOP"]), 
+            "watch_count": len(tiers["WATCH"]),
+            "other_count": len(tiers["OTHER"]),
+            "featured_count": sum(1 for pick in picks if pick.is_featured)
+        },
+        "tier_stats": tier_stats,
+        "generated_at": datetime.utcnow().isoformat()
+    }
+
 # ============================================================================
 # HEALTH & DEBUG
 # ============================================================================

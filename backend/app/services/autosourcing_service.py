@@ -348,6 +348,15 @@ class AutoSourcingService:
             # Create readable summary
             readable_summary = f"{overall_rating}: {roi_data['roi_percentage']:.1f}% ROI, BSR {simulated_data['bsr']}, {velocity_score:.0f} velocity"
             
+            # Classify product tier (v1.7.0 AutoScheduler)
+            tier, tier_reason = self._classify_product_tier({
+                'roi_percentage': roi_data['roi_percentage'],
+                'profit_net': roi_data['profit_net'],
+                'velocity_score': velocity_score,
+                'confidence_score': confidence_score,
+                'overall_rating': overall_rating
+            })
+            
             # Create AutoSourcingPick
             pick = AutoSourcingPick(
                 job_id=job_id,
@@ -363,7 +372,11 @@ class AutoSourcingService:
                 overall_rating=overall_rating,
                 bsr=simulated_data["bsr"],
                 category=simulated_data["category"],
-                readable_summary=readable_summary
+                readable_summary=readable_summary,
+                # AutoScheduler tier classification
+                priority_tier=tier,
+                tier_reason=tier_reason,
+                is_featured=(tier == "HOT")
             )
             
             return pick
@@ -407,6 +420,79 @@ class AutoSourcingService:
         
         return (pick_rating_level >= required_rating_level and 
                 pick.roi_percentage >= roi_min)
+
+    def _classify_product_tier(self, product_data: Dict[str, Any]) -> tuple[str, str]:
+        """
+        Classifie automatiquement un produit selon score/ROI pour AutoScheduler.
+        
+        Args:
+            product_data: Données du produit (ROI, profit, scores, etc.)
+            
+        Returns:
+            Tuple (tier, reason) - tier: HOT/TOP/WATCH/OTHER, reason: explication
+        """
+        roi = product_data.get('roi_percentage', 0)
+        profit = product_data.get('profit_net', 0)
+        velocity = product_data.get('velocity_score', 0)
+        confidence = product_data.get('confidence_score', 0)
+        rating = product_data.get('overall_rating', 'PASS')
+        
+        # 🔥 HOT DEALS - Critères stricts pour action immédiate
+        if (roi >= 50 and profit >= 15 and velocity >= 80 and 
+            confidence >= 85 and rating in ["EXCELLENT"]):
+            return "HOT", f"🔥 {roi:.0f}% ROI, ${profit:.0f} profit, {velocity:.0f} velocity - Action immédiate!"
+        
+        # ⭐ TOP PICKS - Équilibrés et solides
+        elif (roi >= 35 and profit >= 10 and velocity >= 70 and 
+              confidence >= 75 and rating in ["EXCELLENT", "GOOD"]):
+            return "TOP", f"⭐ {roi:.0f}% ROI, ${profit:.0f} profit - Opportunité solide"
+        
+        # 📈 WATCH LIST - Potentiel à surveiller
+        elif (roi >= 25 and profit >= 5 and velocity >= 60 and 
+              confidence >= 65 and rating in ["EXCELLENT", "GOOD", "FAIR"]):
+            return "WATCH", f"📈 {roi:.0f}% ROI, potentiel à surveiller"
+        
+        # 📊 OTHER - Analyse approfondie nécessaire
+        else:
+            return "OTHER", f"📊 {roi:.0f}% ROI - Analyse détaillée recommandée"
+
+    def get_diversified_search_criteria(self, hour: int) -> Dict[str, Any]:
+        """
+        Génère des critères de recherche diversifiés selon l'heure pour AutoScheduler.
+        
+        Args:
+            hour: Heure actuelle (0-23)
+            
+        Returns:
+            Critères de recherche adaptés à l'heure
+        """
+        # Profils de diversification par heure
+        diversification_profiles = {
+            8: {  # Matin: Conservateur, livres populaires
+                "categories": ["Books"],
+                "price_range": {"min": 10, "max": 35},
+                "bsr_range": {"min": 1000, "max": 75000},
+                "description": "Matin - Profil conservateur, livres populaires"
+            },
+            15: {  # Midi: Équilibré, opportunités moyennes  
+                "categories": ["Books"],
+                "price_range": {"min": 15, "max": 50},
+                "bsr_range": {"min": 1000, "max": 150000},
+                "description": "Midi - Profil équilibré, diversité moyenne"
+            },
+            20: {  # Soir: Agressif, large spectre BSR
+                "categories": ["Books"], 
+                "price_range": {"min": 20, "max": 60},
+                "bsr_range": {"min": 1000, "max": 250000},  # BSR élargi pour + d'opportunités
+                "description": "Soir - Profil agressif, large spectre BSR"
+            }
+        }
+        
+        # Retourne le profil correspondant à l'heure, ou profil par défaut
+        profile = diversification_profiles.get(hour, diversification_profiles[15])
+        
+        logger.info(f"Profil diversifié pour {hour}h: {profile['description']}")
+        return profile
 
     async def _remove_recent_duplicates(
         self, picks: List[AutoSourcingPick], days: int = 7

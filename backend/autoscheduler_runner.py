@@ -81,12 +81,31 @@ class AutoSchedulerRunner:
     
     def should_run_now(self) -> bool:
         """Détermine si un run doit être exécuté maintenant"""
-        if not SCHEDULE_CONFIG["enabled"]:
-            logger.info("AutoScheduler désactivé via configuration")
+        # Lire configuration de contrôle dynamique
+        control_config = self._load_control_config()
+        
+        # Vérification activation générale
+        if not control_config.get("enabled", True):
+            logger.info("AutoScheduler désactivé via contrôle")
             return False
         
+        # Vérification date du jour
+        today = datetime.now().date().isoformat()
+        skip_dates = control_config.get("skip_dates", [])
+        
+        if today in skip_dates:
+            logger.info(f"AutoScheduler en pause pour aujourd'hui ({today})")
+            return False
+        
+        # Vérification pause jusqu'à date
+        pause_until = control_config.get("pause_until")
+        if pause_until and pause_until >= today:
+            logger.info(f"AutoScheduler en pause jusqu'au {pause_until}")
+            return False
+        
+        # Vérification horaire
         current_hour = datetime.now().hour
-        scheduled_hours = SCHEDULE_CONFIG["hours"]
+        scheduled_hours = control_config.get("scheduled_hours", SCHEDULE_CONFIG["hours"])
         
         should_run = current_hour in scheduled_hours
         
@@ -96,6 +115,33 @@ class AutoSchedulerRunner:
             logger.debug(f"⏰ Pas l'heure de run: {current_hour}h (programmé: {scheduled_hours})")
         
         return should_run
+    
+    def _load_control_config(self) -> Dict[str, Any]:
+        """Charge la configuration de contrôle dynamique"""
+        control_file = Path("data/autoscheduler_control.json")
+        
+        if not control_file.exists():
+            # Configuration par défaut basée sur les variables d'environnement
+            return {
+                "enabled": SCHEDULE_CONFIG["enabled"],
+                "scheduled_hours": SCHEDULE_CONFIG["hours"],
+                "skip_dates": [],
+                "pause_until": None
+            }
+        
+        try:
+            with open(control_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                logger.debug(f"Configuration de contrôle chargée: {config}")
+                return config
+        except Exception as e:
+            logger.warning(f"Erreur lecture contrôle config: {e}, utilisation config par défaut")
+            return {
+                "enabled": SCHEDULE_CONFIG["enabled"],
+                "scheduled_hours": SCHEDULE_CONFIG["hours"],
+                "skip_dates": [],
+                "pause_until": None
+            }
     
     def get_search_criteria_for_hour(self, hour: int) -> Dict[str, Any]:
         """Génère les critères de recherche diversifiés selon l'heure"""

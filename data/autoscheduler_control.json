@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "scheduled_hours": [
+    8,
+    15,
+    20
+  ],
+  "skip_dates": [],
+  "pause_until": null,
+  "last_updated": "2025-08-24T21:40:08.123668",
+  "updated_by": "system"
+}

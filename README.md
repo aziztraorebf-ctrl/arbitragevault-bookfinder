@@ -2,10 +2,32 @@
 
 Professional tool for identifying profitable book arbitrage opportunities using advanced Keepa API data analysis and intelligent multi-criteria scoring system.
 
-## 🎯 Project Status - v1.6.0-autosourcing ✅ PRODUCTION READY
+## 🎯 Project Status - v1.7.0-autoscheduler ✅ PRODUCTION READY
 
-**Current Phase**: AutoSourcing Intelligence Module Complete ✅  
+**Current Phase**: AutoScheduler System Complete ✅  
 **Next Phase**: Frontend Integration (v2.0.0) 🚀
+
+### ✅ **v1.7.0-autoscheduler - Automated Scheduling & Control**
+
+#### **🕐 AutoScheduler Module - NEW**
+- **⚡ Automated Execution**: Scheduled AutoSourcing runs at configured hours (8h/15h/20h)  
+- **🎛️ Dynamic Control**: Real-time enable/disable via JSON configuration
+- **📊 Comprehensive Metrics**: Performance tracking, execution stats, and system health
+- **🔄 Background Processing**: Non-blocking scheduled execution with monitoring
+- **⚠️ Intelligent Skip Logic**: Date-based skipping and pause functionality
+- **📈 Performance Analytics**: Success rates, processing times, and error tracking
+- **🛠️ Management APIs**: 8 control endpoints for complete system management
+- **✅ Production Validated**: End-to-end testing with real Keepa API integration
+
+#### **🚀 AutoScheduler Capabilities**
+- ✅ **Configurable Scheduling**: Flexible hour-based execution with skip dates
+- ✅ **Real-time Control**: Instant enable/disable without system restart
+- ✅ **Comprehensive Metrics**: Detailed execution statistics and performance tracking
+- ✅ **Health Monitoring**: System status, last execution, and error tracking
+- ✅ **JSON Configuration**: Dynamic settings via `data/autoscheduler_control.json`
+- ✅ **8 Control APIs**: Complete programmatic control and monitoring
+- ✅ **Keepa Integration**: Validated with real ASIN data (4/5 success rate)
+- ✅ **Production Ready**: Comprehensive testing and validation completed
 
 ### ✅ **v1.6.0-autosourcing - Intelligent Product Discovery**
 
@@ -110,9 +132,31 @@ ArbitrageVault employs a sophisticated 4-dimensional scoring system that evaluat
 - **Business Balance**: Maintains selectivity while ensuring sufficient opportunity flow
 - **Configuration**: All thresholds configurable via `business_rules.json` without code changes
 
-## 🔌 **API Endpoints (v1.6.0-autosourcing)**
+## 🔌 **API Endpoints (v1.7.0-autoscheduler)**
 
-### **🤖 AutoSourcing Discovery Endpoints (NEW)**
+### **🕐 AutoScheduler Control Endpoints (NEW v1.7.0)**
+```bash
+# System status and health
+GET /api/v1/autoscheduler/status
+GET /api/v1/autoscheduler/health
+
+# Configuration management
+GET /api/v1/autoscheduler/config
+PUT /api/v1/autoscheduler/config
+# Body: {"enabled": true, "scheduled_hours": [8, 15, 20]}
+
+# Control operations  
+POST /api/v1/autoscheduler/enable
+POST /api/v1/autoscheduler/disable
+POST /api/v1/autoscheduler/pause-until
+# Body: {"pause_until": "2025-08-30T00:00:00"}
+
+# Metrics and monitoring
+GET /api/v1/autoscheduler/metrics
+GET /api/v1/autoscheduler/logs
+```
+
+### **🤖 AutoSourcing Discovery Endpoints**
 ```bash
 # Custom intelligent product discovery
 POST /api/v1/autosourcing/run-custom
@@ -269,7 +313,22 @@ python init_autosourcing_db.py
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### **6. Test AutoSourcing Discovery (NEW)**
+### **6. Test AutoScheduler System (NEW v1.7.0)**
+```bash
+# Check AutoScheduler status
+curl "http://localhost:8000/api/v1/autoscheduler/status"
+
+# Test system configuration  
+curl "http://localhost:8000/api/v1/autoscheduler/config"
+
+# Enable AutoScheduler
+curl -X POST "http://localhost:8000/api/v1/autoscheduler/enable"
+
+# View system metrics
+curl "http://localhost:8000/api/v1/autoscheduler/metrics"
+```
+
+### **7. Test AutoSourcing Discovery**
 ```bash
 # Test intelligent product discovery
 curl -X POST "http://localhost:8000/api/v1/autosourcing/run-custom" \
@@ -325,7 +384,8 @@ arbitragevault_bookfinder/
 │   │   └── api/v1/routers/       # ✅ API route handlers
 │   │       ├── analysis.py       # Analysis endpoints
 │   │       ├── keepa.py          # Keepa integration routes
-│   │       └── autosourcing.py   # ✅ NEW: AutoSourcing discovery endpoints
+│   │       ├── autosourcing.py   # ✅ AutoSourcing discovery endpoints
+│   │       └── autoscheduler.py  # ✅ NEW: AutoScheduler control endpoints
 │   ├── init_autosourcing_db.py   # ✅ NEW: AutoSourcing database initialization
 │   │   └── config/               # ✅ Configuration management
 │   │       └── settings.py       # Environment settings
@@ -333,9 +393,14 @@ arbitragevault_bookfinder/
 │   ├── requirements.txt          # ✅ Production dependencies
 │   └── .env.example             # ✅ Environment template
 ├── frontend/                     # 🚧 React dashboard (Phase 1.5)
-├── docker-compose.yml           # ✅ Container orchestration
-├── .gitignore                   # ✅ Version control rules
-└── README.md                    # ✅ This documentation
+├── data/                        # ✅ Configuration and control files
+│   └── autoscheduler_control.json # ✅ NEW: AutoScheduler configuration
+├── test_integration.py         # ✅ NEW: End-to-end integration tests
+├── test_final_validation.py    # ✅ NEW: System validation tests
+├── VALIDATION_REPORT.md        # ✅ NEW: Test results documentation
+├── docker-compose.yml          # ✅ Container orchestration
+├── .gitignore                  # ✅ Version control rules
+└── README.md                   # ✅ This documentation
 ```
 
 ## 🎯 **Business Logic Engine**

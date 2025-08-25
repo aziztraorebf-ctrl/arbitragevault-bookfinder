@@ -420,6 +420,35 @@ analysis = analyze_product(asin, strategy="balanced")
 # Focus: Sustainable, repeatable arbitrage plays
 ```
 
+### **AutoSourcing Discovery Engine (v1.6.0+)**
+```python
+# Intelligent Product Discovery
+discovery = run_autosourcing({
+    "discovery_config": {
+        "categories": ["Books", "Textbooks"],
+        "bsr_max": 100000,
+        "price_range": {"min": 10, "max": 100}
+    },
+    "scoring_config": {
+        "roi_min": 25,
+        "velocity_min": 60
+    }
+})
+# Focus: Automated opportunity finding with configurable criteria
+```
+
+### **AutoScheduler Automation (v1.7.0+)**  
+```python
+# Automated Scheduling Control
+scheduler = {
+    "enabled": True,
+    "scheduled_hours": [8, 15, 20],  # Run at 8h, 15h, 20h daily
+    "skip_dates": ["2025-12-25"],    # Holiday exclusions
+    "profiles": ["Conservative", "Balanced"]
+}
+# Focus: 24/7 automated discovery with intelligent control
+```
+
 ### **Intelligent Filtering & Scoring**
 ```python
 # Multi-criteria opportunity assessment
@@ -434,41 +463,42 @@ analysis = analyze_product(asin, strategy="balanced")
 
 ## ⚠️ **Known Issues & Limitations**
 
-### **Minor Technical Issues**
-- **Price Alignment**: Debug endpoint and main endpoints occasionally show different price extraction logic
-- **Impact**: Non-blocking - all endpoints functional without crashes
-- **Status**: Tracked for v1.4.2 resolution
-
 ### **Current Scope Limitations**
-- **Frontend**: Command-line and API access only (UI in Phase 1.5)
-- **Export**: No automated Google Sheets integration yet (planned v1.6)
-- **Authentication**: Basic implementation (production security in v1.7)
+- **Frontend**: Command-line and API access only (Dashboard in v1.8.0)
+- **Export**: No automated Google Sheets integration yet (planned v1.9.0)
+- **Authentication**: Basic implementation (enterprise security in v2.0.0)
+- **Multi-User**: Single-tenant operation (organization features in v2.0.0)
+
+### **Performance Considerations**
+- **API Rate Limits**: Keepa API quotas may limit large batch operations
+- **Concurrent Jobs**: AutoScheduler runs single-threaded for API stability
+- **Data Storage**: Historical data accumulation (archiving strategy in v1.8.0)
 
 ## 🚀 **Development Roadmap**
 
-### **🎯 v1.4.2 (Stabilization) - Target: 2 weeks**
-- Resolve price extraction alignment between endpoints
-- Enhanced error messages and API response consistency  
-- Performance optimization for batch processing
-- Extended test coverage for edge cases
+### **🎯 v1.8.0 (Frontend Dashboard) - Target: 4 weeks**
+- React dashboard for AutoScheduler control and monitoring
+- Real-time system status and metrics visualization
+- AutoSourcing results display with interactive filtering
+- Responsive design with Tailwind CSS integration
 
-### **🎯 v1.5.0 (Frontend Integration) - Target: 4 weeks**
-- React dashboard with real-time analysis results
-- Interactive filtering and sorting capabilities
-- Batch upload interface with progress tracking
-- Export functionality (CSV, Excel)
+### **🎯 v1.9.0 (Advanced Integrations) - Target: 6 weeks**
+- Google Sheets API integration for export functionality
+- OpenAI-powered opportunity insights and recommendations
+- Slack/Discord notifications for high-value discoveries
+- Advanced reporting and analytics dashboard
 
-### **🎯 v1.6.0 (Advanced Features) - Target: 6 weeks**
-- Google Sheets API integration
-- OpenAI-powered opportunity insights
-- Advanced reporting and analytics
-- User management and role-based access
-
-### **🎯 v1.7.0 (Production Scale) - Target: 8 weeks**
-- Production-grade authentication and security
+### **🎯 v2.0.0 (Enterprise Features) - Target: 8 weeks**
+- Multi-user authentication and role-based access
+- Organization-level configuration management
 - API rate limiting and optimization
-- Comprehensive monitoring and logging
-- Docker deployment with CI/CD pipeline
+- Advanced monitoring, logging, and alerting
+
+### **🎯 v2.1.0 (AI Enhancement) - Target: 10 weeks**
+- Machine learning-based opportunity scoring
+- Predictive analytics for market trends
+- Automated strategy optimization based on performance
+- Natural language query interface for product discovery
 
 ## 🧪 **Testing & Validation**
 
@@ -519,17 +549,23 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 ## 🎯 **Business Value Delivered**
 
-### **Immediate Value (v1.4.1-stable)**
+### **Immediate Value (v1.7.0-autoscheduler)**
 - **Automated Analysis**: Process ISBN/ASIN lists without manual research
 - **Real-Time Data**: Current Amazon marketplace conditions via Keepa
-- **Smart Filtering**: Focus on high-probability arbitrage opportunities
+- **Smart Filtering**: Focus on high-probability arbitrage opportunities  
 - **Risk Assessment**: Avoid volatile products and market traps
+- **Intelligent Discovery**: Automated product finding with 13 AutoSourcing endpoints
+- **Scheduled Automation**: 24/7 AutoScheduler with configurable execution times
+- **Advanced Scoring**: 6-dimensional analysis with normalized 0-100 scales
 
 ### **Operational Benefits**
 - **Time Savings**: 10x faster than manual product research
-- **Data Accuracy**: Eliminate human error in ROI calculations  
-- **Scalability**: Process hundreds of products simultaneously
+- **Data Accuracy**: Eliminate human error in ROI calculations
+- **Scalability**: Process hundreds of products simultaneously  
 - **Decision Support**: Confidence scoring and recommendation engine
+- **24/7 Operations**: AutoScheduler runs discovery automatically at set hours
+- **Profile Management**: Save and reuse successful discovery configurations
+- **Real-Time Control**: Enable/disable automation via API without downtime
 
 ### **Competitive Advantages**
 - **Professional Grade**: Enterprise-level architecture and reliability
@@ -539,16 +575,19 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 ## 🔄 **Version History**
 
-- **v1.4.1-stable** (Current): Backend Complete + Keepa Integration + Business Logic ✅
+- **v1.7.0-autoscheduler** (Current - Aug 2025): AutoScheduler System + 8 Control APIs ✅
+- **v1.6.0-autosourcing** (Aug 2025): AutoSourcing Intelligence + 13 Discovery APIs ✅
+- **v1.5.0-production** (Aug 2025): Advanced Scoring Engine + Business Rules ✅
+- **v1.4.1-stable** (Aug 2025): Backend Complete + Keepa Integration + Business Logic ✅
 - **v1.3.0**: FastAPI Implementation + Database Layer ✅  
 - **v1.2.5**: Repository Layer + Advanced Filtering ✅
 - **v1.1.0**: Core Models + SQLAlchemy Setup ✅
 - **v1.0.0**: Project Bootstrap + Architecture Definition ✅
 
 **Next Milestones**:
-- **v1.5.0**: Frontend Dashboard 🚧
-- **v1.6.0**: Advanced Integrations 🚧
-- **v1.7.0**: Production Deployment 🚧
+- **v1.8.0**: Frontend Dashboard 🚧
+- **v1.9.0**: Advanced Integrations 🚧
+- **v2.0.0**: Enterprise Features 🚧
 
 ## 🤝 **Contributing & Development**
 
@@ -567,9 +606,9 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 ---
 
-**Last Updated**: 22 August, 2025  
-**Version**: v1.4.1-stable  
-**BUILD-TEST-VALIDATE**: Cycle 1.4.1 Complete ✅  
-**Ready for Phase 1.5**: Frontend Development 🚀
+**Last Updated**: 17 August, 2025  
+**Version**: v1.7.0-autoscheduler  
+**BUILD-TEST-VALIDATE**: Cycle 1.7.0 Complete ✅  
+**Ready for Phase 1.8.0**: Frontend Dashboard Development 🚀
 
-**Technical Status**: Production-ready backend with stable business logic and real-time marketplace data analysis capabilities.
+**Technical Status**: Complete automated arbitrage discovery system with intelligent scheduling, 21 API endpoints, and comprehensive validation testing. Production-ready with end-to-end Keepa integration.

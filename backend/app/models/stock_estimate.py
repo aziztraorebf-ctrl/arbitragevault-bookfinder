@@ -4,7 +4,7 @@ Simple cache for stock availability estimates
 """
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, JSON
-from app.core.database import Base
+from app.core.db import Base
 
 
 class StockEstimateCache(Base):

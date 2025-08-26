@@ -3,10 +3,10 @@ Stock Estimate API Router
 Simple endpoints for stock availability estimation
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
-from app.core.database import get_db
-from app.api.keepa_integration import get_keepa_service
+from app.core.db import get_db_session
+from app.services.keepa_service import get_keepa_service
 from app.services.stock_estimate_service import StockEstimateService
 import logging
 
@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/products", tags=["Stock Estimate"])
 
 
-def get_stock_estimate_service(
-    db: Session = Depends(get_db),
+async def get_stock_estimate_service(
+    db: AsyncSession = Depends(get_db_session),
     keepa_service = Depends(get_keepa_service)
 ) -> StockEstimateService:
     """Dependency injection for StockEstimateService"""
@@ -50,7 +50,7 @@ async def get_stock_estimate(
         
         logger.info(f"Stock estimate request for ASIN: {asin}, price_target: {price_target}")
         
-        result = service.get_stock_estimate(asin, price_target)
+        result = await service.get_stock_estimate(asin, price_target)
         
         # Check if result indicates error
         if result.get("source") == "error":

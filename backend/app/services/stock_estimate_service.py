@@ -4,9 +4,10 @@ Simple stock availability estimation based on FBA offers count
 """
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.models.stock_estimate import StockEstimateCache
-from app.api.keepa_integration import KeepaService
+from app.services.keepa_service import KeepaService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 class StockEstimateService:
     """Service for estimating stock availability from marketplace data"""
     
-    def __init__(self, db: Session, keepa_service: KeepaService):
+    def __init__(self, db: AsyncSession, keepa_service: KeepaService):
         self.db = db
         self.keepa_service = keepa_service
         
@@ -27,21 +28,21 @@ class StockEstimateService:
             "timeout_seconds": 4
         }
     
-    def get_stock_estimate(self, asin: str, price_target: Optional[float] = None) -> Dict[str, Any]:
+    async def get_stock_estimate(self, asin: str, price_target: Optional[float] = None) -> Dict[str, Any]:
         """
         Get stock estimate for single ASIN
         Cache-first approach with 24h TTL
         """
         try:
             # 1. Check cache first
-            cached = self._get_cached_estimate(asin)
+            cached = await self._get_cached_estimate(asin)
             if cached and not cached.is_expired():
                 logger.info(f"Stock estimate cache hit for {asin}")
                 return cached.to_dict(source="cache")
             
             # 2. Cache miss - get fresh data from Keepa
             logger.info(f"Stock estimate cache miss for {asin}, fetching from Keepa")
-            offers_data = self._fetch_keepa_offers(asin)
+            offers_data = await self._fetch_keepa_offers(asin)
             
             if not offers_data:
                 # No offers data available
@@ -51,14 +52,14 @@ class StockEstimateService:
             estimate_result = self._calculate_simple_estimate(offers_data, price_target)
             
             # 4. Cache result
-            cache_entry = self._cache_estimate(asin, estimate_result)
+            cache_entry = await self._cache_estimate(asin, estimate_result)
             
             return cache_entry.to_dict(source="fresh")
             
         except Exception as e:
             logger.error(f"Error getting stock estimate for {asin}: {e}")
             # Try returning cached data even if expired
-            cached = self._get_cached_estimate(asin)
+            cached = await self._get_cached_estimate(asin)
             if cached:
                 return cached.to_dict(source="cache_fallback")
             
@@ -74,17 +75,18 @@ class StockEstimateService:
                 "error": str(e)
             }
     
-    def _get_cached_estimate(self, asin: str) -> Optional[StockEstimateCache]:
+    async def _get_cached_estimate(self, asin: str) -> Optional[StockEstimateCache]:
         """Retrieve cached estimate from database"""
-        return self.db.query(StockEstimateCache).filter(
-            StockEstimateCache.asin == asin
-        ).first()
+        result = await self.db.execute(
+            select(StockEstimateCache).where(StockEstimateCache.asin == asin)
+        )
+        return result.scalar_one_or_none()
     
-    def _fetch_keepa_offers(self, asin: str) -> Optional[Dict]:
+    async def _fetch_keepa_offers(self, asin: str) -> Optional[Dict]:
         """Fetch offers data from Keepa API"""
         try:
             # Use existing Keepa service to get product data with offers
-            product_data = self.keepa_service.get_product_data(asin, include_offers=True)
+            product_data = await self.keepa_service.get_product_data(asin, include_offers=True)
             
             if not product_data or 'offers' not in product_data:
                 logger.warning(f"No offers data for {asin}")
@@ -146,13 +148,14 @@ class StockEstimateService:
             logger.error(f"Error calculating stock estimate: {e}")
             return {"units": 0, "fba_count": 0, "mfn_count": 0}
     
-    def _cache_estimate(self, asin: str, estimate_result: Dict[str, Any]) -> StockEstimateCache:
+    async def _cache_estimate(self, asin: str, estimate_result: Dict[str, Any]) -> StockEstimateCache:
         """Store estimate in cache"""
         try:
             # Upsert cache entry
-            cache_entry = self.db.query(StockEstimateCache).filter(
-                StockEstimateCache.asin == asin
-            ).first()
+            result = await self.db.execute(
+                select(StockEstimateCache).where(StockEstimateCache.asin == asin)
+            )
+            cache_entry = result.scalar_one_or_none()
             
             if cache_entry:
                 # Update existing
@@ -175,14 +178,14 @@ class StockEstimateService:
                 )
                 self.db.add(cache_entry)
             
-            self.db.commit()
-            self.db.refresh(cache_entry)
+            await self.db.commit()
+            await self.db.refresh(cache_entry)
             
             return cache_entry
             
         except Exception as e:
             logger.error(f"Error caching stock estimate for {asin}: {e}")
-            self.db.rollback()
+            await self.db.rollback()
             raise
     
     def _create_empty_estimate(self, asin: str) -> Dict[str, Any]:

@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.api.v1.routers import auth, health, analyses, batches, keepa, config, autosourcing, autoscheduler
-from app.routers import stock_estimate
+from app.routers import stock_estimate, strategic_views
 from app.core.cors import configure_cors
 from app.core.db import lifespan
 from app.core.logging import configure_logging, get_logger, log_request_middleware
@@ -49,6 +49,7 @@ app.include_router(config.router, prefix="/api/v1", tags=["Configuration"])
 app.include_router(autosourcing.router, prefix="/api/v1", tags=["AutoSourcing"])
 app.include_router(autoscheduler.router, prefix="/api/v1", tags=["AutoScheduler Control"])
 app.include_router(stock_estimate.router, tags=["Stock Estimate"])
+app.include_router(strategic_views.router, tags=["Strategic Views"])
 
 
 # Global exception handler

@@ -396,31 +396,91 @@ class KeepaService:
             "hit_rate": getattr(self, '_cache_hits', 0) / max(getattr(self, '_cache_requests', 1), 1)
         }
 
+    async def get_sales_velocity_data(self, asin: str) -> Dict[str, Any]:
+        """
+        Get sales velocity data from Keepa API
+        
+        Extracts salesRankDrops and related metrics for velocity estimation
+        """
+        try:
+            # Get product data with sales rank information and stats
+            product_data = await self.get_product_data(asin)
+            
+            if not product_data:
+                self.logger.warning(f"No product data available for velocity analysis: {asin}")
+                return self._create_empty_velocity_data(asin)
+            
+            # Extract velocity data from stats section (where Keepa stores salesRankDrops)
+            stats = product_data.get('stats', {})
+            
+            # Extract category from categoryTree (more reliable than 'category')
+            category = 'Unknown'
+            category_tree = product_data.get('categoryTree', [])
+            if category_tree and len(category_tree) > 0:
+                # Get the main category (usually first in tree)
+                category = category_tree[0].get('name', 'Unknown')
+            
+            # Get BSR from current CSV data (index 3 is Sales Rank in Keepa)
+            current_bsr = 0
+            csv_data = product_data.get('csv', [])
+            if csv_data and len(csv_data) > 3 and csv_data[3]:
+                # Get latest BSR value (last point in sales rank series)
+                current_bsr = csv_data[3][-1] if csv_data[3] else 0
+            
+            # Extract velocity-relevant data from stats
+            velocity_data = {
+                "asin": asin,
+                "sales_drops_30": stats.get('salesRankDrops30', 0),
+                "sales_drops_90": stats.get('salesRankDrops90', 0),
+                "current_bsr": current_bsr,
+                "category": category,
+                "domain": product_data.get('domainId', 1),
+                "title": product_data.get('title', 'Unknown Product')
+            }
+            
+            self.logger.info(f"Sales velocity data retrieved for {asin}: {velocity_data['sales_drops_30']} drops/30d, BSR: {current_bsr}")
+            return velocity_data
+            
+        except Exception as e:
+            self.logger.error(f"Error fetching sales velocity data for {asin}: {e}")
+            return self._create_empty_velocity_data(asin)
+    
+    def _create_empty_velocity_data(self, asin: str) -> Dict[str, Any]:
+        """Create empty velocity data structure"""
+        return {
+            "asin": asin,
+            "sales_drops_30": 0,
+            "sales_drops_90": 0, 
+            "current_bsr": 0,
+            "category": "Unknown",
+            "domain": 1,
+            "title": "Unknown Product"
+        }
+
 
 # Dependency injection function for FastAPI
 async def get_keepa_service() -> KeepaService:
     """FastAPI dependency to get Keepa service instance."""
     try:
-        # For now, use environment variable fallback until keyring is sorted
-        import os
-        api_key = os.getenv("KEEPA_API_KEY")
+        # First try Memex keyring (primary method)
+        api_key = None
+        try:
+            import keyring
+            api_key = keyring.get_password("memex", "KEEPA_API_KEY")
+            if api_key:
+                logging.getLogger(__name__).info("Successfully retrieved Keepa API key from Memex secrets")
+        except Exception as keyring_error:
+            logging.getLogger(__name__).debug(f"Keyring access failed: {keyring_error}")
         
-        # Try keyring if env var not set
+        # Fallback to environment variable
         if not api_key:
-            try:
-                import subprocess
-                result = subprocess.run(
-                    ["keyring", "get", "memex", "KEEPA_API_KEY"],
-                    capture_output=True,
-                    text=True
-                )
-                if result.returncode == 0:
-                    api_key = result.stdout.strip()
-            except Exception as keyring_error:
-                logging.getLogger(__name__).debug(f"Keyring access failed: {keyring_error}")
+            import os
+            api_key = os.getenv("KEEPA_API_KEY")
+            if api_key:
+                logging.getLogger(__name__).info("Using Keepa API key from environment variable")
         
         if not api_key:
-            raise ValueError("KEEPA_API_KEY not found in environment or secrets")
+            raise ValueError("KEEPA_API_KEY not found in Memex secrets or environment variables")
         
         return KeepaService(api_key=api_key)
     

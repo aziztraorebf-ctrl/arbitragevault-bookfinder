@@ -7,77 +7,201 @@ from typing import List
 from app.core.db import get_db_session
 from app.core.pagination import PaginatedResponse, PaginationParams
 from app.repositories.batch_repository import BatchRepository
+from app.repositories.base_repository import SortOrder
 from app.schemas.batch import BatchResponse, BatchStatusUpdate
 from app.models.batch import BatchStatus
 
 router = APIRouter()
 
 
+@router.post("", status_code=201, response_model=BatchResponse)
+async def create_batch(
+    batch_name: str = Query(..., description="Name for the new batch"),
+    items_total: int = Query(..., description="Total number of items to process"),
+    db: AsyncSession = Depends(get_db_session)
+) -> BatchResponse:
+    """Create a new analysis batch in database."""
+    
+    try:
+        repo = BatchRepository(db)
+        
+        # For now, use a default user ID (user auth will be added later)
+        default_user_id = "default-user"
+        
+        batch = await repo.create_batch(
+            user_id=default_user_id,
+            name=batch_name,
+            items_total=items_total,
+            strategy_snapshot=None  # Will be populated when batch processing starts
+        )
+        
+        return BatchResponse(
+            id=batch.id,
+            name=batch.name,
+            status=batch.status.value,
+            items_total=batch.items_total,
+            items_processed=batch.items_processed,
+            created_at=batch.created_at,
+            started_at=batch.started_at,
+            finished_at=batch.finished_at,
+            progress_percentage=batch.progress_percentage
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create batch: {str(e)}"
+        )
+
+
 @router.get("", response_model=PaginatedResponse[BatchResponse])
 async def list_batches(
-    pagination: PaginationParams = Depends()
+    pagination: PaginationParams = Depends(),
+    db: AsyncSession = Depends(get_db_session)
 ) -> PaginatedResponse[BatchResponse]:
     """
-    Get paginated list of analysis batches.
+    Get paginated list of analysis batches from database.
     
-    PHASE 1 STUB: Returns empty list for now, validates API structure.
-    Will be connected to real repository in Phase 2.
+    Now connected to real BatchRepository with database persistence.
     """
-    return PaginatedResponse(
-        items=[],
-        total=0,
-        page=pagination.page,
-        per_page=pagination.per_page,
-        pages=0
-    )
+    try:
+        repo = BatchRepository(db)
+        
+        # Get paginated batches (for now, get all user batches - user auth will be added later)
+        batches = await repo.get_all(
+            limit=pagination.per_page,
+            offset=(pagination.page - 1) * pagination.per_page,
+            sort_field="created_at",
+            sort_order=SortOrder.DESC
+        )
+        
+        # Count total batches
+        total = await repo.count()
+        
+        # Convert to response models
+        batch_responses = []
+        for batch in batches:
+            batch_responses.append(BatchResponse(
+                id=batch.id,
+                name=batch.name,
+                status=batch.status.value,
+                items_total=batch.items_total,
+                items_processed=batch.items_processed,
+                created_at=batch.created_at,
+                started_at=batch.started_at,
+                finished_at=batch.finished_at,
+                progress_percentage=batch.progress_percentage
+            ))
+        
+        return PaginatedResponse(
+            items=batch_responses,
+            total=total,
+            page=pagination.page,
+            per_page=pagination.per_page,
+            pages=(total + pagination.per_page - 1) // pagination.per_page
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve batches: {str(e)}"
+        )
 
 
-@router.get("/{batch_id}")
+@router.get("/{batch_id}", response_model=BatchResponse)
 async def get_batch(
-    batch_id: str = Path(..., description="Batch ID")
-) -> dict:
-    """Get specific batch by ID with status and progress information."""
+    batch_id: str = Path(..., description="Batch ID"),
+    db: AsyncSession = Depends(get_db_session)
+) -> BatchResponse:
+    """Get specific batch by ID with status and progress information from database."""
     
-    # PHASE 1 STUB: Return mock batch data
-    return {
-        "id": batch_id,
-        "name": f"Sample Batch {batch_id}",
-        "status": "pending",
-        "items_total": 100,
-        "items_processed": 0,
-        "message": "Batch lookup validated - Phase 1 stub",
-        "phase": "PHASE_1_STUB"
-    }
+    try:
+        repo = BatchRepository(db)
+        batch = await repo.get_by_id(batch_id)
+        
+        if not batch:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Batch with ID {batch_id} not found"
+            )
+        
+        return BatchResponse(
+            id=batch.id,
+            name=batch.name,
+            status=batch.status.value,
+            items_total=batch.items_total,
+            items_processed=batch.items_processed,
+            created_at=batch.created_at,
+            started_at=batch.started_at,
+            finished_at=batch.finished_at,
+            progress_percentage=batch.progress_percentage
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve batch: {str(e)}"
+        )
 
 
-@router.patch("/{batch_id}/status")
+@router.patch("/{batch_id}/status", response_model=BatchResponse)
 async def update_batch_status(
     status_update: BatchStatusUpdate,
-    batch_id: str = Path(..., description="Batch ID")
-) -> dict:
+    batch_id: str = Path(..., description="Batch ID"),
+    db: AsyncSession = Depends(get_db_session)
+) -> BatchResponse:
     """
-    Update batch status with proper state transitions.
+    Update batch status with proper state transitions in database.
     
-    PHASE 1 STUB: Validates state transition logic only.
-    Will be connected to real repository in Phase 2.
+    Now connected to real repository with state validation.
     """
-    new_status = status_update.status
-    
-    # Validate that status is valid BatchStatus enum
-    from app.models.batch import BatchStatus
-    
-    valid_statuses = [s.value for s in BatchStatus]
-    if new_status not in valid_statuses:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid status: {new_status}. Valid options: {valid_statuses}"
+    try:
+        repo = BatchRepository(db)
+        
+        # Get existing batch
+        batch = await repo.get_by_id(batch_id)
+        if not batch:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Batch with ID {batch_id} not found"
+            )
+        
+        # Convert string status to enum
+        from app.models.batch import BatchStatus
+        try:
+            new_status_enum = BatchStatus(status_update.status)
+        except ValueError:
+            valid_statuses = [s.value for s in BatchStatus]
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid status: {status_update.status}. Valid options: {valid_statuses}"
+            )
+        
+        # Update batch status using repository method
+        updated_batch = await repo.update_batch_status(
+            batch_id=batch_id,
+            new_status=new_status_enum,
+            error_message=status_update.error_message
         )
-    
-    return {
-        "batch_id": batch_id,
-        "old_status": "pending",
-        "new_status": new_status,  # new_status is already a string
-        "error_message": status_update.error_message,
-        "message": "Status transition validated - Phase 1 stub",
-        "phase": "PHASE_1_STUB"
-    }
+        
+        return BatchResponse(
+            id=updated_batch.id,
+            name=updated_batch.name,
+            status=updated_batch.status.value,
+            items_total=updated_batch.items_total,
+            items_processed=updated_batch.items_processed,
+            created_at=updated_batch.created_at,
+            started_at=updated_batch.started_at,
+            finished_at=updated_batch.finished_at,
+            progress_percentage=updated_batch.progress_percentage
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update batch status: {str(e)}"
+        )

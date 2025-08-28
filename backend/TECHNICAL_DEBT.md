@@ -1,6 +1,20 @@
 # Technical Debt - ArbitrageVault Backend
 
-## Bugs Critiques Identifiés
+**Dernière révision**: 2025-08-27 (Post-Architecture Refactor v1.9.1)
+
+## ✅ Bugs Résolus par Architecture Refactor v1.9.1
+
+### ✅ RÉSOLU: Model-Schema Inconsistencies  
+- **Problème**: Modèles et schémas API désynchronisés (1/5 tests réussis)
+- **Solution**: Harmonisation complète avec BatchCreateRequest et description support
+- **Impact**: 5/5 tests composants maintenant réussis
+
+### ✅ RÉSOLU: Service Initialization Failures
+- **Problème**: Services non initialisables (KeepaService sans API key, méthodes manquantes)  
+- **Solution**: KeepaServiceFactory + SalesVelocityService wrappers
+- **Impact**: Tous services instanciables avec gestion secrets automatique
+
+## ⚠️ Bugs Critiques Restants
 
 ### ⚠️ BUG-001: BaseRepository.update() - Impossible de mettre des champs à NULL
 

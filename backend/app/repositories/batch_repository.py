@@ -26,6 +26,7 @@ class BatchRepository(BaseRepository[Batch]):
         user_id: str,
         name: str,
         items_total: int,
+        description: Optional[str] = None,
         strategy_snapshot: Optional[dict] = None
     ) -> Batch:
         """Create a new batch with validation."""
@@ -33,6 +34,7 @@ class BatchRepository(BaseRepository[Batch]):
             batch = Batch(
                 user_id=user_id,
                 name=name,
+                description=description,
                 items_total=max(0, items_total),  # Ensure non-negative
                 status=BatchStatus.PENDING,
                 strategy_snapshot=strategy_snapshot

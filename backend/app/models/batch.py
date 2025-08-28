@@ -36,6 +36,7 @@ class Batch(Base):
 
     # Batch metadata
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     status: Mapped[BatchStatus] = mapped_column(
         SAEnum(BatchStatus, name="batch_status", native_enum=True),
         default=BatchStatus.PENDING, 
@@ -90,9 +91,10 @@ class Batch(Base):
     @property
     def progress_percentage(self) -> float:
         """Calculate progress percentage."""
-        if self.items_total == 0:
+        if self.items_total == 0 or self.items_total is None:
             return 0.0
-        return (self.items_processed / self.items_total) * 100
+        processed = self.items_processed or 0  # Handle None case
+        return (processed / self.items_total) * 100
 
     def can_transition_to(self, new_status: BatchStatus) -> bool:
         """Check if batch can transition to new status."""

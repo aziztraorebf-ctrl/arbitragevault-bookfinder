@@ -268,6 +268,39 @@ class SalesVelocityService:
         }
 
 
+    # === WRAPPER METHODS FOR BACKWARD COMPATIBILITY ===
+    
+    def calculate_velocity_score(self, keepa_data: Dict[str, Any]) -> float:
+        """
+        Wrapper method for backward compatibility.
+        Returns normalized velocity score (0.0 to 1.0) based on Keepa data.
+        """
+        try:
+            # Extract relevant data
+            sales_drops_30 = keepa_data.get('salesRankDrops30', 0)
+            current_bsr = keepa_data.get('current', {}).get('BUY_BOX', [0])
+            bsr_value = current_bsr[0] if current_bsr else 999999
+            
+            # Estimate monthly sales
+            monthly_sales = self.estimate_monthly_sales(sales_drops_30, bsr_value, 'Books')
+            
+            # Normalize to 0-1 scale based on tier thresholds
+            if monthly_sales >= self.tier_thresholds['PREMIUM']:
+                return 1.0
+            elif monthly_sales >= self.tier_thresholds['HIGH']:
+                return 0.8
+            elif monthly_sales >= self.tier_thresholds['MEDIUM']:
+                return 0.6
+            elif monthly_sales >= self.tier_thresholds['LOW']:
+                return 0.4
+            else:
+                return 0.2
+                
+        except Exception as e:
+            logger.error(f"Error calculating velocity score: {e}")
+            return 0.0
+
+
 # FastAPI dependency
 async def get_sales_velocity_service() -> SalesVelocityService:
     """FastAPI dependency to get SalesVelocityService instance"""

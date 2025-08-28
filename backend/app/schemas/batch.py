@@ -3,9 +3,18 @@
 from datetime import datetime
 from typing import Optional
 
+from typing import List
 from pydantic import BaseModel, Field
 
 # from app.models.batch import BatchStatus  # Not needed for string validation
+
+
+class BatchCreateRequest(BaseModel):
+    """Schema for creating new batches."""
+    name: str = Field(..., description="Name for the batch")
+    description: Optional[str] = Field(None, description="Optional batch description")
+    asin_list: List[str] = Field(..., description="List of ISBN/ASIN codes to process")
+    config_name: str = Field(..., description="Strategy configuration name")
 
 
 class BatchStatusUpdate(BaseModel):
@@ -18,15 +27,16 @@ class BatchResponse(BaseModel):
     """Schema for batch responses."""
     id: str
     name: str
+    description: Optional[str] = None
     status: str
-    items_total: Optional[int]
-    items_processed: Optional[int]
-    items_successful: Optional[int]
-    started_at: Optional[datetime]
-    finished_at: Optional[datetime]
+    items_total: Optional[int] = None
+    items_processed: Optional[int] = None
+    items_successful: Optional[int] = None
+    started_at: Optional[datetime] = None
+    finished_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
-    error_message: Optional[str]
+    error_message: Optional[str] = None
     
     @property
     def progress_percentage(self) -> Optional[float]:

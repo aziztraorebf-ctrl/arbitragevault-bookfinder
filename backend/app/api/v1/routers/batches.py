@@ -1,6 +1,6 @@
 """Batch endpoints for managing analysis batches."""
 
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
@@ -8,7 +8,7 @@ from app.core.db import get_db_session
 from app.core.pagination import PaginatedResponse, PaginationParams
 from app.repositories.batch_repository import BatchRepository
 from app.repositories.base_repository import SortOrder
-from app.schemas.batch import BatchResponse, BatchStatusUpdate
+from app.schemas.batch import BatchResponse, BatchStatusUpdate, BatchCreateRequest
 from app.models.batch import BatchStatus
 
 router = APIRouter()
@@ -16,8 +16,7 @@ router = APIRouter()
 
 @router.post("", status_code=201, response_model=BatchResponse)
 async def create_batch(
-    batch_name: str = Query(..., description="Name for the new batch"),
-    items_total: int = Query(..., description="Total number of items to process"),
+    batch_request: BatchCreateRequest,
     db: AsyncSession = Depends(get_db_session)
 ) -> BatchResponse:
     """Create a new analysis batch in database."""
@@ -30,9 +29,10 @@ async def create_batch(
         
         batch = await repo.create_batch(
             user_id=default_user_id,
-            name=batch_name,
-            items_total=items_total,
-            strategy_snapshot=None  # Will be populated when batch processing starts
+            name=batch_request.name,
+            description=batch_request.description,
+            items_total=len(batch_request.asin_list),
+            strategy_snapshot={"config_name": batch_request.config_name}  # Store strategy config
         )
         
         return BatchResponse(

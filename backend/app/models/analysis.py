@@ -78,6 +78,12 @@ class Analysis(Base):
         JSON, 
         nullable=True
     )
+    
+    # Target price calculation data (for strategic views)
+    target_price_data: Mapped[Optional[dict]] = mapped_column(
+        JSON,
+        nullable=True
+    )
 
     # Relationships
     batch: Mapped["Batch"] = relationship(

@@ -2,10 +2,40 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, Dict, Any
 from decimal import Decimal
 
 from pydantic import BaseModel, Field, validator
+
+
+class TargetPriceResultSchema(BaseModel):
+    """Schema for target price calculation results."""
+    target_price: float = Field(..., description="Calculated target selling price")
+    roi_target: float = Field(..., description="ROI target used for calculation")
+    safety_buffer_used: float = Field(..., description="Safety buffer percentage applied")
+    is_achievable: bool = Field(..., description="Whether target price is achievable in current market")
+    price_gap_percentage: float = Field(..., description="Gap between target and current market price")
+    calculation_details: Dict[str, Any] = Field(..., description="Detailed calculation breakdown")
+
+
+class StrategicViewSummarySchema(BaseModel):
+    """Schema for strategic view summary statistics."""
+    total_products: int = Field(..., description="Total number of products analyzed")
+    achievable_opportunities: int = Field(..., description="Number of achievable opportunities")
+    achievable_percentage: float = Field(..., description="Percentage of achievable opportunities")
+    avg_target_price: float = Field(..., description="Average target price")
+    avg_strategic_score: float = Field(..., description="Average strategic score")
+    total_potential_profit: float = Field(..., description="Total potential profit")
+
+
+class StrategicViewResponseSchema(BaseModel):
+    """Schema for strategic view responses with target prices."""
+    view_name: str = Field(..., description="Strategic view name")
+    description: str = Field(..., description="View description")
+    roi_target: float = Field(..., description="ROI target for this view")
+    products_count: int = Field(..., description="Number of products analyzed")
+    products: list[Dict[str, Any]] = Field(..., description="Enriched product data with target prices")
+    summary: StrategicViewSummarySchema = Field(..., description="Summary statistics")
 
 
 class TopAnalysisStrategy(str, Enum):
@@ -52,8 +82,17 @@ class AnalysisResponse(BaseModel):
     velocity_score: Decimal
     rank_snapshot: Optional[int]
     offers_count: Optional[int]
+    target_price_data: Optional[Dict[str, Any]] = Field(None, description="Target price calculation data")
     created_at: datetime
     updated_at: datetime
     
     class Config:
         from_attributes = True
+
+
+class AnalysisResponseEnriched(AnalysisResponse):
+    """Schema for enriched analysis responses with target price results."""
+    target_price_result: Optional[TargetPriceResultSchema] = Field(None, description="Target price calculation result")
+    strategic_score: Optional[float] = Field(None, description="Strategic score for current view")
+    target_price: Optional[float] = Field(None, description="Convenience field for target price")
+    price_achievable: Optional[bool] = Field(None, description="Convenience field for achievability")

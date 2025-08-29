@@ -11,6 +11,8 @@ from enum import Enum
 from app.core.db import get_db_session
 from app.services.sales_velocity_service import get_sales_velocity_service, SalesVelocityService
 from app.services.keepa_service import get_keepa_service, KeepaService
+from app.services.strategic_views_service import StrategicViewsService
+from app.schemas.analysis import StrategicViewResponseSchema
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,6 +26,11 @@ class ViewType(str, Enum):
     BALANCED_SCORE = "balanced-score"    # NOUVEAU - Score composite
 
 router = APIRouter(prefix="/api/v1/views", tags=["Strategic Views"])
+
+# Dependency injection for StrategicViewsService
+def get_strategic_views_service() -> StrategicViewsService:
+    """Get StrategicViewsService instance."""
+    return StrategicViewsService()
 
 
 @router.get("/{view_type}")
@@ -358,3 +365,113 @@ def _create_empty_analysis(asin: str) -> Dict[str, Any]:
         "category": "Unknown",
         "source": "no_data"
     }
+
+
+@router.get("/{view_type}/target-prices")
+async def get_strategic_view_with_target_prices(
+    view_type: ViewType,
+    asins: str = Query(..., description="Comma-separated list of ASINs to analyze"),
+    limit: int = Query(20, le=50, description="Max results to return"),
+    include_calculation_details: bool = Query(False, description="Include detailed calculation breakdown"),
+    strategic_service: StrategicViewsService = Depends(get_strategic_views_service),
+    keepa_service: KeepaService = Depends(get_keepa_service)
+) -> StrategicViewResponseSchema:
+    """
+    Get strategic view with target price calculations for each product.
+    
+    This endpoint enriches product analysis with target selling prices based on 
+    strategic view ROI targets and provides achievability assessment.
+    """
+    try:
+        # Parse ASINs
+        asin_list = [asin.strip().upper() for asin in asins.split(',') if asin.strip()]
+        if not asin_list:
+            raise HTTPException(status_code=400, detail="At least one ASIN required")
+        
+        if len(asin_list) > 20:
+            raise HTTPException(status_code=400, detail="Maximum 20 ASINs per request for target price analysis")
+        
+        logger.info(f"Target price analysis for view {view_type} with {len(asin_list)} ASINs")
+        
+        # Get product data for all ASINs
+        products_data = []
+        
+        for asin in asin_list:
+            try:
+                # Get real product data from Keepa
+                product_analysis = await _get_real_product_analysis(asin, keepa_service)
+                
+                # Convert strategic view type to our service format
+                view_name_mapping = {
+                    ViewType.PROFIT_HUNTER: "profit_hunter",
+                    ViewType.VELOCITY: "velocity",
+                    ViewType.CASHFLOW_HUNTER: "cashflow_hunter",
+                    ViewType.BALANCED_SCORE: "balanced_score",
+                    ViewType.VOLUME_PLAYER: "volume_player"
+                }
+                
+                view_name = view_name_mapping.get(view_type, "balanced_score")
+                
+                # Prepare product data for target price calculation
+                product_data = {
+                    "id": asin,
+                    "isbn_or_asin": asin,
+                    "buy_price": product_analysis.get("buy_price", 0),
+                    "current_price": product_analysis.get("buy_price", 0),
+                    "fba_fee": 3.50,  # Standard book FBA fee estimate
+                    "buybox_price": product_analysis.get("sell_price", 0),
+                    "referral_fee_rate": 0.15,  # Default books rate
+                    "storage_fee": 0.50,  # Monthly storage estimate
+                    "roi_percentage": product_analysis.get("roi_percent", 0),
+                    "velocity_score": 0.70,  # Placeholder
+                    "profit_estimate": product_analysis.get("profit_net", 0),
+                    "competition_level": "MEDIUM",  # Placeholder
+                    "price_volatility": 0.20,  # Placeholder
+                    "demand_consistency": 0.80,  # Placeholder
+                    "data_confidence": 0.85  # Placeholder
+                }
+                
+                products_data.append(product_data)
+                
+            except Exception as e:
+                logger.warning(f"Failed to analyze ASIN {asin} for target price: {e}")
+                continue
+        
+        # Get strategic view with target prices
+        strategic_view_result = strategic_service.get_strategic_view_with_target_prices(
+            view_name, products_data
+        )
+        
+        # Filter calculation details if not requested
+        if not include_calculation_details:
+            for product in strategic_view_result["products"]:
+                if "target_price_result" in product and isinstance(product["target_price_result"], dict):
+                    if "calculation_details" in product["target_price_result"]:
+                        product["target_price_result"]["calculation_details"] = {
+                            "details_available": True,
+                            "request_with_include_calculation_details": "true"
+                        }
+        
+        # Limit results
+        strategic_view_result["products"] = strategic_view_result["products"][:limit]
+        strategic_view_result["products_count"] = len(strategic_view_result["products"])
+        
+        # Add metadata for API response
+        strategic_view_result["api_metadata"] = {
+            "requested_asins": len(asin_list),
+            "processed_products": len(products_data),
+            "returned_products": len(strategic_view_result["products"]),
+            "view_type": view_type,
+            "calculation_details_included": include_calculation_details
+        }
+        
+        return strategic_view_result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in target price analysis for view {view_type}: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Target price analysis failed: {str(e)}"
+        )

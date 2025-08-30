@@ -13,9 +13,15 @@ logger = logging.getLogger(__name__)
 class AmazonFilterService:
     """Service pour filtrer les produits Amazon avec métriques complètes."""
     
-    def __init__(self):
-        """Initialiser le service avec configuration par défaut."""
+    def __init__(self, detection_level: str = "smart"):
+        """
+        Initialiser le service avec configuration par défaut.
+        
+        Args:
+            detection_level: "safe" (direct seulement) ou "smart" (Amazon présent)
+        """
         self.enabled = True  # Peut être désactivé par config admin
+        self.detection_level = detection_level  # "safe" ou "smart"
         
     def filter_amazon_products(self, products: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
@@ -44,13 +50,14 @@ class AmazonFilterService:
         amazon_products_details = []
         
         for product in products:
-            if self._is_amazon_seller(product):
+            is_amazon, reason = self._detect_amazon_presence(product)
+            if is_amazon:
                 amazon_count += 1
                 # Garder trace des produits éliminés pour transparence
                 amazon_products_details.append({
                     'asin': product.get('asin', 'Unknown'),
                     'title': product.get('title', 'Unknown Title')[:50] + '...' if len(product.get('title', '')) > 50 else product.get('title', 'Unknown Title'),
-                    'reason': 'Amazon vendeur direct'
+                    'reason': reason
                 })
                 continue  # Éliminer ce produit
                 
@@ -80,28 +87,69 @@ class AmazonFilterService:
         
         return result
     
-    def _is_amazon_seller(self, product: Dict[str, Any]) -> bool:
+    def _detect_amazon_presence(self, product: Dict[str, Any]) -> tuple[bool, str]:
         """
-        Détermine si Amazon est le vendeur principal.
-        
-        Logique simple : vérifie le flag isAmazon dans les données Keepa.
+        Détecte si Amazon est présent sur ce listing (approche KISS).
         
         Args:
             product: Dictionnaire produit avec données Keepa
             
         Returns:
-            True si Amazon est vendeur, False sinon
+            Tuple (is_amazon_present, reason)
         """
-        # Vérification principale : flag isAmazon de Keepa
-        is_amazon = product.get('isAmazon', False)
+        asin = product.get('asin', 'Unknown')
         
-        # Log pour debugging si nécessaire
-        if is_amazon:
-            asin = product.get('asin', 'Unknown')
-            title = product.get('title', 'Unknown')[:30]
-            logger.debug(f"Produit Amazon détecté: {asin} - {title}")
+        if self.detection_level == "safe":
+            # NIVEAU SAFE : Amazon vendeur direct seulement
+            is_amazon_direct = product.get('isAmazon', False)
+            if is_amazon_direct:
+                logger.debug(f"Amazon Direct détecté: {asin}")
+                return True, "Amazon vendeur direct"
+            return False, "Amazon non détecté (niveau safe)"
         
-        return is_amazon
+        elif self.detection_level == "smart":
+            # NIVEAU SMART : Amazon présent sur listing (recommandé KISS)
+            
+            # 1. Amazon vendeur direct
+            if product.get('isAmazon', False):
+                logger.debug(f"Amazon Direct détecté: {asin}")
+                return True, "Amazon vendeur direct"
+            
+            # 2. Amazon dans les offres récentes (données Keepa)
+            recent_offers = product.get('offerCSV', [])
+            if recent_offers:
+                # Prendre les 5 dernières offres pour éviter données obsolètes
+                last_5_offers = recent_offers[-5:] if len(recent_offers) >= 5 else recent_offers
+                
+                for offer in last_5_offers:
+                    if len(offer) > 2 and offer[2] == 1:  # seller_id = 1 = Amazon
+                        logger.debug(f"Amazon vendeur actif détecté: {asin}")
+                        return True, "Amazon vendeur actif"
+            
+            # 3. Amazon dans Buy Box history récente
+            buy_box_history = product.get('buyBoxSellerIdHistory', [])
+            if buy_box_history:
+                # Prendre les 10 dernières entrées Buy Box
+                recent_buy_box = buy_box_history[-10:] if len(buy_box_history) >= 10 else buy_box_history
+                
+                if 1 in recent_buy_box:  # Amazon seller_id = 1
+                    logger.debug(f"Amazon en Buy Box récemment: {asin}")
+                    return True, "Amazon en Buy Box récemment"
+            
+            # Pas d'Amazon détecté
+            return False, "Amazon non détecté sur ce listing"
+        
+        else:
+            # Fallback sur niveau safe si configuration inconnue
+            logger.warning(f"Detection level inconnu: {self.detection_level}, fallback sur 'safe'")
+            return self._detect_amazon_presence_safe(product)
+    
+    def _detect_amazon_presence_safe(self, product: Dict[str, Any]) -> tuple[bool, str]:
+        """Méthode fallback pour niveau safe."""
+        is_amazon_direct = product.get('isAmazon', False)
+        if is_amazon_direct:
+            return True, "Amazon vendeur direct"
+        return False, "Amazon non détecté (niveau safe)"
     
     def get_filter_stats(self) -> Dict[str, Any]:
         """
@@ -110,12 +158,18 @@ class AmazonFilterService:
         Returns:
             Dict avec état et configuration du filtre
         """
+        detection_descriptions = {
+            'safe': 'Élimine les produits Amazon Direct seulement',
+            'smart': 'Élimine TOUS produits avec Amazon vendeur (recommandé)'
+        }
+        
         return {
             'service_name': 'AmazonFilterService',
-            'version': '1.0.0',
+            'version': '2.0.0-KISS',
             'enabled': self.enabled,
-            'filter_criteria': 'isAmazon flag from Keepa API',
-            'description': 'Élimine les produits où Amazon est vendeur direct'
+            'detection_level': self.detection_level,
+            'filter_criteria': f'{self.detection_level} level detection',
+            'description': detection_descriptions.get(self.detection_level, 'Configuration inconnue')
         }
     
     def set_enabled(self, enabled: bool) -> None:
@@ -128,6 +182,24 @@ class AmazonFilterService:
         self.enabled = enabled
         status = "activé" if enabled else "désactivé"
         logger.info(f"Amazon Filter {status}")
+    
+    def set_detection_level(self, level: str) -> None:
+        """
+        Configure le niveau de détection Amazon.
+        
+        Args:
+            level: "safe" (Amazon Direct seulement) ou "smart" (Amazon présent)
+        """
+        if level not in ["safe", "smart"]:
+            raise ValueError(f"Niveau détection invalide: {level}. Utiliser 'safe' ou 'smart'")
+        
+        old_level = self.detection_level
+        self.detection_level = level
+        logger.info(f"Amazon Filter niveau changé: {old_level} → {level}")
+    
+    def get_detection_level(self) -> str:
+        """Retourne le niveau de détection actuel."""
+        return self.detection_level
 
 
 # Fonction utilitaire pour usage direct

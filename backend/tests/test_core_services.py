@@ -342,7 +342,7 @@ class TestEdgeCasesAndBoundaries:
 
 
 class TestAmazonFilter:
-    """Tests pour Amazon Filter Service - Option 1 Simple."""
+    """Tests pour Amazon Filter Service - Approche KISS 2 Niveaux."""
     
     def test_amazon_filter_excludes_amazon_products(self):
         """Confirmer que les produits Amazon sont éliminés."""
@@ -419,6 +419,89 @@ class TestAmazonFilter:
         assert result['amazon_filtered'] == 0
         assert result['filter_enabled'] is False
         assert result['filter_impact'] == "Filtrage désactivé"
+    
+    def test_amazon_filter_safe_level(self):
+        """Test niveau SAFE - Amazon Direct seulement."""
+        service = AmazonFilterService(detection_level="safe")
+        
+        test_products = [
+            {'asin': 'B001', 'isAmazon': False, 'title': 'Normal Book'},
+            {'asin': 'B002', 'isAmazon': True, 'title': 'Amazon Direct'},  # Éliminé niveau SAFE
+            {
+                'asin': 'B003', 
+                'isAmazon': False, 
+                'title': 'Amazon Concurrent',
+                'offerCSV': [[1640995200, 2499, 1, 1]],  # Amazon seller_id=1 dans offres
+                'buyBoxSellerIdHistory': [1, 5, 1]  # Amazon dans Buy Box
+            }  # PAS éliminé niveau SAFE (seulement concurrent)
+        ]
+        
+        result = service.filter_amazon_products(test_products)
+        
+        # Niveau SAFE ne doit éliminer que Amazon Direct
+        assert len(result['products']) == 2, "Niveau SAFE: garder concurrent Amazon"
+        assert result['amazon_filtered'] == 1, "Seul Amazon Direct éliminé"
+        
+        # Vérifier que Amazon concurrent reste
+        remaining_asins = [p['asin'] for p in result['products']]
+        assert 'B001' in remaining_asins
+        assert 'B003' in remaining_asins  # Amazon concurrent gardé en niveau SAFE
+        assert 'B002' not in remaining_asins  # Amazon direct éliminé
+    
+    def test_amazon_filter_smart_level(self):
+        """Test niveau SMART - Amazon présent sur listing."""
+        service = AmazonFilterService(detection_level="smart")
+        
+        test_products = [
+            {'asin': 'B001', 'isAmazon': False, 'title': 'Clean Book'},  # Aucun Amazon
+            {'asin': 'B002', 'isAmazon': True, 'title': 'Amazon Direct'},  # Éliminé SMART
+            {
+                'asin': 'B003', 
+                'isAmazon': False, 
+                'title': 'Amazon in Offers',
+                'offerCSV': [
+                    [1640995200, 2499, 5, 1],  # Autre vendeur
+                    [1640995260, 2399, 1, 1],  # Amazon seller_id=1
+                ]
+            },  # Éliminé SMART - Amazon dans offres
+            {
+                'asin': 'B004',
+                'isAmazon': False,
+                'title': 'Amazon Buy Box',
+                'buyBoxSellerIdHistory': [5, 8, 1, 5, 7]  # Amazon (id=1) dans Buy Box
+            },  # Éliminé SMART - Amazon en Buy Box
+            {'asin': 'B005', 'isAmazon': False, 'title': 'Truly Clean'}  # Aucune trace Amazon
+        ]
+        
+        result = service.filter_amazon_products(test_products)
+        
+        # Niveau SMART doit éliminer tous les produits avec Amazon
+        assert len(result['products']) == 2, "Niveau SMART: éliminer tout Amazon présent"
+        assert result['amazon_filtered'] == 3, "3 produits Amazon éliminés"
+        
+        # Seuls les produits vraiment propres restent
+        remaining_asins = [p['asin'] for p in result['products']]
+        assert 'B001' in remaining_asins
+        assert 'B005' in remaining_asins
+        assert 'B002' not in remaining_asins  # Direct
+        assert 'B003' not in remaining_asins  # Offres
+        assert 'B004' not in remaining_asins  # Buy Box
+    
+    def test_amazon_filter_level_configuration(self):
+        """Test changement de niveau de détection."""
+        service = AmazonFilterService()
+        
+        # Test niveau par défaut
+        assert service.get_detection_level() == "smart"
+        
+        # Test changement niveau
+        service.set_detection_level("safe")
+        assert service.get_detection_level() == "safe"
+        
+        # Test validation niveau invalide
+        with pytest.raises(ValueError) as exc_info:
+            service.set_detection_level("invalid")
+        assert "invalide" in str(exc_info.value).lower()
 
 
 class TestAmazonFilterIntegration:
@@ -471,7 +554,7 @@ class TestAmazonFilterIntegration:
         assert 'amazon_filter' in result['summary']
         filter_info = result['summary']['amazon_filter']
         assert filter_info['total_input'] == 3
-        assert filter_info['amazon_filtered'] == 1
+        assert filter_info['amazon_filtered'] == 1  # Seulement Amazon Direct éliminé
         assert filter_info['final_count'] == 2
         assert filter_info['filter_rate_percentage'] == 33.3  # 1/3 = 33.3%
         
@@ -516,6 +599,74 @@ class TestAmazonFilterIntegration:
         amazon_count = result['summary']['amazon_filter']['amazon_filtered']
         assert amazon_count > 0, "Devrait avoir éliminé des produits Amazon"
         assert len(result['products']) == 50 - amazon_count, "Count final cohérent"
+    
+    def test_strategic_views_smart_level_integration(self):
+        """Test intégration niveau SMART avec détection Amazon avancée."""
+        # Initialiser service avec niveau SMART explicite  
+        service = StrategicViewsService()
+        service.amazon_filter.set_detection_level("smart")
+        
+        test_data = [
+            {
+                'asin': 'B001CLEAN',
+                'isAmazon': False,
+                'title': 'Livre 100% Clean',
+                'roi_percentage': 40.0,
+                'buy_box_price': 20.0,
+                'fba_fee': 4.0,
+                'bsr': 50000
+                # Aucune trace Amazon nulle part
+            },
+            {
+                'asin': 'B002DIRECT',
+                'isAmazon': True,  # Amazon Direct → Éliminé SMART
+                'title': 'Amazon Direct Book',
+                'roi_percentage': 60.0,
+                'buy_box_price': 25.0,
+                'fba_fee': 4.5,
+                'bsr': 30000
+            },
+            {
+                'asin': 'B003OFFERS',
+                'isAmazon': False,
+                'title': 'Amazon in Recent Offers',
+                'roi_percentage': 35.0,
+                'buy_box_price': 15.0,
+                'fba_fee': 3.0,
+                'bsr': 80000,
+                'offerCSV': [
+                    [1640995200, 1499, 5, 1],  # Autre vendeur
+                    [1640995260, 1399, 1, 1],  # Amazon seller_id=1 → Éliminé SMART
+                ]
+            },
+            {
+                'asin': 'B004BUYBOX',
+                'isAmazon': False,
+                'title': 'Amazon in Buy Box History',
+                'roi_percentage': 45.0,
+                'buy_box_price': 30.0,
+                'fba_fee': 5.0,
+                'bsr': 40000,
+                'buyBoxSellerIdHistory': [5, 8, 1, 7, 9]  # Amazon (id=1) → Éliminé SMART
+            }
+        ]
+        
+        result = service.get_strategic_view_with_target_prices("profit_hunter", test_data)
+        
+        # Niveau SMART doit éliminer 3 sur 4 produits
+        assert len(result['products']) == 1, "SMART: Seul le livre clean doit rester"
+        assert result['products_count'] == 1
+        
+        # Vérifier que c'est le bon produit qui reste
+        remaining_product = result['products'][0]
+        assert remaining_product['asin'] == 'B001CLEAN'
+        
+        # Vérifier les métriques Amazon Filter SMART
+        filter_info = result['summary']['amazon_filter']
+        assert filter_info['total_input'] == 4
+        assert filter_info['amazon_filtered'] == 3  # Direct + Offers + BuyBox
+        assert filter_info['final_count'] == 1
+        assert filter_info['filter_rate_percentage'] == 75.0  # 3/4 = 75%
 
 
 if __name__ == "__main__":

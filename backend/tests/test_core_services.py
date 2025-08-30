@@ -13,6 +13,7 @@ import keyring
 from app.services.strategic_views_service import StrategicViewsService, TargetPriceCalculator
 from app.services.keepa_service_factory import KeepaServiceFactory
 from app.services.sales_velocity_service import SalesVelocityService
+from app.services.amazon_filter_service import AmazonFilterService
 from app.schemas.batch import BatchCreateRequest
 
 
@@ -338,6 +339,183 @@ class TestEdgeCasesAndBoundaries:
             
             finally:
                 await service.close()
+
+
+class TestAmazonFilter:
+    """Tests pour Amazon Filter Service - Option 1 Simple."""
+    
+    def test_amazon_filter_excludes_amazon_products(self):
+        """Confirmer que les produits Amazon sont éliminés."""
+        service = AmazonFilterService()
+        
+        test_products = [
+            {'asin': 'B001TEST1', 'isAmazon': False, 'title': 'Livre Normal', 'roi_percentage': 45},
+            {'asin': 'B002TEST2', 'isAmazon': True, 'title': 'Livre Amazon Direct', 'roi_percentage': 60},  # À éliminer
+            {'asin': 'B003TEST3', 'isAmazon': False, 'title': 'Autre Livre Normal', 'roi_percentage': 35},
+            {'asin': 'B004TEST4', 'isAmazon': True, 'title': 'Deuxième Amazon', 'roi_percentage': 50},  # À éliminer aussi
+        ]
+        
+        result = service.filter_amazon_products(test_products)
+        
+        # Vérifications principales
+        assert len(result['products']) == 2, "Devrait garder seulement les 2 produits non-Amazon"
+        assert result['amazon_filtered'] == 2, "Devrait éliminer 2 produits Amazon"
+        assert result['total_input'] == 4, "Input total devrait être 4"
+        assert result['final_count'] == 2, "Final count devrait être 2"
+        assert result['filter_rate_percentage'] == 50.0, "Taux de filtrage devrait être 50%"
+        
+        # Vérifier que les produits restants ne sont pas Amazon
+        for product in result['products']:
+            assert not product.get('isAmazon', False), "Aucun produit Amazon ne devrait rester"
+        
+        # Vérifier les bonnes ASINs restantes
+        remaining_asins = [p['asin'] for p in result['products']]
+        assert 'B001TEST1' in remaining_asins
+        assert 'B003TEST3' in remaining_asins
+        assert 'B002TEST2' not in remaining_asins  # Amazon éliminé
+        assert 'B004TEST4' not in remaining_asins  # Amazon éliminé
+    
+    def test_amazon_filter_handles_empty_list(self):
+        """Gestion correcte d'une liste vide."""
+        service = AmazonFilterService()
+        
+        result = service.filter_amazon_products([])
+        
+        assert result['products'] == []
+        assert result['amazon_filtered'] == 0
+        assert result['total_input'] == 0
+        assert result['filter_impact'] == "0 produits Amazon éliminés"
+    
+    def test_amazon_filter_all_non_amazon(self):
+        """Test avec aucun produit Amazon."""
+        service = AmazonFilterService()
+        
+        test_products = [
+            {'asin': 'B001', 'isAmazon': False, 'title': 'Livre 1'},
+            {'asin': 'B002', 'isAmazon': False, 'title': 'Livre 2'},
+            {'asin': 'B003', 'title': 'Livre 3'},  # Pas de champ isAmazon = False par défaut
+        ]
+        
+        result = service.filter_amazon_products(test_products)
+        
+        assert len(result['products']) == 3
+        assert result['amazon_filtered'] == 0
+        assert result['filter_rate_percentage'] == 0.0
+        assert result['filter_impact'] == "0 produits Amazon éliminés"
+    
+    def test_amazon_filter_disabled(self):
+        """Test du filtre quand il est désactivé."""
+        service = AmazonFilterService()
+        service.set_enabled(False)
+        
+        test_products = [
+            {'asin': 'B001', 'isAmazon': False, 'title': 'Normal'},
+            {'asin': 'B002', 'isAmazon': True, 'title': 'Amazon'},  # Devrait rester car filtre désactivé
+        ]
+        
+        result = service.filter_amazon_products(test_products)
+        
+        assert len(result['products']) == 2, "Tous les produits devraient rester"
+        assert result['amazon_filtered'] == 0
+        assert result['filter_enabled'] is False
+        assert result['filter_impact'] == "Filtrage désactivé"
+
+
+class TestAmazonFilterIntegration:
+    """Tests d'intégration Amazon Filter avec StrategicViewsService."""
+    
+    def test_strategic_views_with_amazon_filter(self):
+        """Vérifier que le filtrage fonctionne dans les strategic views."""
+        service = StrategicViewsService()
+        
+        test_data = [
+            {
+                'asin': 'B001NORMAL',
+                'isAmazon': False,
+                'title': 'Livre Normal Rentable',
+                'roi_percentage': 45.0,
+                'buy_box_price': 20.0,
+                'fba_fee': 4.0,
+                'profit_net': 8.0,
+                'bsr': 50000
+            },
+            {
+                'asin': 'B002AMAZON',
+                'isAmazon': True,  # Ce produit doit être éliminé
+                'title': 'Livre Amazon Direct',
+                'roi_percentage': 60.0,  # Même avec ROI élevé, doit être éliminé
+                'buy_box_price': 25.0,
+                'fba_fee': 4.5,
+                'profit_net': 12.0,
+                'bsr': 30000
+            },
+            {
+                'asin': 'B003NORMAL2',
+                'isAmazon': False,
+                'title': 'Autre Livre Normal',
+                'roi_percentage': 35.0,
+                'buy_box_price': 15.0,
+                'fba_fee': 3.0,
+                'profit_net': 5.0,
+                'bsr': 80000
+            }
+        ]
+        
+        result = service.get_strategic_view_with_target_prices("profit_hunter", test_data)
+        
+        # Vérifications intégration
+        assert len(result['products']) == 2, "Seulement 2 produits non-Amazon devraient rester"
+        assert result['products_count'] == 2
+        
+        # Vérifier présence des infos Amazon Filter dans summary
+        assert 'amazon_filter' in result['summary']
+        filter_info = result['summary']['amazon_filter']
+        assert filter_info['total_input'] == 3
+        assert filter_info['amazon_filtered'] == 1
+        assert filter_info['final_count'] == 2
+        assert filter_info['filter_rate_percentage'] == 33.3  # 1/3 = 33.3%
+        
+        # Vérifier que les bonnes ASINs restent
+        remaining_asins = [p['asin'] for p in result['products']]
+        assert 'B001NORMAL' in remaining_asins
+        assert 'B003NORMAL2' in remaining_asins
+        assert 'B002AMAZON' not in remaining_asins  # Éliminé
+        
+        # Vérifier que les strategic scores sont calculés correctement
+        for product in result['products']:
+            assert 'strategic_score' in product
+            # Note: target_price_result sera vérifié dans un test séparé
+    
+    def test_strategic_views_performance_with_filter(self):
+        """Confirmer que l'Amazon Filter n'impacte pas les performances < 2s."""
+        service = StrategicViewsService()
+        
+        # Dataset avec mix Amazon/Non-Amazon
+        large_dataset = []
+        for i in range(50):
+            large_dataset.append({
+                'asin': f'B00{i:07d}',
+                'title': f'Test Book {i}',
+                'isAmazon': i % 3 == 0,  # 1/3 des produits sont Amazon
+                'buy_box_price': 15.0 + i,
+                'fba_fee': 3.50,
+                'roi_percentage': 30.0 + i,
+                'bsr': 50000 + i * 1000,
+                'profit_net': 5.00 + i
+            })
+        
+        start_time = time.time()
+        result = service.get_strategic_view_with_target_prices("profit_hunter", large_dataset)
+        duration = time.time() - start_time
+        
+        # Tests performance
+        assert duration < 2.0, f"Performance dégradée avec Amazon Filter: {duration:.2f}s > 2s"
+        
+        # Tests fonctionnels
+        assert 'amazon_filter' in result['summary']
+        amazon_count = result['summary']['amazon_filter']['amazon_filtered']
+        assert amazon_count > 0, "Devrait avoir éliminé des produits Amazon"
+        assert len(result['products']) == 50 - amazon_count, "Count final cohérent"
 
 
 if __name__ == "__main__":

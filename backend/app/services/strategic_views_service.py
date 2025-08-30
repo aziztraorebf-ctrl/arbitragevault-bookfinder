@@ -5,6 +5,7 @@ Provides service-level interface for strategic analysis configurations
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from pydantic import BaseModel
+from .amazon_filter_service import AmazonFilterService
 
 class TargetPriceResult(BaseModel):
     """Result of target price calculation."""
@@ -125,6 +126,8 @@ class StrategicViewsService:
     
     def __init__(self):
         """Initialize with predefined strategic view configurations."""
+        # Initialize Amazon Filter Service
+        self.amazon_filter = AmazonFilterService()
         self.view_configs = {
             "profit_hunter": ViewConfig(
                 view_name="profit_hunter",
@@ -320,9 +323,13 @@ class StrategicViewsService:
         Returns:
             Strategic view results with target prices
         """
+        # NOUVEAU : Filtrage Amazon avant analyse
+        filter_result = self.amazon_filter.filter_amazon_products(products_data)
+        filtered_products = filter_result['products']
+        
         enriched_products = []
         
-        for product_data in products_data:
+        for product_data in filtered_products:  # Utilisation des produits filtrés
             # Calculate strategic score
             strategic_score = self.calculate_strategic_score(view_name, product_data)
             
@@ -337,13 +344,17 @@ class StrategicViewsService:
         
         view_config = self.get_view_config(view_name)
         
+        # Générer summary enrichi avec infos Amazon Filter
+        summary = self._generate_view_summary(enriched_products)
+        summary['amazon_filter'] = filter_result  # Transparence totale sur le filtrage
+        
         return {
             "view_name": view_name,
             "description": view_config.description if view_config else "",
             "roi_target": TargetPriceCalculator.ROI_TARGETS.get(view_name, 0.30),
             "products_count": len(enriched_products),
             "products": enriched_products,
-            "summary": self._generate_view_summary(enriched_products)
+            "summary": summary
         }
     
     def _generate_view_summary(self, enriched_products: list[Dict[str, Any]]) -> Dict[str, Any]:

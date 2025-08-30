@@ -209,16 +209,18 @@ class KeepaService:
                 }
             )
             
-            # Handle rate limiting
+            # Handle rate limiting (HTTP 429)
             if response.status_code == 429:
                 self._circuit_breaker.record_failure()
                 tokens_left = response.headers.get('tokens-left', 'unknown')
                 self.logger.warning(f"Rate limited by Keepa API (tokens left: {tokens_left})")
-                raise httpx.HTTPStatusError(
-                    f"Rate limited: {tokens_left} tokens remaining",
-                    request=response.request,
-                    response=response
-                )
+                raise Exception(f"HTTP 429: Rate limit exceeded - {tokens_left} tokens remaining")
+            
+            # Handle server errors (HTTP 500)
+            if response.status_code == 500:
+                self._circuit_breaker.record_failure()
+                self.logger.error(f"Keepa API server error (HTTP 500)")
+                raise Exception("HTTP 500: Keepa API internal server error")
             
             # Check for other HTTP errors
             response.raise_for_status()

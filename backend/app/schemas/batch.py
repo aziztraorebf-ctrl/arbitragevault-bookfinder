@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 from typing import List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # from app.models.batch import BatchStatus  # Not needed for string validation
 
@@ -15,6 +15,14 @@ class BatchCreateRequest(BaseModel):
     description: Optional[str] = Field(None, description="Optional batch description")
     asin_list: List[str] = Field(..., description="List of ISBN/ASIN codes to process")
     config_name: str = Field(..., description="Strategy configuration name")
+    
+    @field_validator('description')
+    @classmethod
+    def validate_description(cls, v):
+        """Valider que la description fait au moins 3 caractères si fournie."""
+        if v is not None and len(v.strip()) < 3:
+            raise ValueError("La description doit faire au moins 3 caractères")
+        return v
 
 
 class BatchStatusUpdate(BaseModel):

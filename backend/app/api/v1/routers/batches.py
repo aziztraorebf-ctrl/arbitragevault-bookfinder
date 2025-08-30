@@ -1,5 +1,7 @@
 """Batch endpoints for managing analysis batches."""
 
+import logging
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -12,6 +14,9 @@ from app.schemas.batch import BatchResponse, BatchStatusUpdate, BatchCreateReque
 from app.models.batch import BatchStatus
 
 router = APIRouter()
+
+# Configuration du logger pour les batches
+logger = logging.getLogger("arbitragevault.batch")
 
 
 @router.post("", status_code=201, response_model=BatchResponse)
@@ -34,6 +39,9 @@ async def create_batch(
             items_total=len(batch_request.asin_list),
             strategy_snapshot={"config_name": batch_request.config_name}  # Store strategy config
         )
+        
+        # Log création batch avec succès
+        logger.info(f"Batch créé avec succès - ID: {batch.id}, Timestamp: {datetime.now()}, Items: {len(batch_request.asin_list)}")
         
         return BatchResponse(
             id=batch.id,

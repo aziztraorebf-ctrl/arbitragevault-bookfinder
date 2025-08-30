@@ -15,6 +15,7 @@ from app.services.keepa_service_factory import KeepaServiceFactory
 from app.services.sales_velocity_service import SalesVelocityService
 from app.services.amazon_filter_service import AmazonFilterService
 from app.schemas.batch import BatchCreateRequest
+from app.utils.keepa_data_adapter import KeepaDataAdapter, TestDataFactory
 
 
 class TestStrategicViewsService:
@@ -345,15 +346,11 @@ class TestAmazonFilter:
     """Tests pour Amazon Filter Service - Approche KISS 2 Niveaux."""
     
     def test_amazon_filter_excludes_amazon_products(self):
-        """Confirmer que les produits Amazon sont éliminés."""
+        """Confirmer que les produits Amazon sont éliminés - Test hybride (compatibilité + production)."""
         service = AmazonFilterService()
         
-        test_products = [
-            {'asin': 'B001TEST1', 'isAmazon': False, 'title': 'Livre Normal', 'roi_percentage': 45},
-            {'asin': 'B002TEST2', 'isAmazon': True, 'title': 'Livre Amazon Direct', 'roi_percentage': 60},  # À éliminer
-            {'asin': 'B003TEST3', 'isAmazon': False, 'title': 'Autre Livre Normal', 'roi_percentage': 35},
-            {'asin': 'B004TEST4', 'isAmazon': True, 'title': 'Deuxième Amazon', 'roi_percentage': 50},  # À éliminer aussi
-        ]
+        # Utiliser TestDataFactory pour données cohérentes
+        test_products = TestDataFactory.create_mixed_product_set()
         
         result = service.filter_amazon_products(test_products)
         
@@ -368,12 +365,12 @@ class TestAmazonFilter:
         for product in result['products']:
             assert not product.get('isAmazon', False), "Aucun produit Amazon ne devrait rester"
         
-        # Vérifier les bonnes ASINs restantes
+        # Vérifier les bonnes ASINs restantes (adapté aux nouvelles données)
         remaining_asins = [p['asin'] for p in result['products']]
-        assert 'B001TEST1' in remaining_asins
-        assert 'B003TEST3' in remaining_asins
-        assert 'B002TEST2' not in remaining_asins  # Amazon éliminé
-        assert 'B004TEST4' not in remaining_asins  # Amazon éliminé
+        assert 'B001NORMAL1' in remaining_asins
+        assert 'B003NORMAL2' in remaining_asins
+        assert 'B002AMAZON1' not in remaining_asins  # Amazon éliminé
+        assert 'B004AMAZON2' not in remaining_asins  # Amazon éliminé
     
     def test_amazon_filter_handles_empty_list(self):
         """Gestion correcte d'une liste vide."""
@@ -449,28 +446,24 @@ class TestAmazonFilter:
         assert 'B002' not in remaining_asins  # Amazon direct éliminé
     
     def test_amazon_filter_smart_level(self):
-        """Test niveau SMART - Amazon présent sur listing."""
+        """Test niveau SMART - Amazon présent sur listing avec nouvelles données."""
         service = AmazonFilterService(detection_level="smart")
+        adapter = KeepaDataAdapter()
         
         test_products = [
-            {'asin': 'B001', 'isAmazon': False, 'title': 'Clean Book'},  # Aucun Amazon
-            {'asin': 'B002', 'isAmazon': True, 'title': 'Amazon Direct'},  # Éliminé SMART
+            # Produit clean - pas Amazon
+            adapter.create_test_product('B001', 'Clean Book', is_amazon=False, availability_amazon=-1),
+            # Amazon direct 
+            adapter.create_test_product('B002', 'Amazon Direct', is_amazon=True, availability_amazon=0),
+            # Amazon avec délai
+            adapter.create_test_product('B003', 'Amazon Delayed', is_amazon=False, availability_amazon=5),
+            # Produit avec historique Amazon Buy Box
             {
-                'asin': 'B003', 
-                'isAmazon': False, 
-                'title': 'Amazon in Offers',
-                'offerCSV': [
-                    [1640995200, 2499, 5, 1],  # Autre vendeur
-                    [1640995260, 2399, 1, 1],  # Amazon seller_id=1
-                ]
-            },  # Éliminé SMART - Amazon dans offres
-            {
-                'asin': 'B004',
-                'isAmazon': False,
-                'title': 'Amazon Buy Box',
+                **adapter.create_test_product('B004', 'Had Amazon', is_amazon=False, availability_amazon=-1),
                 'buyBoxSellerIdHistory': [5, 8, 1, 5, 7]  # Amazon (id=1) dans Buy Box
-            },  # Éliminé SMART - Amazon en Buy Box
-            {'asin': 'B005', 'isAmazon': False, 'title': 'Truly Clean'}  # Aucune trace Amazon
+            },
+            # Vraiment clean
+            adapter.create_test_product('B005', 'Truly Clean', is_amazon=False, availability_amazon=-1),
         ]
         
         result = service.filter_amazon_products(test_products)
@@ -484,8 +477,8 @@ class TestAmazonFilter:
         assert 'B001' in remaining_asins
         assert 'B005' in remaining_asins
         assert 'B002' not in remaining_asins  # Direct
-        assert 'B003' not in remaining_asins  # Offres
-        assert 'B004' not in remaining_asins  # Buy Box
+        assert 'B003' not in remaining_asins  # Disponible avec délai
+        assert 'B004' not in remaining_asins  # Buy Box history
     
     def test_amazon_filter_level_configuration(self):
         """Test changement de niveau de détection."""
@@ -504,43 +497,100 @@ class TestAmazonFilter:
         assert "invalide" in str(exc_info.value).lower()
 
 
+class TestAmazonFilterKeepaIntegration:
+    """Tests spécifiques pour validation structure Keepa réelle."""
+    
+    def test_amazon_filter_with_keepa_realistic_data(self):
+        """Test avec données au format Keepa réaliste."""
+        service = AmazonFilterService()
+        
+        # Données au format Keepa réaliste
+        keepa_products = TestDataFactory.create_keepa_realistic_set()
+        
+        result = service.filter_amazon_products(keepa_products)
+        
+        # Vérifier structure de base
+        assert isinstance(result, dict)
+        assert 'products' in result
+        assert 'amazon_filtered' in result
+        assert 'total_input' in result
+        
+        # Vérifier traitement correct (dépend des données dans TestDataFactory)
+        assert result['total_input'] == len(keepa_products)
+        assert len(result['products']) + result['amazon_filtered'] == result['total_input']
+    
+    def test_amazon_detection_availabilityAmazon_field(self):
+        """Test détection spécifique champ availabilityAmazon."""
+        service = AmazonFilterService(detection_level="safe")
+        adapter = KeepaDataAdapter()
+        
+        test_cases = [
+            # Amazon pas disponible
+            (-1, False, "Pas d'offre Amazon"),
+            # Amazon en stock
+            (0, True, "Amazon en stock maintenant"), 
+            # Amazon avec délai
+            (5, True, "Amazon avec délai 5 jours"),
+        ]
+        
+        for availability, should_filter, description in test_cases:
+            product = adapter.create_keepa_realistic_data(
+                asin=f'TEST{availability}',
+                amazon_available=(availability >= 0)
+            )
+            product['availabilityAmazon'] = availability
+            
+            has_amazon, reason = service._detect_amazon_presence(product)
+            
+            assert has_amazon == should_filter, f"{description}: attendu {should_filter}, reçu {has_amazon}"
+            print(f"✅ {description}: {reason}")
+    
+    def test_compatibility_test_vs_production_data(self):
+        """Vérifier compatibilité données test vs production."""
+        service = AmazonFilterService()
+        
+        # Données test (ancien format)
+        test_product = {'asin': 'TEST001', 'isAmazon': True, 'title': 'Test'}
+        
+        # Données production (format Keepa)  
+        keepa_product = {
+            'asin': 'PROD001',
+            'availabilityAmazon': 0,
+            'title': None,
+            'csv': [[] for _ in range(30)]
+        }
+        
+        # Les deux devraient être détectés comme Amazon
+        test_result = service._detect_amazon_presence(test_product)
+        keepa_result = service._detect_amazon_presence(keepa_product)
+        
+        assert test_result[0] == True, "Données test devraient détecter Amazon"
+        assert keepa_result[0] == True, "Données Keepa devraient détecter Amazon"
+        
+        print(f"✅ Test data: {test_result[1]}")
+        print(f"✅ Keepa data: {keepa_result[1]}")
+
+
 class TestAmazonFilterIntegration:
     """Tests d'intégration Amazon Filter avec StrategicViewsService."""
     
     def test_strategic_views_with_amazon_filter(self):
         """Vérifier que le filtrage fonctionne dans les strategic views."""
         service = StrategicViewsService()
+        adapter = KeepaDataAdapter()
         
         test_data = [
             {
-                'asin': 'B001NORMAL',
-                'isAmazon': False,
-                'title': 'Livre Normal Rentable',
-                'roi_percentage': 45.0,
-                'buy_box_price': 20.0,
-                'fba_fee': 4.0,
-                'profit_net': 8.0,
-                'bsr': 50000
+                **adapter.create_test_product('B001NORMAL', 'Livre Normal Rentable', is_amazon=False),
+                'roi_percentage': 45.0, 'buy_box_price': 20.0, 'fba_fee': 4.0, 'profit_net': 8.0, 'bsr': 50000
             },
             {
-                'asin': 'B002AMAZON',
-                'isAmazon': True,  # Ce produit doit être éliminé
-                'title': 'Livre Amazon Direct',
-                'roi_percentage': 60.0,  # Même avec ROI élevé, doit être éliminé
-                'buy_box_price': 25.0,
-                'fba_fee': 4.5,
-                'profit_net': 12.0,
-                'bsr': 30000
+                **adapter.create_test_product('B002AMAZON', 'Livre Amazon Direct', is_amazon=True),
+                'roi_percentage': 60.0, 'buy_box_price': 25.0, 'fba_fee': 4.5, 'profit_net': 12.0, 'bsr': 30000
             },
             {
-                'asin': 'B003NORMAL2',
-                'isAmazon': False,
-                'title': 'Autre Livre Normal',
-                'roi_percentage': 35.0,
-                'buy_box_price': 15.0,
-                'fba_fee': 3.0,
-                'profit_net': 5.0,
-                'bsr': 80000
+                **adapter.create_test_product('B003NORMAL2', 'Autre Livre Normal', is_amazon=False),
+                'roi_percentage': 35.0, 'buy_box_price': 15.0, 'fba_fee': 3.0, 'profit_net': 5.0, 'bsr': 80000
             }
         ]
         
@@ -572,20 +622,21 @@ class TestAmazonFilterIntegration:
     def test_strategic_views_performance_with_filter(self):
         """Confirmer que l'Amazon Filter n'impacte pas les performances < 2s."""
         service = StrategicViewsService()
+        adapter = KeepaDataAdapter()
         
         # Dataset avec mix Amazon/Non-Amazon
         large_dataset = []
         for i in range(50):
-            large_dataset.append({
-                'asin': f'B00{i:07d}',
-                'title': f'Test Book {i}',
-                'isAmazon': i % 3 == 0,  # 1/3 des produits sont Amazon
+            is_amazon = i % 3 == 0  # 1/3 des produits sont Amazon
+            product = {
+                **adapter.create_test_product(f'B00{i:07d}', f'Test Book {i}', is_amazon=is_amazon),
                 'buy_box_price': 15.0 + i,
                 'fba_fee': 3.50,
                 'roi_percentage': 30.0 + i,
                 'bsr': 50000 + i * 1000,
                 'profit_net': 5.00 + i
-            })
+            }
+            large_dataset.append(product)
         
         start_time = time.time()
         result = service.get_strategic_view_with_target_prices("profit_hunter", large_dataset)
@@ -601,59 +652,40 @@ class TestAmazonFilterIntegration:
         assert len(result['products']) == 50 - amazon_count, "Count final cohérent"
     
     def test_strategic_views_smart_level_integration(self):
-        """Test intégration niveau SMART avec détection Amazon avancée."""
+        """Test intégration niveau SMART avec données cohérentes."""
         # Initialiser service avec niveau SMART explicite  
         service = StrategicViewsService()
         service.amazon_filter.set_detection_level("smart")
+        adapter = KeepaDataAdapter()
         
+        # Utiliser des données cohérentes avec notre nouveau système
         test_data = [
+            # Produit clean
             {
-                'asin': 'B001CLEAN',
-                'isAmazon': False,
-                'title': 'Livre 100% Clean',
-                'roi_percentage': 40.0,
-                'buy_box_price': 20.0,
-                'fba_fee': 4.0,
-                'bsr': 50000
-                # Aucune trace Amazon nulle part
+                **adapter.create_test_product('B001CLEAN', 'Livre Clean', is_amazon=False, availability_amazon=-1),
+                'roi_percentage': 40.0, 'buy_box_price': 20.0, 'fba_fee': 4.0, 'bsr': 50000
             },
+            # Amazon Direct
             {
-                'asin': 'B002DIRECT',
-                'isAmazon': True,  # Amazon Direct → Éliminé SMART
-                'title': 'Amazon Direct Book',
-                'roi_percentage': 60.0,
-                'buy_box_price': 25.0,
-                'fba_fee': 4.5,
-                'bsr': 30000
+                **adapter.create_test_product('B002DIRECT', 'Amazon Direct', is_amazon=True, availability_amazon=0),
+                'roi_percentage': 60.0, 'buy_box_price': 25.0, 'fba_fee': 4.5, 'bsr': 30000
             },
+            # Amazon avec délai (détecté par SMART)
             {
-                'asin': 'B003OFFERS',
-                'isAmazon': False,
-                'title': 'Amazon in Recent Offers',
-                'roi_percentage': 35.0,
-                'buy_box_price': 15.0,
-                'fba_fee': 3.0,
-                'bsr': 80000,
-                'offerCSV': [
-                    [1640995200, 1499, 5, 1],  # Autre vendeur
-                    [1640995260, 1399, 1, 1],  # Amazon seller_id=1 → Éliminé SMART
-                ]
+                **adapter.create_test_product('B003DELAYED', 'Amazon Delayed', is_amazon=False, availability_amazon=3),
+                'roi_percentage': 35.0, 'buy_box_price': 15.0, 'fba_fee': 3.0, 'bsr': 80000
             },
+            # Amazon dans Buy Box history
             {
-                'asin': 'B004BUYBOX',
-                'isAmazon': False,
-                'title': 'Amazon in Buy Box History',
-                'roi_percentage': 45.0,
-                'buy_box_price': 30.0,
-                'fba_fee': 5.0,
-                'bsr': 40000,
-                'buyBoxSellerIdHistory': [5, 8, 1, 7, 9]  # Amazon (id=1) → Éliminé SMART
+                **adapter.create_test_product('B004BUYBOX', 'Had Amazon', is_amazon=False, availability_amazon=-1),
+                'roi_percentage': 45.0, 'buy_box_price': 30.0, 'fba_fee': 5.0, 'bsr': 40000,
+                'buyBoxSellerIdHistory': [5, 8, 1, 7, 9]  # Amazon présent
             }
         ]
         
         result = service.get_strategic_view_with_target_prices("profit_hunter", test_data)
         
-        # Niveau SMART doit éliminer 3 sur 4 produits
+        # Niveau SMART doit éliminer 3 sur 4 produits (tous sauf clean)
         assert len(result['products']) == 1, "SMART: Seul le livre clean doit rester"
         assert result['products_count'] == 1
         
@@ -664,7 +696,7 @@ class TestAmazonFilterIntegration:
         # Vérifier les métriques Amazon Filter SMART
         filter_info = result['summary']['amazon_filter']
         assert filter_info['total_input'] == 4
-        assert filter_info['amazon_filtered'] == 3  # Direct + Offers + BuyBox
+        assert filter_info['amazon_filtered'] == 3  # Direct + Delayed + BuyBox
         assert filter_info['final_count'] == 1
         assert filter_info['filter_rate_percentage'] == 75.0  # 3/4 = 75%
 

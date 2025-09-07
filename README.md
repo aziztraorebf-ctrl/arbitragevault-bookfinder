@@ -2,11 +2,37 @@
 
 Professional tool for identifying profitable book arbitrage opportunities using advanced Keepa API data analysis and intelligent multi-criteria scoring system.
 
-## 🎯 Project Status - v1.9.1-alpha ✅ ARCHITECTURE REFACTORED
+## 🎯 Project Status - v1.6.1 ✅ NICHE BOOKMARKING VALIDATED
 
-**Current Phase**: Backend Architecture Harmonized ✅  
-**Next Phase**: Target Pricing & Amazon Filtering Features 🚀  
-**Future Phase**: Frontend Integration (v2.0.0) 📱
+**Current Phase**: Niche Bookmarking (Phase 2) Complete ✅  
+**Next Phase**: Frontend UI for "Mes Niches" (Phase 3) 🚀  
+**Future Phase**: Advanced Analytics & Export Features 📱
+
+### ✅ **v1.6.1 - Niche Bookmarking Fully Validated (2025-09-05)**
+
+#### **📚 Niche Bookmarking System - PRODUCTION READY**
+- **💾 Save & Organize**: Bookmark promising niches with complete analysis parameters
+- **🔄 Relaunch Analysis**: One-click re-execution with preserved search criteria
+- **📋 Manage Collections**: List, update, delete saved niches with pagination
+- **🎯 Filter Preservation**: Keepa-compatible parameter storage (prices, BSR, categories)
+- **📊 Score Tracking**: Monitor niche evolution over time with score comparisons
+- **⚡ E2E Validated**: Complete workflow tested with real Keepa API (1200 tokens)
+
+#### **🚀 Niche Bookmarking Capabilities**
+- ✅ **Complete CRUD**: Create, read, update, delete saved niches via REST API
+- ✅ **Smart Storage**: JSONB format with 11+ parameters preserved perfectly
+- ✅ **Keepa Integration**: Real API validation - discovery → bookmark → relaunch working
+- ✅ **User Management**: Multi-user support with isolated niche collections
+- ✅ **Production Backend**: 11/11 unit tests + 6/6 integration tests passing
+- ✅ **Data Persistence**: PostgreSQL with flexible filter storage and metadata
+- ✅ **Compatibility Proven**: Price formats (centimes), BSR via csv[3], category IDs validated
+
+#### **🎯 User Workflow Enabled**
+1. **Discover** promising niches via NicheDiscoveryService analysis
+2. **Bookmark** interesting niches with "Sauvegarder cette niche" button  
+3. **Manage** saved niches in upcoming "Mes Niches" interface
+4. **Relaunch** analysis on bookmarked niches with identical parameters
+5. **Compare** score evolution to track market changes over time
 
 ### ✅ **v1.9.1-alpha - Architecture Refactor Major (2025-08-27)**
 

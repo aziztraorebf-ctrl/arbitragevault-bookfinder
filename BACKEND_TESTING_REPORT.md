@@ -12,16 +12,42 @@
 | Logging création batch | ✅ | Logger structuré avec timestamp et ID batch |
 | Test injection clé API | ✅ | Validation secrets Memex + service factory |
 
-### 📊 STATISTIQUES FINALES
+### 📊 STATISTIQUES FINALES (Mise à jour v1.6.1)
 
-- **Tests implémentés** : 14 tests (100% de succès)
-- **Temps d'exécution** : 4.39s pour suite complète
-- **Couverture fonctionnelle** : 5 services core + validation + logging
-- **Temps de développement** : ~60 minutes (vs 2-3 semaines humain)
+- **Tests core services** : 14 tests (100% de succès) - 4.39s
+- **Tests Niche Bookmarking** : 11 tests unitaires + 6 tests intégration (100% succès)  
+- **Tests intégration Keepa** : E2E workflow avec vraies données API validé
+- **Couverture totale** : 5 services core + BookmarkService + intégration Keepa
+- **Temps développement** : Phase 2 complète en ~3 sessions
 
 ### 🛠️ DÉTAILS TECHNIQUES IMPLÉMENTÉS
 
-#### 1. Fichier Principal : `tests/test_core_services.py`
+#### 1. Tests Niche Bookmarking System (NEW v1.6.1) ✅
+```python
+- Fichier: `tests/test_bookmark_service.py`
+- Tests unitaires: 11/11 passants (100% success rate)
+  ✅ test_create_niche_success - Création niche avec paramètres complets
+  ✅ test_create_niche_duplicate_name - Gestion erreur doublons (409 Conflict)  
+  ✅ test_get_niche_by_id - Récupération niche par ID
+  ✅ test_get_niche_not_found - Gestion niche inexistante (404)
+  ✅ test_list_niches_paginated - Pagination avec skip/limit
+  ✅ test_update_niche - Modification partielle avec NicheUpdateSchema
+  ✅ test_delete_niche - Suppression avec vérification existence
+  ✅ test_get_filters_for_analysis - Récupération filtres pour relance
+  ✅ test_database_rollback - Gestion erreurs avec rollback DB
+  ✅ test_schema_validation - Validation Pydantic V2 complète
+  ✅ test_jsonb_compatibility - Format JSONB PostgreSQL
+
+- Tests intégration E2E: 6/6 critères validés (100% success rate)  
+  ✅ API Keepa fonctionne (1200 tokens disponibles)
+  ✅ Données bien structurées (prix, BSR, catégories)
+  ✅ Sauvegarde réussie (mock corrigé, ID attribué)  
+  ✅ Filtres préservés (11+ paramètres stockés)
+  ✅ Relance possible (workflow complet)
+  ✅ Compatibilité Keepa (formats API respectés)
+```
+
+#### 2. Fichier Principal : `tests/test_core_services.py`
 ```python
 - TestStrategicViewsService (3 tests)
   ✅ Structure cohérente des vues

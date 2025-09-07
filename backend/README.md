@@ -1,8 +1,8 @@
 # ArbitrageVault FastAPI Backend - Quick Start
 
-Production-ready FastAPI backend for ArbitrageVault BookFinder with complete Keepa API integration.
+Production-ready FastAPI backend for ArbitrageVault BookFinder with complete Keepa API integration and Niche Bookmarking system.
 
-## 🚀 **Quick Start (v1.4.1-stable)**
+## 🚀 **Quick Start (v1.6.1 - Niche Bookmarking Validated)**
 
 ### **1. Environment Setup**
 ```bash
@@ -26,8 +26,26 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     -H "Content-Type: application/json" \
     -d '{"asin": "B08N5WRWNW"}'
   ```
+- **Test Niche Bookmarking**:
+  ```bash
+  # Save a promising niche
+  curl -X POST "http://localhost:8000/api/bookmarks/niches" \
+    -H "Content-Type: application/json" \
+    -d '{"niche_name": "Engineering Books", "category_id": 4142, "filters": {...}, "last_score": 7.7}'
+  
+  # List saved niches
+  curl "http://localhost:8000/api/bookmarks/niches?page=1&size=10"
+  ```
 
-## 📊 **Available Endpoints (v1.4.1-stable)**
+## 📊 **Available Endpoints (v1.6.1 - Production Ready)**
+
+### **🚀 Niche Bookmarking System - NEW v1.6.1**
+- ✅ `POST /api/bookmarks/niches` - Save discovered niche with analysis parameters
+- ✅ `GET /api/bookmarks/niches` - List user's bookmarked niches (paginated)
+- ✅ `GET /api/bookmarks/niches/{id}` - Get specific niche details
+- ✅ `PUT /api/bookmarks/niches/{id}` - Update saved niche
+- ✅ `DELETE /api/bookmarks/niches/{id}` - Delete saved niche
+- ✅ `GET /api/bookmarks/niches/{id}/filters` - Get filters for analysis relaunch
 
 ### **Keepa Integration - Production Ready**
 - ✅ `POST /api/v1/keepa/analyze` - Single product analysis

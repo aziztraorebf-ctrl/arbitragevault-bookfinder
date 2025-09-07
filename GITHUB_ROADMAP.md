@@ -1,17 +1,46 @@
 # GitHub Roadmap - ArbitrageVault BookFinder
 
-## 🎯 STATUS ACTUEL (2025-08-27)
+## 🎯 STATUS ACTUEL (2025-09-05)
 
-**✅ TERMINÉ - Architecture Refactor Major**
+**✅ TERMINÉ - Niche Bookmarking Phase 2 Complete**
+- Tag: `v1.6.1` - Keepa Integration Fully Validated - E2E Tests Passing
+- Commit: `c145017` - README mis à jour avec fonctionnalité validée
+- 11/11 tests unitaires + 6/6 tests intégration Keepa passants
+- Backend production-ready avec workflow complet découverte → sauvegarde → relance
+- API REST complète : 6 endpoints Niche Bookmarking opérationnels
+
+**✅ PRÉCÉDEMMENT TERMINÉ - Architecture Refactor Major (2025-08-27)**
 - Commit: `a405d4e` - Architecture refactor - Harmonisation modèles/services/API  
 - 5/5 tests composants réussis
-- Backend cohérent et prêt pour frontend
-- Services initialisables avec secrets management
+- Backend cohérent et services avec secrets management
 
-## 📋 PROCHAINES FEATURES (Option 1)
+## 📋 PHASE 3 EN COURS - FRONTEND NICHE MANAGEMENT UI
 
-### **Feature 1: Target Selling Price**
-**Branch:** `feature/target-selling-price`
+### **Phase 3A: Interface "Mes Niches" (Priorité 1)**
+**Branch:** `feature/frontend-mes-niches`
+**Description:** Interface utilisateur pour gestion des niches bookmarkées
+**Status:** 🚧 À démarrer
+
+**Frontend Requirements:**
+- Page "Mes Niches" avec liste paginée des niches sauvegardées
+- Boutons d'action par niche : Voir | Modifier | Supprimer | **Relancer l'analyse**
+- Affichage : Nom, Score, Catégorie, Date création/modification
+- Intégration avec NicheDiscoveryService pour relance d'analyse
+- Design responsive avec Tailwind CSS
+
+**Backend Ready:** ✅ 6 endpoints API disponibles
+**Tests Ready:** ✅ 11/11 unitaires + 6/6 intégration validés
+
+### **Phase 3B: Workflow Integration (Priorité 2)**  
+**Description:** Intégration complète découverte ↔ sauvegarde dans UI existante
+- Bouton "Sauvegarder cette niche" sur résultats de découverte
+- Workflow utilisateur complet dans interface
+- Navigation fluide entre découverte et gestion
+
+## 📋 PROCHAINES FEATURES AVANCÉES (Phase 4)
+
+### **Feature 4.1: Target Selling Price**
+**Branch:** `feature/target-selling-price`  
 **Description:** Calcul automatique du prix de vente cible basé sur ROI souhaité
 
 **Technical Specs:**

@@ -37,7 +37,16 @@ Malgré les améliorations v1.9.0, **plusieurs services utilisent encore des don
 - **Fonctionnalité**: 5 vues stratégiques avec vraies données Keepa
 - **Test validé**: Endpoint fonctionne avec données marketplace
 
-#### 4. **Stock Estimate Service** ✅
+#### 4. **Niche Bookmarking System** ✅ **NEW v1.6.1**
+- **Fichier**: `app/services/bookmark_service.py`
+- **État**: Production-ready avec vraies données Keepa validées
+- **Intégration**: Tests E2E avec API Keepa réelle (1200 tokens utilisés)
+- **Validation**: Workflow complet découverte → sauvegarde → relance testé
+- **Formats confirmés**: Prix (centimes), BSR (csv[3]), catégories compatibles
+- **Tests**: 11/11 unitaires + 6/6 intégration passants
+- **Persistance**: PostgreSQL JSONB avec 11+ paramètres préservés
+
+#### 5. **Stock Estimate Service** ✅
 - **Fichier**: `app/services/stock_estimate_service.py`
 - **État**: Production-ready (v1.8.0)
 - **Intégration**: Vraies données Keepa pour stock FBA

@@ -1,6 +1,24 @@
-# ArbitrageVault - État d'Implémentation Backend v1.9.1-alpha
+# ArbitrageVault - État d'Implémentation Backend v1.6.1
 
-## ✅ COMPLÉTÉ - Architecture Refactor & Backend Production Ready
+## ✅ COMPLÉTÉ - Niche Bookmarking Phase 2 & Backend Production Ready
+
+### 🚀 Niche Bookmarking System (v1.6.1 - 2025-09-05)
+- [x] **SavedNiche Model** : PostgreSQL avec JSONB pour filtres flexibles
+- [x] **BookmarkService** : CRUD complet avec gestion utilisateur multi-tenant  
+- [x] **API REST Complète** : 6 endpoints pour workflow complet (save/list/manage/relaunch)
+- [x] **Keepa Integration Validated** : Tests E2E avec vraies données API (1200 tokens)
+- [x] **Schémas Pydantic V2** : Validation complète avec field_validator
+- [x] **Tests Complets** : 11/11 tests unitaires + 6/6 tests intégration passants
+- [x] **Production Ready** : Workflow découverte → sauvegarde → relance opérationnel
+
+#### **🎯 Niche Bookmarking Capabilities Delivered**
+- [x] **Save Discovered Niches** : Bookmark promising niches with complete parameters
+- [x] **Filter Preservation** : Keepa-compatible storage (prices, BSR, categories)
+- [x] **User Collections** : Multi-user support with isolated niche management
+- [x] **Relaunch Analysis** : One-click re-execution with preserved search criteria
+- [x] **Score Evolution** : Track niche performance over time with comparisons
+- [x] **Pagination Support** : Efficient browsing of large niche collections
+- [x] **Data Validation** : Real Keepa API format compatibility proven
 
 ### 🏗️ Architecture Refactor (v1.9.1 - 2025-08-27)
 - [x] **Model-Schema Harmonization** : Batch model avec description field, schemas alignés

@@ -6,7 +6,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
-from ..core.database import get_db
+from ..core.db import get_db_session as get_db
 from ..core.auth import get_current_user_id
 from ..services.bookmark_service import BookmarkService
 from ..schemas.bookmark import (

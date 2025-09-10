@@ -1,132 +1,154 @@
-import { TrendingUp, BookOpen, Target, Activity } from 'lucide-react'
-
-const stats = [
-  {
-    title: "Opportunités trouvées",
-    value: "847",
-    change: "+12%",
-    changeType: "positive",
-    icon: BookOpen,
-    gradient: "from-primary-500 to-primary-600"
-  },
-  {
-    title: "Opportunité du jour",
-    value: "ROI 42%",
-    subtitle: "Analyse manuelle (CSV / ASIN)",
-    change: "00:06:02:05",
-    changeType: "neutral",
-    icon: Target,
-    gradient: "from-primary-400 to-accent-500"
-  },
-  {
-    title: "Score moyen",
-    value: "108982",
-    subtitle: "Score d'opportunités (CSV / ASIN)",
-    change: "09:11m:56s",
-    changeType: "positive",
-    icon: TrendingUp,
-    gradient: "from-success-500 to-success-600"
-  }
-]
+import { ArrowRight, BookOpen } from 'lucide-react'
 
 export default function Dashboard() {
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="gradient-bg rounded-2xl p-8 text-white">
-        <h2 className="text-3xl font-bold mb-2">Bienvenue sur ArbitrageVault</h2>
-        <p className="text-blue-100 text-lg">
-          Découvrez des opportunités d'arbitrage rentables avec notre plateforme d'analyse automatisée
-        </p>
+    <div className="space-y-8">
+      {/* KPI Stats avec Identité Couleur */}
+      <div className="quick-stats">
+        <div className="stat-item">
+          <div className="stat-number color-blue">847</div>
+          <div className="stat-label">Total Opportunités</div>
+          <div className="text-xs color-blue mt-1">📦 Découvertes brutes</div>
+        </div>
+        <div className="stat-item">
+          <div className="stat-number color-violet">42%</div>
+          <div className="stat-label">ROI Moyen</div>
+          <div className="text-xs color-violet mt-1">📊 Analyses calculées</div>
+        </div>
+        <div className="stat-item">
+          <div className="stat-number color-green">15</div>
+          <div className="stat-label">Niches Actives</div>
+          <div className="text-xs color-green mt-1">✅ Résultats validés</div>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon
-          return (
-            <div key={index} className="card p-6 hover:shadow-xl transition-shadow duration-200">
-              <div className={`w-16 h-16 bg-gradient-to-br ${stat.gradient} rounded-2xl flex items-center justify-center mb-4`}>
-                <Icon className="w-8 h-8 text-white" />
-              </div>
-              
-              <h3 className="text-gray-600 text-sm font-medium mb-1">{stat.title}</h3>
-              <div className="flex items-baseline justify-between mb-2">
-                <span className="text-2xl font-bold text-gray-900">{stat.value}</span>
-                <button className="p-2 hover:bg-gray-50 rounded-full transition-colors">
-                  <Activity className="w-4 h-4 text-gray-400" />
-                </button>
-              </div>
-              
-              {stat.subtitle && (
-                <p className="text-sm text-gray-500 mb-2">{stat.subtitle}</p>
-              )}
-              
-              <div className="flex items-center justify-between">
-                <span className={`text-sm font-medium ${
-                  stat.changeType === 'positive' ? 'text-success-600' : 
-                  stat.changeType === 'negative' ? 'text-red-600' : 
-                  'text-gray-500'
-                }`}>
-                  {stat.change}
-                </span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Analyse Manuelle Card */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Analyse manuelle</h3>
-            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-primary-600" />
-            </div>
+      {/* Stats Cards - Exact Mockup Match */}
+      <div className="dashboard-cards-grid">
+        {/* Card 1: Opportunités trouvées (Blue - Découvertes) */}
+        <div className="dashboard-card-blue">
+          <div>
+            <div className="text-4xl mb-4">📦</div>
+            <div className="typography-h2 text-white mb-2">Opportunités</div>
+            <div className="text-2xl font-bold text-white mb-2">ASI1 B85NG</div>
+            <div className="typography-body text-blue-100">Découvertes brutes</div>
           </div>
-          <p className="text-gray-600 mb-4">
-            Analysez vos produits en uploadant un fichier CSV ou en saisissant des ASINs manuellement.
-          </p>
-          <button className="btn-primary w-full">
-            Commencer l'analyse
+          <div className="typography-secondary text-blue-100 mt-auto">
+            Scan: 00:06:02:05
+          </div>
+          <button className="card-arrow-button">
+            <ArrowRight className="w-5 h-5" />
           </button>
         </div>
 
-        {/* AutoSourcing Card */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">AutoSourcing</h3>
-            <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
-              <Target className="w-5 h-5 text-success-600" />
+        {/* Card 2: Opportunité du jour (Violet - Analyses) */}
+        <div className="dashboard-card-purple">
+          <div>
+            <div className="text-4xl mb-4">📊</div>
+            <div className="typography-h2 text-white mb-2">Opportunité du jour</div>
+            <div className="typography-h3 text-purple-100 mb-4">
+              Analyse manuelle<br />
+              (CSV / ASIN)
             </div>
+            <div className="typography-body text-purple-100">Analyses & scores</div>
           </div>
-          <p className="text-gray-600 mb-4">
-            Découvrez automatiquement de nouvelles opportunités basées sur vos critères.
-          </p>
-          <button className="btn-success w-full">
-            Lancer une recherche
+          <div className="typography-secondary text-purple-100 mt-auto">
+            Dernière analyse: 00:06:02:05
+          </div>
+          <button className="card-arrow-button">
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Card 3: Score du jour (Vert - Validé) */}
+        <div className="dashboard-card-green">
+          <div>
+            <div className="text-4xl mb-4">✅</div>
+            <div className="typography-h2 text-white mb-2">108982 du jour</div>
+            <div className="typography-h3 text-green-100 mb-4">
+              Score d'opportunités<br />
+              (CSV / ASIN)
+            </div>
+            <div className="typography-body text-green-100">Résultats validés</div>
+          </div>
+          <div className="typography-secondary text-green-100 mt-auto">
+            Validation: 09:11m:56s
+          </div>
+          <button className="card-arrow-button">
+            <ArrowRight className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="card p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Activité récente</h3>
-        <div className="space-y-4">
+      {/* Profile Section */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="typography-body">
+          Profil actif : <span className="font-semibold color-violet">Conservative</span>
+        </div>
+        <div className="typography-secondary">
+          Dernier scan : -24 jours / 10:12
+        </div>
+      </div>
+
+      {/* Activité Récente - Full Width + Optimized */}
+      <div className="card p-8">
+        <h2 className="typography-h2 mb-6">Activité Récente</h2>
+        <div className="space-y-1">
           {[
-            { action: "Analyse terminée", details: "47 produits analysés - ROI moyen: 35%", time: "Il y a 2h" },
-            { action: "Nouvelle niche découverte", details: "Engineering & Transportation - Score: 89", time: "Il y a 4h" },
-            { action: "AutoScheduler activé", details: "Prochaine exécution: 15:00", time: "Il y a 6h" }
+            { 
+              action: "Analyse terminée", 
+              details: "47 produits analysés - ROI moyen: 35%", 
+              time: "Il y a 2h",
+              color: "green",
+              icon: "✅"
+            },
+            { 
+              action: "Nouvelle niche découverte", 
+              details: "Engineering & Transportation - Score: 89", 
+              time: "Il y a 4h",
+              color: "blue", 
+              icon: "📦"
+            },
+            { 
+              action: "AutoScheduler activé", 
+              details: "Prochaine exécution: 15:00", 
+              time: "Il y a 6h",
+              color: "orange",
+              icon: "⚙️"
+            },
+            { 
+              action: "Opportunité à fort ROI", 
+              details: "B08N5WRWNW - ROI estimé: 58%", 
+              time: "Il y a 8h",
+              color: "green",
+              icon: "✅"
+            },
+            { 
+              action: "Stock vérifié", 
+              details: "15 produits - Disponibilité confirmée", 
+              time: "Il y a 10h",
+              color: "blue",
+              icon: "📦"
+            },
+            { 
+              action: "Niche bookmark ajoutée", 
+              details: "Health & Personal Care sauvegardée", 
+              time: "Il y a 12h",
+              color: "violet",
+              icon: "📊"
+            }
           ].map((item, index) => (
-            <div key={index} className="flex items-start space-x-4 p-3 hover:bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-primary-500 rounded-full mt-2"></div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">{item.action}</p>
-                <p className="text-sm text-gray-600">{item.details}</p>
+            <div key={index}>
+              <div className="flex items-start space-x-4 p-4 hover:bg-gray-50 rounded-xl transition-colors">
+                <div className="text-lg mt-1">{item.icon}</div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className="typography-h3" style={{fontWeight: 600, color: '#111827'}}>{item.action}</h3>
+                    <span className="typography-secondary">{item.time}</span>
+                  </div>
+                  <p className="typography-body mt-1">{item.details}</p>
+                </div>
               </div>
-              <span className="text-xs text-gray-500">{item.time}</span>
+              {index < 5 && <div className="border-t border-gray-100 ml-12"></div>}
             </div>
           ))}
         </div>

@@ -1,0 +1,11 @@
+{
+  "identifiers": [
+    "B00FLIJJSA",
+    "B01MXY6GEF", 
+    "B00A4DQZH4"
+  ],
+  "batch_id": "test-batch-001",
+  "config_profile": "default",
+  "force_refresh": false,
+  "async_threshold": 100
+}

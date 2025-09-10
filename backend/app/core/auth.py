@@ -202,3 +202,10 @@ async def get_current_user_optional(
         return await get_current_user(token, db)
     except HTTPException:
         return None
+
+
+async def get_current_user_id(
+    current_user: CurrentUser = Depends(get_current_user),
+) -> str:
+    """Get current authenticated user ID."""
+    return current_user.id

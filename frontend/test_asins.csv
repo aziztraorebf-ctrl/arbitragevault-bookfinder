@@ -1,0 +1,5 @@
+ASIN,Title,BuyPrice,Source,Notes
+B00FLIJJSA,The Mirrored Heavens,2.99,eBay,Fantasy book
+B01MXY6GEF,Clean Code,15.50,Amazon,Programming guide
+B00A4DQZH4,Design Patterns,12.00,Local Store,Technical book
+B0000INVALD,Invalid ASIN,5.00,Test,Should fail validation

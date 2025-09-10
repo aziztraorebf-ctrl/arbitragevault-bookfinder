@@ -58,3 +58,32 @@ export interface UploadProgress {
   total: number
   percentage: number
 }
+
+// Manual Analysis Types
+export interface UploadedCSVData {
+  headers: string[]
+  rows: Record<string, string>[]
+  fileName: string
+  totalRows: number
+  asinColumnIndex?: number
+}
+
+export interface ValidationResult {
+  isValid: boolean
+  validASINs: string[]
+  invalidASINs: string[]
+  errors: string[]
+}
+
+export interface AnalysisInput {
+  asins: string[]
+  source: 'csv' | 'manual'
+  csvData?: UploadedCSVData
+  strategy?: string
+}
+
+export interface AnalysisStep {
+  step: 'upload' | 'criteria' | 'progress' | 'results' | 'export'
+  title: string
+  completed: boolean
+}

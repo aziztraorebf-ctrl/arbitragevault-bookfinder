@@ -1,0 +1,6 @@
+ASIN,Title,BuyPrice,Source,Notes
+B00FLIJJSA,Test Book 1,5.99,eBay,Should pass Velocity
+B01MXY6GEF,Test Book 2,12.50,Amazon,Should pass Balanced
+B00A4DQZH4,Test Book 3,25.00,Local,Should pass Profit Hunter
+B007ZRT506,Test Book 4,8.75,Online,Mixed results expected
+B08N5WRWNW,Test Book 5,15.25,Marketplace,Premium pricing

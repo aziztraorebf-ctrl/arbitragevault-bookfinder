@@ -1,15 +1,17 @@
 import React, { useState } from 'react'
 import { ChevronRight, Upload, Settings, BarChart3, FileOutput, Play } from 'lucide-react'
 import UploadSection from './UploadSection'
-import type { AnalysisStep, AnalysisInput } from '../../types'
+import CriteriaConfig from './CriteriaConfig'
+import type { AnalysisStep, AnalysisInput, ConfiguredAnalysis } from '../../types'
 
 const ManualAnalysis: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'upload' | 'criteria' | 'progress' | 'results' | 'export'>('upload')
   const [analysisData, setAnalysisData] = useState<AnalysisInput | null>(null)
+  const [configuredAnalysis, setConfiguredAnalysis] = useState<ConfiguredAnalysis | null>(null)
 
   const steps: AnalysisStep[] = [
     { step: 'upload', title: 'Upload & Validation', completed: !!analysisData },
-    { step: 'criteria', title: 'Configuration Critères', completed: false },
+    { step: 'criteria', title: 'Configuration Critères', completed: !!configuredAnalysis },
     { step: 'progress', title: 'Analyse en Cours', completed: false },
     { step: 'results', title: 'Résultats & Vues', completed: false },
     { step: 'export', title: 'Export & Actions', completed: false },
@@ -17,9 +19,15 @@ const ManualAnalysis: React.FC = () => {
 
   const handleDataUploaded = (data: AnalysisInput) => {
     setAnalysisData(data)
+    setCurrentStep('criteria') // Auto-advance to criteria step
     console.log('Analysis data uploaded:', data)
-    // TODO: Auto-advance to criteria step
-    // setCurrentStep('criteria')
+  }
+
+  const handleConfigComplete = (configured: ConfiguredAnalysis) => {
+    setConfiguredAnalysis(configured)
+    console.log('Configuration completed:', configured)
+    // TODO: Auto-advance to progress step
+    // setCurrentStep('progress')
   }
 
   const getStepIcon = (step: string) => {
@@ -38,10 +46,15 @@ const ManualAnalysis: React.FC = () => {
       case 'upload':
         return <UploadSection onDataUploaded={handleDataUploaded} />
       case 'criteria':
-        return (
+        return analysisData ? (
+          <CriteriaConfig 
+            analysisInput={analysisData}
+            onConfigComplete={handleConfigComplete}
+          />
+        ) : (
           <div className="bg-white rounded-lg shadow-sm border p-8 text-center text-gray-500">
             <Settings className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Configuration Critères - À implémenter</p>
+            <p>Veuillez d'abord compléter l'étape Upload</p>
           </div>
         )
       case 'progress':
@@ -91,7 +104,9 @@ const ManualAnalysis: React.FC = () => {
                 const Icon = getStepIcon(step.step)
                 const isActive = currentStep === step.step
                 const isCompleted = step.completed
-                const isClickable = step.step === 'upload' || (index > 0 && steps[index - 1].completed)
+                const isClickable = step.step === 'upload' || 
+                                   (step.step === 'criteria' && analysisData) ||
+                                   (index > 0 && steps[index - 1].completed)
 
                 return (
                   <div key={step.step} className="flex items-center">
@@ -142,12 +157,31 @@ const ManualAnalysis: React.FC = () => {
         </div>
 
         {/* Debug Info (Development Only) */}
-        {process.env.NODE_ENV === 'development' && analysisData && (
+        {process.env.NODE_ENV === 'development' && (analysisData || configuredAnalysis) && (
           <div className="mt-8 p-4 bg-gray-100 rounded border text-xs">
-            <strong>Debug - Données actuelles:</strong>
-            <pre className="mt-2 overflow-x-auto">
-              {JSON.stringify(analysisData, null, 2)}
-            </pre>
+            <strong>Debug - État actuel:</strong>
+            <div className="mt-2 space-y-2">
+              {analysisData && (
+                <div>
+                  <strong>Step 1 - Upload Data:</strong>
+                  <pre className="overflow-x-auto bg-white p-2 rounded mt-1">
+                    {JSON.stringify({ asins: analysisData.asins.length, source: analysisData.source }, null, 2)}
+                  </pre>
+                </div>
+              )}
+              {configuredAnalysis && (
+                <div>
+                  <strong>Step 2 - Configuration:</strong>
+                  <pre className="overflow-x-auto bg-white p-2 rounded mt-1">
+                    {JSON.stringify({ 
+                      strategy: configuredAnalysis.strategy.name,
+                      criteria: configuredAnalysis.strategy.criteria,
+                      customMode: configuredAnalysis.strategy.id === 'custom'
+                    }, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

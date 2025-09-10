@@ -87,3 +87,27 @@ export interface AnalysisStep {
   title: string
   completed: boolean
 }
+
+// Analysis Criteria Types
+export interface AnalysisCriteria {
+  roiMin: number        // Percentage (20 = 20%)
+  bsrMax: number        // Number (250000 = 250k)
+  minSalesPerMonth: number  // Number (10 = 10+ sales/month)
+}
+
+export interface AnalysisStrategy {
+  id: 'velocity' | 'balanced' | 'profit-hunter' | 'custom'
+  name: string
+  description: string
+  criteria: AnalysisCriteria
+  color: string
+  icon: string
+}
+
+export interface ConfiguredAnalysis {
+  asins: string[]
+  source: 'csv' | 'manual'
+  csvData?: UploadedCSVData
+  strategy: AnalysisStrategy
+  customCriteria?: AnalysisCriteria
+}

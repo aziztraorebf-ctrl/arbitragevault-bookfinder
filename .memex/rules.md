@@ -1,195 +1,275 @@
 # ArbitrageVault - Règles et Spécifications Projet
 
-## Résumé Complet de la Session de Développement
+## Frontend Development Phase - Complete System Architecture
 
-### Contexte Initial
-Nous avions un projet ArbitrageVault avec les fonctionnalités de base :
-- **Niche Discovery Service** (v1.5.0) : Système de découverte de niches de marché
-- **Intégration Keepa** : Service validé avec vraies données API
-- **Architecture backend** : FastAPI + PostgreSQL solide et testée
+### Contexte Actuel
+**Backend Status:** v1.6.1 - Production ready avec toutes les fonctionnalités core implémentées
+**Frontend Phase:** Démarrage développement interface utilisateur complète
+**Approche:** BUILD-TEST-VALIDATE avec développement local + deploy tests périodiques sur Render
 
-### Nouvelle Fonctionnalité Développée : Niche Bookmarking (Phase 2)
+### Architecture Backend Complète (Validée)
 
-#### Objectif
-Permettre aux utilisateurs de sauvegarder les niches découvertes prometteuses pour les réutiliser plus tard via la fonctionnalité "Relancer l'analyse".
+#### Modules Fonctionnels Implémentés
+1. **Niche Discovery Service (v1.6.1)**
+   - Découverte automatique de niches rentables via analyse Keepa
+   - Scoring intelligent avec métriques (BSR, marge, concurrence, stabilité)
+   - APIs: `/api/niche-discovery/analyze`, `/api/niche-discovery/categories`
+   - Export vers CSV et AutoSourcing
 
-#### Ce Qui a Été Construit (BUILD)
-1. **Modèle SavedNiche** (`backend/app/models/bookmark.py`)
-   - Structure PostgreSQL avec JSONB pour stocker les filtres flexibles
-   - Champs : niche_name, category_id, filters, last_score, description, user_id
-   - Relations avec utilisateurs et métadonnées de découverte
+2. **Niche Bookmarking System (v1.6.1)** 
+   - Sauvegarde niches prometteuses avec paramètres complets
+   - CRUD complet avec pagination et gestion utilisateur
+   - APIs: `/api/bookmarks/niches/*` (6 endpoints)
+   - Workflow: Découverte → Bookmark → "Mes Niches" → Relance analyse
 
-2. **Schémas Pydantic V2** (`backend/app/schemas/bookmark.py`)
-   - NicheCreateSchema : Création de niches sauvegardées
-   - NicheReadSchema : Lecture avec métadonnées complètes
-   - NicheUpdateSchema : Mise à jour partielle
-   - NicheListResponseSchema : Pagination des résultats
-   - Validation avec @field_validator (migration V1 → V2)
+3. **AutoScheduler Module (v1.7.0)**
+   - Automation programmée (8h/15h/20h) avec contrôle temps réel
+   - APIs: 8 endpoints de contrôle et monitoring
+   - Configuration JSON dynamique, métriques performance
 
-3. **BookmarkService** (`backend/app/services/bookmark_service.py`)
-   - CRUD complet : create, read, update, delete, list avec pagination
-   - Gestion des duplicatas (409 Conflict)
-   - Récupération des filtres pour "Relancer l'analyse"
-   - Gestion d'erreurs robuste avec rollback DB
+4. **AutoSourcing Discovery (v1.6.0)**
+   - Discovery automatique produits avec Keepa Product Finder
+   - 13 endpoints, profiles système, action workflow (Buy/Favorite/Ignore)
+   - "Opportunity of the Day" avec prioritisation intelligente
 
-4. **Routes API** (`backend/app/routers/bookmarks.py`)
-   - `POST /api/bookmarks/niches` : Sauvegarder une niche
-   - `GET /api/bookmarks/niches` : Lister avec pagination
-   - `GET /api/bookmarks/niches/{id}` : Détails d'une niche
-   - `PUT /api/bookmarks/niches/{id}` : Mettre à jour
-   - `DELETE /api/bookmarks/niches/{id}` : Supprimer
-   - `GET /api/bookmarks/niches/{id}/filters` : Récupérer filtres pour relance
+5. **Stock Estimate Module (v1.8.0)**
+   - Évaluation stock en 2 secondes avec price-targeted analysis
+   - Smart caching 24h TTL, 3 endpoints
 
-5. **Intégration dans l'application principale**
-   - Ajout du routeur dans `main.py`
-   - Mise à jour des imports dans `models/__init__.py`
+6. **Strategic Views Service (v1.9.1)**
+   - 5 vues stratégiques: Profit Hunter, Velocity, Cashflow Hunter, Balanced Score, Volume Player
+   - Advanced scoring 6 dimensions (0-100 scale)
 
-#### Tests Implémentés (TEST)
-1. **Tests Unitaires Complets** (`backend/app/tests/test_bookmark_service.py`)
-   - 11/11 tests passants
-   - Couverture CRUD complète avec mocks appropriés
-   - Tests de validation et gestion d'erreurs
-   - Correction des patterns Pydantic V2
+7. **Analyse Manuelle (Core)**
+   - Upload CSV ou saisie ASINs manuels
+   - Multi-strategy analysis avec critères personnalisables
+   - APIs: `/api/v1/keepa/analyze`, `/api/v1/keepa/batch-analyze`
 
-2. **Tests avec Données Réalistes**
-   - Script de validation avec structures Keepa officielles
-   - Test workflow complet découverte → sauvegarde → récupération
-   - Validation compatibilité paramètres API Keepa
+### Stack Technique Frontend (Décidé)
 
-#### Approche de Validation (VALIDATE)
+#### Technologies Core
+- **Framework:** React + TypeScript + Vite
+- **Styling:** Tailwind CSS (Light Modern Professional theme)
+- **State Management:** @tanstack/react-query + React hooks
+- **Icons:** Lucide React (pas d'images de couvertures livres)
+- **Charts:** Recharts pour visualisations
+- **Animations:** Framer Motion
+- **Déploiement:** Render (full-stack avec backend)
 
-**Décision Stratégique Critique :**
-Suite à votre excellente recommandation, nous avons consulté la documentation officielle Keepa AVANT de finaliser l'implémentation. Cette approche a confirmé que nos structures étaient déjà alignées avec les vraies données API :
-
-- **Prix en centimes** : Division par 100 validée ✅
-- **BSR via csv[3]** : Extraction SALES validée ✅  
-- **Format paires temps/valeur** : Iteration correcte validée ✅
-- **Filtres Keepa** : Compatibilité product_finder confirmée ✅
-
-Cette validation précoce nous a évité les pièges rencontrés précédemment avec AmazonFilterService (27/27 tests unitaires passants avec mocks, mais échec avec vraies données).
-
-### Workflow Utilisateur Final Implémenté
-1. **Découverte** → L'utilisateur analyse des niches via NicheDiscoveryService
-2. **Sauvegarde** → Bookmark des niches prometteuses avec bouton "Sauvegarder cette niche"  
-3. **Gestion** → Page "Mes Niches" avec liste paginée (Nom, Score, Catégorie, Date, Actions)
-4. **Relance** → Bouton "Relancer l'analyse" qui restaure automatiquement tous les paramètres sauvegardés
-
-### Commits Réalisés
-1. **Commit principal** (5a47d6b) : `feat: implement Niche Bookmarking (Phase 2) with Keepa integration`
-   - 15 fichiers modifiés, 1930+ lignes ajoutées
-   - Fonctionnalité complète avec validation E2E
-
-2. **Commit nettoyage** (1452ccb) : `chore: clean up temporary test files`
-   - Suppression des fichiers de test temporaires
-   - Conservation des tests permanents en production
-
-### État Actuel - Tests d'Intégration Keepa
-
-**Où nous en sommes :**
-- ✅ Backend complet et testé (11/11 tests unitaires)
-- ✅ Structures de données alignées avec API Keepa officielle
-- ✅ Commits propres sur main branch (approche pragmatique validée)
-- 🔄 **EN COURS** : Tests d'intégration avec vraies clés API Keepa
-
-**Tests d'intégration en cours d'exécution :**
-- Connectivité de base Keepa API : ✅ VALIDÉE (1200 tokens disponibles, API healthy)
-- Test requête produit simple : 🔄 En cours d'exécution
-- Test workflow complet découverte → sauvegarde → relance : En attente
-
-## Prochaines Étapes Claires
-
-### 1. IMMÉDIAT - Finaliser Tests d'Intégration Keepa
-**Action :** Compléter l'exécution du test `test_simple_keepa_connectivity.py` qui est actuellement en cours
-- Vérifier que la requête produit simple fonctionne
-- Lancer le test complet `test_keepa_integration_bookmarks.py` 
-- Résoudre tout problème d'intégration trouvé
-
-### 2. COURT TERME - Tests d'Intégration Complets
-**Action :** Valider le workflow E2E avec vraies données
-- Test découverte de niches avec critères réalistes  
-- Test sauvegarde via BookmarkService
-- Test récupération et relance d'analyse
-- Validation compatibilité filtres ↔ paramètres Keepa
-
-### 3. MOYEN TERME - Développement Frontend (Phase 3)
-**Action :** Interface utilisateur pour la gestion des niches bookmarkées
-- Page "Mes Niches" avec liste paginée
-- Boutons d'action (Voir, Modifier, Supprimer, Relancer)
-- Intégration avec le système de découverte existant
-- Tests frontend complets
-
-### 4. LONG TERME - Fonctionnalités Avancées
-**Options selon priorités business :**
-- **Gated Products Checker** : Vérification restrictions vendeur Amazon
-- **Export avancé** : Integration Google Sheets pour niches sauvegardées
-- **Analytics niches** : Tracking performance des niches dans le temps
-- **Alertes automatiques** : Notification changements marché sur niches sauvées
-
-## Architecture Technique Validée
-
-### Stack Technologique
-- **Backend** : FastAPI + PostgreSQL + SQLAlchemy
-- **Frontend** : React + TypeScript + Tailwind CSS  
-- **Intégrations** : Keepa API, OpenAI API, Google Sheets API
-- **Déploiement** : Docker + Docker Compose
-
-### Modèle de Développement BUILD-TEST-VALIDATE ✅ VALIDÉ
-
-**Principe fondamental appliqué avec succès :**
-
-1. **BUILD** : Validation avec documentation officielle Keepa avant implémentation
-2. **TEST** : 11/11 tests unitaires + tests avec données réalistes
-3. **VALIDATE** : Tests d'intégration avec vraies clés API en cours
-
-### Conventions de Développement Établies
-
-#### Gestion Git et Proactivité
-- **Workflow main branch** : Approche pragmatique validée pour features complètes
-- **Commits descriptifs** : Format standardisé avec signature Memex
-- **Proactivité** : Proposer actions Git après milestones importantes
-
-#### Conventions Code
-- **Python** : snake_case, async/await patterns, Pydantic V2
-- **Gestion des secrets** : Keyring avec variations de noms
-- **Tests** : Jamais de mocks seuls, toujours compléter par vraies données
-
-## Variables d'Environnement Requises
-
-```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/arbitragevault
-
-# APIs (récupérées via Memex secrets)
-KEEPA_API_KEY=your_keepa_api_key  # ✅ VALIDÉE
-OPENAI_API_KEY=your_openai_api_key
-
-# Application
-SECRET_KEY=your_jwt_secret_key
-DEBUG=false
-ENVIRONMENT=production
+#### Configuration Deployment-Ready
+```yaml
+# render.yaml structure validée
+services:
+  - frontend (Node.js + Vite)
+  - backend (Python + FastAPI)
+  - database (PostgreSQL)
 ```
 
-## Intégration API Keepa - Patterns Validés
-
-### Service KeepaService (Méthodes Confirmées)
-```python
-# Initialisation avec clé API requise
-keepa_service = KeepaService(api_key=keepa_key)
-
-# Méthodes disponibles :
-health = await keepa_service.health_check()  # ✅ TESTÉE
-product = await keepa_service.get_product_data(asin)  # 🔄 EN TEST  
-asins = await keepa_service.find_products(search_criteria)
+#### Environment Management Pattern
+```typescript
+// Configuration automatique local ↔ production
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 ```
 
-### Structures de Données Keepa (Validées avec Documentation Officielle)
-- **Prix** : Stockés en centimes, division par 100 requise
-- **BSR** : Extrait via `csv[3]` (champ SALES)
-- **Format temporal** : Paires `[keepa_time, value]` dans les arrays CSV
-- **Disponibilité Amazon** : Via `availabilityAmazon`, `csv` arrays, `buyBoxSellerIdHistory`
+### Stratégie Développement Hybride
+
+#### Approche Validée : Local Development + Render Deploy Tests
+- **90% Local Development:** Développement quotidien sur localhost (performance max)
+- **10% Deploy Tests:** Tests périodiques sur Render (validation production)
+- **Séquence:** Week 1-2 local → Deploy test → Week 3-4 local → Deploy test → etc.
+
+#### Workflow Développement
+```bash
+# Daily (Local)
+npm run dev  # Frontend localhost:5173
+uvicorn app.main:app --reload  # Backend localhost:8000
+
+# Weekly (Render Test)
+npm run build && git push origin main
+# Test production URL → Noter issues → Continue local
+```
+
+### Architecture Frontend (Structure Complète)
+
+#### Navigation Principale
+```
+🏠 Dashboard (Hub central)
+├── 📋 Analyse Manuelle      ← Upload CSV/ASINs (PRIORITÉ 1)
+├── 🔍 Niche Discovery       ← Découverte automatique niches
+├── 📚 Mes Niches           ← Bookmarking & gestion
+├── 🤖 AutoScheduler        ← Contrôle automation
+├── 📊 AutoSourcing         ← Résultats discovery
+├── 📈 Analyse Stratégique  ← 5 vues stratégiques
+├── 📦 Stock Estimates      ← Vérification disponibilité
+└── ⚙️ Configuration       ← Paramètres système
+```
+
+#### Composants Architecture
+```
+src/components/
+├── Dashboard/              # Hub central + navigation
+├── ManualAnalysis/         # Upload CSV/ASINs + critères
+├── NicheDiscovery/         # Configuration + résultats discovery
+├── NicheBookmarking/       # "Mes Niches" + CRUD operations
+├── AutoScheduler/          # Control center automation
+├── AutoSourcing/           # Résultats produits + actions
+├── StrategicAnalysis/      # 5 vues (Profit/Velocity/etc.)
+├── StockEstimate/          # Validation disponibilité
+└── Common/                 # Composants partagés
+```
+
+### Workflow Utilisateur Complet (Validé)
+
+#### Flow Principal: Analyse → Découverte → Sauvegarde → Automation → Exploitation
+1. **Analyse Manuelle:** Upload CSV/ASINs → Validation directe ROI
+2. **Niche Discovery:** Découverte automatique niches rentables
+3. **Bookmarking:** Sauvegarde niches avec paramètres complets
+4. **AutoScheduler:** Automation programmée sur niches sauvées
+5. **AutoSourcing:** Exploitation résultats avec actions (Buy/Favorite)
+6. **Strategic Views:** Analyse multi-dimensionnelle (5 vues)
+7. **Stock Estimate:** Validation scalabilité opportunités
+
+#### Profils Utilisateurs Types
+- **Débutant (Sarah):** 20h/semaine → Analyse manuelle + quelques niches
+- **Expérimenté (Marc):** 40h/semaine → Pipeline automatisé 400+ ASINs/semaine
+- **Équipe (Julie):** Industriel → 1000+ ASINs/semaine, 47 niches sous surveillance
+
+### Design System (Icon-Based)
+
+#### Décision Critique: Pas d'Images Couvertures Livres
+- **Problème:** Complexité APIs images (Amazon/Open Library)
+- **Solution:** Interface icon-based avec Lucide React
+- **Avantage:** Développement 3x plus rapide, performance max, look professionnel
+
+#### Theme: Light Modern Professional
+- **Couleurs:** Fond blanc #ffffff, cartes blanches avec shadows, gradients bleu/violet
+- **Palette:** Primary #3B82F6 (blue), Success #10B981 (green), Accent #8B5CF6 (violet)
+- **Typography:** Inter font, texte sombre pour lisibilité
+- **Layout:** Cards blanches shadow-lg, backgrounds colorés, tables responsive
+- **Animations:** Subtle micro-interactions, hover effects modernes
+- **Style:** Clean, accessible, business-focused avec touches colorées
+
+### Séquence Développement (Finalisée)
+
+#### Phase 1: Analyse Manuelle (Week 1-2) - PRIORITÉ
+- Upload CSV/ASINs avec drag & drop
+- Configuration stratégies + critères personnalisables  
+- Progress tracking + résultats multi-vues
+- Export fonctionnel + validation stock
+
+#### Phase 2: Niche Discovery (Week 3-4)
+- Interface configuration critères discovery
+- Sélection catégories Keepa + progression temps réel
+- Résultats scorés + actions sauvegarde
+
+#### Phase 3: Niche Bookmarking (Week 5-6)
+- "Mes Niches" avec CRUD complet + pagination
+- Modal "Relancer analyse" avec paramètres restaurés
+- Suivi évolution scores dans le temps
+
+#### Phase 4: AutoScheduler Control (Week 7-8)
+- Dashboard contrôle avec enable/disable temps réel
+- Configuration horaires + skip dates
+- Métriques performance + logs système
+
+#### Phase 5: AutoSourcing Results (Week 9-10)
+- Interface résultats avec filtres avancés
+- Actions par produit (Buy/Favorite/Ignore/Analyze)
+- "Opportunity of the Day" + management
+
+#### Phase 6: Strategic Analysis (Week 11-12)
+- 5 vues stratégiques complètes avec toggle
+- Breakdown scoring détaillé par dimension
+- Export par vue + comparaisons
+
+### API Integration Patterns
+
+#### Backend Connections (Par Module)
+```typescript
+// Analyse Manuelle
+POST /api/v1/keepa/batch-analyze
+POST /api/v1/strategic-views/analyze
+
+// Niche Discovery  
+POST /api/niche-discovery/analyze
+GET /api/niche-discovery/categories
+
+// Bookmarking
+POST /api/bookmarks/niches
+GET /api/bookmarks/niches
+GET /api/bookmarks/niches/{id}/filters
+
+// AutoScheduler
+GET/POST /api/v1/autoscheduler/*
+
+// AutoSourcing
+GET /api/v1/autosourcing/latest
+POST /api/v1/autosourcing/run-custom
+
+// Stock Estimate
+GET /api/v1/products/{asin}/stock-estimate
+```
+
+### Conventions Code Frontend
+
+#### Structure Composants
+- **Taille max:** <50 lignes par composant
+- **Pattern:** Un fichier par composant majeur
+- **Types:** Interfaces TypeScript pour toutes props
+- **State:** React Query pour server state, useState pour local
+
+#### Error Handling
+- **Toast notifications** pour feedback utilisateur
+- **Error boundaries** pour composants critiques  
+- **Fallback UI** pour états de chargement
+- **Retry logic** pour appels API
+
+#### Testing Strategy
+- **Unit tests** pour logique critique
+- **Integration tests** pour workflows complets
+- **E2E validation** avant chaque deploy test
+
+### Déploiement Render (Production)
+
+#### Configuration Validée
+- **Auto-deploy** via GitHub push
+- **Environment variables** automatiques via fromService
+- **Database** PostgreSQL managée incluse
+- **Scaling** automatique pour pics de charge
+- **Monitoring** health checks intégrés
+
+#### Performance Targets
+- **Single Analysis:** <2s response time
+- **Batch Processing:** 50 produits <30s
+- **UI Responsiveness:** <100ms interactions
+- **Build Time:** <3 minutes deploy complet
+
+### Secrets Management
+
+#### Pattern Established
+- **Keyring usage:** KEEPA_API_KEY via Memex secrets
+- **Variations:** ALL_CAPS, lowercase, mixed case testing
+- **Security:** Jamais d'affichage secrets dans logs/output
+- **Validation:** Format verification avant usage
+
+### Business Logic Integration
+
+#### Data Flows Validés
+- **Prix:** Division par 100 (centimes → euros)
+- **BSR:** Extraction via csv[3] (champ SALES)  
+- **Categories:** IDs Keepa standards (4142 = Engineering)
+- **Scoring:** Échelle 0-100 normalisée sur 6 dimensions
+
+### Version Control Patterns
+
+#### Commit Strategy
+- **Atomic commits** par fonctionnalité
+- **Messages descriptifs** avec contexte business
+- **Signature Memex:** "Generated with [Memex](https://memex.tech)"
+- **Branching:** Direct main pour features complètes (approche pragmatique)
 
 ---
 
-**Dernière mise à jour** : 4 septembre 2025 (Session complète de développement Niche Bookmarking)
-**Version** : v1.6.0 - Niche Bookmarking complet, tests d'intégration Keepa en cours  
-**Prochaine milestone** : Validation intégration API + développement frontend
+**Dernière mise à jour:** 9 janvier 2025 - Design System mis à jour vers Light Theme moderne
+**Status:** Backend v1.6.1 production ready, Frontend Phase 1 ready to start
+**Prochaine étape:** Lancement développement Phase 1 (Analyse Manuelle)

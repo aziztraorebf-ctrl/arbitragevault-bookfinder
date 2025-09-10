@@ -1,0 +1,7 @@
+ASIN,Title,BuyPrice,Source,Notes
+B00FLIJJSA,Valid Book 1,5.99,eBay,This is valid
+B01MXY6GEF,Valid Book 2,12.50,Amazon,This is valid
+INVALID123,Invalid ASIN 1,8.75,Test,This should fail
+B007ZRT506,Valid Book 3,15.25,Local,This is valid
+123456789,Invalid ASIN 2,20.00,Test,This should fail
+B08N5WRWNW,Valid Book 4,25.00,Online,This is valid

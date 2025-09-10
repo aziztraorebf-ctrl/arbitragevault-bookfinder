@@ -36,19 +36,22 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onDataUploaded }) => {
       }
     })
 
-    // Generate error messages
-    if (invalidASINs.length > 0) {
-      errors.push(`${invalidASINs.length} ASIN(s) invalide(s) détecté(s)`)
-    }
+    // Generate error/warning messages
     if (validASINs.length === 0) {
       errors.push('Aucun ASIN valide trouvé')
     }
     if (validASINs.length > 200) {
       errors.push(`Limite dépassée: ${validASINs.length} ASINs (max 200)`)
     }
+    if (invalidASINs.length > 0 && validASINs.length > 0) {
+      errors.push(`${invalidASINs.length} ASIN(s) invalide(s) seront ignoré(s) - Continuer avec ${validASINs.length} ASIN(s) valide(s)`)
+    }
+    if (invalidASINs.length > 0 && validASINs.length === 0) {
+      errors.push(`${invalidASINs.length} ASIN(s) invalide(s) détecté(s) - Aucun ASIN valide`)
+    }
 
     return {
-      isValid: validASINs.length > 0 && validASINs.length <= 200 && invalidASINs.length === 0,
+      isValid: validASINs.length > 0 && validASINs.length <= 200,  // Permet continuation même avec ASINs invalides
       validASINs,
       invalidASINs,
       errors
@@ -377,20 +380,43 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onDataUploaded }) => {
               <div className={`
                 flex items-start p-4 rounded-lg
                 ${validationResult.isValid 
-                  ? 'bg-green-50 border border-green-200' 
-                  : 'bg-red-50 border border-red-200'
+                  ? validationResult.invalidASINs.length > 0
+                    ? 'bg-yellow-50 border border-yellow-200'  // Warning: valides + invalides
+                    : 'bg-green-50 border border-green-200'    // Success: tous valides
+                  : 'bg-red-50 border border-red-200'          // Error: aucun valide
                 }
               `}>
                 {validationResult.isValid ? (
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+                  validationResult.invalidASINs.length > 0 ? (
+                    <AlertCircle className="w-5 h-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+                  )
                 ) : (
                   <AlertCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
                 )}
                 <div>
-                  <p className={`font-medium ${validationResult.isValid ? 'text-green-800' : 'text-red-800'}`}>
-                    {validationResult.isValid ? 'Validation réussie' : 'Erreurs détectées'}
+                  <p className={`font-medium ${
+                    validationResult.isValid 
+                      ? validationResult.invalidASINs.length > 0 
+                        ? 'text-yellow-800' 
+                        : 'text-green-800'
+                      : 'text-red-800'
+                  }`}>
+                    {validationResult.isValid 
+                      ? validationResult.invalidASINs.length > 0 
+                        ? 'Validation avec avertissements'
+                        : 'Validation réussie'
+                      : 'Erreurs détectées'
+                    }
                   </p>
-                  <p className={`text-sm mt-1 ${validationResult.isValid ? 'text-green-700' : 'text-red-700'}`}>
+                  <p className={`text-sm mt-1 ${
+                    validationResult.isValid 
+                      ? validationResult.invalidASINs.length > 0 
+                        ? 'text-yellow-700' 
+                        : 'text-green-700'
+                      : 'text-red-700'
+                  }`}>
                     {validationResult.validASINs.length} ASIN(s) valide(s)
                     {validationResult.invalidASINs.length > 0 && `, ${validationResult.invalidASINs.length} invalide(s)`}
                   </p>
@@ -423,12 +449,28 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onDataUploaded }) => {
 
       {/* Action Button */}
       {validationResult?.isValid && (
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+          {validationResult.invalidASINs.length > 0 && (
+            <div className="text-sm text-yellow-600 flex items-center">
+              <AlertCircle className="w-4 h-4 mr-1" />
+              {validationResult.invalidASINs.length} ASIN(s) seront ignoré(s)
+            </div>
+          )}
+          
           <button
             onClick={handleSubmit}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className={`
+              px-6 py-3 rounded-lg font-medium transition-colors
+              ${validationResult.invalidASINs.length > 0 
+                ? 'bg-yellow-600 text-white hover:bg-yellow-700' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+              }
+            `}
           >
-            Continuer vers Configuration ({validationResult.validASINs.length} ASINs)
+            {validationResult.invalidASINs.length > 0 
+              ? `Continuer malgré tout (${validationResult.validASINs.length} ASINs valides)`
+              : `Continuer vers Configuration (${validationResult.validASINs.length} ASINs)`
+            }
           </button>
         </div>
       )}

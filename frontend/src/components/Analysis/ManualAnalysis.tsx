@@ -2,19 +2,23 @@ import React, { useState } from 'react'
 import { ChevronRight, Upload, Settings, BarChart3, FileOutput, Play } from 'lucide-react'
 import UploadSection from './UploadSection'
 import CriteriaConfig from './CriteriaConfig'
-import type { AnalysisStep, AnalysisInput, ConfiguredAnalysis } from '../../types'
+import AnalysisProgress from './AnalysisProgress'
+import ResultsView from './ResultsView'
+import ExportActions from './ExportActions'
+import type { AnalysisStep, AnalysisInput, ConfiguredAnalysis, AnalysisResults } from '../../types'
 
 const ManualAnalysis: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'upload' | 'criteria' | 'progress' | 'results' | 'export'>('upload')
   const [analysisData, setAnalysisData] = useState<AnalysisInput | null>(null)
   const [configuredAnalysis, setConfiguredAnalysis] = useState<ConfiguredAnalysis | null>(null)
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null)
 
   const steps: AnalysisStep[] = [
     { step: 'upload', title: 'Upload & Validation', completed: !!analysisData },
     { step: 'criteria', title: 'Configuration Critères', completed: !!configuredAnalysis },
-    { step: 'progress', title: 'Analyse en Cours', completed: false },
-    { step: 'results', title: 'Résultats & Vues', completed: false },
-    { step: 'export', title: 'Export & Actions', completed: false },
+    { step: 'progress', title: 'Analyse en Cours', completed: !!analysisResults },
+    { step: 'results', title: 'Résultats & Vues', completed: !!analysisResults },
+    { step: 'export', title: 'Export & Actions', completed: !!analysisResults },
   ]
 
   const handleDataUploaded = (data: AnalysisInput) => {
@@ -25,9 +29,28 @@ const ManualAnalysis: React.FC = () => {
 
   const handleConfigComplete = (configured: ConfiguredAnalysis) => {
     setConfiguredAnalysis(configured)
+    setCurrentStep('progress') // Auto-advance to progress step
     console.log('Configuration completed:', configured)
-    // TODO: Auto-advance to progress step
-    // setCurrentStep('progress')
+  }
+
+  const handleAnalysisComplete = (results: AnalysisResults) => {
+    setAnalysisResults(results)
+    setCurrentStep('results') // Auto-advance to results
+    console.log('Analysis completed:', results)
+  }
+
+  const handleExportReady = (results: AnalysisResults) => {
+    // Results are ready for export, no state change needed
+    console.log('Export ready:', results.successful.length, 'results')
+  }
+
+  const handleNewAnalysis = () => {
+    // Reset all state and start over
+    setAnalysisData(null)
+    setConfiguredAnalysis(null)
+    setAnalysisResults(null)
+    setCurrentStep('upload')
+    console.log('Starting new analysis')
   }
 
   const getStepIcon = (step: string) => {
@@ -58,24 +81,39 @@ const ManualAnalysis: React.FC = () => {
           </div>
         )
       case 'progress':
-        return (
+        return configuredAnalysis ? (
+          <AnalysisProgress 
+            configuredAnalysis={configuredAnalysis}
+            onAnalysisComplete={handleAnalysisComplete}
+          />
+        ) : (
           <div className="bg-white rounded-lg shadow-sm border p-8 text-center text-gray-500">
             <Play className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Analyse en Cours - À implémenter</p>
+            <p>Veuillez d'abord compléter la configuration</p>
           </div>
         )
       case 'results':
-        return (
+        return analysisResults ? (
+          <ResultsView 
+            results={analysisResults}
+            onExportReady={handleExportReady}
+          />
+        ) : (
           <div className="bg-white rounded-lg shadow-sm border p-8 text-center text-gray-500">
             <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Résultats & Vues - À implémenter</p>
+            <p>Aucun résultat disponible</p>
           </div>
         )
       case 'export':
-        return (
+        return analysisResults ? (
+          <ExportActions 
+            results={analysisResults}
+            onNewAnalysis={handleNewAnalysis}
+          />
+        ) : (
           <div className="bg-white rounded-lg shadow-sm border p-8 text-center text-gray-500">
             <FileOutput className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Export & Actions - À implémenter</p>
+            <p>Aucun résultat à exporter</p>
           </div>
         )
       default:
@@ -106,7 +144,8 @@ const ManualAnalysis: React.FC = () => {
                 const isCompleted = step.completed
                 const isClickable = step.step === 'upload' || 
                                    (step.step === 'criteria' && analysisData) ||
-                                   (index > 0 && steps[index - 1].completed)
+                                   (step.step === 'results' && analysisResults) ||
+                                   (step.step === 'export' && analysisResults)
 
                 return (
                   <div key={step.step} className="flex items-center">
@@ -157,7 +196,7 @@ const ManualAnalysis: React.FC = () => {
         </div>
 
         {/* Debug Info (Development Only) */}
-        {process.env.NODE_ENV === 'development' && (analysisData || configuredAnalysis) && (
+        {process.env.NODE_ENV === 'development' && (analysisData || configuredAnalysis || analysisResults) && (
           <div className="mt-8 p-4 bg-gray-100 rounded border text-xs">
             <strong>Debug - État actuel:</strong>
             <div className="mt-2 space-y-2">
@@ -177,6 +216,19 @@ const ManualAnalysis: React.FC = () => {
                       strategy: configuredAnalysis.strategy.name,
                       criteria: configuredAnalysis.strategy.criteria,
                       customMode: configuredAnalysis.strategy.id === 'custom'
+                    }, null, 2)}
+                  </pre>
+                </div>
+              )}
+              {analysisResults && (
+                <div>
+                  <strong>Step 3+ - Analysis Results:</strong>
+                  <pre className="overflow-x-auto bg-white p-2 rounded mt-1">
+                    {JSON.stringify({ 
+                      successful: analysisResults.successful.length,
+                      failed: analysisResults.failed.length,
+                      batch_id: analysisResults.batchInfo.batch_id,
+                      processing_time: analysisResults.batchInfo.processing_time
                     }, null, 2)}
                   </pre>
                 </div>

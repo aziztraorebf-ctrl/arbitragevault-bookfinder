@@ -111,3 +111,64 @@ export interface ConfiguredAnalysis {
   strategy: AnalysisStrategy
   customCriteria?: AnalysisCriteria
 }
+
+// API Response Types (from backend /api/v1/keepa/ingest)
+export interface AnalysisAPIResult {
+  asin: string
+  title: string
+  roi: {
+    roi_percentage: number
+    is_profitable: boolean
+    net_profit: string
+    profit_tier: string
+  }
+  velocity: {
+    velocity_score: number
+    velocity_tier: string
+  }
+  overall_rating: string
+  readable_summary: string
+  recommendation: string
+  risk_factors: string[]
+}
+
+export interface BatchAPIResponse {
+  batch_id: string
+  total_items: number
+  processed: number
+  successful: number
+  failed: number
+  results: BatchResult[]
+  trace_id: string
+}
+
+export interface BatchResult {
+  identifier: string
+  asin: string | null
+  status: 'success' | 'error' | 'not_found'
+  analysis: AnalysisAPIResult | null
+  error: string | null
+}
+
+// Progress Tracking Types
+export interface AnalysisProgress {
+  status: 'idle' | 'running' | 'completed' | 'error' | 'partial'
+  processed: number
+  total: number
+  percentage: number
+  successful: number
+  failed: number
+  startTime?: Date
+  endTime?: Date
+}
+
+export interface AnalysisResults {
+  successful: AnalysisAPIResult[]
+  failed: BatchResult[]
+  batchInfo: {
+    batch_id: string
+    trace_id: string
+    total_items: number
+    processing_time?: number
+  }
+}

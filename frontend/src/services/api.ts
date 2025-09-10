@@ -43,3 +43,33 @@ export const healthCheck = async () => {
     throw new Error(`Backend connection failed: ${API_BASE_URL}`)
   }
 }
+
+// Additional imports for analysis functionality
+import type { BatchAPIResponse, ConfiguredAnalysis } from '../types'
+
+// Generate UUID for batch tracking
+export const generateBatchId = (): string => {
+  return 'batch_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+}
+
+// Keepa Analysis API - Main function for Phase 3
+export const runAnalysis = async (configuredAnalysis: ConfiguredAnalysis): Promise<BatchAPIResponse> => {
+  const batch_id = generateBatchId()
+  
+  const requestPayload = {
+    identifiers: configuredAnalysis.asins,
+    batch_id,
+    config_profile: 'default',
+    force_refresh: false,
+    async_threshold: 100 // Use sync mode for UI progress
+  }
+
+  console.log('Starting Keepa analysis:', {
+    asins_count: configuredAnalysis.asins.length,
+    strategy: configuredAnalysis.strategy.name,
+    batch_id
+  })
+
+  const response = await api.post('/api/v1/keepa/ingest', requestPayload)
+  return response.data
+}

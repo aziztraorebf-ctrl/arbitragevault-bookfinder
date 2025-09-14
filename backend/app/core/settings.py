@@ -8,6 +8,16 @@ from pydantic import Field, validator
 from pydantic_settings import BaseSettings
 
 
+class AppConfig:
+    """Compatibility layer for nested app config access."""
+    def __init__(self, settings):
+        self._settings = settings
+    
+    @property
+    def app_name(self):
+        return self._settings.app_name
+
+
 class Settings(BaseSettings):
     """Application settings with environment variable support."""
 
@@ -16,6 +26,10 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False, alias="DEBUG")
     app_name: str = "ArbitrageVault API"
     version: str = "0.1.0"
+
+    def model_post_init(self, __context):
+        """Create compatibility app property for legacy code (Pydantic v2)."""
+        self.app = AppConfig(self)
 
     # Database
     database_url: str = Field(..., alias="DATABASE_URL")
@@ -37,7 +51,15 @@ class Settings(BaseSettings):
 
     # CORS
     cors_allowed_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://127.0.0.1:3000"],
+        default=[
+            "http://localhost:3000", 
+            "http://127.0.0.1:3000",
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://localhost:5176",
+            "http://127.0.0.1:5176",
+            "*"
+        ],
         alias="CORS_ALLOWED_ORIGINS",
     )
 
@@ -68,9 +90,13 @@ class Settings(BaseSettings):
     @validator("cors_allowed_origins", pre=True)
     def parse_cors_origins(cls, v):
         """Parse CORS origins from string or list."""
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
+        try:
+            if isinstance(v, str):
+                return [origin.strip() for origin in v.split(",")]
+            return v
+        except Exception as e:
+            # Fallback to default for development
+            return ["*"]
 
     @validator("trusted_hosts", pre=True)
     def parse_trusted_hosts(cls, v):

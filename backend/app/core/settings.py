@@ -9,13 +9,17 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Application settings with environment variable support."""
+    """Application settings with environment variable support.
+    
+    PYDANTIC V2 STRUCTURE: Flat structure, no nested config.
+    Access via: settings.app_name (NOT settings.app.app_name)
+    """
 
     # Application
     app_env: str = Field(default="development", alias="APP_ENV")
     debug: bool = Field(default=False, alias="DEBUG")
     app_name: str = "ArbitrageVault API"
-    version: str = "0.1.0"
+    version: str = "1.6.2"  # Increment to force Render refresh
 
     # Database
     database_url: str = Field(..., alias="DATABASE_URL")

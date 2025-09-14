@@ -1,4 +1,8 @@
-"""ArbitrageVault FastAPI application main entry point."""
+"""ArbitrageVault FastAPI application main entry point.
+
+IMPORTANT: This app uses FLAT settings structure (settings.app_name, NOT settings.app.app_name)
+Compatible with Pydantic V2 - render deployment v52dd65d+
+"""
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse

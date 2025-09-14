@@ -1,275 +1,236 @@
 # ArbitrageVault - Règles et Spécifications Projet
 
-## Frontend Development Phase - Complete System Architecture
+## PHASE DÉPLOIEMENT RENDER - Architecture Production Validée
 
-### Contexte Actuel
-**Backend Status:** v1.6.1 - Production ready avec toutes les fonctionnalités core implémentées
-**Frontend Phase:** Démarrage développement interface utilisateur complète
-**Approche:** BUILD-TEST-VALIDATE avec développement local + deploy tests périodiques sur Render
+### Contexte Actuel - DÉPLOIEMENT PRODUCTION EN COURS
+**Backend Status:** v1.6.1 - Configuration SQLAlchemy 2.0 + Pydantic v2 compatible
+**Frontend Status:** React 18 + TypeScript + Vite - Structure minimale déployée
+**Production:** Déploiement Render Blueprint avec monorepo structure
+**Développement:** Migration complète local → production, workflow établi
 
-### Architecture Backend Complète (Validée)
+### Configuration Render Critique - LEÇONS PRODUCTION
 
-#### Modules Fonctionnels Implémentés
-1. **Niche Discovery Service (v1.6.1)**
-   - Découverte automatique de niches rentables via analyse Keepa
-   - Scoring intelligent avec métriques (BSR, marge, concurrence, stabilité)
-   - APIs: `/api/niche-discovery/analyze`, `/api/niche-discovery/categories`
-   - Export vers CSV et AutoSourcing
-
-2. **Niche Bookmarking System (v1.6.1)** 
-   - Sauvegarde niches prometteuses avec paramètres complets
-   - CRUD complet avec pagination et gestion utilisateur
-   - APIs: `/api/bookmarks/niches/*` (6 endpoints)
-   - Workflow: Découverte → Bookmark → "Mes Niches" → Relance analyse
-
-3. **AutoScheduler Module (v1.7.0)**
-   - Automation programmée (8h/15h/20h) avec contrôle temps réel
-   - APIs: 8 endpoints de contrôle et monitoring
-   - Configuration JSON dynamique, métriques performance
-
-4. **AutoSourcing Discovery (v1.6.0)**
-   - Discovery automatique produits avec Keepa Product Finder
-   - 13 endpoints, profiles système, action workflow (Buy/Favorite/Ignore)
-   - "Opportunity of the Day" avec prioritisation intelligente
-
-5. **Stock Estimate Module (v1.8.0)**
-   - Évaluation stock en 2 secondes avec price-targeted analysis
-   - Smart caching 24h TTL, 3 endpoints
-
-6. **Strategic Views Service (v1.9.1)**
-   - 5 vues stratégiques: Profit Hunter, Velocity, Cashflow Hunter, Balanced Score, Volume Player
-   - Advanced scoring 6 dimensions (0-100 scale)
-
-7. **Analyse Manuelle (Core)**
-   - Upload CSV ou saisie ASINs manuels
-   - Multi-strategy analysis avec critères personnalisables
-   - APIs: `/api/v1/keepa/analyze`, `/api/v1/keepa/batch-analyze`
-
-### Stack Technique Frontend (Décidé)
-
-#### Technologies Core
-- **Framework:** React + TypeScript + Vite
-- **Styling:** Tailwind CSS (Light Modern Professional theme)
-- **State Management:** @tanstack/react-query + React hooks
-- **Icons:** Lucide React (pas d'images de couvertures livres)
-- **Charts:** Recharts pour visualisations
-- **Animations:** Framer Motion
-- **Déploiement:** Render (full-stack avec backend)
-
-#### Configuration Deployment-Ready
+#### Render Blueprint Syntax - DOCUMENTATION VALIDÉE
+**Structure monorepo validée:**
 ```yaml
-# render.yaml structure validée
 services:
-  - frontend (Node.js + Vite)
-  - backend (Python + FastAPI)
-  - database (PostgreSQL)
+  - type: web
+    name: arbitragevault-backend
+    runtime: python                    # ✅ PAS python3
+    rootDir: backend                    # ✅ Évite cd commands
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    
+  - type: web  
+    name: arbitragevault-frontend
+    runtime: static
+    rootDir: frontend                   # ✅ Évite cd commands
+    staticPublishPath: dist             # ✅ Relatif à rootDir
 ```
 
-#### Environment Management Pattern
-```typescript
-// Configuration automatique local ↔ production
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+**Pattern de résolution problèmes Render:**
+1. Documentation officielle AVANT correction (render.com/docs/blueprint-spec)
+2. Errors logs précis → corrections ciblées
+3. Commits atomiques pour chaque fix
+4. Test immédiat après chaque correction
+
+#### SQLAlchemy 2.0 Migration - BREAKING CHANGES CRITIQUES
+**Imports v1→v2:**
+```python
+# ❌ OBSOLÈTE (SQLAlchemy 1.x)
+from sqlalchemy import Decimal
+
+# ✅ CORRECT (SQLAlchemy 2.0)
+from decimal import Decimal
+from sqlalchemy import Numeric
+Column(Numeric(10, 2))  # Pour colonnes décimales
 ```
 
-### Stratégie Développement Hybride
+**Pattern de migration identifié:**
+- SQLAlchemy 2.0 supprime imports directs de types Python standard
+- Utiliser types Python natifs + types SQLAlchemy SQL pour colonnes
+- Vérifier documentation type hierarchy avant imports
 
-#### Approche Validée : Local Development + Render Deploy Tests
-- **90% Local Development:** Développement quotidien sur localhost (performance max)
-- **10% Deploy Tests:** Tests périodiques sur Render (validation production)
-- **Séquence:** Week 1-2 local → Deploy test → Week 3-4 local → Deploy test → etc.
+#### Pydantic v2 Configuration - BREAKING CHANGES
+**Configuration v1→v2:**
+```python
+# ❌ OBSOLÈTE (Pydantic v1)
+class Config:
+    env_file = ".env"
+    allow_population_by_field_name = True
 
-#### Workflow Développement
-```bash
-# Daily (Local)
-npm run dev  # Frontend localhost:5173
-uvicorn app.main:app --reload  # Backend localhost:8000
-
-# Weekly (Render Test)
-npm run build && git push origin main
-# Test production URL → Noter issues → Continue local
+# ✅ CORRECT (Pydantic v2)
+model_config = {
+    "env_file": ".env", 
+    "populate_by_name": True,
+}
 ```
 
-### Architecture Frontend (Structure Complète)
+### Workflow Développement Production - ÉTABLI
 
-#### Navigation Principale
+#### Local → Production Pattern
+1. **Développement Local:** Modifications frontend/backend localement
+2. **Test Local:** Validation fonctionnelle sur localhost
+3. **Git Push:** Commits atomiques avec descriptions détaillées
+4. **Auto-Deploy Render:** Déploiement automatique depuis GitHub
+5. **Validation Production:** Test sur URL .onrender.com
+
+#### Debug Deployment Pattern - MÉTHODOLOGIE VALIDÉE
+**Approche systématique:**
+1. **Logs Analysis:** Identifier l'erreur précise dans deployment logs
+2. **Documentation Research:** Consulter documentation officielle
+3. **Targeted Fix:** Correction ciblée sans sur-engineering
+4. **Preventive Analysis:** Anticiper problèmes similaires
+5. **Commit & Test:** Push immédiat + validation
+
+### Configuration Technologies - STACK VALIDÉ
+
+#### Frontend React Minimal
+**Structure TypeScript + Vite validée:**
 ```
-🏠 Dashboard (Hub central)
-├── 📋 Analyse Manuelle      ← Upload CSV/ASINs (PRIORITÉ 1)
-├── 🔍 Niche Discovery       ← Découverte automatique niches
-├── 📚 Mes Niches           ← Bookmarking & gestion
-├── 🤖 AutoScheduler        ← Contrôle automation
-├── 📊 AutoSourcing         ← Résultats discovery
-├── 📈 Analyse Stratégique  ← 5 vues stratégiques
-├── 📦 Stock Estimates      ← Vérification disponibilité
-└── ⚙️ Configuration       ← Paramètres système
-```
-
-#### Composants Architecture
-```
-src/components/
-├── Dashboard/              # Hub central + navigation
-├── ManualAnalysis/         # Upload CSV/ASINs + critères
-├── NicheDiscovery/         # Configuration + résultats discovery
-├── NicheBookmarking/       # "Mes Niches" + CRUD operations
-├── AutoScheduler/          # Control center automation
-├── AutoSourcing/           # Résultats produits + actions
-├── StrategicAnalysis/      # 5 vues (Profit/Velocity/etc.)
-├── StockEstimate/          # Validation disponibilité
-└── Common/                 # Composants partagés
-```
-
-### Workflow Utilisateur Complet (Validé)
-
-#### Flow Principal: Analyse → Découverte → Sauvegarde → Automation → Exploitation
-1. **Analyse Manuelle:** Upload CSV/ASINs → Validation directe ROI
-2. **Niche Discovery:** Découverte automatique niches rentables
-3. **Bookmarking:** Sauvegarde niches avec paramètres complets
-4. **AutoScheduler:** Automation programmée sur niches sauvées
-5. **AutoSourcing:** Exploitation résultats avec actions (Buy/Favorite)
-6. **Strategic Views:** Analyse multi-dimensionnelle (5 vues)
-7. **Stock Estimate:** Validation scalabilité opportunités
-
-#### Profils Utilisateurs Types
-- **Débutant (Sarah):** 20h/semaine → Analyse manuelle + quelques niches
-- **Expérimenté (Marc):** 40h/semaine → Pipeline automatisé 400+ ASINs/semaine
-- **Équipe (Julie):** Industriel → 1000+ ASINs/semaine, 47 niches sous surveillance
-
-### Design System (Icon-Based)
-
-#### Décision Critique: Pas d'Images Couvertures Livres
-- **Problème:** Complexité APIs images (Amazon/Open Library)
-- **Solution:** Interface icon-based avec Lucide React
-- **Avantage:** Développement 3x plus rapide, performance max, look professionnel
-
-#### Theme: Light Modern Professional
-- **Couleurs:** Fond blanc #ffffff, cartes blanches avec shadows, gradients bleu/violet
-- **Palette:** Primary #3B82F6 (blue), Success #10B981 (green), Accent #8B5CF6 (violet)
-- **Typography:** Inter font, texte sombre pour lisibilité
-- **Layout:** Cards blanches shadow-lg, backgrounds colorés, tables responsive
-- **Animations:** Subtle micro-interactions, hover effects modernes
-- **Style:** Clean, accessible, business-focused avec touches colorées
-
-### Séquence Développement (Finalisée)
-
-#### Phase 1: Analyse Manuelle (Week 1-2) - PRIORITÉ
-- Upload CSV/ASINs avec drag & drop
-- Configuration stratégies + critères personnalisables  
-- Progress tracking + résultats multi-vues
-- Export fonctionnel + validation stock
-
-#### Phase 2: Niche Discovery (Week 3-4)
-- Interface configuration critères discovery
-- Sélection catégories Keepa + progression temps réel
-- Résultats scorés + actions sauvegarde
-
-#### Phase 3: Niche Bookmarking (Week 5-6)
-- "Mes Niches" avec CRUD complet + pagination
-- Modal "Relancer analyse" avec paramètres restaurés
-- Suivi évolution scores dans le temps
-
-#### Phase 4: AutoScheduler Control (Week 7-8)
-- Dashboard contrôle avec enable/disable temps réel
-- Configuration horaires + skip dates
-- Métriques performance + logs système
-
-#### Phase 5: AutoSourcing Results (Week 9-10)
-- Interface résultats avec filtres avancés
-- Actions par produit (Buy/Favorite/Ignore/Analyze)
-- "Opportunity of the Day" + management
-
-#### Phase 6: Strategic Analysis (Week 11-12)
-- 5 vues stratégiques complètes avec toggle
-- Breakdown scoring détaillé par dimension
-- Export par vue + comparaisons
-
-### API Integration Patterns
-
-#### Backend Connections (Par Module)
-```typescript
-// Analyse Manuelle
-POST /api/v1/keepa/batch-analyze
-POST /api/v1/strategic-views/analyze
-
-// Niche Discovery  
-POST /api/niche-discovery/analyze
-GET /api/niche-discovery/categories
-
-// Bookmarking
-POST /api/bookmarks/niches
-GET /api/bookmarks/niches
-GET /api/bookmarks/niches/{id}/filters
-
-// AutoScheduler
-GET/POST /api/v1/autoscheduler/*
-
-// AutoSourcing
-GET /api/v1/autosourcing/latest
-POST /api/v1/autosourcing/run-custom
-
-// Stock Estimate
-GET /api/v1/products/{asin}/stock-estimate
+frontend/
+├── package.json              # React 18 + @types/node requis
+├── vite.config.ts            # Pas de terser (utiliser esbuild)
+├── tsconfig.app.json         # types: ["vite/client"] requis
+├── src/vite-env.d.ts         # Types import.meta.env
+└── src/App.tsx               # Backend connectivity check
 ```
 
-### Conventions Code Frontend
+**Patterns TypeScript Render:**
+- `@types/node` requis pour Buffer, NodeJS types
+- `vite/client` types pour import.meta.env
+- Éviter terser minifier (dependencies extra)
 
-#### Structure Composants
-- **Taille max:** <50 lignes par composant
-- **Pattern:** Un fichier par composant majeur
-- **Types:** Interfaces TypeScript pour toutes props
-- **State:** React Query pour server state, useState pour local
+#### Backend FastAPI Production
+**Dependencies critiques production:**
+```
+sqlalchemy>=2.0.0            # v2 syntax obligatoire
+pydantic>=2.0.0               # v2 config syntax
+pydantic-settings>=2.0.0      # BaseSettings séparé
+keyring>=24.0.0               # Production secrets
+psycopg2-binary>=2.9.0        # PostgreSQL Render
+```
 
-#### Error Handling
-- **Toast notifications** pour feedback utilisateur
-- **Error boundaries** pour composants critiques  
-- **Fallback UI** pour états de chargement
-- **Retry logic** pour appels API
+### Architecture Monorepo - PATTERNS VALIDÉS
 
-#### Testing Strategy
-- **Unit tests** pour logique critique
-- **Integration tests** pour workflows complets
-- **E2E validation** avant chaque deploy test
+#### Structure Projet Production
+```
+/
+├── render.yaml               # Blueprint configuration
+├── backend/                  # rootDir backend
+│   ├── app/
+│   │   ├── core/settings.py  # ✅ Pydantic v2 principal
+│   │   ├── config/settings.py # ✅ Compatibility redirect
+│   │   └── models/           # SQLAlchemy 2.0 syntax
+│   └── requirements.txt      
+└── frontend/                 # rootDir frontend
+    ├── src/                  # React + TypeScript
+    └── package.json          # @types/node included
+```
 
-### Déploiement Render (Production)
+#### Import Compatibility Pattern
+**Backward compatibility strategy:**
+```python
+# config/settings.py (compatibility)
+from ..core.settings import get_settings
+settings = get_settings()
 
-#### Configuration Validée
-- **Auto-deploy** via GitHub push
-- **Environment variables** automatiques via fromService
-- **Database** PostgreSQL managée incluse
-- **Scaling** automatique pour pics de charge
-- **Monitoring** health checks intégrés
+# Permet imports existants sans breaking changes
+```
 
-#### Performance Targets
-- **Single Analysis:** <2s response time
-- **Batch Processing:** 50 produits <30s
-- **UI Responsiveness:** <100ms interactions
-- **Build Time:** <3 minutes deploy complet
+### Environment Management Production - RENDER SPECIFIQUE
 
-### Secrets Management
+#### Variables Configuration
+```yaml
+# render.yaml pattern
+envVars:
+  - key: DATABASE_URL
+    fromDatabase:
+      name: arbitragevault-db
+      property: connectionString
+  - key: KEEPA_API_KEY
+    sync: false                # User input required
+  - key: APP_ENV
+    value: production          # Environment detection
+```
 
-#### Pattern Established
-- **Keyring usage:** KEEPA_API_KEY via Memex secrets
-- **Variations:** ALL_CAPS, lowercase, mixed case testing
-- **Security:** Jamais d'affichage secrets dans logs/output
-- **Validation:** Format verification avant usage
+#### CORS Production
+**Configuration auto-adaptive:**
+```python
+cors_allowed_origins: List[str] = Field(default=[
+    "http://localhost:5173",   # Development
+    "http://localhost:5174", 
+    "*"                        # Production wildcard
+])
+```
 
-### Business Logic Integration
+### Troubleshooting Playbook Production - MÉTHODOLOGIE
 
-#### Data Flows Validés
-- **Prix:** Division par 100 (centimes → euros)
-- **BSR:** Extraction via csv[3] (champ SALES)  
-- **Categories:** IDs Keepa standards (4142 = Engineering)
-- **Scoring:** Échelle 0-100 normalisée sur 6 dimensions
+#### Deployment Failures Pattern
+1. **CORS Issues:** Browser blocks, logs vides backend
+2. **Import Errors:** Version conflicts libraries (SQLAlchemy, Pydantic)
+3. **Path Issues:** Monorepo rootDir vs cd commands
+4. **TypeScript:** Missing @types packages ou configurations
+5. **Dependencies:** Missing optional dependencies (terser, keyring)
 
-### Version Control Patterns
+#### Error Resolution Strategy
+**Documentation-First Approach:**
+- Consulter documentation officielle avant corrections
+- Rechercher patterns sur community forums
+- Appliquer corrections préventives basées sur bonnes pratiques
+- Commits atomiques pour traçabilité
 
-#### Commit Strategy
-- **Atomic commits** par fonctionnalité
-- **Messages descriptifs** avec contexte business
-- **Signature Memex:** "Generated with [Memex](https://memex.tech)"
-- **Branching:** Direct main pour features complètes (approche pragmatique)
+### Performance Production - RENDER CONSTRAINTS
+
+#### Coûts Anticipés
+- **Backend Starter:** ~$7/mois (service actif)
+- **Database Free:** PostgreSQL 256MB (30 jours limite)
+- **Frontend Static:** Gratuit
+- **Alternative:** Supabase Free database (économie $6/mois)
+
+#### Scaling Considerations
+- **Build Time:** TypeScript + Python dependencies ~2-3 minutes
+- **Auto-Deploy:** Trigger sur chaque git push main
+- **Resource Limits:** Starter plan 512MB RAM, 0.5 CPU
+
+### Testing Strategy Production - WORKFLOW E2E
+
+#### Validation End-to-End
+**Test sequence validé:**
+1. **Frontend Health:** Landing page + backend connectivity check
+2. **Backend API:** Endpoints health check
+3. **Database:** PostgreSQL connection + table creation
+4. **Keepa Integration:** API calls avec clés production
+5. **Workflow Complet:** Upload → Config → Analysis → Results
+
+#### Monitoring Pattern
+**Status checking automatique:**
+- Frontend teste backend connectivity via fetch()
+- Health endpoints exposés pour monitoring
+- Logs centralisés Render dashboard
+
+### Migration Patterns - TECHNOLOGY UPDATES
+
+#### SQLAlchemy 1.x → 2.0
+**Breaking changes identifiés:**
+- `from sqlalchemy import Decimal` → supprimé
+- Utiliser `from decimal import Decimal` + `sqlalchemy.Numeric`
+- Settings structure simplifiée (pas database.* nested)
+
+#### Pydantic v1 → v2  
+**Breaking changes identifiés:**
+- `BaseSettings` déplacé vers `pydantic-settings`
+- `class Config:` → `model_config = {}`
+- `allow_population_by_field_name` → `populate_by_name`
+
+#### React TypeScript Vite
+**Configuration production-ready:**
+- `types: ["vite/client"]` pour import.meta.env
+- `@types/node` pour Buffer/NodeJS types
+- `vite-env.d.ts` pour environment variables
 
 ---
 
-**Dernière mise à jour:** 9 janvier 2025 - Design System mis à jour vers Light Theme moderne
-**Status:** Backend v1.6.1 production ready, Frontend Phase 1 ready to start
-**Prochaine étape:** Lancement développement Phase 1 (Analyse Manuelle)
+**Dernière mise à jour:** 14 septembre 2025 - Déploiement Render en cours  
+**Status:** Frontend déployé ✅, Backend corrections SQLAlchemy 2.0 appliquées
+**Prochaine étape:** Validation système complet production + test workflow utilisateur

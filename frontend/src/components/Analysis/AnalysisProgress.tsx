@@ -27,11 +27,15 @@ const AnalysisProgressComponent: React.FC<AnalysisProgressProps> = ({
 
   const [startTime, setStartTime] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isStarted, setIsStarted] = useState(false)
 
   // Start analysis when component mounts
   useEffect(() => {
-    startAnalysis()
-  }, [])
+    if (!isStarted) {
+      setIsStarted(true)
+      startAnalysis()
+    }
+  }, [isStarted])
 
   const startAnalysis = async () => {
     try {

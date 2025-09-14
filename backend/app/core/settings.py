@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     app_env: str = Field(default="development", alias="APP_ENV")
     debug: bool = Field(default=False, alias="DEBUG")
     app_name: str = "ArbitrageVault API"
-    version: str = "1.6.2"  # Increment to force Render refresh
+    version: str = "1.6.3"  # RENDER FIX: Force backend/ folder visibility
 
     # Database
     database_url: str = Field(..., alias="DATABASE_URL")

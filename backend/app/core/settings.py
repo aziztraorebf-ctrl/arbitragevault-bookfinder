@@ -8,16 +8,6 @@ from pydantic import Field, validator
 from pydantic_settings import BaseSettings
 
 
-class AppConfig:
-    """Compatibility layer for nested app config access."""
-    def __init__(self, settings):
-        self._settings = settings
-    
-    @property
-    def app_name(self):
-        return self._settings.app_name
-
-
 class Settings(BaseSettings):
     """Application settings with environment variable support."""
 
@@ -26,10 +16,6 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False, alias="DEBUG")
     app_name: str = "ArbitrageVault API"
     version: str = "0.1.0"
-
-    def model_post_init(self, __context):
-        """Create compatibility app property for legacy code (Pydantic v2)."""
-        self.app = AppConfig(self)
 
     # Database
     database_url: str = Field(..., alias="DATABASE_URL")

@@ -77,6 +77,20 @@ class Settings(BaseSettings):
     # API Keys
     keepa_api_key: Optional[str] = Field(default=None, alias="KEEPA_API_KEY")
 
+    @validator("database_url", pre=True)
+    def transform_database_url_for_asyncpg(cls, v):
+        """Transform DATABASE_URL to asyncpg format for SQLAlchemy async.
+        
+        Render provides: postgresql://user:pass@host:port/db
+        SQLAlchemy async needs: postgresql+asyncpg://user:pass@host:port/db
+        """
+        if isinstance(v, str):
+            if v.startswith("postgresql://") and "asyncpg" not in v:
+                return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+            elif v.startswith("postgres://") and "asyncpg" not in v:
+                return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        return v
+
     @validator("cors_allowed_origins", pre=True)
     def parse_cors_origins(cls, v):
         """Parse CORS origins from string or list."""

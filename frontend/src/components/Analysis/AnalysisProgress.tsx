@@ -38,13 +38,14 @@ const AnalysisProgressComponent: React.FC<AnalysisProgressProps> = ({
   }, [isStarted])
 
   const startAnalysis = async () => {
+    let progressSimulation: NodeJS.Timeout | undefined
     try {
       setProgress(prev => ({ ...prev, status: 'running', startTime: new Date() }))
       setStartTime(new Date())
       setError(null)
 
       // Simulate progress during API call (since it's synchronous)
-      const progressSimulation = setInterval(() => {
+      progressSimulation = setInterval(() => {
         setProgress(prev => {
           if (prev.status === 'running') {
             const newProcessed = Math.min(prev.processed + 1, prev.total - 1)
@@ -109,7 +110,7 @@ const AnalysisProgressComponent: React.FC<AnalysisProgressProps> = ({
       }, 2000)
 
     } catch (err) {
-      clearInterval(progressSimulation)
+      if (progressSimulation) clearInterval(progressSimulation)
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'analyse')
       setProgress(prev => ({ 
         ...prev, 

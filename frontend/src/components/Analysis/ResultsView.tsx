@@ -245,7 +245,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {sortedResults.map((result, index) => (
+                {sortedResults.map((result) => (
                   <tr key={result.asin} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getProfitabilityIcon(result)}

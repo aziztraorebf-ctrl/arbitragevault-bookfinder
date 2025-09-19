@@ -1,24 +1,37 @@
 # Generated from requirements-lock.txt for Render deployment
-# Core FastAPI dependencies
+# Complete dependencies for ArbitrageVault Backend
+
+# Core Framework
 sqlalchemy>=2.0.0
 pydantic>=2.0.0
 pydantic-settings>=2.0.0
-psycopg2-binary>=2.9.0
-keyring>=24.0.0
-
-# FastAPI framework
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
-python-multipart>=0.0.6
 
-# HTTP client
+# Database
+psycopg2-binary>=2.9.0
+alembic>=1.13.0
+
+# Authentication & Security  
+keyring>=24.0.0
+bcrypt>=4.0.0
+cryptography>=45.0.0
+argon2-cffi>=25.0.0
+
+# HTTP & API
 httpx>=0.25.0
 requests>=2.31.0
+python-multipart>=0.0.6
 
-# Development tools (for testing if needed)
+# Logging & Monitoring
+structlog>=23.0.0
+
+# Development & Testing
 pytest>=7.0.0
 pytest-asyncio>=0.21.0
-
-# Code formatting
 black>=23.0.0
 isort>=5.12.0
+
+# Utilities
+python-dotenv>=1.0.0
+click>=8.0.0

@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 
 export default function Dashboard() {
   return (

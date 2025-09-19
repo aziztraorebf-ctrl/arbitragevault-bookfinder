@@ -72,11 +72,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
   const getProfitabilityIcon = (result: AnalysisAPIResult) => {
     if (result.roi.is_profitable) {
       const roi = parseFloat(result.roi.roi_percentage.toString())
-      if (roi >= 40) return <CheckCircle className="w-5 h-5 text-green-600" title="Très rentable" />
-      if (roi >= 20) return <CheckCircle className="w-5 h-5 text-green-500" title="Rentable" />
-      return <AlertTriangle className="w-5 h-5 text-yellow-500" title="Borderline" />
+      if (roi >= 40) return <CheckCircle className="w-5 h-5 text-green-600" aria-label="Très rentable" />
+      if (roi >= 20) return <CheckCircle className="w-5 h-5 text-green-500" aria-label="Rentable" />
+      return <AlertTriangle className="w-5 h-5 text-yellow-500" aria-label="Borderline" />
     }
-    return <XCircle className="w-5 h-5 text-red-500" title="Non rentable" />
+    return <XCircle className="w-5 h-5 text-red-500" aria-label="Non rentable" />
   }
 
   const getOverallRatingStyle = (rating: string) => {
@@ -297,7 +297,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
       )}
 
       {/* Debug Info */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.MODE === 'development' && (
         <div className="p-4 bg-gray-100 rounded border text-xs">
           <strong>Debug - Results Summary:</strong>
           <pre className="mt-2 overflow-x-auto">

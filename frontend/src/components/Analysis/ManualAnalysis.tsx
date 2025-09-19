@@ -196,7 +196,7 @@ const ManualAnalysis: React.FC = () => {
         </div>
 
         {/* Debug Info (Development Only) */}
-        {process.env.NODE_ENV === 'development' && (analysisData || configuredAnalysis || analysisResults) && (
+        {import.meta.env.MODE === 'development' && (analysisData || configuredAnalysis || analysisResults) && (
           <div className="mt-8 p-4 bg-gray-100 rounded border text-xs">
             <strong>Debug - État actuel:</strong>
             <div className="mt-2 space-y-2">

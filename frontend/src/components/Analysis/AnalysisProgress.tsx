@@ -25,7 +25,7 @@ const AnalysisProgressComponent: React.FC<AnalysisProgressProps> = ({
     Object.fromEntries(configuredAnalysis.asins.map(asin => [asin, 'pending']))
   )
 
-  const [startTime, setStartTime] = useState<Date | null>(null)
+  const [startTime, setStartTime] = useState<Date | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [isStarted, setIsStarted] = useState(false)
 
@@ -109,7 +109,7 @@ const AnalysisProgressComponent: React.FC<AnalysisProgressProps> = ({
       }, 2000)
 
     } catch (err) {
-      clearInterval()
+      clearInterval(progressSimulation)
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'analyse')
       setProgress(prev => ({ 
         ...prev, 
@@ -263,7 +263,7 @@ const AnalysisProgressComponent: React.FC<AnalysisProgressProps> = ({
       </div>
 
       {/* Debug Info */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.MODE === 'development' && (
         <div className="p-4 bg-gray-100 rounded border text-xs">
           <strong>Debug - Analysis Progress:</strong>
           <pre className="mt-2 overflow-x-auto">

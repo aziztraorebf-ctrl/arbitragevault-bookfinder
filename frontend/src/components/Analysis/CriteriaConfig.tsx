@@ -298,7 +298,7 @@ const CriteriaConfig: React.FC<CriteriaConfigProps> = ({ analysisInput, onConfig
       </div>
 
       {/* Debug Info (Development Only) */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.MODE === 'development' && (
         <div className="mt-6 p-4 bg-gray-100 rounded border text-xs">
           <strong>Debug - Configuration:</strong>
           <pre className="mt-2 overflow-x-auto">

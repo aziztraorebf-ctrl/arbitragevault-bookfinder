@@ -244,7 +244,7 @@ const ExportActions: React.FC<ExportActionsProps> = ({ results, onNewAnalysis })
       </div>
 
       {/* Debug Info */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.MODE === 'development' && (
         <div className="p-4 bg-gray-100 rounded border text-xs">
           <strong>Debug - Export Actions:</strong>
           <pre className="mt-2 overflow-x-auto">

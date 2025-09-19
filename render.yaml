@@ -17,12 +17,12 @@ services:
           name: arbitragevault-backend
           property: host
         
-  # Backend - Python FastAPI
+  # Backend - Python FastAPI with UV support
   - type: web
     name: arbitragevault-backend
     runtime: python
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
+    buildCommand: uv sync --frozen
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL

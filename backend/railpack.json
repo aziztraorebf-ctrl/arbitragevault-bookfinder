@@ -6,11 +6,11 @@
   },
   "steps": {
     "install": {
-      "commands": ["cd /app && uv sync --no-dev --frozen"]
+      "commands": ["uv sync --no-dev --frozen"]
     }
   },
   "deploy": {
-    "startCommand": "cd /app && uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT",
     "variables": {
       "RAILPACK_PYTHON_PACKAGE_MANAGER": "uv"
     }

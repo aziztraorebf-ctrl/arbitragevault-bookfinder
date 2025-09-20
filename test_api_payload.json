@@ -1,0 +1,13 @@
+{
+  "identifiers": ["B00FLIJJSA", "B01MXY6GEF", "B00A4DQZH4"],
+  "batch_id": "test_final_workflow",
+  "config_profile": {
+    "strategy": "balanced",
+    "criteria": {
+      "roiMin": 25,
+      "bsrMax": 100000,
+      "minSalesPerMonth": 10
+    }
+  },
+  "async_threshold": 10
+}

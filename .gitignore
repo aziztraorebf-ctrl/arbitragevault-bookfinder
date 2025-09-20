@@ -110,3 +110,9 @@ dmypy.json
 *.temp
 .temp/
 temp/
+
+# Railway
+.railway/
+
+# Render (legacy - removed)
+render.yaml

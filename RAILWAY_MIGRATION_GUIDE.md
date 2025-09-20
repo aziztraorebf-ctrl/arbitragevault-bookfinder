@@ -11,23 +11,32 @@
 - `Procfile` - Commande de démarrage
 - `.gitignore` mis à jour
 
-## 🚀 Étapes de Migration
+## 🚀 Étapes de Migration - CONFIGURATION CORRIGÉE
 
 ### 1. Créer un Compte Railway
 - Va sur https://railway.app
 - Connecte-toi avec GitHub
 - Autoriser l'accès au repository
 
-### 2. Créer un Nouveau Projet
-- Cliquer "New Project"
-- Sélectionner "Deploy from GitHub repo"
+### 2. Créer DEUX Services Séparés (Monorepo Isolé)
+
+#### Service Backend :
+- Cliquer "New Project" → "Deploy from GitHub repo"
 - Choisir `arbitragevault-bookfinder`
+- Dans Settings → **Root Directory** : `backend`
+- Railway détectera automatiquement UV via `uv.lock`
+
+#### Service Frontend :
+- Dans le même projet, cliquer "+" → "GitHub Repo"
+- Choisir le même repo `arbitragevault-bookfinder`
+- Dans Settings → **Root Directory** : `frontend`
+- Railway détectera automatiquement React via `package.json`
 
 ### 3. Configuration Automatique
 Railway détectera automatiquement :
-- ✅ **Python Backend** (via pyproject.toml)
-- ✅ **Node.js Frontend** (via package.json)
-- ✅ **Monorepo Structure**
+- ✅ **Backend** : Python 3.12 + UV + FastAPI (via backend/pyproject.toml + uv.lock)
+- ✅ **Frontend** : Node.js 20 + React + Vite (via frontend/package.json)
+- ✅ **Monorepo Isolé** : Services séparés avec Root Directory
 
 ### 4. Variables d'Environnement à Configurer
 
@@ -59,20 +68,27 @@ VITE_API_URL=https://your-backend-domain.railway.app
 
 ## 🔧 Configuration Technique
 
-### Structure Détectée par Railway
+### Structure Détectée par Railway (Services Séparés)
 ```
 /
-├── backend/          # Service Python (FastAPI + UV)
-├── frontend/         # Service Node.js (React + Vite)
-├── nixpacks.toml     # Configuration build
-├── Procfile          # Commande démarrage
-└── railway.json     # Configuration Railway
+├── backend/                    # SERVICE 1 - Root Directory: backend/
+│   ├── pyproject.toml         # ✅ Détection Python + UV
+│   ├── uv.lock               # ✅ UV package manager
+│   ├── nixpacks.toml         # ✅ Configuration build backend
+│   └── app/main.py           # ✅ FastAPI app
+├── frontend/                  # SERVICE 2 - Root Directory: frontend/
+│   ├── package.json          # ✅ Détection Node.js + React
+│   ├── nixpacks.toml         # ✅ Configuration build frontend
+│   └── src/                  # ✅ React app
+├── Procfile                  # ✅ Fallback start command
+└── railway.json             # ✅ Configuration Railway globale
 ```
 
-### Commandes de Build
-- **Backend:** `cd backend && uv sync --frozen`
-- **Frontend:** `cd frontend && npm ci && npm run build`
-- **Start:** `cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+### Commandes de Build (Automatiques)
+- **Backend:** `uv sync --no-dev --frozen` (détecté via uv.lock)
+- **Frontend:** `npm ci && npm run build` (détecté via package.json)
+- **Start Backend:** `uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- **Start Frontend:** `serve -s dist -l $PORT` (serveur statique pour React)
 
 ## 🎯 Avantages Railway vs Render
 

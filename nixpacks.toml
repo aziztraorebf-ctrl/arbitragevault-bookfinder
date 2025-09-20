@@ -1,16 +1,12 @@
+# Configuration pour le service BACKEND uniquement
+# Le frontend aura son propre service Railway
+
 [phases.setup]
-nixPkgs = ["python312", "nodejs_20"]
+nixPkgs = ["python312"]
 
 [phases.install]
-cmds = [
-    "cd backend && uv sync --frozen",
-    "cd frontend && npm ci"
-]
-
-[phases.build]
-cmds = [
-    "cd frontend && npm run build"
-]
+# Railway détecte automatiquement uv.lock et utilise: uv sync --no-dev --frozen
+# Pas besoin de commandes manuelles
 
 [start]
-cmd = "cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+cmd = "uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT"

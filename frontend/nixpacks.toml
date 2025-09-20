@@ -1,0 +1,10 @@
+# Configuration pour le service FRONTEND
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+# Utiliser un serveur statique pour servir les fichiers React buildés
+cmd = "npx serve -s dist -l $PORT"

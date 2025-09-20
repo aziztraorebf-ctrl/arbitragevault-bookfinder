@@ -1,0 +1,9 @@
+# Configuration pour le service BACKEND
+[phases.setup]
+nixPkgs = ["python312"]
+
+# Railway détecte automatiquement uv.lock et pyproject.toml
+# Utilise automatiquement: uv sync --no-dev --frozen
+
+[start]
+cmd = "uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT"

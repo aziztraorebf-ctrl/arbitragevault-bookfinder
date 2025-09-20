@@ -22,7 +22,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
 
   // Sorting logic
   const sortedResults = useMemo(() => {
-    return [...results.successful].sort((a, b) => {
+    console.log("CSV parsed:", results);
+    const successful = Array.isArray(results.successful) ? results.successful : [];
+    return [...successful].sort((a, b) => {
       let aVal: any, bVal: any
 
       switch (sortField) {
@@ -117,22 +119,22 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-xl font-bold text-green-600">{results.successful.length}</div>
+              <div className="text-xl font-bold text-green-600">{Array.isArray(results.successful) ? results.successful.length : 0}</div>
               <div className="text-sm text-green-700">Analyses réussies</div>
             </div>
             <div className="text-center p-3 bg-red-50 rounded-lg">
-              <div className="text-xl font-bold text-red-600">{results.failed.length}</div>
+              <div className="text-xl font-bold text-red-600">{Array.isArray(results.failed) ? results.failed.length : 0}</div>
               <div className="text-sm text-red-700">Échecs</div>
             </div>
             <div className="text-center p-3 bg-blue-50 rounded-lg">
               <div className="text-xl font-bold text-blue-600">
-                {results.successful.filter(r => r.roi.is_profitable).length}
+                {Array.isArray(results.successful) ? results.successful.filter(r => r.roi.is_profitable).length : 0}
               </div>
               <div className="text-sm text-blue-700">Rentables</div>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg">
               <div className="text-xl font-bold text-purple-600">
-                {results.successful.filter(r => r.overall_rating === 'EXCELLENT').length}
+                {Array.isArray(results.successful) ? results.successful.filter(r => r.overall_rating === 'EXCELLENT').length : 0}
               </div>
               <div className="text-sm text-purple-700">Excellents</div>
             </div>
@@ -302,9 +304,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
           <strong>Debug - Results Summary:</strong>
           <pre className="mt-2 overflow-x-auto">
             {JSON.stringify({
-              successful_count: results.successful.length,
-              failed_count: results.failed.length,
-              profitable_count: results.successful.filter(r => r.roi.is_profitable).length,
+              successful_count: Array.isArray(results.successful) ? results.successful.length : 0,
+              failed_count: Array.isArray(results.failed) ? results.failed.length : 0,
+              profitable_count: Array.isArray(results.successful) ? results.successful.filter(r => r.roi.is_profitable).length : 0,
               sort: { field: sortField, direction: sortDirection }
             }, null, 2)}
           </pre>

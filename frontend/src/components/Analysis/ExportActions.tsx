@@ -79,17 +79,21 @@ const ExportActions: React.FC<ExportActionsProps> = ({ results, onNewAnalysis })
   }
 
   const getProfitableCount = () => {
-    return results.successful.filter(r => r.roi.is_profitable).length
+    console.log("CSV parsed:", results);
+    const successful = Array.isArray(results.successful) ? results.successful : [];
+    return successful.filter(r => r.roi.is_profitable).length
   }
 
   const getExcellentCount = () => {
-    return results.successful.filter(r => r.overall_rating === 'EXCELLENT').length
+    const successful = Array.isArray(results.successful) ? results.successful : [];
+    return successful.filter(r => r.overall_rating === 'EXCELLENT').length
   }
 
   const getAverageROI = () => {
-    if (results.successful.length === 0) return 0
-    const total = results.successful.reduce((sum, r) => sum + parseFloat(r.roi.roi_percentage.toString()), 0)
-    return (total / results.successful.length).toFixed(1)
+    const successful = Array.isArray(results.successful) ? results.successful : [];
+    if (successful.length === 0) return 0
+    const total = successful.reduce((sum, r) => sum + parseFloat(r.roi.roi_percentage.toString()), 0)
+    return (total / successful.length).toFixed(1)
   }
 
   return (

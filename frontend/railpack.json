@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "node",
+  "packages": {
+    "node": "20"
+  },
+  "steps": {
+    "build": {
+      "commands": ["npm run build"]
+    }
+  },
+  "deploy": {
+    "startCommand": "npx serve -s dist -p $PORT"
+  }
+}

@@ -7,4 +7,4 @@ cmds = ["npm run build"]
 
 [start]
 # Utiliser un serveur statique pour servir les fichiers React buildés
-cmd = "npx serve -s dist -l $PORT"
+cmd = "npx serve -s dist -p $PORT"

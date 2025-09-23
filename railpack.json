@@ -10,7 +10,7 @@
     }
   },
   "deploy": {
-    "startCommand": "cd backend && /app/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "PYTHONPATH=backend uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT",
     "variables": {
       "RAILPACK_PYTHON_PACKAGE_MANAGER": "uv"
     }

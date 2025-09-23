@@ -12,7 +12,7 @@ description = "ArbitrageVault monorepo - Railway deployment config"
 authors = [{name = "Aziz Traore", email = "aziztraorebf@gmail.com"}]
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 
 dependencies = [
     "fastapi>=0.104.0,<0.105.0",
@@ -58,18 +58,18 @@ exclude_lines = [
 ]
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 88
 select = ["E", "F", "I", "B", "C4", "ARG", "SIM", "TCH", "PIE"]
 ignore = ["E501", "B008", "ARG001"]
 
 [tool.black]
-target-version = ['py311']
+target-version = ['py312']
 line-length = 88
 include = '\.pyi?$'
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = false
 ignore_missing_imports = true
 warn_return_any = false

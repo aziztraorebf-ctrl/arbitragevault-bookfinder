@@ -6,7 +6,7 @@
   },
   "steps": {
     "install": {
-      "commands": ["uv sync --no-dev --frozen"]
+      "commands": ["uv sync --no-dev --frozen --project ."]
     }
   },
   "deploy": {

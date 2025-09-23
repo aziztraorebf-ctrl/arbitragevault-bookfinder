@@ -43,6 +43,8 @@ dev = [
     "black>=23.11.0,<24.0.0",
     "mypy>=1.7.0,<1.8.0",
     "types-python-jose>=3.3.4,<3.4.0",
+    "numpy>=2.0.0,<3.0.0",
+    "psutil>=5.9.0,<6.0.0",
 ]
 
 [tool.coverage.run]

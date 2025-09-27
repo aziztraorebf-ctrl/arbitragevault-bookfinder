@@ -1,5 +1,4 @@
 {
   "buildCommand": "cd backend && poetry install",
-  "outputDirectory": "backend",
-  "ignoreCommand": "true"
+  "outputDirectory": "backend"
 }

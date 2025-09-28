@@ -21,6 +21,10 @@ class UserRepository(BaseRepository[User]):
     SORTABLE_FIELDS = ["id", "email", "created_at", "first_name", "last_name", "role", "last_login_at"]
     FILTERABLE_FIELDS = ["id", "email", "role", "is_active", "is_verified", "first_name", "last_name"]
 
+    def __init__(self, db_session: AsyncSession, model: type = User):
+        """Initialize UserRepository with User model."""
+        super().__init__(db_session, model)
+
     async def get_by_email(self, email: str) -> Optional[User]:
         """Get user by email address."""
         try:

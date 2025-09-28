@@ -21,6 +21,10 @@ class BatchRepository(BaseRepository[Batch]):
     SORTABLE_FIELDS = ["id", "name", "created_at", "started_at", "finished_at", "items_total", "items_processed"]
     FILTERABLE_FIELDS = ["id", "user_id", "name", "status"]
 
+    def __init__(self, db_session: AsyncSession, model: type = Batch):
+        """Initialize BatchRepository with Batch model."""
+        super().__init__(db_session, model)
+
     async def create_batch(
         self,
         user_id: str,

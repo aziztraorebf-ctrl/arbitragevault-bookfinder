@@ -26,6 +26,10 @@ class AnalysisRepository(BaseRepository[Analysis]):
         "profit", "buy_price", "expected_sale_price"
     ]
 
+    def __init__(self, db_session: AsyncSession, model: type = Analysis):
+        """Initialize AnalysisRepository with Analysis model."""
+        super().__init__(db_session, model)
+
     async def create_analysis(
         self,
         batch_id: str,

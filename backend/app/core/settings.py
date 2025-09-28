@@ -81,14 +81,32 @@ class Settings(BaseSettings):
     def transform_database_url_for_asyncpg(cls, v):
         """Transform DATABASE_URL to asyncpg format for SQLAlchemy async.
         
-        Render provides: postgresql://user:pass@host:port/db
+        Render provides: postgresql://user:pass@host:port/db?sslmode=require
         SQLAlchemy async needs: postgresql+asyncpg://user:pass@host:port/db
+        
+        CRITICAL: asyncpg doesn't support sslmode parameter in URL.
+        SSL config is handled via connect_args in db.py
         """
         if isinstance(v, str):
+            # Convert postgres:// to postgresql+asyncpg://
             if v.startswith("postgresql://") and "asyncpg" not in v:
-                return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+                v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
             elif v.startswith("postgres://") and "asyncpg" not in v:
-                return v.replace("postgres://", "postgresql+asyncpg://", 1)
+                v = v.replace("postgres://", "postgresql+asyncpg://", 1)
+            
+            # Remove sslmode parameter - asyncpg doesn't support it
+            # SSL is configured via connect_args={"ssl": "require"} in db.py
+            if "?sslmode=" in v:
+                v = v.split("?sslmode=")[0]
+            elif "&sslmode=" in v:
+                # Handle case where sslmode is not the first parameter
+                parts = v.split("&sslmode=")
+                if len(parts) > 1:
+                    remaining_params = parts[1].split("&")[1:]  # Skip sslmode value
+                    if remaining_params:
+                        v = parts[0] + "&" + "&".join(remaining_params)
+                    else:
+                        v = parts[0]
         return v
 
     @validator("cors_allowed_origins", pre=True)

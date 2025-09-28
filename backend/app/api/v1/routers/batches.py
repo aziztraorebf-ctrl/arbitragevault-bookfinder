@@ -11,7 +11,7 @@ from app.core.pagination import PaginatedResponse, PaginationParams
 from app.repositories.batch_repository import BatchRepository
 from app.repositories.base_repository import SortOrder
 from app.schemas.batch import BatchResponse, BatchStatusUpdate, BatchCreateRequest
-from app.models.batch import BatchStatus
+from app.models.batch import Batch, BatchStatus
 
 router = APIRouter()
 

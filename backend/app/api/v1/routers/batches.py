@@ -56,6 +56,17 @@ async def create_batch(
         )
         
     except Exception as e:
+        # Handle specific connection errors with 503 Service Unavailable
+        error_msg = str(e).lower()
+        if any(keyword in error_msg for keyword in [
+            "connection was closed", "connection pool", "timeout", 
+            "connection failed", "database is locked"
+        ]):
+            raise HTTPException(
+                status_code=503,
+                detail="Database temporarily unavailable. Please try again in a moment."
+            )
+        
         raise HTTPException(
             status_code=500,
             detail=f"Failed to create batch: {str(e)}"
@@ -110,6 +121,17 @@ async def list_batches(
         )
         
     except Exception as e:
+        # Handle specific connection errors with 503 Service Unavailable
+        error_msg = str(e).lower()
+        if any(keyword in error_msg for keyword in [
+            "connection was closed", "connection pool", "timeout", 
+            "connection failed", "database is locked"
+        ]):
+            raise HTTPException(
+                status_code=503,
+                detail="Database temporarily unavailable. Please try again in a moment."
+            )
+        
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve batches: {str(e)}"
@@ -148,6 +170,17 @@ async def get_batch(
     except HTTPException:
         raise
     except Exception as e:
+        # Handle specific connection errors with 503 Service Unavailable
+        error_msg = str(e).lower()
+        if any(keyword in error_msg for keyword in [
+            "connection was closed", "connection pool", "timeout", 
+            "connection failed", "database is locked"
+        ]):
+            raise HTTPException(
+                status_code=503,
+                detail="Database temporarily unavailable. Please try again in a moment."
+            )
+        
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve batch: {str(e)}"
@@ -209,6 +242,17 @@ async def update_batch_status(
     except HTTPException:
         raise
     except Exception as e:
+        # Handle specific connection errors with 503 Service Unavailable
+        error_msg = str(e).lower()
+        if any(keyword in error_msg for keyword in [
+            "connection was closed", "connection pool", "timeout", 
+            "connection failed", "database is locked"
+        ]):
+            raise HTTPException(
+                status_code=503,
+                detail="Database temporarily unavailable. Please try again in a moment."
+            )
+        
         raise HTTPException(
             status_code=500,
             detail=f"Failed to update batch status: {str(e)}"

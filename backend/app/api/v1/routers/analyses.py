@@ -84,6 +84,17 @@ async def list_analyses(
         )
         
     except Exception as e:
+        # Handle specific connection errors with 503 Service Unavailable
+        error_msg = str(e).lower()
+        if any(keyword in error_msg for keyword in [
+            "connection was closed", "connection pool", "timeout", 
+            "connection failed", "database is locked"
+        ]):
+            raise HTTPException(
+                status_code=503,
+                detail="Database temporarily unavailable. Please try again in a moment."
+            )
+        
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve analyses: {str(e)}"
@@ -145,6 +156,17 @@ async def get_top_analyses(
         return analysis_responses
         
     except Exception as e:
+        # Handle specific connection errors with 503 Service Unavailable
+        error_msg = str(e).lower()
+        if any(keyword in error_msg for keyword in [
+            "connection was closed", "connection pool", "timeout", 
+            "connection failed", "database is locked"
+        ]):
+            raise HTTPException(
+                status_code=503,
+                detail="Database temporarily unavailable. Please try again in a moment."
+            )
+        
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve top analyses: {str(e)}"
@@ -195,6 +217,17 @@ async def create_analysis(
         )
         
     except Exception as e:
+        # Handle specific connection errors with 503 Service Unavailable
+        error_msg = str(e).lower()
+        if any(keyword in error_msg for keyword in [
+            "connection was closed", "connection pool", "timeout", 
+            "connection failed", "database is locked"
+        ]):
+            raise HTTPException(
+                status_code=503,
+                detail="Database temporarily unavailable. Please try again in a moment."
+            )
+        
         raise HTTPException(
             status_code=500,
             detail=f"Failed to create analysis: {str(e)}"

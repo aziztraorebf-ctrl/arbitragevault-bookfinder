@@ -43,9 +43,10 @@ class DatabaseManager:
         self._engine = create_async_engine(
             settings.database_url,
             # Connection pool optimized for Render Basic PostgreSQL (256MB)
-            pool_size=2,           # Reduced from 20 for Render compatibility
-            max_overflow=5,        # Reduced from 30 for Render compatibility 
-            pool_timeout=30,       # Connection acquisition timeout
+            # FIXED: Increased pool for concurrent operations on /analyses /batches
+            pool_size=5,           # Increased from 2 - more concurrent connections
+            max_overflow=10,       # Increased from 5 - handle traffic spikes
+            pool_timeout=60,       # Increased from 30 - longer timeout for DB ops
             pool_recycle=1800,     # Recycle connections after 30 minutes
             pool_pre_ping=True,    # Verify connection liveness
             echo=settings.debug,   # SQL logging in debug mode

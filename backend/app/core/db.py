@@ -43,6 +43,8 @@ class DatabaseManager:
             pool_recycle=3600,  # Recycle connections after 1 hour
             echo=settings.debug,  # SQL logging in debug mode
             echo_pool=settings.debug,
+            # SSL configuration for Render PostgreSQL
+            connect_args={"ssl": "require"} if "render.com" in settings.database_url else {},
         )
 
         self._session_maker = async_sessionmaker(

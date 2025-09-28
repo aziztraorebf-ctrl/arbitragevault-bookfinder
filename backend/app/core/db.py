@@ -42,12 +42,13 @@ class DatabaseManager:
 
         self._engine = create_async_engine(
             settings.database_url,
-            # QueuePool not compatible with asyncio - removed poolclass
-            pool_size=20,
-            max_overflow=30,
-            pool_pre_ping=True,
-            pool_recycle=3600,  # Recycle connections after 1 hour
-            echo=settings.debug,  # SQL logging in debug mode
+            # Connection pool optimized for Render free tier limitations
+            pool_size=2,           # Reduced from 20 for Render compatibility
+            max_overflow=5,        # Reduced from 30 for Render compatibility 
+            pool_timeout=30,       # Connection acquisition timeout
+            pool_recycle=1800,     # Recycle connections after 30 minutes
+            pool_pre_ping=True,    # Verify connection liveness
+            echo=settings.debug,   # SQL logging in debug mode
             echo_pool=settings.debug,
             connect_args=connect_args,
         )

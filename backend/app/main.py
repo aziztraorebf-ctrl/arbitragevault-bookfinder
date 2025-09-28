@@ -103,6 +103,12 @@ async def root():
     }
 
 
+@app.get("/health", include_in_schema=False)
+async def health():
+    """Simple health check endpoint for Render deployment monitoring."""
+    return {"status": "ok"}
+
+
 if __name__ == "__main__":
     import uvicorn
 

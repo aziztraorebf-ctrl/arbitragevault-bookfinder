@@ -355,6 +355,10 @@ class BaseRepository(Generic[ModelType]):
             if offset:
                 query = query.offset(offset)
 
+            # Context7 SQLAlchemy 2.0: Check session active before execute
+            if not self.db.is_active:
+                raise RuntimeError("Database session is not active")
+            
             result = await self.db.execute(query)
             return result.scalars().all()
 
@@ -385,6 +389,10 @@ class BaseRepository(Generic[ModelType]):
             if offset:
                 query = query.offset(offset)
 
+            # Context7 SQLAlchemy 2.0: Check session active before execute
+            if not self.db.is_active:
+                raise RuntimeError("Database session is not active")
+            
             result = await self.db.execute(query)
             return result.scalars().all()
 

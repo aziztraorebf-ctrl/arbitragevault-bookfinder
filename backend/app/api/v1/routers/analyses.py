@@ -30,6 +30,13 @@ async def list_analyses(
     Now connected to real AnalysisRepository with filtering capabilities.
     """
     try:
+        # SQLAlchemy 2.0 + asyncpg: Verify session is active before use
+        if not db.is_active:
+            raise HTTPException(
+                status_code=503,
+                detail="Database session not active. Please retry."
+            )
+        
         repo = AnalysisRepository(db, Analysis)
         
         # Build filters
@@ -117,6 +124,13 @@ async def get_top_analyses(
     Now connected to real repository with intelligent sorting.
     """
     try:
+        # SQLAlchemy 2.0 + asyncpg: Verify session is active before use
+        if not db.is_active:
+            raise HTTPException(
+                status_code=503,
+                detail="Database session not active. Please retry."
+            )
+        
         repo = AnalysisRepository(db, Analysis)
         
         # Determine sort field based on strategy
@@ -184,6 +198,13 @@ async def create_analysis(
     Now connected to real repository with data persistence.
     """
     try:
+        # SQLAlchemy 2.0 + asyncpg: Verify session is active before use
+        if not db.is_active:
+            raise HTTPException(
+                status_code=503,
+                detail="Database session not active. Please retry."
+            )
+        
         repo = AnalysisRepository(db, Analysis)
         
         # Create analysis in database

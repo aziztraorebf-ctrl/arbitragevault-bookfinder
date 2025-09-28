@@ -42,15 +42,14 @@ class DatabaseManager:
 
         self._engine = create_async_engine(
             settings.database_url,
-            # Connection pool optimized for Render Basic PostgreSQL (256MB)
-            # FIXED: Increased pool for concurrent operations on /analyses /batches
-            pool_size=5,           # Increased from 2 - more concurrent connections
-            max_overflow=10,       # Increased from 5 - handle traffic spikes
-            pool_timeout=60,       # Increased from 30 - longer timeout for DB ops
-            pool_recycle=1800,     # Recycle connections after 30 minutes
-            pool_pre_ping=True,    # Verify connection liveness
-            echo=settings.debug,   # SQL logging in debug mode
-            echo_pool=settings.debug,
+            # RENDER DOCUMENTATION: Basic plan ~20 connections max, strict timeouts
+            # Context7 SQLAlchemy: Minimal pool for production constraints
+            pool_size=1,           # Single connection for Render Basic
+            max_overflow=0,        # No overflow - prevent pool exhaustion
+            pool_timeout=30,       # Render-compatible timeout
+            pool_recycle=300,      # 5min recycle - prevent stale connections
+            pool_pre_ping=True,    # asyncpg doc: verify before use
+            echo=settings.debug,   # Only debug logging
             connect_args=connect_args,
         )
 

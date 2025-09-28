@@ -27,6 +27,13 @@ async def create_batch(
     """Create a new analysis batch in database."""
     
     try:
+        # SQLAlchemy 2.0 + asyncpg: Verify session is active before use
+        if not db.is_active:
+            raise HTTPException(
+                status_code=503,
+                detail="Database session not active. Please retry."
+            )
+        
         repo = BatchRepository(db, Batch)
         
         # For now, use a default user ID (user auth will be added later)
@@ -84,6 +91,13 @@ async def list_batches(
     Now connected to real BatchRepository with database persistence.
     """
     try:
+        # SQLAlchemy 2.0 + asyncpg: Verify session is active before use
+        if not db.is_active:
+            raise HTTPException(
+                status_code=503,
+                detail="Database session not active. Please retry."
+            )
+        
         repo = BatchRepository(db, Batch)
         
         # Get paginated batches (for now, get all user batches - user auth will be added later)
@@ -146,6 +160,13 @@ async def get_batch(
     """Get specific batch by ID with status and progress information from database."""
     
     try:
+        # SQLAlchemy 2.0 + asyncpg: Verify session is active before use
+        if not db.is_active:
+            raise HTTPException(
+                status_code=503,
+                detail="Database session not active. Please retry."
+            )
+        
         repo = BatchRepository(db, Batch)
         batch = await repo.get_by_id(batch_id)
         
@@ -199,6 +220,13 @@ async def update_batch_status(
     Now connected to real repository with state validation.
     """
     try:
+        # SQLAlchemy 2.0 + asyncpg: Verify session is active before use
+        if not db.is_active:
+            raise HTTPException(
+                status_code=503,
+                detail="Database session not active. Please retry."
+            )
+        
         repo = BatchRepository(db, Batch)
         
         # Get existing batch

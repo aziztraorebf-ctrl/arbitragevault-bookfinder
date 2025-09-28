@@ -91,16 +91,27 @@ class DatabaseManager:
             await session.close()
 
     async def health_check(self) -> bool:
-        """Check database connectivity."""
+        """Check database connectivity using SQLAlchemy 2.0 documented pattern."""
         try:
             if not self._engine:
+                logger.error("Database health check failed", error="Engine not initialized")
                 return False
 
+            # Context7 SQLAlchemy 2.0: Official pattern for async health check
+            from sqlalchemy import text
             async with self._engine.begin() as conn:
-                await conn.execute("SELECT 1")
-            return True
+                result = await conn.execute(text("SELECT 1"))
+                # Context7 docs: Verify we got expected result
+                scalar_result = result.scalar()
+                if scalar_result == 1:
+                    logger.info("Database health check successful")
+                    return True
+                else:
+                    logger.error("Database health check failed", error="Unexpected scalar result", result=scalar_result)
+                    return False
+                    
         except Exception as e:
-            logger.error("Database health check failed", error=str(e))
+            logger.error("Database health check failed", error=str(e), error_type=type(e).__name__)
             return False
 
 

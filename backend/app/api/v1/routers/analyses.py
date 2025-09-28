@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db_session
 from app.core.pagination import PaginatedResponse, PaginationParams
+from app.models.analysis import Analysis
 from app.repositories.analysis_repository import AnalysisRepository
 from app.repositories.base_repository import SortOrder
 from app.schemas.analysis import AnalysisResponse, AnalysisCreate, TopAnalysisStrategy
@@ -29,7 +30,7 @@ async def list_analyses(
     Now connected to real AnalysisRepository with filtering capabilities.
     """
     try:
-        repo = AnalysisRepository(db)
+        repo = AnalysisRepository(db, Analysis)
         
         # Build filters
         filters = {}
@@ -105,7 +106,7 @@ async def get_top_analyses(
     Now connected to real repository with intelligent sorting.
     """
     try:
-        repo = AnalysisRepository(db)
+        repo = AnalysisRepository(db, Analysis)
         
         # Determine sort field based on strategy
         if strategy == TopAnalysisStrategy.ROI:
@@ -161,7 +162,7 @@ async def create_analysis(
     Now connected to real repository with data persistence.
     """
     try:
-        repo = AnalysisRepository(db)
+        repo = AnalysisRepository(db, Analysis)
         
         # Create analysis in database
         analysis = await repo.create_analysis(

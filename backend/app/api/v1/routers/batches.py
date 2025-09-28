@@ -27,7 +27,7 @@ async def create_batch(
     """Create a new analysis batch in database."""
     
     try:
-        repo = BatchRepository(db)
+        repo = BatchRepository(db, Batch)
         
         # For now, use a default user ID (user auth will be added later)
         default_user_id = "default-user"
@@ -73,7 +73,7 @@ async def list_batches(
     Now connected to real BatchRepository with database persistence.
     """
     try:
-        repo = BatchRepository(db)
+        repo = BatchRepository(db, Batch)
         
         # Get paginated batches (for now, get all user batches - user auth will be added later)
         batches = await repo.get_all(
@@ -124,7 +124,7 @@ async def get_batch(
     """Get specific batch by ID with status and progress information from database."""
     
     try:
-        repo = BatchRepository(db)
+        repo = BatchRepository(db, Batch)
         batch = await repo.get_by_id(batch_id)
         
         if not batch:
@@ -166,7 +166,7 @@ async def update_batch_status(
     Now connected to real repository with state validation.
     """
     try:
-        repo = BatchRepository(db)
+        repo = BatchRepository(db, Batch)
         
         # Get existing batch
         batch = await repo.get_by_id(batch_id)

@@ -331,3 +331,87 @@ class BaseRepository(Generic[ModelType]):
                 error=str(e),
             )
             raise
+
+    async def get_filtered(
+        self, 
+        filters: Optional[Dict[str, Any]] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        sort_field: str = "created_at",
+        sort_order: SortOrder = SortOrder.DESC
+    ) -> List[ModelType]:
+        """Get filtered records with pagination and sorting."""
+        try:
+            filters = filters or {}
+            self._validate_filter_fields(filters)
+            self._validate_sort_fields([sort_field])
+
+            query = select(self.model)
+            query = self._apply_filters(query, filters)
+            query = self._apply_sorting(query, [sort_field], [sort_order])
+
+            if limit:
+                query = query.limit(limit)
+            if offset:
+                query = query.offset(offset)
+
+            result = await self.db.execute(query)
+            return result.scalars().all()
+
+        except Exception as e:
+            logger.error(
+                "Failed to get filtered records", 
+                model=self.model.__name__, 
+                error=str(e)
+            )
+            raise
+
+    async def get_all(
+        self,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        sort_field: str = "created_at",
+        sort_order: SortOrder = SortOrder.DESC
+    ) -> List[ModelType]:
+        """Get all records with pagination and sorting."""
+        try:
+            self._validate_sort_fields([sort_field])
+
+            query = select(self.model)
+            query = self._apply_sorting(query, [sort_field], [sort_order])
+
+            if limit:
+                query = query.limit(limit)
+            if offset:
+                query = query.offset(offset)
+
+            result = await self.db.execute(query)
+            return result.scalars().all()
+
+        except Exception as e:
+            logger.error(
+                "Failed to get all records", 
+                model=self.model.__name__, 
+                error=str(e)
+            )
+            raise
+
+    async def count_filtered(self, filters: Optional[Dict[str, Any]] = None) -> int:
+        """Count filtered records."""
+        try:
+            filters = filters or {}
+            self._validate_filter_fields(filters)
+
+            query = select(func.count(self.model.id))
+            query = self._apply_filters(query, filters)
+
+            result = await self.db.execute(query)
+            return result.scalar()
+
+        except Exception as e:
+            logger.error(
+                "Failed to count filtered records", 
+                model=self.model.__name__, 
+                error=str(e)
+            )
+            raise

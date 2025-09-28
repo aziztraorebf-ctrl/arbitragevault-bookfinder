@@ -34,15 +34,14 @@ class DatabaseManager:
         """Initialize database engine and session maker."""
         settings = get_settings()
 
-        # For Render PostgreSQL, ensure SSL is handled in the URL itself
-        database_url = settings.database_url
-        if "render.com" in database_url and "sslmode=" not in database_url:
-            # Add SSL parameter to URL if not already present
-            separator = "&" if "?" in database_url else "?"
-            database_url = f"{database_url}{separator}sslmode=require"
+        # SSL configuration for Render PostgreSQL 
+        connect_args = {}
+        if "render.com" in settings.database_url:
+            # asyncpg requires ssl='require' instead of sslmode=require
+            connect_args = {"ssl": "require"}
 
         self._engine = create_async_engine(
-            database_url,
+            settings.database_url,
             # QueuePool not compatible with asyncio - removed poolclass
             pool_size=20,
             max_overflow=30,
@@ -50,6 +49,7 @@ class DatabaseManager:
             pool_recycle=3600,  # Recycle connections after 1 hour
             echo=settings.debug,  # SQL logging in debug mode
             echo_pool=settings.debug,
+            connect_args=connect_args,
         )
 
         self._session_maker = async_sessionmaker(

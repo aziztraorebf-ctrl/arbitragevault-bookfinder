@@ -42,7 +42,7 @@ class DatabaseManager:
 
         self._engine = create_async_engine(
             settings.database_url,
-            # Connection pool optimized for Render free tier limitations
+            # Connection pool optimized for Render Basic PostgreSQL (256MB)
             pool_size=2,           # Reduced from 20 for Render compatibility
             max_overflow=5,        # Reduced from 30 for Render compatibility 
             pool_timeout=30,       # Connection acquisition timeout

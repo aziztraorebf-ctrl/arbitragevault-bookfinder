@@ -42,10 +42,10 @@ class DatabaseManager:
 
         self._engine = create_async_engine(
             settings.database_url,
-            # RENDER DOCUMENTATION: Basic plan ~20 connections max, strict timeouts
-            # Context7 SQLAlchemy: Minimal pool for production constraints
-            pool_size=1,           # Single connection for Render Basic
-            max_overflow=0,        # No overflow - prevent pool exhaustion
+            # PGBOUNCER CONFIGURATION: Let PgBouncer manage connection pooling
+            # Context7 SQLAlchemy: PgBouncer-optimized pool settings
+            pool_size=10,          # PgBouncer handles DB connections
+            max_overflow=10,       # Allow overflow for burst traffic
             pool_timeout=30,       # Render-compatible timeout
             pool_recycle=300,      # 5min recycle - prevent stale connections
             pool_pre_ping=True,    # asyncpg doc: verify before use

@@ -100,7 +100,7 @@ class BatchRepository(BaseRepository[Batch]):
         """Get all batches that are currently running."""
         try:
             page = await self.list(
-                filters={"status": BatchStatus.RUNNING},
+                filters={"status": BatchStatus.PROCESSING},
                 sort_by=["started_at"],
                 sort_order=["asc"],
                 limit=100  # Reasonable limit for active batches
@@ -147,10 +147,10 @@ class BatchRepository(BaseRepository[Batch]):
             # Update status and timing
             updates = {"status": new_status}
             
-            if new_status == BatchStatus.RUNNING and not batch.started_at:
+            if new_status == BatchStatus.PROCESSING and not batch.started_at:
                 updates["started_at"] = datetime.utcnow()
             
-            if new_status in (BatchStatus.DONE, BatchStatus.FAILED) and not batch.finished_at:
+            if new_status in (BatchStatus.COMPLETED, BatchStatus.FAILED, BatchStatus.CANCELLED) and not batch.finished_at:
                 updates["finished_at"] = datetime.utcnow()
             
             old_status = batch.status.value  # Store before update
@@ -197,8 +197,8 @@ class BatchRepository(BaseRepository[Batch]):
             updates = {"items_processed": items_processed}
             
             # Auto-complete if all items processed
-            if auto_complete and items_processed >= batch.items_total and batch.status == BatchStatus.RUNNING:
-                updates["status"] = BatchStatus.DONE
+            if auto_complete and items_processed >= batch.items_total and batch.status == BatchStatus.PROCESSING:
+                updates["status"] = BatchStatus.COMPLETED
                 updates["finished_at"] = datetime.utcnow()
             
             updated_batch = await self.update(batch_id, **updates)
@@ -269,7 +269,7 @@ class BatchRepository(BaseRepository[Batch]):
                 ).label("avg_duration_seconds")
             ).where(
                 and_(
-                    Batch.status == BatchStatus.DONE,
+                    Batch.status == BatchStatus.COMPLETED,
                     Batch.started_at.is_not(None),
                     Batch.finished_at.is_not(None)
                 )
@@ -363,7 +363,7 @@ class BatchRepository(BaseRepository[Batch]):
             query = select(func.count(Batch.id)).where(
                 and_(
                     Batch.created_at < cutoff_date,
-                    Batch.status.in_([BatchStatus.DONE, BatchStatus.FAILED])
+                    Batch.status.in_([BatchStatus.COMPLETED, BatchStatus.FAILED, BatchStatus.CANCELLED])
                 )
             )
             
@@ -374,7 +374,7 @@ class BatchRepository(BaseRepository[Batch]):
                 delete_query = delete(Batch).where(
                     and_(
                         Batch.created_at < cutoff_date,
-                        Batch.status.in_([BatchStatus.DONE, BatchStatus.FAILED])
+                        Batch.status.in_([BatchStatus.COMPLETED, BatchStatus.FAILED, BatchStatus.CANCELLED])
                     )
                 )
                 

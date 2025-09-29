@@ -12,10 +12,11 @@ from .base import Base
 
 class BatchStatus(enum.Enum):
     """Status of a batch analysis."""
-    PENDING = "pending"
-    RUNNING = "running"
-    DONE = "done"
-    FAILED = "failed"
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
 
 
 class Batch(Base):
@@ -85,8 +86,8 @@ class Batch(Base):
 
     @property
     def is_completed(self) -> bool:
-        """Check if batch is in a completed state (done or failed)."""
-        return self.status in (BatchStatus.DONE, BatchStatus.FAILED)
+        """Check if batch is in a completed state (completed, failed, or cancelled)."""
+        return self.status in (BatchStatus.COMPLETED, BatchStatus.FAILED, BatchStatus.CANCELLED)
 
     @property
     def progress_percentage(self) -> float:
@@ -99,9 +100,10 @@ class Batch(Base):
     def can_transition_to(self, new_status: BatchStatus) -> bool:
         """Check if batch can transition to new status."""
         valid_transitions = {
-            BatchStatus.PENDING: [BatchStatus.RUNNING],
-            BatchStatus.RUNNING: [BatchStatus.DONE, BatchStatus.FAILED],
-            BatchStatus.DONE: [],
-            BatchStatus.FAILED: []
+            BatchStatus.PENDING: [BatchStatus.PROCESSING],
+            BatchStatus.PROCESSING: [BatchStatus.COMPLETED, BatchStatus.FAILED, BatchStatus.CANCELLED],
+            BatchStatus.COMPLETED: [],
+            BatchStatus.FAILED: [],
+            BatchStatus.CANCELLED: []
         }
         return new_status in valid_transitions.get(self.status, [])

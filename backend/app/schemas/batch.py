@@ -1,28 +1,30 @@
-"""Batch schemas for API requests and responses."""
+"""Schemas for batch-related requests and responses."""
 
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
-from typing import List
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, validator
 
-# from app.models.batch import BatchStatus  # Not needed for string validation
+from .base import TimestampedResponse
 
 
-class BatchCreateRequest(BaseModel):
-    """Schema for creating new batches."""
-    name: str = Field(..., description="Name for the batch")
-    description: Optional[str] = Field(None, description="Optional batch description")
-    asin_list: List[str] = Field(..., description="List of ISBN/ASIN codes to process")
-    config_name: str = Field(..., description="Strategy configuration name")
-    
-    @field_validator('description')
-    @classmethod
-    def validate_description(cls, v):
-        """Valider que la description fait au moins 3 caractères si fournie."""
-        if v is not None and len(v.strip()) < 3:
-            raise ValueError("La description doit faire au moins 3 caractères")
-        return v
+class BatchCreate(BaseModel):
+    """Schema for creating a new batch."""
+    name: str = Field(..., min_length=1, max_length=255, description="Batch name")
+    description: Optional[str] = Field(None, max_length=1000, description="Batch description")
+
+
+class BatchUpdate(BaseModel):
+    """Schema for updating a batch."""
+    name: Optional[str] = Field(None, min_length=1, max_length=255, description="Batch name")
+    description: Optional[str] = Field(None, max_length=1000, description="Batch description")
+
+
+class BatchSearch(BaseModel):
+    """Schema for searching batches."""
+    name: Optional[str] = Field(None, description="Search in batch name")
+    status: Optional[str] = Field(None, description="Filter by status")
+    user_id: Optional[str] = Field(None, description="Filter by user ID")
 
 
 class BatchStatusUpdate(BaseModel):
@@ -39,12 +41,11 @@ class BatchResponse(BaseModel):
     status: str
     items_total: Optional[int] = None
     items_processed: Optional[int] = None
-    items_successful: Optional[int] = None
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
+    strategy_snapshot: Optional[dict] = None
     created_at: datetime
     updated_at: datetime
-    error_message: Optional[str] = None
     
     @property
     def progress_percentage(self) -> Optional[float]:
@@ -56,3 +57,25 @@ class BatchResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class BatchListResponse(BaseModel):
+    """Schema for batch list responses."""
+    items: List[BatchResponse]
+    total: int
+    page: int
+    per_page: int
+    pages: int
+
+
+class BatchAnalysisStatus(BaseModel):
+    """Schema for batch analysis status."""
+    batch_id: str
+    status: str
+    items_total: int
+    items_processed: int
+    items_successful: int
+    progress_percentage: float
+    started_at: Optional[datetime] = None
+    finished_at: Optional[datetime] = None
+    error_message: Optional[str] = None

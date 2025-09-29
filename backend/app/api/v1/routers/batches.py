@@ -101,7 +101,8 @@ async def list_batches(
             items=batch_responses,
             total=total,
             page=pagination.page,
-            per_page=pagination.per_page
+            per_page=pagination.per_page,
+            pages=(total + pagination.per_page - 1) // pagination.per_page
         )
         
     except Exception as e:

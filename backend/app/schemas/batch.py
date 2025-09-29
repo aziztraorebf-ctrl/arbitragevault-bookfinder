@@ -45,6 +45,14 @@ class BatchResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
+    @field_validator('status', mode='before')
+    @classmethod
+    def validate_status(cls, v):
+        """Convert enum to string for serialization."""
+        if hasattr(v, 'value'):
+            return v.value
+        return v
+    
     @property
     def progress_percentage(self) -> Optional[float]:
         """Calculate progress percentage."""

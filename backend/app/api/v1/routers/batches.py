@@ -111,20 +111,10 @@ async def list_batches(
         # Count total batches
         total = await repo.count()
         
-        # Convert to response models
+        # Convert to response models using from_attributes pattern
         batch_responses = []
         for batch in batches:
-            batch_responses.append(BatchResponse(
-                id=batch.id,
-                name=batch.name,
-                status=batch.status.value,
-                items_total=batch.items_total,
-                items_processed=batch.items_processed,
-                created_at=batch.created_at,
-                started_at=batch.started_at,
-                finished_at=batch.finished_at,
-                progress_percentage=batch.progress_percentage
-            ))
+            batch_responses.append(BatchResponse.model_validate(batch))
         
         return PaginatedResponse(
             items=batch_responses,

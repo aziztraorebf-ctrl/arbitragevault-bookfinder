@@ -39,12 +39,19 @@ class BatchResponse(BaseModel):
     status: str
     items_total: Optional[int] = None
     items_processed: Optional[int] = None
-    items_successful: Optional[int] = None
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
+    strategy_snapshot: Optional[dict] = None
     created_at: datetime
     updated_at: datetime
-    error_message: Optional[str] = None
+    
+    @field_validator('status', mode='before')
+    @classmethod
+    def validate_status(cls, v):
+        """Convert enum to string for serialization."""
+        if hasattr(v, 'value'):
+            return v.value
+        return v
     
     @property
     def progress_percentage(self) -> Optional[float]:

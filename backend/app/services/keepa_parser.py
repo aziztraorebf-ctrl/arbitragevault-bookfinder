@@ -91,41 +91,64 @@ def _extract_category(raw_data: Dict[str, Any]) -> str:
 
 
 def _extract_current_data(raw_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Extract current pricing and availability data."""
+    """Extract current pricing and availability data.
+    
+    Uses stats.current[] array for current prices (not csv[] which contains historical data).
+    Keepa stats.current[] indices (official Keepa API structure):
+      0: AMAZON - Amazon price
+      1: NEW - Marketplace New price (3rd party + Amazon)
+      2: USED - Used price
+      3: SALES - Sales Rank (BSR) - NOT a price!
+      4: LISTPRICE - List price
+      7: NEW_FBM_SHIPPING - FBM price with shipping
+      8: LIGHTNING_DEAL - Lightning Deal price
+      10: NEW_FBA - FBA price (3rd party only, excluding Amazon)
+      18: BUY_BOX_SHIPPING - Buy Box price with shipping
+    
+    Reference: https://github.com/keepacom/api_backend/blob/master/src/main/java/com/keepa/api/backend/structs/Product.java
+    """
     current_data = {}
     
-    # Current prices from 'csv' field (last values in arrays)
-    csv_data = raw_data.get("csv", [])
-    if csv_data and len(csv_data) > 0:
-        # Keepa CSV format: each element is [timestamp_minutes, price_or_rank]
-        # Different indexes represent different data types
-        
+    # FIXED: Use stats.current[] for current prices, not csv[] historical arrays
+    stats = raw_data.get("stats", {})
+    current_array = stats.get("current", [])
+    
+    if current_array and isinstance(current_array, list) and len(current_array) > 0:
         # Amazon price (index 0)
-        amazon_prices = csv_data[0] if len(csv_data) > 0 else []
-        if amazon_prices and len(amazon_prices) >= 2:
-            current_data["current_amazon_price"] = _keepa_price_to_decimal(amazon_prices[-1])
+        if len(current_array) > 0:
+            amazon_price = current_array[0]
+            if amazon_price and amazon_price != -1:
+                current_data["current_amazon_price"] = _keepa_price_to_decimal(amazon_price)
         
-        # Marketplace (FBM) price (index 1) 
-        marketplace_prices = csv_data[1] if len(csv_data) > 1 else []
-        if marketplace_prices and len(marketplace_prices) >= 2:
-            current_data["current_fbm_price"] = _keepa_price_to_decimal(marketplace_prices[-1])
+        # New/Marketplace price (index 1) - includes both FBM and Amazon
+        if len(current_array) > 1:
+            new_price = current_array[1]
+            if new_price and new_price != -1:
+                current_data["current_fbm_price"] = _keepa_price_to_decimal(new_price)
         
-        # Sales rank (index 3)
-        sales_ranks = csv_data[3] if len(csv_data) > 3 else []
-        if sales_ranks and len(sales_ranks) >= 2:
-            rank_value = sales_ranks[-1]
-            if rank_value != -1:  # Keepa uses -1 for no data
-                current_data["current_bsr"] = int(rank_value)
+        # Used price (index 2)
+        if len(current_array) > 2:
+            used_price = current_array[2]
+            if used_price and used_price != -1:
+                current_data["current_used_price"] = _keepa_price_to_decimal(used_price)
         
-        # FBA price (index 7)
-        fba_prices = csv_data[7] if len(csv_data) > 7 else []
-        if fba_prices and len(fba_prices) >= 2:
-            current_data["current_fba_price"] = _keepa_price_to_decimal(fba_prices[-1])
+        # Sales rank (index 3) - BSR is NOT a price, do not convert
+        if len(current_array) > 3:
+            bsr = current_array[3]
+            if bsr and bsr != -1 and isinstance(bsr, (int, float)):
+                current_data["current_bsr"] = int(bsr)
         
-        # Buy Box price (index 18) 
-        buybox_prices = csv_data[18] if len(csv_data) > 18 else []
-        if buybox_prices and len(buybox_prices) >= 2:
-            current_data["current_buybox_price"] = _keepa_price_to_decimal(buybox_prices[-1])
+        # FBA price (index 10) - 3rd party FBA offers only
+        if len(current_array) > 10:
+            fba_price = current_array[10]
+            if fba_price and fba_price != -1:
+                current_data["current_fba_price"] = _keepa_price_to_decimal(fba_price)
+        
+        # Buy Box price with shipping (index 18)
+        if len(current_array) > 18:
+            buybox_price = current_array[18]
+            if buybox_price and buybox_price != -1:
+                current_data["current_buybox_price"] = _keepa_price_to_decimal(buybox_price)
     
     # Offers count
     if "offersCount" in raw_data:

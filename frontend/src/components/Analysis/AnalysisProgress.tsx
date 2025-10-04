@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Play, Clock, CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react'
-import { runAnalysis } from '../../services/api'
-import type { ConfiguredAnalysis, AnalysisProgress, AnalysisResults, BatchAPIResponse } from '../../types'
+import { runAnalysis, type IngestResponse } from '../../services/api'
+import type { ConfiguredAnalysis, AnalysisProgress, AnalysisResults } from '../../types'
 
 interface AnalysisProgressProps {
   configuredAnalysis: ConfiguredAnalysis
@@ -61,17 +61,30 @@ const AnalysisProgressComponent: React.FC<AnalysisProgressProps> = ({
 
       console.log('Starting analysis with:', configuredAnalysis)
 
-      // Make actual API call
-      const response: BatchAPIResponse = await runAnalysis(configuredAnalysis)
+      // Make actual API call - extract ASINs from configured analysis
+      const response: IngestResponse = await runAnalysis(configuredAnalysis.asins, 'default')
       
       clearInterval(progressSimulation)
 
-      // Process API response
-      const successfulResults = response.results
-        .filter(r => r.status === 'success' && r.analysis)
-        .map(r => r.analysis!)
+      // ✅ PATTERN Context7: Mapping explicite Backend → Frontend avec defensive checks
+      // IngestResponse → AnalysisResults transformation
+      
+      // Defensive check: Vérifier que results existe et est un array
+      if (!response || !Array.isArray(response.results)) {
+        throw new Error('Invalid API response: missing or invalid results array')
+      }
 
-      const failedResults = response.results.filter(r => r.status !== 'success')
+      // Filter successful avec defensive checks - Pattern safeParse Zod appliqué au runtime
+      const successfulResults = response.results
+        .filter(r => {
+          // Defensive: vérifier que l'objet existe et a les propriétés attendues
+          return r && r.status === 'success' && r.analysis != null
+        })
+        .map(r => r.analysis!) // Safe car déjà filtré
+
+      // Filter failed avec defensive checks
+      const failedResults = response.results
+        .filter(r => r && r.status !== 'success')
 
       // Update final progress
       setProgress({
@@ -85,21 +98,24 @@ const AnalysisProgressComponent: React.FC<AnalysisProgressProps> = ({
         endTime: new Date()
       })
 
-      // Update ASIN statuses
+      // Update ASIN statuses - Defensive check sur chaque result
       const finalASINStates: Record<string, 'completed' | 'failed'> = {}
       response.results.forEach(result => {
-        finalASINStates[result.identifier] = result.status === 'success' ? 'completed' : 'failed'
+        // ✅ Defensive: vérifier que result et identifier existent
+        if (result && result.identifier) {
+          finalASINStates[result.identifier] = result.status === 'success' ? 'completed' : 'failed'
+        }
       })
       setCurrentASINs(prev => ({ ...prev, ...finalASINStates }))
 
-      // Prepare results for next component
+      // ✅ Mapping final avec defensive checks sur toutes propriétés - Pattern Nullish Coalescing
       const analysisResults: AnalysisResults = {
         successful: successfulResults,
         failed: failedResults,
         batchInfo: {
-          batch_id: response.batch_id,
-          trace_id: response.trace_id,
-          total_items: response.total_items,
+          batch_id: response.batch_id ?? 'unknown_batch', // Fallback si undefined/null
+          trace_id: response.trace_id ?? 'unknown_trace',
+          total_items: response.total_items ?? response.results.length,
           processing_time: startTime ? (new Date().getTime() - startTime.getTime()) / 1000 : undefined
         }
       }
@@ -111,7 +127,19 @@ const AnalysisProgressComponent: React.FC<AnalysisProgressProps> = ({
 
     } catch (err) {
       if (progressSimulation) clearInterval(progressSimulation)
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'analyse')
+      
+      // Message d'erreur amélioré selon le type d'erreur
+      let errorMessage = 'Erreur lors de l\'analyse'
+      if (err instanceof Error) {
+        errorMessage = err.message
+        
+        // Message spécifique pour timeout
+        if (err.message.includes('timeout') || err.message.includes('temps')) {
+          errorMessage = `Analyse trop longue (${configuredAnalysis.asins.length} produits). L'analyse continue côté serveur, mais l'affichage a expiré. Vérifiez la page Batches dans quelques minutes.`
+        }
+      }
+      
+      setError(errorMessage)
       setProgress(prev => ({ 
         ...prev, 
         status: 'error',

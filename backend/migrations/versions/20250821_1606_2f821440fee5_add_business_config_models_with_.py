@@ -142,7 +142,7 @@ def upgrade() -> None:
         sa.text("""
             INSERT INTO business_config (id, scope, data, version, description, is_active, created_at, updated_at)
             VALUES (1, 'global', :config_data, 1, 'Global business configuration', true, now(), now())
-        """).bindparam(config_data=json.dumps(default_config))
+        """).bindparams(config_data=json.dumps(default_config))
     )
 
 

@@ -56,6 +56,38 @@ def do_run_migrations(connection):
         context.run_migrations()
 
 
+def run_migrations_online_sync() -> None:
+    """Run migrations in 'online' mode with synchronous connection."""
+    # Convert asyncpg URL to psycopg2 format
+    db_url = config.get_main_option("sqlalchemy.url")
+    if "postgresql+asyncpg" in db_url:
+        db_url = db_url.replace("postgresql+asyncpg", "postgresql")
+    elif "postgresql://" in db_url and "postgresql+psycopg" not in db_url:
+        db_url = db_url.replace("postgresql://", "postgresql+psycopg2://")
+    
+    configuration = config.get_section(config.config_ini_section)
+    configuration["sqlalchemy.url"] = db_url
+    
+    connectable = engine_from_config(
+        configuration,
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            compare_server_default=True,
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+    connectable.dispose()
+
+
 async def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
     connectable = AsyncEngine(
@@ -76,4 +108,9 @@ async def run_migrations_online() -> None:
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    asyncio.run(run_migrations_online())
+    # Try sync first (for migration runs without asyncpg)
+    try:
+        run_migrations_online_sync()
+    except ImportError:
+        # Fall back to async if psycopg2 not available
+        asyncio.run(run_migrations_online())

@@ -127,7 +127,19 @@ const AnalysisProgressComponent: React.FC<AnalysisProgressProps> = ({
 
     } catch (err) {
       if (progressSimulation) clearInterval(progressSimulation)
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'analyse')
+      
+      // Message d'erreur amélioré selon le type d'erreur
+      let errorMessage = 'Erreur lors de l\'analyse'
+      if (err instanceof Error) {
+        errorMessage = err.message
+        
+        // Message spécifique pour timeout
+        if (err.message.includes('timeout') || err.message.includes('temps')) {
+          errorMessage = `Analyse trop longue (${configuredAnalysis.asins.length} produits). L'analyse continue côté serveur, mais l'affichage a expiré. Vérifiez la page Batches dans quelques minutes.`
+        }
+      }
+      
+      setError(errorMessage)
       setProgress(prev => ({ 
         ...prev, 
         status: 'error',

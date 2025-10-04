@@ -161,11 +161,26 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
             </div>
           </div>
 
-          {/* Batch Info */}
+          {/* Batch Info - Formaté pour lisibilité */}
           <div className="mt-4 text-sm text-gray-500 border-t pt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div><strong>Batch ID:</strong> {results.batchInfo.batch_id}</div>
-              <div><strong>Temps de traitement:</strong> {results.batchInfo.processing_time?.toFixed(1)}s</div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div>
+                <span className="font-medium text-gray-700">Batch ID:</span>
+                <br />
+                <span className="font-mono text-xs">{results.batchInfo.batch_id}</span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Temps:</span>
+                <br />
+                {results.batchInfo.processing_time 
+                  ? `${results.batchInfo.processing_time.toFixed(1)}s`
+                  : 'N/A'}
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Total produits:</span>
+                <br />
+                {results.batchInfo.total_items}
+              </div>
             </div>
           </div>
         </div>
@@ -276,7 +291,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
                       {result?.asin ?? 'N/A'}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title={result?.title ?? 'N/A'}>
                       {result?.title ?? 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">

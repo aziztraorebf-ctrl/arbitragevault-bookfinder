@@ -5,9 +5,10 @@ import { z } from 'zod'
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 // Type-safe API client
+// Timeout: 300s (5 min) pour supporter jusqu'à 200 ASINs
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 300000, // 300 secondes = 5 minutes (supporte 200+ ASINs)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -48,7 +49,13 @@ api.interceptors.response.use(
     return response
   },
   (error) => {
-    const message = error.response?.data?.message || error.response?.data?.detail || error.message
+    // Message d'erreur amélioré pour timeout
+    let message = error.response?.data?.message || error.response?.data?.detail || error.message
+    
+    if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+      message = 'L\'analyse prend plus de temps que prévu. Essayez avec moins de produits ou réessayez plus tard.'
+    }
+    
     const status = error.response?.status
     const data = error.response?.data
     

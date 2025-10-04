@@ -72,6 +72,8 @@ class AnalysisResult(BaseModel):
     """Complete analysis result for a product."""
     asin: str
     title: Optional[str]
+    current_price: Optional[float] = Field(None, description="Current price from Keepa")
+    current_bsr: Optional[int] = Field(None, description="Current sales rank")
     roi: Dict[str, Any]
     velocity: Dict[str, Any]
     
@@ -156,6 +158,8 @@ async def analyze_product(
             return AnalysisResult(
                 asin=asin,
                 title=keepa_data.get('title', 'Unknown'),
+                current_price=None,
+                current_bsr=keepa_data.get('current_bsr'),
                 roi={"error": "No valid pricing data available"},
                 velocity={"error": "No pricing data for velocity analysis"},
                 
@@ -278,6 +282,8 @@ async def analyze_product(
         return AnalysisResult(
             asin=asin,
             title=keepa_data.get('title', 'Unknown'),
+            current_price=float(current_price) if current_price else None,
+            current_bsr=keepa_data.get('current_bsr'),
             roi=roi_result,
             velocity=velocity_result,
             
@@ -299,6 +305,8 @@ async def analyze_product(
         return AnalysisResult(
             asin=asin,
             title=keepa_data.get('title', 'Unknown'),
+            current_price=None,
+            current_bsr=None,
             roi={"error": str(e)},
             velocity={"error": str(e)},
             

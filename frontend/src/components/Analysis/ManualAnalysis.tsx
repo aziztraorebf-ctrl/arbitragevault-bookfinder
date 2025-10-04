@@ -5,6 +5,7 @@ import CriteriaConfig from './CriteriaConfig'
 import AnalysisProgress from './AnalysisProgress'
 import ResultsView from './ResultsView'
 import ExportActions from './ExportActions'
+import ErrorBoundary from '../Common/ErrorBoundary'
 import type { AnalysisStep, AnalysisInput, ConfiguredAnalysis, AnalysisResults } from '../../types'
 
 const ManualAnalysis: React.FC = () => {
@@ -82,10 +83,13 @@ const ManualAnalysis: React.FC = () => {
         )
       case 'progress':
         return configuredAnalysis ? (
-          <AnalysisProgress 
-            configuredAnalysis={configuredAnalysis}
-            onAnalysisComplete={handleAnalysisComplete}
-          />
+          // ✅ Error Boundary autour du composant critique AnalysisProgress
+          <ErrorBoundary>
+            <AnalysisProgress 
+              configuredAnalysis={configuredAnalysis}
+              onAnalysisComplete={handleAnalysisComplete}
+            />
+          </ErrorBoundary>
         ) : (
           <div className="bg-white rounded-lg shadow-sm border p-8 text-center text-gray-500">
             <Play className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -94,10 +98,13 @@ const ManualAnalysis: React.FC = () => {
         )
       case 'results':
         return analysisResults ? (
-          <ResultsView 
-            results={analysisResults}
-            onExportReady={handleExportReady}
-          />
+          // ✅ Error Boundary autour du composant critique ResultsView
+          <ErrorBoundary>
+            <ResultsView 
+              results={analysisResults}
+              onExportReady={handleExportReady}
+            />
+          </ErrorBoundary>
         ) : (
           <div className="bg-white rounded-lg shadow-sm border p-8 text-center text-gray-500">
             <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />

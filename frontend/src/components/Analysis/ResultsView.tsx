@@ -37,12 +37,14 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
           bVal = b.title || ''
           break
         case 'roi_percentage':
-          aVal = parseFloat(a.roi.roi_percentage.toString())
-          bVal = parseFloat(b.roi.roi_percentage.toString())
+          // ✅ Optional chaining - Pattern Context7 Defensive Programming
+          aVal = a?.roi?.roi_percentage != null ? parseFloat(a.roi.roi_percentage.toString()) : 0
+          bVal = b?.roi?.roi_percentage != null ? parseFloat(b.roi.roi_percentage.toString()) : 0
           break
         case 'velocity_score':
-          aVal = a.velocity.velocity_score
-          bVal = b.velocity.velocity_score
+          // ✅ Optional chaining avec fallback
+          aVal = a?.velocity?.velocity_score ?? 0
+          bVal = b?.velocity?.velocity_score ?? 0
           break
         case 'overall_rating':
           const ratingOrder = { 'EXCELLENT': 4, 'GOOD': 3, 'FAIR': 2, 'PASS': 1 }
@@ -71,9 +73,17 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
     }
   }
 
+  // ✅ PATTERN Context7: Defensive Programming avec optional chaining
   const getProfitabilityIcon = (result: AnalysisAPIResult) => {
+    // Early return si données manquantes
+    if (!result?.roi) {
+      return <XCircle className="w-5 h-5 text-gray-400" aria-label="Données manquantes" />
+    }
+
     if (result.roi.is_profitable) {
-      const roi = parseFloat(result.roi.roi_percentage.toString())
+      const roi = result.roi.roi_percentage != null 
+        ? parseFloat(result.roi.roi_percentage.toString()) 
+        : 0
       if (roi >= 40) return <CheckCircle className="w-5 h-5 text-green-600" aria-label="Très rentable" />
       if (roi >= 20) return <CheckCircle className="w-5 h-5 text-green-500" aria-label="Rentable" />
       return <AlertTriangle className="w-5 h-5 text-yellow-500" aria-label="Borderline" />
@@ -95,7 +105,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
     return roi >= 0 ? `+${roi.toFixed(1)}%` : `${roi.toFixed(1)}%`
   }
 
+  // ✅ Defensive: Gérer tier undefined/null
   const getVelocityIcon = (tier: string) => {
+    if (!tier) {
+      return <TrendingDown className="w-4 h-4 text-gray-400" />
+    }
+    
     switch (tier.toLowerCase()) {
       case 'very_fast':
       case 'fast':
@@ -128,13 +143,19 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
             </div>
             <div className="text-center p-3 bg-blue-50 rounded-lg">
               <div className="text-xl font-bold text-blue-600">
-                {Array.isArray(results.successful) ? results.successful.filter(r => r.roi.is_profitable).length : 0}
+                {/* ✅ Optional chaining dans filter */}
+                {Array.isArray(results.successful) 
+                  ? results.successful.filter(r => r?.roi?.is_profitable === true).length 
+                  : 0}
               </div>
               <div className="text-sm text-blue-700">Rentables</div>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg">
               <div className="text-xl font-bold text-purple-600">
-                {Array.isArray(results.successful) ? results.successful.filter(r => r.overall_rating === 'EXCELLENT').length : 0}
+                {/* ✅ Optional chaining dans filter */}
+                {Array.isArray(results.successful) 
+                  ? results.successful.filter(r => r?.overall_rating === 'EXCELLENT').length 
+                  : 0}
               </div>
               <div className="text-sm text-purple-700">Excellents</div>
             </div>
@@ -248,36 +269,43 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {sortedResults.map((result) => (
-                  <tr key={result.asin} className="hover:bg-gray-50">
+                  <tr key={result?.asin ?? 'unknown'} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getProfitabilityIcon(result)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
-                      {result.asin}
+                      {result?.asin ?? 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                      {result.title || 'N/A'}
+                      {result?.title ?? 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`font-medium ${
-                        result.roi.is_profitable ? 'text-green-600' : 'text-red-600'
+                        result?.roi?.is_profitable ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {formatROI(parseFloat(result.roi.roi_percentage.toString()))}
+                        {/* ✅ Optional chaining + fallback */}
+                        {result?.roi?.roi_percentage != null 
+                          ? formatROI(parseFloat(result.roi.roi_percentage.toString()))
+                          : 'N/A'
+                        }
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex items-center">
-                        {getVelocityIcon(result.velocity.velocity_tier)}
-                        <span className="ml-2 capitalize">{result.velocity.velocity_tier.replace('_', ' ')}</span>
+                        {/* ✅ Optional chaining */}
+                        {getVelocityIcon(result?.velocity?.velocity_tier ?? 'unknown')}
+                        <span className="ml-2 capitalize">
+                          {result?.velocity?.velocity_tier?.replace('_', ' ') ?? 'N/A'}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded border ${getOverallRatingStyle(result.overall_rating)}`}>
-                        {result.overall_rating}
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded border ${getOverallRatingStyle(result?.overall_rating ?? 'PASS')}`}>
+                        {result?.overall_rating ?? 'N/A'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                      {result.readable_summary}
+                      {result?.readable_summary ?? 'Aucun résumé disponible'}
                     </td>
                   </tr>
                 ))}
@@ -288,7 +316,8 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
       )}
 
       {/* Message si aucun résultat */}
-      {results.successful.length === 0 && (
+      {/* ✅ Defensive check avec optional chaining */}
+      {(!results?.successful || results.successful.length === 0) && (
         <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-6 text-center">
           <AlertTriangle className="w-12 h-12 text-yellow-600 mx-auto mb-3" />
           <h3 className="font-medium text-yellow-800 mb-2">Aucun résultat exploitable</h3>
@@ -306,7 +335,10 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
             {JSON.stringify({
               successful_count: Array.isArray(results.successful) ? results.successful.length : 0,
               failed_count: Array.isArray(results.failed) ? results.failed.length : 0,
-              profitable_count: Array.isArray(results.successful) ? results.successful.filter(r => r.roi.is_profitable).length : 0,
+              // ✅ Optional chaining dans debug info
+              profitable_count: Array.isArray(results.successful) 
+                ? results.successful.filter(r => r?.roi?.is_profitable === true).length 
+                : 0,
               sort: { field: sortField, direction: sortDirection }
             }, null, 2)}
           </pre>

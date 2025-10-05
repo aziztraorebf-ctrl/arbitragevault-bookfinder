@@ -83,17 +83,21 @@ class BusinessConfigService:
             try:
                 async with db_manager.session() as session:
                     # 1. Load global config
-                    global_config = await self._load_config_by_scope(session, "global")
-                    if not global_config:
+                    global_config_obj = await self._load_config_by_scope(session, "global")
+                    if global_config_obj:
+                        global_config = global_config_obj.data
+                    else:
                         global_config = await self._load_fallback_config()
-                    
+
                     # 2. Load domain override
                     domain_scope = f"domain:{domain_id}"
-                    domain_config = await self._load_config_by_scope(session, domain_scope)
-                    
-                    # 3. Load category override  
+                    domain_config_obj = await self._load_config_by_scope(session, domain_scope)
+                    domain_config = domain_config_obj.data if domain_config_obj else None
+
+                    # 3. Load category override
                     category_scope = f"category:{category}"
-                    category_config = await self._load_config_by_scope(session, category_scope)
+                    category_config_obj = await self._load_config_by_scope(session, category_scope)
+                    category_config = category_config_obj.data if category_config_obj else None
                     
                     # 4. Deep merge hierarchy
                     effective_config = self._deep_merge_configs([

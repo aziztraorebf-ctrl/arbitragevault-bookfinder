@@ -11,7 +11,8 @@ import logging
 from app.services.business_config_service import get_business_config_service
 from app.services.keepa_service import KeepaService
 from app.core.calculations import calculate_roi_metrics, calculate_velocity_score, VelocityData
-from app.services.keepa_parser import parse_keepa_product, create_velocity_data_from_keepa
+from app.services.keepa_parser_v2 import parse_keepa_product
+from app.services.keepa_parser import create_velocity_data_from_keepa
 
 
 logger = logging.getLogger(__name__)

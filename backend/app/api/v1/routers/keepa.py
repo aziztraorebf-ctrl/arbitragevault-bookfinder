@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field, validator
 
 from app.services.keepa_service import KeepaService, get_keepa_service
 from app.services.business_config_service import BusinessConfigService, get_business_config_service
-from app.services.keepa_parser import parse_keepa_product
+from app.services.keepa_parser_v2 import parse_keepa_product
 from app.core.calculations import (
     calculate_roi_metrics, calculate_velocity_score, VelocityData,
     compute_advanced_velocity_score, compute_advanced_stability_score, 

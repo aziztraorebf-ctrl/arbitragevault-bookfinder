@@ -422,12 +422,14 @@ class KeepaService:
                 # Get the main category (usually first in tree)
                 category = category_tree[0].get('name', 'Unknown')
             
-            # Get BSR from current CSV data (index 3 is Sales Rank in Keepa)
-            current_bsr = 0
-            csv_data = product_data.get('csv', [])
-            if csv_data and len(csv_data) > 3 and csv_data[3]:
-                # Get latest BSR value (last point in sales rank series)
-                current_bsr = csv_data[3][-1] if csv_data[3] else 0
+            # Get BSR from stats.current[3] (official Keepa pattern)
+            stats = product_data.get('stats', {})
+            current = stats.get('current', [])
+            current_bsr = None
+            if current and len(current) > 3:
+                bsr = current[3]
+                if bsr and bsr != -1:
+                    current_bsr = int(bsr)
             
             # Extract velocity-relevant data from stats
             velocity_data = {

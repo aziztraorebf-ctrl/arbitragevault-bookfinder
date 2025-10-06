@@ -159,7 +159,7 @@ async def analyze_product(
                 asin=asin,
                 title=keepa_data.get('title', 'Unknown'),
                 current_price=None,
-                current_bsr=keepa_data.get('current_bsr'),
+                current_bsr=parsed_data.get('current_bsr'),
                 roi={"error": "No valid pricing data available"},
                 velocity={"error": "No pricing data for velocity analysis"},
                 
@@ -283,7 +283,7 @@ async def analyze_product(
             asin=asin,
             title=keepa_data.get('title', 'Unknown'),
             current_price=float(current_price) if current_price else None,
-            current_bsr=keepa_data.get('current_bsr'),
+            current_bsr=parsed_data.get('current_bsr'),
             roi=roi_result,
             velocity=velocity_result,
             

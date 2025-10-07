@@ -77,6 +77,10 @@ class Settings(BaseSettings):
     # API Keys
     keepa_api_key: Optional[str] = Field(default=None, alias="KEEPA_API_KEY")
 
+    # Monitoring
+    sentry_dsn: Optional[str] = Field(default=None, alias="SENTRY_DSN")
+    environment: str = Field(default="development", alias="ENVIRONMENT")
+
     @validator("database_url", pre=True)
     def transform_database_url_for_asyncpg(cls, v):
         """Transform DATABASE_URL to asyncpg format for SQLAlchemy async.

@@ -4,6 +4,10 @@ IMPORTANT: This app uses FLAT settings structure (settings.app_name, NOT setting
 Compatible with Pydantic V2 - render deployment v52dd65d+
 """
 
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
@@ -22,6 +26,23 @@ logger = logging.getLogger("main")
 
 # Get settings
 settings = get_settings()
+
+# Initialize Sentry SDK
+if settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        integrations=[
+            FastApiIntegration(),
+            SqlalchemyIntegration(),
+        ],
+        traces_sample_rate=0.1,  # 10% des transactions pour performance monitoring
+        profiles_sample_rate=0.1,  # 10% profiling
+        environment=settings.environment,
+        release=settings.version,
+    )
+    logger.info(f"Sentry initialized for environment: {settings.environment}")
+else:
+    logger.warning("SENTRY_DSN not configured - Sentry disabled")
 
 
 # Create FastAPI application with lifespan

@@ -10,6 +10,7 @@ Last Modified: 2025-10-08 03:05 UTC - Force cache invalidation
 
 from datetime import datetime, timedelta
 from decimal import Decimal
+import decimal
 from typing import Dict, List, Optional, Any, Tuple
 import logging
 from enum import IntEnum
@@ -526,8 +527,14 @@ def _determine_best_current_price(data: Dict[str, Any]) -> Optional[Decimal]:
 
     for price_field in price_priority:
         price = data.get(price_field)
-        if price and price > 0:
-            return price
+        if price is not None:
+            try:
+                # Handle Decimal, float, numpy scalars, etc.
+                price_val = float(price) if price else 0
+                if price_val > 0:
+                    return price
+            except (ValueError, TypeError, decimal.InvalidOperation):
+                continue
 
     return None
 

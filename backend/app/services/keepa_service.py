@@ -296,13 +296,14 @@ class KeepaService:
         
         try:
             # Call Keepa API
+            # Note: 'current' param doesn't exist in Keepa API (causes 400 error)
+            # Current values are automatically included in 'stats' when stats > 0
             params = {
                 'domain': domain,
                 'asin': identifier,
-                'stats': 90,      # 90 days of stats
+                'stats': 180,     # ✅ CRITICAL: stats > 0 triggers current values
                 'history': 1,     # Price history
-                'current': 1,     # ✅ CRITICAL: Force current values array
-                'offers': 0       # No offers data (reduces token usage)
+                'offers': 20      # Include offers for pricing data
             }
             
             data = await self._make_request('/product', params)

@@ -299,8 +299,10 @@ class KeepaService:
             params = {
                 'domain': domain,
                 'asin': identifier,
-                'stats': 90,  # 90 days of stats
-                'history': 1   # Price history
+                'stats': 90,      # 90 days of stats
+                'history': 1,     # Price history
+                'current': 1,     # ✅ CRITICAL: Force current values array
+                'offers': 0       # No offers data (reduces token usage)
             }
             
             data = await self._make_request('/product', params)

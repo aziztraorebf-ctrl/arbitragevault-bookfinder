@@ -306,12 +306,29 @@ class KeepaService:
             loop = asyncio.get_event_loop()
 
             def _sync_query():
+                # Map domain integer to keepa library string format
+                domain_map = {
+                    1: 'US',
+                    2: 'GB',
+                    3: 'DE',
+                    4: 'FR',
+                    5: 'JP',
+                    6: 'CA',
+                    7: 'CN',
+                    8: 'IT',
+                    9: 'ES',
+                    10: 'IN',
+                    11: 'MX',
+                    12: 'BR'
+                }
+                domain_str = domain_map.get(domain, 'US')  # Default to US
+
                 return api.query(
                     identifier,
-                    domain=domain,
-                    stats=180,      # Get 180-day statistics
-                    history=True,   # Include price history
-                    offers=20       # Include offer data
+                    domain=domain_str,  # ✅ Use string, not integer
+                    stats=180,          # Get 180-day statistics
+                    history=True,       # Include price history
+                    offers=20           # Include offer data
                 )
 
             products = await loop.run_in_executor(None, _sync_query)

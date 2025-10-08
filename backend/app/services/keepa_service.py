@@ -273,68 +273,88 @@ class KeepaService:
     
     async def get_product_data(self, identifier: str, domain: int = 1, force_refresh: bool = False) -> Optional[Dict[str, Any]]:
         """
-        Get product data from Keepa API.
-        
+        Get product data from Keepa using official Python library.
+
         Args:
             identifier: ASIN or ISBN (will be resolved)
             domain: Keepa domain (1=US, 2=UK, etc.)
             force_refresh: Skip cache and force fresh API call
-        
+
         Returns:
             Product data dict or None if not found
         """
-        
+
         # Check cache first (unless force_refresh)
         cache_key = self._get_cache_key('/product', {
             'asin': identifier,
             'domain': domain
         })
-        
+
         cached_data = None if force_refresh else self._get_from_cache(cache_key)
         if cached_data:
             return cached_data
-        
+
         try:
-            # Call Keepa API
-            # Note: 'current' param doesn't exist in Keepa API (causes 400 error)
-            # Current values are automatically included in 'stats' when stats > 0
-            params = {
-                'domain': domain,
-                'asin': identifier,
-                'stats': 180,     # ✅ CRITICAL: stats > 0 triggers current values
-                'history': 1,     # Price history
-                'offers': 20      # Include offers for pricing data
-            }
-            
-            data = await self._make_request('/product', params)
-            
+            # Import official keepa library
+            import keepa
+
+            # Create Keepa API instance
+            api = keepa.Keepa(self.api_key)
+
+            # Query product with stats and history
+            # Run in executor to avoid blocking (keepa lib is synchronous)
+            loop = asyncio.get_event_loop()
+
+            def _sync_query():
+                return api.query(
+                    identifier,
+                    domain=domain,
+                    stats=180,      # Get 180-day statistics
+                    history=True,   # Include price history
+                    offers=20       # Include offer data
+                )
+
+            products = await loop.run_in_executor(None, _sync_query)
+
             # Check if product found
-            if not data.get('products') or len(data['products']) == 0:
+            if not products or len(products) == 0:
                 self.logger.info(f"Product not found: {identifier}")
                 return None
-            
-            product = data['products'][0]
 
-            # ✅ DEBUG: Log raw Keepa response structure
-            self.logger.info(f"🔍 RAW Keepa response keys for {identifier}: {list(product.keys())[:15]}")
-            self.logger.info(f"🔍 Has 'current' at root? {'current' in product}")
-            self.logger.info(f"🔍 Has 'stats.current'? {'current' in product.get('stats', {})}")
+            product = products[0]
 
-            if 'current' in product:
-                current_arr = product['current']
-                self.logger.info(f"🔍 current[] length: {len(current_arr) if isinstance(current_arr, list) else 'not a list'}")
-                if isinstance(current_arr, list) and len(current_arr) > 5:
-                    self.logger.info(f"🔍 current[0-5]: [{current_arr[0]}, {current_arr[1]}, {current_arr[2]}, {current_arr[3]}, {current_arr[4]}, {current_arr[5]}]")
-            else:
-                self.logger.warning(f"⚠️ 'current' field MISSING in Keepa response for {identifier}")
+            # ✅ Log product data structure for debugging
+            self.logger.info(f"✅ Keepa lib returned product for {identifier}")
+            self.logger.info(f"📊 Available keys: {list(product.keys())[:20]}")
+
+            # Log price data availability
+            if 'data' in product:
+                data_keys = list(product['data'].keys())[:10]
+                self.logger.info(f"💰 Price data keys: {data_keys}")
+
+                # Check for NEW price
+                if 'NEW' in product['data']:
+                    new_prices = product['data']['NEW']
+                    if isinstance(new_prices, list) and len(new_prices) > 0:
+                        latest_price = new_prices[-1]
+                        self.logger.info(f"💵 Latest NEW price: {latest_price}")
+
+                # Check for BSR (SALES)
+                if 'SALES' in product['data']:
+                    bsr_history = product['data']['SALES']
+                    if isinstance(bsr_history, list) and len(bsr_history) > 0:
+                        latest_bsr = bsr_history[-1]
+                        self.logger.info(f"📈 Latest BSR: {latest_bsr}")
 
             # Cache the result (pricing data = shorter TTL)
             self._set_cache(cache_key, product, cache_type='pricing')
-            
+
             return product
-            
+
         except Exception as e:
             self.logger.error(f"Failed to get product data for {identifier}: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             return None
     
     async def find_products(self, search_criteria: Dict[str, Any], domain: int = 1, max_results: int = 50) -> List[str]:

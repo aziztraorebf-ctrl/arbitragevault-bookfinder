@@ -57,116 +57,167 @@ class KeepaRawParser:
     @staticmethod
     def extract_current_values(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Extract current values from stats.current[] array.
+        Extract current values from product['data'] arrays using keepa library format.
+
+        The keepa Python library transforms API responses into structured data:
+        - product['data']['NEW'] = array of New prices (latest = current)
+        - product['data']['SALES'] = array of BSR values (latest = current)
+        - product['data']['AMAZON'] = array of Amazon prices
+        - etc.
 
         Args:
-            raw_data: Raw Keepa API response
+            raw_data: Keepa product dict from keepa.Keepa().query()
 
         Returns:
             Dictionary with current values (prices, BSR, counts)
         """
         current_values = {}
+        asin = raw_data.get('asin', 'unknown')
 
-        # ✅ Compatibilité Keepa nouvelle et ancienne structure
-        current_array = raw_data.get("current")  # Nouveau : racine directe
-        if not current_array:  # Fallback ancien format
-            stats = raw_data.get("stats", {})
-            current_array = stats.get("current", [])
+        # Get 'data' section (created by keepa lib)
+        data = raw_data.get('data', {})
 
-        if not current_array or not isinstance(current_array, list):
-            logger.warning(f"ASIN {raw_data.get('asin', 'unknown')}: current[] not available")
+        if not data:
+            logger.warning(f"ASIN {asin}: 'data' section not available")
             return current_values
 
-        # Log temporaire pour vérification
-        logger.info(f"ASIN {raw_data.get('asin', 'unknown')}: current[0]={current_array[0] if len(current_array)>0 else None}, current[3]={current_array[3] if len(current_array)>3 else None}")
+        # Helper to extract latest value from array
+        def get_latest(key: str, is_price: bool = False) -> Optional[Any]:
+            array = data.get(key)
+            if not array or not isinstance(array, list) or len(array) == 0:
+                return None
 
-        # Extract values using official indices
-        extractors = [
-            (KeepaCSVType.AMAZON, "amazon_price", True),           # Convert to price
-            (KeepaCSVType.NEW, "new_price", True),                 # Convert to price
-            (KeepaCSVType.USED, "used_price", True),               # Convert to price
-            (KeepaCSVType.SALES, "bsr", False),                    # Keep as integer
-            (KeepaCSVType.LISTPRICE, "list_price", True),          # Convert to price
-            (KeepaCSVType.NEW_FBA, "fba_price", True),             # Convert to price
-            (KeepaCSVType.BUY_BOX_SHIPPING, "buybox_price", True), # Convert to price
-            (KeepaCSVType.COUNT_NEW, "new_count", False),          # Keep as integer
-            (KeepaCSVType.COUNT_USED, "used_count", False),        # Keep as integer
-            (KeepaCSVType.RATING, "rating", False),                # Keep as integer (0-50)
-            (KeepaCSVType.COUNT_REVIEWS, "review_count", False),   # Keep as integer
-        ]
-
-        for idx, key, is_price in extractors:
-            if len(current_array) > idx:
-                value = current_array[idx]
+            # Get last non-null value
+            for value in reversed(array):
                 if value is not None and value != -1:
                     if is_price:
-                        current_values[key] = KeepaRawParser._convert_price(value)
+                        return KeepaRawParser._convert_price(value)
                     else:
-                        current_values[key] = int(value)
-                    logger.debug(f"Extracted {key}: {current_values[key]}")
+                        return int(value)
+            return None
+
+        # Extract current values from data arrays
+        extractors = [
+            ('AMAZON', 'amazon_price', True),      # Amazon price
+            ('NEW', 'new_price', True),            # New price
+            ('USED', 'used_price', True),          # Used price
+            ('SALES', 'bsr', False),               # BSR (Sales Rank) - INTEGER!
+            ('LISTPRICE', 'list_price', True),     # List price
+            ('NEW_FBA', 'fba_price', True),        # FBA price
+            ('BUY_BOX_SHIPPING', 'buybox_price', True),  # Buy Box price
+            ('COUNT_NEW', 'new_count', False),     # New offer count
+            ('COUNT_USED', 'used_count', False),   # Used offer count
+            ('RATING', 'rating', False),           # Rating (0-50)
+            ('COUNT_REVIEWS', 'review_count', False),  # Review count
+        ]
+
+        for data_key, output_key, is_price in extractors:
+            value = get_latest(data_key, is_price)
+            if value is not None:
+                current_values[output_key] = value
+                logger.debug(f"ASIN {asin}: {output_key} = {value}")
+
+        logger.info(f"✅ ASIN {asin}: Extracted {len(current_values)} current values from keepa lib format")
 
         return current_values
 
     @staticmethod
     def extract_history_arrays(raw_data: Dict[str, Any], days_back: int = 90) -> Dict[str, List[Tuple]]:
         """
-        Extract historical data from csv[][] arrays.
+        Extract historical data from product['data'] arrays using keepa library format.
+
+        The keepa library provides:
+        - product['data']['SALES'] = BSR values array
+        - product['data']['SALES_time'] = corresponding datetime objects
+        - product['data']['NEW'] = New price values array
+        - product['data']['NEW_time'] = corresponding datetime objects
 
         Args:
-            raw_data: Raw Keepa API response
+            raw_data: Keepa product dict from keepa.Keepa().query()
             days_back: Number of days of history to extract
 
         Returns:
             Dictionary with history arrays (bsr_history, price_history, etc.)
         """
         history_data = {}
-        csv_data = raw_data.get("csv", [])
+        asin = raw_data.get('asin', 'unknown')
 
-        if not csv_data or not isinstance(csv_data, list):
-            logger.warning(f"ASIN {raw_data.get('asin', 'unknown')}: csv[] data not available")
+        # Get 'data' section (created by keepa lib)
+        data = raw_data.get('data', {})
+
+        if not data:
+            logger.warning(f"ASIN {asin}: 'data' section not available")
             return history_data
 
-        # Calculate cutoff timestamp
+        # Calculate cutoff date
         cutoff_date = datetime.now() - timedelta(days=days_back)
-        keepa_cutoff = KeepaRawParser._datetime_to_keepa(cutoff_date)
 
-        # Extract BSR history from csv[3]
-        if len(csv_data) > KeepaCSVType.SALES and csv_data[KeepaCSVType.SALES]:
-            bsr_history = KeepaRawParser._parse_time_series(
-                csv_data[KeepaCSVType.SALES],
-                keepa_cutoff,
-                convert_price=False
-            )
-            history_data["bsr_history"] = bsr_history
-            logger.debug(f"Extracted {len(bsr_history)} BSR data points")
+        # Helper to extract time series from keepa lib format
+        def extract_series(value_key: str, time_key: str, is_price: bool = False) -> List[Tuple]:
+            values = data.get(value_key, [])
+            times = data.get(time_key, [])
 
-        # Extract price history from csv[0] (Amazon price)
-        if len(csv_data) > KeepaCSVType.AMAZON and csv_data[KeepaCSVType.AMAZON]:
-            price_history = KeepaRawParser._parse_time_series(
-                csv_data[KeepaCSVType.AMAZON],
-                keepa_cutoff,
-                convert_price=True
-            )
-            history_data["price_history"] = price_history
-            logger.debug(f"Extracted {len(price_history)} price data points")
+            if not values or not times or len(values) != len(times):
+                return []
 
-        # Extract Buy Box history from csv[18]
-        if len(csv_data) > KeepaCSVType.BUY_BOX_SHIPPING and csv_data[KeepaCSVType.BUY_BOX_SHIPPING]:
-            buybox_history = KeepaRawParser._parse_time_series(
-                csv_data[KeepaCSVType.BUY_BOX_SHIPPING],
-                keepa_cutoff,
-                convert_price=True
-            )
-            history_data["buybox_history"] = buybox_history
+            series = []
+            for i in range(len(values)):
+                value = values[i]
+                time = times[i]
 
-        # Extract offer count history from csv[11]
-        if len(csv_data) > KeepaCSVType.COUNT_NEW and csv_data[KeepaCSVType.COUNT_NEW]:
-            offers_history = KeepaRawParser._parse_time_series(
-                csv_data[KeepaCSVType.COUNT_NEW],
-                keepa_cutoff,
-                convert_price=False
-            )
-            history_data["offers_history"] = offers_history
+                # Skip null/invalid values
+                if value is None or value == -1:
+                    continue
+
+                # Apply time filter
+                if isinstance(time, datetime) and time < cutoff_date:
+                    continue
+
+                # Convert price if needed
+                if is_price:
+                    value = float(KeepaRawParser._convert_price(value))
+                else:
+                    value = int(value)
+
+                # Ensure time is datetime
+                if not isinstance(time, datetime):
+                    try:
+                        time = datetime.fromisoformat(str(time))
+                    except:
+                        continue
+
+                series.append((time, value))
+
+            return series
+
+        # Extract BSR history (SALES)
+        bsr_history = extract_series('SALES', 'SALES_time', is_price=False)
+        if bsr_history:
+            history_data['bsr_history'] = bsr_history
+            logger.debug(f"ASIN {asin}: Extracted {len(bsr_history)} BSR data points")
+
+        # Extract price history (NEW)
+        price_history = extract_series('NEW', 'NEW_time', is_price=True)
+        if price_history:
+            history_data['price_history'] = price_history
+            logger.debug(f"ASIN {asin}: Extracted {len(price_history)} price data points")
+
+        # Extract Amazon price history
+        amazon_history = extract_series('AMAZON', 'AMAZON_time', is_price=True)
+        if amazon_history:
+            history_data['amazon_history'] = amazon_history
+
+        # Extract Buy Box history
+        buybox_history = extract_series('BUY_BOX_SHIPPING', 'BUY_BOX_SHIPPING_time', is_price=True)
+        if buybox_history:
+            history_data['buybox_history'] = buybox_history
+
+        # Extract offer count history
+        offers_history = extract_series('COUNT_NEW', 'COUNT_NEW_time', is_price=False)
+        if offers_history:
+            history_data['offers_history'] = offers_history
+
+        logger.info(f"✅ ASIN {asin}: Extracted {len(history_data)} history series from keepa lib format")
 
         return history_data
 

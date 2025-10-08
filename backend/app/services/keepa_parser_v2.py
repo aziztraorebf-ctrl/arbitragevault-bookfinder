@@ -5,6 +5,7 @@ Refactored version with proper BSR extraction pattern following official Keepa d
 
 Author: Claude Opus 4.1 + Context7 Validation
 Date: October 2025
+Last Modified: 2025-10-08 03:05 UTC - Force cache invalidation
 """
 
 from datetime import datetime, timedelta

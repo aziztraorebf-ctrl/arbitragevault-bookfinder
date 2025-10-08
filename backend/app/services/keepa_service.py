@@ -340,28 +340,120 @@ class KeepaService:
 
             product = products[0]
 
-            # ✅ Log product data structure for debugging
-            self.logger.info(f"✅ Keepa lib returned product for {identifier}")
-            self.logger.info(f"📊 Available keys: {list(product.keys())[:20]}")
+            # ========================================
+            # 🔍 EXHAUSTIVE LOGGING FOR DEBUGGING
+            # ========================================
 
-            # Log price data availability
+            self.logger.info(f"=" * 80)
+            self.logger.info(f"🔍 KEEPA RESPONSE ANALYSIS FOR ASIN: {identifier}")
+            self.logger.info(f"=" * 80)
+
+            # 1. Product type and top-level keys
+            self.logger.info(f"📦 Product type: {type(product)}")
+            self.logger.info(f"📊 Product keys ({len(product.keys())} total):")
+            self.logger.info(f"    {list(product.keys())}")
+
+            # 2. Check for 'data' section
             if 'data' in product:
-                data_keys = list(product['data'].keys())[:10]
-                self.logger.info(f"💰 Price data keys: {data_keys}")
+                data = product['data']
+                self.logger.info(f"✅ 'data' section EXISTS")
+                self.logger.info(f"📊 'data' type: {type(data)}")
+                self.logger.info(f"📊 'data' keys ({len(data.keys())} total):")
+                self.logger.info(f"    {list(data.keys())}")
 
-                # Check for NEW price
-                if 'NEW' in product['data']:
-                    new_prices = product['data']['NEW']
-                    if isinstance(new_prices, list) and len(new_prices) > 0:
-                        latest_price = new_prices[-1]
-                        self.logger.info(f"💵 Latest NEW price: {latest_price}")
+                # 3. Analyze critical keys for pricing
+                critical_keys = ['NEW', 'NEW_time', 'AMAZON', 'AMAZON_time', 'SALES', 'SALES_time']
+                self.logger.info(f"🎯 CRITICAL KEYS ANALYSIS:")
 
-                # Check for BSR (SALES)
-                if 'SALES' in product['data']:
-                    bsr_history = product['data']['SALES']
-                    if isinstance(bsr_history, list) and len(bsr_history) > 0:
-                        latest_bsr = bsr_history[-1]
-                        self.logger.info(f"📈 Latest BSR: {latest_bsr}")
+                for key in critical_keys:
+                    if key in data:
+                        value = data[key]
+                        self.logger.info(f"  ✅ '{key}' exists:")
+                        self.logger.info(f"     - Type: {type(value)}")
+                        self.logger.info(f"     - Module: {type(value).__module__}")
+
+                        # Check length
+                        try:
+                            length = len(value)
+                            self.logger.info(f"     - Length: {length}")
+
+                            # Show first/last values if array
+                            if length > 0:
+                                self.logger.info(f"     - First value: {value[0]} (type: {type(value[0])})")
+                                if length > 1:
+                                    self.logger.info(f"     - Last value: {value[-1]} (type: {type(value[-1])})")
+
+                                # For time arrays, show conversion
+                                if key.endswith('_time'):
+                                    self.logger.info(f"     - Time value example: {value[0]}")
+                        except TypeError:
+                            self.logger.info(f"     - Not iterable (scalar value)")
+                    else:
+                        self.logger.info(f"  ❌ '{key}' MISSING")
+
+                # 4. Try to extract current price from NEW array
+                if 'NEW' in data:
+                    try:
+                        new_array = data['NEW']
+                        # Convert to list if numpy
+                        if hasattr(new_array, 'tolist'):
+                            new_list = new_array.tolist()
+                            self.logger.info(f"💰 NEW array converted to list: {len(new_list)} items")
+                        else:
+                            new_list = list(new_array)
+
+                        # Find last non-null value
+                        last_price = None
+                        for val in reversed(new_list):
+                            if val is not None and val != -1:
+                                last_price = val
+                                break
+
+                        if last_price:
+                            price_cents = int(last_price)
+                            price_dollars = price_cents / 100.0
+                            self.logger.info(f"💵 EXTRACTED PRICE: {price_cents} cents = ${price_dollars:.2f}")
+                        else:
+                            self.logger.info(f"⚠️ No valid price found in NEW array (all -1 or None)")
+                    except Exception as e:
+                        self.logger.error(f"❌ Failed to extract NEW price: {e}")
+                        import traceback
+                        self.logger.error(f"   Traceback: {traceback.format_exc()}")
+
+                # 5. Try to extract current BSR from SALES array
+                if 'SALES' in data:
+                    try:
+                        sales_array = data['SALES']
+                        # Convert to list if numpy
+                        if hasattr(sales_array, 'tolist'):
+                            sales_list = sales_array.tolist()
+                            self.logger.info(f"📈 SALES array converted to list: {len(sales_list)} items")
+                        else:
+                            sales_list = list(sales_array)
+
+                        # Find last non-null value
+                        last_bsr = None
+                        for val in reversed(sales_list):
+                            if val is not None and val != -1:
+                                last_bsr = val
+                                break
+
+                        if last_bsr:
+                            bsr_rank = int(last_bsr)
+                            self.logger.info(f"📈 EXTRACTED BSR: {bsr_rank:,}")
+                        else:
+                            self.logger.info(f"⚠️ No valid BSR found in SALES array (all -1 or None)")
+                    except Exception as e:
+                        self.logger.error(f"❌ Failed to extract SALES BSR: {e}")
+                        import traceback
+                        self.logger.error(f"   Traceback: {traceback.format_exc()}")
+            else:
+                self.logger.error(f"❌ NO 'data' SECTION IN PRODUCT!")
+                self.logger.error(f"   Available top-level keys: {list(product.keys())}")
+
+            self.logger.info(f"=" * 80)
+            self.logger.info(f"🏁 END KEEPA RESPONSE ANALYSIS")
+            self.logger.info(f"=" * 80)
 
             # Cache the result (pricing data = shorter TTL)
             self._set_cache(cache_key, product, cache_type='pricing')

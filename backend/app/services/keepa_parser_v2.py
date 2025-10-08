@@ -17,6 +17,14 @@ from enum import IntEnum
 
 from app.models.keepa_models import ProductStatus
 from app.core.calculations import VelocityData
+from app.utils.keepa_utils import (
+    safe_array_check,
+    safe_array_to_list,
+    safe_value_check,
+    extract_latest_value,
+    KEEPA_NULL_VALUE,
+    KEEPA_PRICE_DIVISOR
+)
 
 
 # Configure structured logging
@@ -83,40 +91,14 @@ class KeepaRawParser:
             return current_values
 
         # Helper to extract latest value from array (numpy or list)
+        # Source verified: Keepa SDK v1.3.0 - numpy arrays with -1 for null
         def get_latest(key: str, is_price: bool = False) -> Optional[Any]:
-            array = data.get(key)
+            """
+            Extract latest valid value from Keepa data array using numpy-safe helpers.
 
-            # Handle both numpy arrays and lists
-            if array is None:
-                return None
-
-            # Check if it's a numpy array or list with content
-            try:
-                if len(array) == 0:
-                    return None
-            except TypeError:
-                return None
-
-            # Iterate from end to find last valid value
-            # Convert to list if numpy array for safe iteration
-            try:
-                array_list = list(array) if hasattr(array, '__iter__') else [array]
-            except:
-                return None
-
-            # Get last non-null value
-            for value in reversed(array_list):
-                # Handle numpy types and None checks safely
-                try:
-                    is_null = value is None or (hasattr(value, '__eq__') and value == -1)
-                    if not is_null:
-                        if is_price:
-                            return KeepaRawParser._convert_price(value)
-                        else:
-                            return int(value)
-                except (ValueError, TypeError):
-                    continue
-            return None
+            Uses extract_latest_value() to avoid "ambiguous truth value" errors.
+            """
+            return extract_latest_value(data, key, is_price=is_price, null_value=KEEPA_NULL_VALUE)
 
         # Extract current values from data arrays
         extractors = [

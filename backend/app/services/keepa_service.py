@@ -14,6 +14,12 @@ from dataclasses import dataclass, field
 import httpx
 from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
+from app.utils.keepa_utils import (
+    safe_value_check,
+    safe_array_to_list,
+    KEEPA_NULL_VALUE
+)
+
 # Circuit breaker states
 class CircuitState(Enum):
     CLOSED = "closed"
@@ -392,20 +398,18 @@ class KeepaService:
                         self.logger.info(f"  ❌ '{key}' MISSING")
 
                 # 4. Try to extract current price from NEW array
+                # Source verified: Keepa SDK v1.3.0 - numpy arrays
                 if 'NEW' in data:
                     try:
                         new_array = data['NEW']
-                        # Convert to list if numpy
-                        if hasattr(new_array, 'tolist'):
-                            new_list = new_array.tolist()
-                            self.logger.info(f"💰 NEW array converted to list: {len(new_list)} items")
-                        else:
-                            new_list = list(new_array)
+                        # Convert to list using safe helper
+                        new_list = safe_array_to_list(new_array)
+                        self.logger.info(f"💰 NEW array converted to list: {len(new_list)} items")
 
-                        # Find last non-null value
+                        # Find last non-null value using safe helper
                         last_price = None
                         for val in reversed(new_list):
-                            if val is not None and val != -1:
+                            if safe_value_check(val, KEEPA_NULL_VALUE):
                                 last_price = val
                                 break
 
@@ -421,20 +425,18 @@ class KeepaService:
                         self.logger.error(f"   Traceback: {traceback.format_exc()}")
 
                 # 5. Try to extract current BSR from SALES array
+                # Source verified: Keepa SDK v1.3.0 - numpy arrays
                 if 'SALES' in data:
                     try:
                         sales_array = data['SALES']
-                        # Convert to list if numpy
-                        if hasattr(sales_array, 'tolist'):
-                            sales_list = sales_array.tolist()
-                            self.logger.info(f"📈 SALES array converted to list: {len(sales_list)} items")
-                        else:
-                            sales_list = list(sales_array)
+                        # Convert to list using safe helper
+                        sales_list = safe_array_to_list(sales_array)
+                        self.logger.info(f"📈 SALES array converted to list: {len(sales_list)} items")
 
-                        # Find last non-null value
+                        # Find last non-null value using safe helper
                         last_bsr = None
                         for val in reversed(sales_list):
-                            if val is not None and val != -1:
+                            if safe_value_check(val, KEEPA_NULL_VALUE):
                                 last_bsr = val
                                 break
 

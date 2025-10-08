@@ -81,19 +81,40 @@ class KeepaRawParser:
             logger.warning(f"ASIN {asin}: 'data' section not available")
             return current_values
 
-        # Helper to extract latest value from array
+        # Helper to extract latest value from array (numpy or list)
         def get_latest(key: str, is_price: bool = False) -> Optional[Any]:
             array = data.get(key)
-            if not array or not isinstance(array, list) or len(array) == 0:
+
+            # Handle both numpy arrays and lists
+            if array is None:
+                return None
+
+            # Check if it's a numpy array or list with content
+            try:
+                if len(array) == 0:
+                    return None
+            except TypeError:
+                return None
+
+            # Iterate from end to find last valid value
+            # Convert to list if numpy array for safe iteration
+            try:
+                array_list = list(array) if hasattr(array, '__iter__') else [array]
+            except:
                 return None
 
             # Get last non-null value
-            for value in reversed(array):
-                if value is not None and value != -1:
-                    if is_price:
-                        return KeepaRawParser._convert_price(value)
-                    else:
-                        return int(value)
+            for value in reversed(array_list):
+                # Handle numpy types and None checks safely
+                try:
+                    is_null = value is None or (hasattr(value, '__eq__') and value == -1)
+                    if not is_null:
+                        if is_price:
+                            return KeepaRawParser._convert_price(value)
+                        else:
+                            return int(value)
+                except (ValueError, TypeError):
+                    continue
             return None
 
         # Extract current values from data arrays

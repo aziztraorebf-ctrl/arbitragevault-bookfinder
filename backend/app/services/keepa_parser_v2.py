@@ -66,13 +66,18 @@ class KeepaRawParser:
         """
         current_values = {}
 
-        # Primary source: stats.current[] array
-        stats = raw_data.get("stats", {})
-        current_array = stats.get("current", [])
+        # ✅ Compatibilité Keepa nouvelle et ancienne structure
+        current_array = raw_data.get("current")  # Nouveau : racine directe
+        if not current_array:  # Fallback ancien format
+            stats = raw_data.get("stats", {})
+            current_array = stats.get("current", [])
 
         if not current_array or not isinstance(current_array, list):
-            logger.warning(f"ASIN {raw_data.get('asin', 'unknown')}: stats.current[] not available")
+            logger.warning(f"ASIN {raw_data.get('asin', 'unknown')}: current[] not available")
             return current_values
+
+        # Log temporaire pour vérification
+        logger.info(f"ASIN {raw_data.get('asin', 'unknown')}: current[0]={current_array[0] if len(current_array)>0 else None}, current[3]={current_array[3] if len(current_array)>3 else None}")
 
         # Extract values using official indices
         extractors = [
@@ -232,14 +237,17 @@ class KeepaBSRExtractor:
         """
         asin = raw_data.get("asin", "unknown")
 
-        # Strategy 1: Primary source - stats.current[3]
-        stats = raw_data.get("stats", {})
-        current = stats.get("current", [])
+        # Strategy 1: Primary source - current[3]
+        # ✅ Compatibilité Keepa nouvelle et ancienne structure
+        current = raw_data.get("current")
+        if not current:  # Fallback ancien format
+            stats = raw_data.get("stats", {})
+            current = stats.get("current", [])
 
         if current and len(current) > KeepaCSVType.SALES:
             bsr = current[KeepaCSVType.SALES]
             if bsr and bsr != -1:
-                logger.info(f"ASIN {asin}: BSR {bsr} from stats.current[3]")
+                logger.info(f"ASIN {asin}: BSR {bsr} from current[3]")
                 return int(bsr)
 
         # Strategy 2: Fallback to last historical point if recent

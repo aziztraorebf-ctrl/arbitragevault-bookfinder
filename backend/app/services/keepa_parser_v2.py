@@ -176,16 +176,27 @@ class KeepaRawParser:
 
         # Helper to extract time series from keepa lib format
         def extract_series(value_key: str, time_key: str, is_price: bool = False) -> List[Tuple]:
-            values = data.get(value_key, [])
-            times = data.get(time_key, [])
+            values = data.get(value_key)
+            times = data.get(time_key)
 
-            if not values or not times or len(values) != len(times):
+            # ✅ Handle numpy arrays - check existence with 'is None', not 'not'
+            if values is None or times is None:
+                return []
+
+            # Convert to list if numpy array
+            try:
+                values_list = values.tolist() if hasattr(values, 'tolist') else list(values)
+                times_list = times.tolist() if hasattr(times, 'tolist') else list(times)
+            except (TypeError, AttributeError):
+                return []
+
+            if len(values_list) == 0 or len(times_list) == 0 or len(values_list) != len(times_list):
                 return []
 
             series = []
-            for i in range(len(values)):
-                value = values[i]
-                time = times[i]
+            for i in range(len(values_list)):
+                value = values_list[i]
+                time = times_list[i]
 
                 # Skip null/invalid values
                 if value is None or value == -1:

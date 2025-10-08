@@ -311,7 +311,20 @@ class KeepaService:
                 return None
             
             product = data['products'][0]
-            
+
+            # ✅ DEBUG: Log raw Keepa response structure
+            self.logger.info(f"🔍 RAW Keepa response keys for {identifier}: {list(product.keys())[:15]}")
+            self.logger.info(f"🔍 Has 'current' at root? {'current' in product}")
+            self.logger.info(f"🔍 Has 'stats.current'? {'current' in product.get('stats', {})}")
+
+            if 'current' in product:
+                current_arr = product['current']
+                self.logger.info(f"🔍 current[] length: {len(current_arr) if isinstance(current_arr, list) else 'not a list'}")
+                if isinstance(current_arr, list) and len(current_arr) > 5:
+                    self.logger.info(f"🔍 current[0-5]: [{current_arr[0]}, {current_arr[1]}, {current_arr[2]}, {current_arr[3]}, {current_arr[4]}, {current_arr[5]}]")
+            else:
+                self.logger.warning(f"⚠️ 'current' field MISSING in Keepa response for {identifier}")
+
             # Cache the result (pricing data = shorter TTL)
             self._set_cache(cache_key, product, cache_type='pricing')
             

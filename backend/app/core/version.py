@@ -7,8 +7,8 @@ Build metadata and version tracking for deployment verification.
 
 from datetime import datetime
 
-# Build Tag for Numpy-Safe Refactor
-BUILD_TAG = "keepa_refactor_v2_verified"
+# Build Tag for ROI Logic Fix
+BUILD_TAG = "roi_logic_v1_verified"
 
 # Keepa SDK Version
 KEEPA_SDK_VERSION = "1.3.0"

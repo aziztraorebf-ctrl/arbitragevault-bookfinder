@@ -16,9 +16,9 @@ from app.services.business_config_service import BusinessConfigService, get_busi
 from app.services.keepa_parser_v2 import parse_keepa_product
 from app.core.calculations import (
     calculate_roi_metrics, calculate_velocity_score, VelocityData,
-    compute_advanced_velocity_score, compute_advanced_stability_score, 
-    compute_advanced_confidence_score, compute_overall_rating, 
-    generate_readable_summary
+    compute_advanced_velocity_score, compute_advanced_stability_score,
+    compute_advanced_confidence_score, compute_overall_rating,
+    generate_readable_summary, calculate_purchase_cost_from_strategy
 )
 
 router = APIRouter()
@@ -182,7 +182,14 @@ async def analyze_product(
         
         # Calculate ROI metrics with valid price - EXACT SAME AS DEBUG ENDPOINT
         current_price = Decimal(str(current_price_raw))
-        estimated_cost = current_price * Decimal('0.75')
+
+        # Use strategy-based purchase cost calculation with inverse ROI formula
+        strategy = config.get("active_strategy", "balanced")
+        estimated_cost = calculate_purchase_cost_from_strategy(
+            sell_price=current_price,
+            strategy=strategy,
+            config=config
+        )
         
         # Weight handling - EXACT SAME AS DEBUG ENDPOINT  
         weight_raw = parsed_data.get('weight', 1.0)

@@ -8,7 +8,61 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 
-from .fees_config import calculate_profit_metrics, get_fee_config
+from .fees_config import calculate_profit_metrics, get_fee_config, calculate_total_fees
+
+
+def calculate_purchase_cost_from_strategy(
+    sell_price: Decimal,
+    strategy: str,
+    config: Dict[str, Any]
+) -> Decimal:
+    """
+    Calculate maximum purchase cost from strategy ROI target using inverse ROI formula.
+
+    This function guarantees the exact ROI percentage defined in the strategy configuration
+    by working backwards from the target ROI to calculate the maximum purchase price.
+
+    Formula: buy_cost = (sell_price - fees - buffer) / (1 + roi_target/100)
+
+    Args:
+        sell_price: Target selling price (from Keepa current price)
+        strategy: Strategy name ('aggressive', 'balanced', 'conservative')
+        config: Business configuration containing strategy definitions
+
+    Returns:
+        Calculated purchase cost that guarantees target ROI
+
+    Example:
+        sell_price = $100, strategy = 'balanced' (roi_min: 25%)
+        fees = $6.90, buffer = $5.00
+        buy_cost = ($100 - $6.90 - $5.00) / (1 + 0.25) = $70.48
+        Actual ROI = ($100 - $6.90 - $70.48 - $5.00) / $70.48 * 100 = 25%
+    """
+    # 1. Calculate all Amazon fees (referral, FBA, closing, etc.)
+    fees_result = calculate_total_fees(sell_price, Decimal("1.0"), "books")
+    total_fees = fees_result["total_fees"]
+
+    # 2. Calculate 5% buffer amount
+    buffer_amount = sell_price * Decimal("0.05")
+
+    # 3. Get ROI target from strategy configuration
+    strategies = config.get("strategies", {})
+    strategy_config = strategies.get(strategy.lower(), {})
+    roi_target = Decimal(str(strategy_config.get("roi_min", 30)))  # Default 30% if not found
+
+    # 4. Apply inverse ROI formula
+    # roi = (sell_price - fees - buy_cost - buffer) / buy_cost * 100
+    # Solving for buy_cost: buy_cost = (sell_price - fees - buffer) / (1 + roi/100)
+    numerator = sell_price - total_fees - buffer_amount
+    denominator = Decimal("1") + (roi_target / Decimal("100"))
+    purchase_cost = numerator / denominator
+
+    # 5. Validation and fallback
+    # If calculation produces invalid result, fallback to 50% of sell price
+    if purchase_cost <= 0 or purchase_cost >= sell_price:
+        purchase_cost = sell_price * Decimal("0.50")
+
+    return purchase_cost
 
 
 @dataclass

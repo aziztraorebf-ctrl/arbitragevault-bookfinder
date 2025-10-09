@@ -14,12 +14,6 @@ from dataclasses import dataclass, field
 import httpx
 from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
-from app.utils.keepa_utils import (
-    safe_value_check,
-    safe_array_to_list,
-    KEEPA_NULL_VALUE
-)
-
 # Circuit breaker states
 class CircuitState(Enum):
     CLOSED = "closed"
@@ -345,117 +339,6 @@ class KeepaService:
                 return None
 
             product = products[0]
-
-            # ========================================
-            # 🔍 EXHAUSTIVE LOGGING FOR DEBUGGING
-            # ========================================
-
-            self.logger.info(f"=" * 80)
-            self.logger.info(f"🔍 KEEPA RESPONSE ANALYSIS FOR ASIN: {identifier}")
-            self.logger.info(f"=" * 80)
-
-            # 1. Product type and top-level keys
-            self.logger.info(f"📦 Product type: {type(product)}")
-            self.logger.info(f"📊 Product keys ({len(product.keys())} total):")
-            self.logger.info(f"    {list(product.keys())}")
-
-            # 2. Check for 'data' section
-            if 'data' in product:
-                data = product['data']
-                self.logger.info(f"✅ 'data' section EXISTS")
-                self.logger.info(f"📊 'data' type: {type(data)}")
-                self.logger.info(f"📊 'data' keys ({len(data.keys())} total):")
-                self.logger.info(f"    {list(data.keys())}")
-
-                # 3. Analyze critical keys for pricing
-                critical_keys = ['NEW', 'NEW_time', 'AMAZON', 'AMAZON_time', 'SALES', 'SALES_time']
-                self.logger.info(f"🎯 CRITICAL KEYS ANALYSIS:")
-
-                for key in critical_keys:
-                    if key in data:
-                        value = data[key]
-                        self.logger.info(f"  ✅ '{key}' exists:")
-                        self.logger.info(f"     - Type: {type(value)}")
-                        self.logger.info(f"     - Module: {type(value).__module__}")
-
-                        # Check length
-                        try:
-                            length = len(value)
-                            self.logger.info(f"     - Length: {length}")
-
-                            # Show first/last values if array
-                            if length > 0:
-                                self.logger.info(f"     - First value: {value[0]} (type: {type(value[0])})")
-                                if length > 1:
-                                    self.logger.info(f"     - Last value: {value[-1]} (type: {type(value[-1])})")
-
-                                # For time arrays, show conversion
-                                if key.endswith('_time'):
-                                    self.logger.info(f"     - Time value example: {value[0]}")
-                        except TypeError:
-                            self.logger.info(f"     - Not iterable (scalar value)")
-                    else:
-                        self.logger.info(f"  ❌ '{key}' MISSING")
-
-                # 4. Try to extract current price from NEW array
-                # Source verified: Keepa SDK v1.3.0 - numpy arrays
-                if 'NEW' in data:
-                    try:
-                        new_array = data['NEW']
-                        # Convert to list using safe helper
-                        new_list = safe_array_to_list(new_array)
-                        self.logger.info(f"💰 NEW array converted to list: {len(new_list)} items")
-
-                        # Find last non-null value using safe helper
-                        last_price = None
-                        for val in reversed(new_list):
-                            if safe_value_check(val, KEEPA_NULL_VALUE):
-                                last_price = val
-                                break
-
-                        if last_price:
-                            price_cents = int(last_price)
-                            price_dollars = price_cents / 100.0
-                            self.logger.info(f"💵 EXTRACTED PRICE: {price_cents} cents = ${price_dollars:.2f}")
-                        else:
-                            self.logger.info(f"⚠️ No valid price found in NEW array (all -1 or None)")
-                    except Exception as e:
-                        self.logger.error(f"❌ Failed to extract NEW price: {e}")
-                        import traceback
-                        self.logger.error(f"   Traceback: {traceback.format_exc()}")
-
-                # 5. Try to extract current BSR from SALES array
-                # Source verified: Keepa SDK v1.3.0 - numpy arrays
-                if 'SALES' in data:
-                    try:
-                        sales_array = data['SALES']
-                        # Convert to list using safe helper
-                        sales_list = safe_array_to_list(sales_array)
-                        self.logger.info(f"📈 SALES array converted to list: {len(sales_list)} items")
-
-                        # Find last non-null value using safe helper
-                        last_bsr = None
-                        for val in reversed(sales_list):
-                            if safe_value_check(val, KEEPA_NULL_VALUE):
-                                last_bsr = val
-                                break
-
-                        if last_bsr:
-                            bsr_rank = int(last_bsr)
-                            self.logger.info(f"📈 EXTRACTED BSR: {bsr_rank:,}")
-                        else:
-                            self.logger.info(f"⚠️ No valid BSR found in SALES array (all -1 or None)")
-                    except Exception as e:
-                        self.logger.error(f"❌ Failed to extract SALES BSR: {e}")
-                        import traceback
-                        self.logger.error(f"   Traceback: {traceback.format_exc()}")
-            else:
-                self.logger.error(f"❌ NO 'data' SECTION IN PRODUCT!")
-                self.logger.error(f"   Available top-level keys: {list(product.keys())}")
-
-            self.logger.info(f"=" * 80)
-            self.logger.info(f"🏁 END KEEPA RESPONSE ANALYSIS")
-            self.logger.info(f"=" * 80)
 
             # Cache the result (pricing data = shorter TTL)
             self._set_cache(cache_key, product, cache_type='pricing')

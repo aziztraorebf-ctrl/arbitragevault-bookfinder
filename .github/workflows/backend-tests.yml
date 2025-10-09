@@ -1,0 +1,71 @@
+name: Backend Tests
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '!backend/README*.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '!backend/README*.md'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      # Tests will skip Keepa integration tests without API key
+      DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run unit tests
+        run: |
+          cd backend
+          pytest tests/unit/ -v --tb=short --cov=app --cov-report=term-missing
+
+      - name: Run integration tests (without Keepa API)
+        run: |
+          cd backend
+          pytest tests/integration/ -v --tb=short -m "not requires_keepa_api"
+
+      - name: Upload coverage report
+        if: always()
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./backend/.coverage
+          flags: backend
+          name: backend-coverage

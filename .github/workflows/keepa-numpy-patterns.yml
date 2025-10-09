@@ -1,0 +1,43 @@
+name: Keepa NumPy Patterns Check
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/services/keepa*.py'
+      - 'backend/app/utils/keepa*.py'
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/app/services/keepa*.py'
+      - 'backend/app/utils/keepa*.py'
+
+jobs:
+  check-numpy-patterns:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run NumPy pattern checker
+        run: |
+          cd scripts
+          python check_numpy_patterns.py
+
+      - name: Comment on PR (if failure)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ **NumPy Pattern Check Failed**\n\nUnsafe numpy patterns detected in Keepa code. Please review the logs and fix before merging.\n\nSee [check_numpy_patterns.py](https://github.com/${{ github.repository }}/blob/main/scripts/check_numpy_patterns.py) for details.'
+            })

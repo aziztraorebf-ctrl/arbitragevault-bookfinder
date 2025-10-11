@@ -184,13 +184,13 @@ export default function MesNiches() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
-                        {product.raw_metrics.roi_percentage.toFixed(1)}%
+                        {(product.raw_metrics.roi_pct ?? 0).toFixed(1)}%
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
-                        {product.raw_metrics.velocity_score.toFixed(1)}
+                        {(product.raw_metrics.velocity_score ?? 0).toFixed(1)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
-                        {product.raw_metrics.stability_score.toFixed(1)}
+                        {(product.raw_metrics.stability_score ?? 0).toFixed(1)}
                       </td>
                     </tr>
                   ))}

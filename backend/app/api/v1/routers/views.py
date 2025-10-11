@@ -216,25 +216,34 @@ async def score_products_for_view(
 
     try:
         async with keepa_service:
-            keepa_response = await keepa_service.fetch_products(request.identifiers)
-
-            # 4. Parse and score each product
-            products_data = keepa_response.get("products", [])
-            if not products_data:
-                raise HTTPException(
-                    status_code=404,
-                    detail="No products found for the provided identifiers"
-                )
-
+            # 4. Fetch and score each product
             scored_products = []
             successful_scores = 0
             failed_scores = 0
 
-            for product_data in products_data:
+            for identifier in request.identifiers:
                 try:
+                    # Fetch Keepa data for this product
+                    product_data = await keepa_service.get_product_data(identifier, force_refresh=False)
+
+                    if not product_data:
+                        logger.warning(f"No Keepa data found for {identifier}")
+                        failed_scores += 1
+                        scored_products.append({
+                            "asin": identifier,
+                            "score": 0.0,
+                            "rank": 0,
+                            "strategy_profile": None,
+                            "weights_applied": {},
+                            "components": {},
+                            "raw_metrics": {},
+                            "error": "No data available from Keepa"
+                        })
+                        continue
+
                     # Parse Keepa product data
                     parsed = parse_keepa_product(product_data)
-                    asin = parsed.get("asin", "unknown")
+                    asin = parsed.get("asin", identifier)
 
                     # Compute view-specific score
                     score_result = compute_view_score(
@@ -256,10 +265,10 @@ async def score_products_for_view(
                     successful_scores += 1
 
                 except Exception as e:
-                    logger.error(f"Failed to score product: {e}")
+                    logger.error(f"Failed to score product {identifier}: {e}")
                     failed_scores += 1
                     scored_products.append({
-                        "asin": product_data.get("asin", "unknown"),
+                        "asin": identifier,
                         "score": 0.0,
                         "rank": 0,
                         "strategy_profile": None,

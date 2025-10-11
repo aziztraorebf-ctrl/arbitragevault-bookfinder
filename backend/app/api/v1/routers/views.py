@@ -238,7 +238,7 @@ async def score_products_for_view(
     for product_data in products_data:
         try:
             # Parse Keepa product data
-            parsed = parse_keepa_product(product_data, config)
+            parsed = parse_keepa_product(product_data)
             asin = parsed.get("asin", "unknown")
 
             # Compute view-specific score

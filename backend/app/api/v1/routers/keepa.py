@@ -8,7 +8,7 @@ from decimal import Decimal
 from typing import Dict, Any, List, Optional, Union
 from dataclasses import dataclass, field
 
-from fastapi import APIRouter, Query, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Query, Depends, HTTPException, BackgroundTasks, Request
 from pydantic import BaseModel, Field, validator
 
 from app.services.keepa_service import KeepaService, get_keepa_service
@@ -86,7 +86,11 @@ class AnalysisResult(BaseModel):
     # Score breakdown and summary
     score_breakdown: Dict[str, ScoreBreakdown] = Field(..., description="Detailed score breakdown")
     readable_summary: str = Field(..., description="Human-readable summary")
-    
+
+    # NEW: Strategy Refactor V2 fields
+    strategy_profile: Optional[str] = Field(None, description="Auto-selected strategy: textbook/velocity/balanced")
+    calculation_method: Optional[str] = Field(None, description="ROI calculation method: direct_keepa_prices/inverse_formula_fallback/inverse_formula_legacy")
+
     # Legacy fields (maintained for compatibility)
     recommendation: str
     risk_factors: List[str]
@@ -183,13 +187,46 @@ async def analyze_product(
         # Calculate ROI metrics with valid price - EXACT SAME AS DEBUG ENDPOINT
         current_price = Decimal(str(current_price_raw))
 
-        # Use strategy-based purchase cost calculation with inverse ROI formula
-        strategy = config.get("active_strategy", "balanced")
-        estimated_cost = calculate_purchase_cost_from_strategy(
-            sell_price=current_price,
-            strategy=strategy,
-            config=config
+        # *** STRATEGY REFACTOR V2: Direct ROI with real Keepa prices ***
+        from app.services.keepa_parser_v2 import (
+            _determine_target_sell_price,
+            _determine_buy_cost_used,
+            _auto_select_strategy
         )
+
+        # Feature flag: use new direct ROI or fallback to inverse formula
+        use_direct_roi = config.get("feature_flags", {}).get("direct_roi_calculation", False)
+
+        if use_direct_roi:
+            # Direct ROI: Extract real Keepa prices
+            sell_price_raw = _determine_target_sell_price(parsed_data)
+            buy_cost_raw = _determine_buy_cost_used(parsed_data)
+
+            # Validation: buy_cost must be less than sell_price
+            if sell_price_raw and buy_cost_raw and buy_cost_raw < sell_price_raw:
+                current_price = sell_price_raw  # BuyBox USED target
+                estimated_cost = buy_cost_raw    # FBA USED purchase cost
+                calculation_method = "direct_keepa_prices"
+                logger.info(f"ASIN {asin}: Direct ROI - sell=${sell_price_raw}, buy=${buy_cost_raw}")
+            else:
+                # Fallback: Inverse formula if prices invalid
+                logger.warning(f"ASIN {asin}: Invalid Keepa prices (sell={sell_price_raw}, buy={buy_cost_raw}), using inverse formula")
+                strategy = config.get("active_strategy", "balanced")
+                estimated_cost = calculate_purchase_cost_from_strategy(
+                    sell_price=current_price,
+                    strategy=strategy,
+                    config=config
+                )
+                calculation_method = "inverse_formula_fallback"
+        else:
+            # Legacy: Use strategy-based purchase cost calculation with inverse ROI formula
+            strategy = config.get("active_strategy", "balanced")
+            estimated_cost = calculate_purchase_cost_from_strategy(
+                sell_price=current_price,
+                strategy=strategy,
+                config=config
+            )
+            calculation_method = "inverse_formula_legacy"
         
         # Weight handling - EXACT SAME AS DEBUG ENDPOINT  
         weight_raw = parsed_data.get('weight', 1.0)
@@ -270,11 +307,18 @@ async def analyze_product(
             "confidence": confidence_normalized
         }
         readable_summary = generate_readable_summary(roi_percentage, overall_rating, scores_dict, config)
-        
+
+        # *** STRATEGY REFACTOR V2: Auto-select strategy profile ***
+        use_strategy_profiles = config.get("feature_flags", {}).get("strategy_profiles_v2", False)
+        if use_strategy_profiles:
+            strategy_profile = _auto_select_strategy(parsed_data)
+        else:
+            strategy_profile = config.get("active_strategy", "balanced")
+
         # Legacy recommendation logic (maintained for compatibility)
         recommendation = "PASS"
         risk_factors = []
-        
+
         if overall_rating == "EXCELLENT":
             recommendation = "STRONG BUY"
         elif overall_rating == "GOOD":
@@ -285,7 +329,7 @@ async def analyze_product(
         else:
             recommendation = "PASS"
             risk_factors.append("Below thresholds")
-            
+
         return AnalysisResult(
             asin=asin,
             title=keepa_data.get('title', 'Unknown'),
@@ -293,7 +337,7 @@ async def analyze_product(
             current_bsr=parsed_data.get('current_bsr'),
             roi=roi_result,
             velocity=velocity_result,
-            
+
             # NEW: Advanced scoring fields
             velocity_score=velocity_normalized,
             price_stability_score=stability_normalized,
@@ -301,7 +345,11 @@ async def analyze_product(
             overall_rating=overall_rating,
             score_breakdown=score_breakdown,
             readable_summary=readable_summary,
-            
+
+            # NEW: Strategy profile (v2)
+            strategy_profile=strategy_profile,
+            calculation_method=calculation_method,
+
             # Legacy fields (maintained for compatibility)
             recommendation=recommendation,
             risk_factors=risk_factors
@@ -338,6 +386,7 @@ async def analyze_product(
 
 @router.post("/ingest", response_model=IngestResponse)
 async def ingest_batch(
+    http_request: Request,
     request: IngestBatchRequest,
     background_tasks: BackgroundTasks,
     keepa_service: KeepaService = Depends(get_keepa_service),
@@ -349,19 +398,31 @@ async def ingest_batch(
     """
     trace_id = generate_trace_id()
     batch_id = request.batch_id or str(uuid.uuid4())
-    
+
     logger.info(f"[{trace_id}] Starting batch ingestion", extra={
         "batch_id": batch_id,
         "count": len(request.identifiers),
         "profile": request.config_profile
     })
-    
+
     try:
         # Get effective configuration
         config = await config_service.get_effective_config(
             domain_id=1,  # Default US domain
             category="books"
         )
+
+        # ✨ DEV/TEST ONLY: Feature flags override via header
+        if "X-Feature-Flags-Override" in http_request.headers:
+            import json
+            try:
+                override_flags = json.loads(http_request.headers["X-Feature-Flags-Override"])
+                if not config.get("feature_flags"):
+                    config["feature_flags"] = {}
+                config["feature_flags"].update(override_flags)
+                logger.info(f"[DEV] Feature flags overridden: {override_flags}")
+            except (json.JSONDecodeError, TypeError) as e:
+                logger.warning(f"[DEV] Invalid feature flags override header: {e}")
         
         # Check if async mode needed
         if len(request.identifiers) > request.async_threshold:
@@ -418,10 +479,21 @@ async def ingest_batch(
                         continue
                     
                     asin = keepa_data.get('asin', normalized_id)
-                    
+
                     # Analyze product
                     analysis = await analyze_product(asin, keepa_data, config, keepa_service)
-                    
+
+                    # ✨ DEV/TEST ONLY: Validation logging if feature flags overridden
+                    if "X-Feature-Flags-Override" in http_request.headers:
+                        logger.info(
+                            f"[VALIDATION] ASIN={asin} | "
+                            f"strategy={analysis.strategy_profile} | "
+                            f"method={analysis.calculation_method} | "
+                            f"roi={analysis.roi.get('roi_percentage', 0):.1f}% | "
+                            f"buy=${analysis.roi.get('buy_cost', 'N/A')} | "
+                            f"sell=${analysis.current_price}"
+                        )
+
                     results.append(BatchResult(
                         identifier=identifier,
                         asin=asin,

@@ -78,6 +78,88 @@
     "B08N5WRWNW",
     "B07FNW9FGJ"
   ],
+  "strategies": {
+    "textbook": {
+      "description": "High margin, slow rotation - Professional/Academic books",
+      "roi_min": 80.0,
+      "velocity_min": 30.0,
+      "stability_min": 70.0,
+      "min_sell_price": 40.0,
+      "max_bsr": 250000,
+      "holding_period_days": [60, 90],
+      "buy_price_source": "current_fba_price",
+      "sell_price_source": "avg_90d_buybox_price",
+      "fees_estimate_pct": 25.0,
+      "weights": {
+        "roi": 0.7,
+        "velocity": 0.3,
+        "stability": 0.3
+      }
+    },
+    "velocity": {
+      "description": "Modest margin, fast rotation - Popular/Bestseller books",
+      "roi_min": 30.0,
+      "velocity_min": 70.0,
+      "stability_min": 50.0,
+      "min_sell_price": 25.0,
+      "max_bsr": 250000,
+      "holding_period_days": [15, 45],
+      "buy_price_source": "current_fba_price",
+      "sell_price_source": "current_buybox_price",
+      "fees_estimate_pct": 25.0,
+      "weights": {
+        "roi": 0.4,
+        "velocity": 0.6,
+        "stability": 0.2
+      }
+    },
+    "balanced": {
+      "description": "Balanced approach - General books outside textbook/velocity criteria",
+      "roi_min": 25.0,
+      "velocity_min": 50.0,
+      "stability_min": 60.0,
+      "min_sell_price": 20.0,
+      "max_bsr": 500000,
+      "holding_period_days": [30, 60],
+      "buy_price_source": "current_fba_price",
+      "sell_price_source": "current_buybox_price",
+      "fees_estimate_pct": 25.0,
+      "weights": {
+        "roi": 0.5,
+        "velocity": 0.5,
+        "stability": 0.4
+      }
+    },
+    "aggressive": {
+      "description": "LEGACY: High ROI focus (use textbook instead)",
+      "roi_min": 40.0,
+      "velocity_min": 70.0,
+      "stability_min": 80.0,
+      "weights": {
+        "roi": 0.6,
+        "velocity": 0.4,
+        "stability": 0.3
+      }
+    },
+    "conservative": {
+      "description": "LEGACY: Safety-first approach (use balanced instead)",
+      "roi_min": 35.0,
+      "velocity_min": 60.0,
+      "stability_min": 85.0,
+      "weights": {
+        "roi": 0.4,
+        "velocity": 0.3,
+        "stability": 0.6
+      }
+    }
+  },
+  "active_strategy": "balanced",
+  "feature_flags": {
+    "strategy_profiles_v2": false,
+    "scoring_shadow_mode": false,
+    "view_specific_scoring": false,
+    "direct_roi_calculation": false
+  },
   "overrides": {
     "domain:2": {
       "roi": {

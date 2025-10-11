@@ -505,8 +505,104 @@ def _extract_category(raw_data: Dict[str, Any]) -> str:
     return "unknown"
 
 
+def _determine_target_sell_price(data: Dict[str, Any]) -> Optional[Decimal]:
+    """
+    Determine sell price for USED arbitrage (BuyBox competition target).
+
+    Strategy: USED-to-USED arbitrage (buy from FBA sellers, resell via FBA at BuyBox).
+    Priority: BuyBox USED > FBA avg > NEW fallback
+    Excludes: current_amazon_price (too high NEW), current_used_price (defective items)
+
+    Returns:
+        Decimal price if valid, None otherwise
+    """
+    price_priority = [
+        "current_buybox_price",  # ✅ Target for BuyBox competition (USED)
+        "current_fba_price",     # ✅ FBA average if BuyBox missing
+        "current_new_price",     # ⚠️ Fallback only
+    ]
+
+    for price_field in price_priority:
+        price = data.get(price_field)
+        if price is not None:
+            try:
+                price_val = float(price) if price else 0
+                if price_val > 0:
+                    return Decimal(str(price))
+            except (ValueError, TypeError, decimal.InvalidOperation):
+                continue
+
+    return None
+
+
+def _determine_buy_cost_used(data: Dict[str, Any]) -> Optional[Decimal]:
+    """
+    Determine purchase cost from FBA USED sellers.
+
+    Strategy: Buy USED books from third-party FBA sellers.
+    Priority: FBA USED > NEW fallback
+    Excludes: current_used_price (too low, defective items)
+
+    Returns:
+        Decimal cost if valid, None otherwise
+    """
+    price_priority = [
+        "current_fba_price",    # ✅ FBA USED sellers (primary source)
+        "lowest_offer_new",     # ⚠️ Fallback if USED unavailable
+    ]
+
+    for price_field in price_priority:
+        price = data.get(price_field)
+        if price is not None:
+            try:
+                price_val = float(price) if price else 0
+                if price_val > 0:
+                    return Decimal(str(price))
+            except (ValueError, TypeError, decimal.InvalidOperation):
+                continue
+
+    return None
+
+
+def _auto_select_strategy(parsed: Dict[str, Any]) -> str:
+    """
+    Auto-select strategy based on price + BSR business rules.
+
+    Rules:
+    - Textbook: price ≥$40, BSR ≤250k (high margin, slow rotation OK)
+    - Velocity: price ≥$25, BSR <250k (modest margin, fast rotation)
+    - Balanced: fallback for products outside textbook/velocity criteria
+
+    Args:
+        parsed: Parsed Keepa product data with current_buybox_price and current_bsr
+
+    Returns:
+        Strategy name: "textbook", "velocity", or "balanced"
+    """
+    # Extract price (prefer BuyBox, fallback to any available)
+    price_raw = parsed.get("current_buybox_price") or parsed.get("current_price") or 0
+    try:
+        price = float(price_raw) if price_raw else 0
+    except (ValueError, TypeError):
+        price = 0
+
+    # Extract BSR
+    bsr = parsed.get("current_bsr") or 999999
+
+    # Business rules
+    if price >= 40 and bsr <= 250000:
+        return "textbook"
+    elif price >= 25 and bsr < 250000:
+        return "velocity"
+    else:
+        return "balanced"
+
+
 def _determine_best_current_price(data: Dict[str, Any]) -> Optional[Decimal]:
     """
+    DEPRECATED: Use _determine_target_sell_price() instead.
+    Kept for backward compatibility during transition.
+
     Determine the best current price from available options.
     Priority: Amazon > FBA > New > Buy Box > Used
     """

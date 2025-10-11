@@ -7,7 +7,7 @@ Each view has distinct weight priorities for ROI, velocity, and stability metric
 Phase 2 of Strategy Refactor (strategy_refactor_v2_phase2_views)
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from decimal import Decimal
 import logging
 
@@ -282,7 +282,7 @@ def validate_view_type(view_type: str) -> bool:
     return view_type in VIEW_WEIGHTS
 
 
-def get_available_views() -> list[str]:
+def get_available_views() -> List[str]:
     """
     Get list of all available view types.
 

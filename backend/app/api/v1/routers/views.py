@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, Field, validator
 import logging
 
-from app.services.keepa_service import KeepaService
+from app.services.keepa_service import KeepaService, get_keepa_service
 from app.services.keepa_parser_v2 import parse_keepa_product
 from app.services.scoring_v2 import (
     compute_view_score,
@@ -111,6 +111,7 @@ async def score_products_for_view(
     view_type: str,
     request: ViewScoreRequest,
     http_request: Request,
+    keepa_service: KeepaService = Depends(get_keepa_service),
     config_service: BusinessConfigService = Depends(get_business_config_service)
 ):
     """
@@ -213,104 +214,104 @@ async def score_products_for_view(
         f"(strategy={request.strategy})"
     )
 
-    keepa_service = KeepaService()
     try:
-        keepa_response = await keepa_service.fetch_products(request.identifiers)
+        async with keepa_service:
+            keepa_response = await keepa_service.fetch_products(request.identifiers)
+
+            # 4. Parse and score each product
+            products_data = keepa_response.get("products", [])
+            if not products_data:
+                raise HTTPException(
+                    status_code=404,
+                    detail="No products found for the provided identifiers"
+                )
+
+            scored_products = []
+            successful_scores = 0
+            failed_scores = 0
+
+            for product_data in products_data:
+                try:
+                    # Parse Keepa product data
+                    parsed = parse_keepa_product(product_data)
+                    asin = parsed.get("asin", "unknown")
+
+                    # Compute view-specific score
+                    score_result = compute_view_score(
+                        parsed_data=parsed,
+                        view_type=view_type,
+                        strategy_profile=request.strategy
+                    )
+
+                    scored_products.append({
+                        "asin": asin,
+                        "score": score_result["score"],
+                        "rank": 0,  # Will be assigned after sorting
+                        "strategy_profile": score_result["strategy_profile"],
+                        "weights_applied": score_result["weights_applied"],
+                        "components": score_result["components"],
+                        "raw_metrics": score_result["raw_metrics"],
+                        "error": None
+                    })
+                    successful_scores += 1
+
+                except Exception as e:
+                    logger.error(f"Failed to score product: {e}")
+                    failed_scores += 1
+                    scored_products.append({
+                        "asin": product_data.get("asin", "unknown"),
+                        "score": 0.0,
+                        "rank": 0,
+                        "strategy_profile": None,
+                        "weights_applied": {},
+                        "components": {},
+                        "raw_metrics": {},
+                        "error": str(e)
+                    })
+
+            # 5. Sort by score descending and assign ranks
+            scored_products.sort(key=lambda x: x["score"], reverse=True)
+            for idx, product in enumerate(scored_products, start=1):
+                product["rank"] = idx
+
+            # 6. Calculate metadata
+            valid_scores = [p["score"] for p in scored_products if p["error"] is None]
+            avg_score = sum(valid_scores) / len(valid_scores) if valid_scores else 0.0
+
+            weights = VIEW_WEIGHTS[view_type]
+            metadata = ViewScoreMetadata(
+                view_type=view_type,
+                weights_used={
+                    "roi": weights["roi"],
+                    "velocity": weights["velocity"],
+                    "stability": weights["stability"]
+                },
+                total_products=len(scored_products),
+                successful_scores=successful_scores,
+                failed_scores=failed_scores,
+                avg_score=round(avg_score, 2),
+                strategy_requested=request.strategy
+            )
+
+            # 7. Log summary for monitoring
+            logger.info(
+                f"[VIEW_SCORING] view={view_type} | "
+                f"total={len(scored_products)} | "
+                f"success={successful_scores} | "
+                f"fail={failed_scores} | "
+                f"avg_score={avg_score:.2f}"
+            )
+
+            return ViewScoreResponse(
+                products=[ProductScore(**p) for p in scored_products],
+                metadata=metadata
+            )
     except Exception as e:
         logger.error(f"Failed to fetch Keepa data: {e}")
         raise HTTPException(
             status_code=502,
             detail=f"Failed to fetch product data from Keepa: {str(e)}"
         )
-
-    # 4. Parse and score each product
-    products_data = keepa_response.get("products", [])
-    if not products_data:
-        raise HTTPException(
-            status_code=404,
-            detail="No products found for the provided identifiers"
-        )
-
-    scored_products = []
-    successful_scores = 0
-    failed_scores = 0
-
-    for product_data in products_data:
-        try:
-            # Parse Keepa product data
-            parsed = parse_keepa_product(product_data)
-            asin = parsed.get("asin", "unknown")
-
-            # Compute view-specific score
-            score_result = compute_view_score(
-                parsed_data=parsed,
-                view_type=view_type,
-                strategy_profile=request.strategy
-            )
-
-            scored_products.append({
-                "asin": asin,
-                "score": score_result["score"],
-                "rank": 0,  # Will be assigned after sorting
-                "strategy_profile": score_result["strategy_profile"],
-                "weights_applied": score_result["weights_applied"],
-                "components": score_result["components"],
-                "raw_metrics": score_result["raw_metrics"],
-                "error": None
-            })
-            successful_scores += 1
-
-        except Exception as e:
-            logger.error(f"Failed to score product: {e}")
-            failed_scores += 1
-            scored_products.append({
-                "asin": product_data.get("asin", "unknown"),
-                "score": 0.0,
-                "rank": 0,
-                "strategy_profile": None,
-                "weights_applied": {},
-                "components": {},
-                "raw_metrics": {},
-                "error": str(e)
-            })
-
-    # 5. Sort by score descending and assign ranks
-    scored_products.sort(key=lambda x: x["score"], reverse=True)
-    for idx, product in enumerate(scored_products, start=1):
-        product["rank"] = idx
-
-    # 6. Calculate metadata
-    valid_scores = [p["score"] for p in scored_products if p["error"] is None]
-    avg_score = sum(valid_scores) / len(valid_scores) if valid_scores else 0.0
-
-    weights = VIEW_WEIGHTS[view_type]
-    metadata = ViewScoreMetadata(
-        view_type=view_type,
-        weights_used={
-            "roi": weights["roi"],
-            "velocity": weights["velocity"],
-            "stability": weights["stability"]
-        },
-        total_products=len(scored_products),
-        successful_scores=successful_scores,
-        failed_scores=failed_scores,
-        avg_score=round(avg_score, 2),
-        strategy_requested=request.strategy
-    )
-
-    # 7. Log summary for monitoring
-    logger.info(
-        f"[VIEW_SCORING] view={view_type} | "
-        f"total={len(scored_products)} | "
-        f"success={successful_scores} | "
-        f"fail={failed_scores} | "
-        f"avg_score={avg_score:.2f}"
-    )
-
-    return ViewScoreResponse(
-        products=[ProductScore(**p) for p in scored_products],
-        metadata=metadata
-    )
 
 
 @router.get("/views", response_model=Dict[str, Any])

@@ -20,7 +20,7 @@ from app.services.scoring_v2 import (
     get_available_views,
     VIEW_WEIGHTS
 )
-from app.core.config import ConfigService, get_config_service
+from app.services.business_config_service import BusinessConfigService, get_business_config_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -111,7 +111,7 @@ async def score_products_for_view(
     view_type: str,
     request: ViewScoreRequest,
     http_request: Request,
-    config_service: ConfigService = Depends(get_config_service)
+    config_service: BusinessConfigService = Depends(get_business_config_service)
 ):
     """
     Score products with view-specific weights.
@@ -184,7 +184,7 @@ async def score_products_for_view(
         )
 
     # 2. Get effective config (with feature flag check)
-    config = await config_service.get_effective_config(request.strategy)
+    config = await config_service.get_effective_config(domain_id=1, category="books")
 
     # Check if view_specific_scoring is enabled
     feature_flags = config.get("feature_flags", {})

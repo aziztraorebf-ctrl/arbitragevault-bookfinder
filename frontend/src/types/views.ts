@@ -38,9 +38,10 @@ export interface ScoreComponents {
 
 /**
  * Métriques brutes extraites
+ * Note: Backend retourne "roi_pct" (pas "roi_percentage")
  */
 export interface RawMetrics {
-  roi_percentage: number
+  roi_pct: number  // Backend field name
   velocity_score: number
   stability_score: number
 }

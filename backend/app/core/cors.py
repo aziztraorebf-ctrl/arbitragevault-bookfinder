@@ -26,6 +26,7 @@ def configure_cors(app: FastAPI) -> None:
             "Authorization",
             "X-Requested-With",
             "X-Request-ID",
+            "X-Feature-Flags-Override",  # Phase 2: Allow feature flag override for dev/test
         ],
         expose_headers=[
             "X-Process-Time",

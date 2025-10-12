@@ -116,3 +116,23 @@ temp/
 
 # Render (legacy - removed)
 render.yaml
+
+# E2E Validation responses (large JSON files from Keepa API)
+backend/e2e_validation_responses/
+backend/keepa_validation_response.json
+backend/keepa_prod_validation.json
+backend/keepa_full_response_airpods.json
+keepa_response_step1.json
+
+# Test scripts and data exports
+backend/test_*.py
+backend/validate_*.py
+backend/inspect_*.py
+backend/check_*.py
+*_export.py
+test_*.csv
+hotfix_pr.json
+pr_body.json
+render_mcp_config.json
+migrate_to_neon.py
+mcp_migration.py

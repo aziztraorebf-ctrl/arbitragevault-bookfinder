@@ -48,16 +48,30 @@ export interface RawMetrics {
 
 /**
  * Score calculé pour un produit
+ * Phase 2.5A: Amazon Check fields added
  */
 export interface ProductScore {
   asin: string
   title: string | null
   score: number
-  view_type: ViewType
-  weights_applied: ViewWeights
-  components: ScoreComponents
+  rank: number  // Phase 2.5A: Rank within result set
+  strategy_profile: StrategyProfile  // Phase 2.5A: Strategy applied
+  weights_applied: {
+    roi: number
+    velocity: number
+    stability: number
+  }
+  components: {
+    roi_contribution: number
+    velocity_contribution: number
+    stability_contribution: number
+  }
   raw_metrics: RawMetrics
-  strategy_boost?: number
+
+  // Phase 2.5A - Amazon Check fields
+  amazon_on_listing: boolean  // Amazon has any offer on this product
+  amazon_buybox: boolean       // Amazon currently owns the Buy Box
+
   error?: string
 }
 
@@ -71,17 +85,20 @@ export interface ViewScoreRequest {
 
 /**
  * Métadonnées de la réponse
+ * Updated Phase 2.5A to match backend schema
  */
 export interface ViewScoreMetadata {
   view_type: ViewType
-  total_products: number
-  successful: number
-  failed: number
-  timestamp: string
-  feature_flags: {
-    view_specific_scoring: boolean
-    scoring_shadow_mode: boolean
+  weights_used: {
+    roi: number
+    velocity: number
+    stability: number
   }
+  total_products: number
+  successful_scores: number
+  failed_scores: number
+  avg_score: number
+  strategy_requested?: StrategyProfile
 }
 
 /**

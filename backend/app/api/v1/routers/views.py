@@ -22,6 +22,8 @@ from app.services.scoring_v2 import (
 )
 from app.services.business_config_service import BusinessConfigService, get_business_config_service
 from app.services.amazon_check_service import check_amazon_presence  # Phase 2.5A
+from app.core.calculations import calculate_roi_metrics, calculate_velocity_score, VelocityData  # Phase 2.5A ROI/Velocity fix
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -260,6 +262,53 @@ async def score_products_for_view(
                     parsed = parse_keepa_product(product_data)
                     asin = parsed.get("asin", identifier)
                     title = parsed.get("title")
+
+                    # Phase 2.5A FIX: Calculate ROI and Velocity metrics
+                    # These were missing from parse_keepa_product(), causing all scores = 0
+                    try:
+                        # Extract prices for ROI calculation
+                        current_price = parsed.get("current_price")
+                        fba_price = parsed.get("current_fba_price")
+
+                        # Calculate ROI if prices available
+                        if current_price and fba_price:
+                            roi_result = calculate_roi_metrics(
+                                current_price=Decimal(str(current_price)),
+                                estimated_buy_cost=Decimal(str(fba_price)),
+                                category="books",
+                                config=config
+                            )
+                            parsed["roi"] = {
+                                "roi_percentage": roi_result.get("roi_percentage", 0.0)
+                            }
+                            logger.debug(f"[ROI] {asin}: {roi_result.get('roi_percentage', 0)}%")
+                        else:
+                            parsed["roi"] = {"roi_percentage": 0.0}
+                            logger.debug(f"[ROI] {asin}: No price data, defaulting to 0%")
+
+                        # Calculate Velocity if BSR history available
+                        current_bsr = parsed.get("current_bsr")
+                        bsr_history = parsed.get("bsr_history", [])
+
+                        if current_bsr and bsr_history:
+                            velocity_data = VelocityData(
+                                current_bsr=current_bsr,
+                                bsr_history=bsr_history,
+                                price_history=parsed.get("price_history", []),
+                                buybox_history=[],
+                                offers_history=[]
+                            )
+                            velocity_result = calculate_velocity_score(velocity_data, config=config)
+                            parsed["velocity_score"] = velocity_result.get("velocity_score", 0.0)
+                            logger.debug(f"[VELOCITY] {asin}: {velocity_result.get('velocity_score', 0)}")
+                        else:
+                            parsed["velocity_score"] = 0.0
+                            logger.debug(f"[VELOCITY] {asin}: No BSR data, defaulting to 0")
+
+                    except Exception as calc_error:
+                        logger.warning(f"[CALC_ERROR] {asin}: {calc_error}, defaulting ROI/Velocity to 0")
+                        parsed["roi"] = {"roi_percentage": 0.0}
+                        parsed["velocity_score"] = 0.0
 
                     # Compute view-specific score
                     score_result = compute_view_score(

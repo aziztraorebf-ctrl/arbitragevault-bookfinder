@@ -159,7 +159,7 @@
     "scoring_shadow_mode": false,
     "view_specific_scoring": false,
     "direct_roi_calculation": false,
-    "amazon_check_enabled": false
+    "amazon_check_enabled": true
   },
   "overrides": {
     "domain:2": {

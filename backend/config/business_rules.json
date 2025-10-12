@@ -158,7 +158,8 @@
     "strategy_profiles_v2": false,
     "scoring_shadow_mode": false,
     "view_specific_scoring": false,
-    "direct_roi_calculation": false
+    "direct_roi_calculation": false,
+    "amazon_check_enabled": false
   },
   "overrides": {
     "domain:2": {

@@ -7,8 +7,8 @@ Build metadata and version tracking for deployment verification.
 
 from datetime import datetime
 
-# Build Tag for Strategy Refactor V2 (Phase 2: Views Integration)
-BUILD_TAG = "strategy_refactor_v2_phase2_views"
+# Build Tag for Phase 2.5A (Step 1: Amazon Check Service)
+BUILD_TAG = "PHASE_2_5A_STEP_1"
 
 # Keepa SDK Version
 KEEPA_SDK_VERSION = "1.3.0"

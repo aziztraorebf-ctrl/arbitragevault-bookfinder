@@ -21,6 +21,7 @@ from app.services.scoring_v2 import (
     VIEW_WEIGHTS
 )
 from app.services.business_config_service import BusinessConfigService, get_business_config_service
+from app.services.amazon_check_service import check_amazon_presence  # Phase 2.5A
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -78,6 +79,17 @@ class ProductScore(BaseModel):
         description="Raw input metrics (roi_pct, velocity_score, stability_score)"
     )
     error: Optional[str] = Field(None, description="Error message if scoring failed")
+
+    # Phase 2.5A - Amazon Check (optional fields)
+    amazon_on_listing: bool = Field(
+        False,
+        description="Amazon has any offer on this product (Phase 2.5A)"
+    )
+    amazon_buybox: bool = Field(
+        False,
+        description="Amazon currently owns the Buy Box (Phase 2.5A)"
+    )
+    title: Optional[str] = Field(None, description="Product title from Keepa")
 
 
 class ViewScoreMetadata(BaseModel):
@@ -237,13 +249,17 @@ async def score_products_for_view(
                             "weights_applied": {},
                             "components": {},
                             "raw_metrics": {},
-                            "error": "No data available from Keepa"
+                            "error": "No data available from Keepa",
+                            "amazon_on_listing": False,  # Phase 2.5A default
+                            "amazon_buybox": False,  # Phase 2.5A default
+                            "title": None
                         })
                         continue
 
                     # Parse Keepa product data
                     parsed = parse_keepa_product(product_data)
                     asin = parsed.get("asin", identifier)
+                    title = parsed.get("title")
 
                     # Compute view-specific score
                     score_result = compute_view_score(
@@ -251,6 +267,16 @@ async def score_products_for_view(
                         view_type=view_type,
                         strategy_profile=request.strategy
                     )
+
+                    # Phase 2.5A: Amazon Check (if feature enabled)
+                    amazon_check_enabled = feature_flags.get("amazon_check_enabled", False)
+                    amazon_on_listing = False
+                    amazon_buybox = False
+
+                    if amazon_check_enabled:
+                        amazon_result = check_amazon_presence(product_data)
+                        amazon_on_listing = amazon_result.get("amazon_on_listing", False)
+                        amazon_buybox = amazon_result.get("amazon_buybox", False)
 
                     scored_products.append({
                         "asin": asin,
@@ -260,7 +286,10 @@ async def score_products_for_view(
                         "weights_applied": score_result["weights_applied"],
                         "components": score_result["components"],
                         "raw_metrics": score_result["raw_metrics"],
-                        "error": None
+                        "error": None,
+                        "amazon_on_listing": amazon_on_listing,  # Phase 2.5A
+                        "amazon_buybox": amazon_buybox,  # Phase 2.5A
+                        "title": title
                     })
                     successful_scores += 1
 
@@ -275,7 +304,10 @@ async def score_products_for_view(
                         "weights_applied": {},
                         "components": {},
                         "raw_metrics": {},
-                        "error": str(e)
+                        "error": str(e),
+                        "amazon_on_listing": False,  # Phase 2.5A default
+                        "amazon_buybox": False,  # Phase 2.5A default
+                        "title": None
                     })
 
             # 5. Sort by score descending and assign ranks

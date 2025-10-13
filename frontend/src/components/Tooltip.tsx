@@ -61,6 +61,7 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
             absolute z-50 ${positionClasses[position]}
             bg-gray-900 text-white text-xs rounded-lg shadow-xl
             py-3 px-4 min-w-[300px] max-w-[400px]
+            max-h-[80vh] overflow-y-auto
             pointer-events-auto
           `}
           style={{ whiteSpace: 'pre-line' }}

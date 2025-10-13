@@ -59,16 +59,16 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
 
       switch (sortBy) {
         case 'score':
-          compareValue = a.score - b.score;
+          compareValue = (a.score ?? 0) - (b.score ?? 0);
           break;
         case 'rank':
           compareValue = a.rank - b.rank;
           break;
         case 'roi':
-          compareValue = a.raw_metrics.roi_pct - b.raw_metrics.roi_pct;
+          compareValue = (a.raw_metrics?.roi_pct ?? 0) - (b.raw_metrics?.roi_pct ?? 0);
           break;
         case 'velocity':
-          compareValue = a.raw_metrics.velocity_score - b.raw_metrics.velocity_score;
+          compareValue = (a.raw_metrics?.velocity_score ?? 0) - (b.raw_metrics?.velocity_score ?? 0);
           break;
       }
 
@@ -95,13 +95,13 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
       p.rank,
       p.asin,
       `"${p.title || 'N/A'}"`,
-      p.score.toFixed(2),
-      `${p.raw_metrics.roi_pct.toFixed(2)}%`,
-      p.raw_metrics.velocity_score.toFixed(0),
+      (p.score ?? 0).toFixed(2),
+      `${(p.raw_metrics?.roi_pct ?? 0).toFixed(2)}%`,
+      (p.raw_metrics?.velocity_score ?? 0).toFixed(0),
       p.velocity_breakdown?.estimated_sales_30d || 0,
-      `$${p.max_buy_price_35pct?.toFixed(2) || '0.00'}`,
-      `$${p.market_sell_price?.toFixed(2) || '0.00'}`,
-      `$${p.market_buy_price?.toFixed(2) || '0.00'}`,
+      `$${(p.max_buy_price_35pct ?? 0).toFixed(2)}`,
+      `$${(p.market_sell_price ?? 0).toFixed(2)}`,
+      `$${(p.market_buy_price ?? 0).toFixed(2)}`,
       p.amazon_on_listing ? 'Yes' : 'No',
       p.amazon_buybox ? 'Yes' : 'No'
     ]);
@@ -298,135 +298,145 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {processedProducts.map((product) => (
-              <tr key={product.asin} className="hover:bg-gray-50">
-                {/* Rank */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  #{product.rank}
-                </td>
+            {processedProducts.map((product) => {
+              // Defensive extraction of values with fallbacks
+              const roiPct = product.raw_metrics?.roi_pct ?? 0;
+              const velocityScore = product.raw_metrics?.velocity_score ?? 0;
+              const marketSellPrice = product.market_sell_price ?? 0;
+              const marketBuyPrice = product.market_buy_price ?? 0;
+              const maxBuyPrice35pct = product.max_buy_price_35pct ?? 0;
+              const productScore = product.score ?? 0;
 
-                {/* ASIN */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                  {product.asin}
-                </td>
+              return (
+                <tr key={product.asin} className="hover:bg-gray-50">
+                  {/* Rank */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    #{product.rank}
+                  </td>
 
-                {/* Title */}
-                <td className="px-6 py-4 text-sm text-gray-700">
-                  <div className="max-w-xs truncate" title={product.title || ''}>
-                    {product.title || 'N/A'}
-                  </div>
-                </td>
+                  {/* ASIN */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                    {product.asin}
+                  </td>
 
-                {/* Score */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                  <span className="font-semibold text-blue-600">
-                    {product.score.toFixed(1)}
-                  </span>
-                </td>
-
-                {/* ROI with tooltip */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <span className={`font-semibold ${
-                      product.raw_metrics.roi_pct >= 30 ? 'text-green-600' :
-                      product.raw_metrics.roi_pct >= 15 ? 'text-yellow-600' :
-                      'text-red-600'
-                    }`}>
-                      {product.raw_metrics.roi_pct.toFixed(1)}%
-                    </span>
-                    <Tooltip
-                      content={
-                        <ROITooltip
-                          currentROI={product.raw_metrics.roi_pct}
-                          marketSellPrice={product.market_sell_price}
-                          marketBuyPrice={product.market_buy_price}
-                        />
-                      }
-                    >
-                      <InfoIcon />
-                    </Tooltip>
-                  </div>
-                </td>
-
-                {/* Velocity with tooltip */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <div className="flex flex-col items-center">
-                      <span className="font-semibold">{product.raw_metrics.velocity_score.toFixed(0)}</span>
-                      <div className="w-16 bg-gray-200 rounded-full h-1.5 mt-1">
-                        <div
-                          className="bg-blue-500 h-1.5 rounded-full"
-                          style={{ width: `${Math.min(product.raw_metrics.velocity_score, 100)}%` }}
-                        ></div>
-                      </div>
+                  {/* Title */}
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    <div className="max-w-xs truncate" title={product.title || ''}>
+                      {product.title || 'N/A'}
                     </div>
-                    <Tooltip
-                      content={
-                        <VelocityTooltip
-                          score={product.raw_metrics.velocity_score}
-                          breakdown={product.velocity_breakdown}
-                        />
-                      }
-                    >
-                      <InfoIcon />
-                    </Tooltip>
-                  </div>
-                </td>
+                  </td>
 
-                {/* Max Buy (35%) with tooltip */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <span className="font-semibold text-green-600">
-                      ${product.max_buy_price_35pct?.toFixed(2) || '0.00'}
+                  {/* Score */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                    <span className="font-semibold text-blue-600">
+                      {productScore.toFixed(1)}
                     </span>
-                    <Tooltip
-                      content={
-                        <MaxBuyTooltip
-                          maxBuyPrice={product.max_buy_price_35pct || 0}
-                          marketSellPrice={product.market_sell_price}
-                          targetROI={35}
-                        />
-                      }
+                  </td>
+
+                  {/* ROI with tooltip */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <span className={`font-semibold ${
+                        roiPct >= 30 ? 'text-green-600' :
+                        roiPct >= 15 ? 'text-yellow-600' :
+                        'text-red-600'
+                      }`}>
+                        {roiPct.toFixed(1)}%
+                      </span>
+                      <Tooltip
+                        content={
+                          <ROITooltip
+                            currentROI={roiPct}
+                            marketSellPrice={marketSellPrice}
+                            marketBuyPrice={marketBuyPrice}
+                          />
+                        }
+                      >
+                        <InfoIcon />
+                      </Tooltip>
+                    </div>
+                  </td>
+
+                  {/* Velocity with tooltip */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <div className="flex flex-col items-center">
+                        <span className="font-semibold">{velocityScore.toFixed(0)}</span>
+                        <div className="w-16 bg-gray-200 rounded-full h-1.5 mt-1">
+                          <div
+                            className="bg-blue-500 h-1.5 rounded-full"
+                            style={{ width: `${Math.min(velocityScore, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      <Tooltip
+                        content={
+                          <VelocityTooltip
+                            score={velocityScore}
+                            breakdown={product.velocity_breakdown}
+                          />
+                        }
+                      >
+                        <InfoIcon />
+                      </Tooltip>
+                    </div>
+                  </td>
+
+                  {/* Max Buy (35%) with tooltip */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <span className="font-semibold text-green-600">
+                        ${maxBuyPrice35pct.toFixed(2)}
+                      </span>
+                      <Tooltip
+                        content={
+                          <MaxBuyTooltip
+                            maxBuyPrice={maxBuyPrice35pct}
+                            marketSellPrice={marketSellPrice}
+                            targetROI={35}
+                          />
+                        }
+                      >
+                        <InfoIcon />
+                      </Tooltip>
+                    </div>
+                  </td>
+
+                  {/* Market Sell */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                    <span className="text-gray-700">
+                      ${marketSellPrice.toFixed(2)}
+                    </span>
+                  </td>
+
+                  {/* Market Buy */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                    <span className="text-gray-700">
+                      ${marketBuyPrice.toFixed(2)}
+                    </span>
+                  </td>
+
+                  {/* Amazon Badges */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                    <AmazonBadges
+                      amazonOnListing={product.amazon_on_listing}
+                      amazonBuybox={product.amazon_buybox}
+                      size="sm"
+                    />
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                    <button
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      onClick={() => window.open(`https://www.amazon.com/dp/${product.asin}`, '_blank')}
                     >
-                      <InfoIcon />
-                    </Tooltip>
-                  </div>
-                </td>
-
-                {/* Market Sell */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                  <span className="text-gray-700">
-                    ${product.market_sell_price?.toFixed(2) || '0.00'}
-                  </span>
-                </td>
-
-                {/* Market Buy */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                  <span className="text-gray-700">
-                    ${product.market_buy_price?.toFixed(2) || '0.00'}
-                  </span>
-                </td>
-
-                {/* Amazon Badges */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                  <AmazonBadges
-                    amazonOnListing={product.amazon_on_listing}
-                    amazonBuybox={product.amazon_buybox}
-                    size="sm"
-                  />
-                </td>
-
-                {/* Actions */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                  <button
-                    className="text-blue-600 hover:text-blue-800 font-medium"
-                    onClick={() => window.open(`https://www.amazon.com/dp/${product.asin}`, '_blank')}
-                  >
-                    Voir
-                  </button>
-                </td>
-              </tr>
-            ))}
+                      Voir
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

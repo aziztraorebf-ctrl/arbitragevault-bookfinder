@@ -57,6 +57,7 @@ export interface VelocityBreakdown {
   sales_activity_score?: number
   estimated_sales_30d?: number
   bsr_drops_30d?: number
+  rank_drops_30d?: number  // Actual field name from backend
   buybox_score?: number
   buybox_uptime_pct?: number | null  // null if data not available
   stability_score?: number

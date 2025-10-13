@@ -11,6 +11,7 @@ export function RecommendationSection({ product }: AccordionSectionProps) {
   const velocityScore = product.raw_metrics?.velocity_score ?? 0
   const amazonOnListing = product.amazon_on_listing
   const amazonBuybox = product.amazon_buybox
+  const maxBuy35 = product.max_buy_price_35pct ?? null
 
   // Logique de recommandation
   let recommendation: {
@@ -98,6 +99,22 @@ export function RecommendationSection({ product }: AccordionSectionProps) {
         <p className={`text-xs ${recommendation.textColor} leading-relaxed`}>
           {recommendation.message}
         </p>
+      </div>
+
+      {/* Max Buy Price - Toujours affiché (Option A validée par user) */}
+      <div className="mt-3 p-2 bg-purple-50 border border-purple-200 rounded text-xs">
+        {maxBuy35 !== null && maxBuy35 > 0 ? (
+          <div className="text-purple-800">
+            <span className="font-semibold">💰 Prix Max Achat:</span>
+            <span className="ml-1 font-bold text-purple-900">${maxBuy35.toFixed(2)}</span>
+            <span className="ml-1 text-purple-700">(pour atteindre 35% ROI)</span>
+          </div>
+        ) : (
+          <div className="text-gray-700">
+            <span className="font-semibold">💰 Prix Max Achat:</span>
+            <span className="ml-1 italic">Aucun prix d'achat rentable aux conditions actuelles</span>
+          </div>
+        )}
       </div>
 
       {/* Avertissement si Amazon présent */}

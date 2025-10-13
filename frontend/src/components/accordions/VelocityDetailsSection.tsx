@@ -12,7 +12,7 @@ export function VelocityDetailsSection({ product }: AccordionSectionProps) {
 
   // Extraction des données velocity avec fallbacks
   const estimatedSales = breakdown?.estimated_sales_30d ?? 0
-  const bsrDrops = breakdown?.bsr_drops_30d ?? 0
+  const bsrDrops = breakdown?.rank_drops_30d ?? breakdown?.bsr_drops_30d ?? 0
   const buyboxUptime = breakdown?.buybox_uptime_pct ?? null
   const priceVolatility = breakdown?.price_volatility_pct ?? null
   const priceRange = breakdown?.price_range_30d

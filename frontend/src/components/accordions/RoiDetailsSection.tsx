@@ -21,11 +21,11 @@ export function RoiDetailsSection({ product }: AccordionSectionProps) {
 
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div>
-          <span className="text-gray-600">Sell:</span>{' '}
+          <span className="text-gray-600">Vente Amazon:</span>{' '}
           <span className="font-medium text-green-700">${marketSell.toFixed(2)}</span>
         </div>
         <div>
-          <span className="text-gray-600">Buy:</span>{' '}
+          <span className="text-gray-600">Achat FBA:</span>{' '}
           <span className="font-medium text-blue-700">${marketBuy.toFixed(2)}</span>
         </div>
         <div>

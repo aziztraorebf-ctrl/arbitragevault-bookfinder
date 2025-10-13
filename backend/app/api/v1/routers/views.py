@@ -98,6 +98,28 @@ class ProductScore(BaseModel):
     )
     title: Optional[str] = Field(None, description="Product title from Keepa")
 
+    # Phase 2.5A HYBRID - Market Analysis + Recommendations
+    market_sell_price: Optional[float] = Field(
+        None,
+        description="Current market sell price (Amazon/marketplace) - Phase 2.5A Hybrid"
+    )
+    market_buy_price: Optional[float] = Field(
+        None,
+        description="Current FBA buy price (3rd party sellers) - Phase 2.5A Hybrid"
+    )
+    current_roi_pct: Optional[float] = Field(
+        None,
+        description="ROI percentage if buying/selling at current market prices - Phase 2.5A Hybrid"
+    )
+    max_buy_price_35pct: Optional[float] = Field(
+        None,
+        description="Recommended max buy price for 35% ROI target - Phase 2.5A Hybrid"
+    )
+    velocity_breakdown: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Detailed velocity components for tooltip display - Phase 2.5A Hybrid"
+    )
+
 
 class ViewScoreMetadata(BaseModel):
     """Metadata for view score response."""

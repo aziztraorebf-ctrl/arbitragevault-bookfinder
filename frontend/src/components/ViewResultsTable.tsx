@@ -16,11 +16,13 @@
 
 import { useState, useMemo } from 'react';
 import type { ProductScore, ViewScoreMetadata } from '../types/views';
-import { AmazonBadges } from './AmazonBadges';
-import { Tooltip, InfoIcon } from './Tooltip';
-import { ROITooltip } from './tooltips/ROITooltip';
-import { VelocityTooltip } from './tooltips/VelocityTooltip';
-import { MaxBuyTooltip } from './tooltips/MaxBuyTooltip';
+import { ViewResultsRow } from './ViewResultsRow';
+// Anciens imports tooltips commentés (Phase 2.5A migration accordéon)
+// import { AmazonBadges } from './AmazonBadges';
+// import { Tooltip, InfoIcon } from './Tooltip';
+// import { ROITooltip } from './tooltips/ROITooltip';
+// import { VelocityTooltip } from './tooltips/VelocityTooltip';
+// import { MaxBuyTooltip } from './tooltips/MaxBuyTooltip';
 
 interface ViewResultsTableProps {
   products: ProductScore[];
@@ -35,6 +37,9 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
   const [filterMinScore, setFilterMinScore] = useState(0);
   const [sortBy, setSortBy] = useState<'score' | 'rank' | 'roi' | 'velocity'>('score');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Accordion state - Phase 2.5A: State lifting pour gérer 1 seule row ouverte
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   // Process and filter products
   const processedProducts = useMemo(() => {
@@ -262,181 +267,50 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                {/* Chevron column */}
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Rank
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ASIN
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Title
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Score
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ROI
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Velocity
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Max Buy (35%)
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Market Sell
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Market Buy
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Amazon
-              </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {processedProducts.map((product) => {
-              // Defensive extraction of values with fallbacks
-              const roiPct = product.raw_metrics?.roi_pct ?? 0;
-              const velocityScore = product.raw_metrics?.velocity_score ?? 0;
-              const marketSellPrice = product.market_sell_price ?? 0;
-              const marketBuyPrice = product.market_buy_price ?? 0;
-              const maxBuyPrice35pct = product.max_buy_price_35pct ?? 0;
-              const productScore = product.score ?? 0;
-
-              return (
-                <tr key={product.asin} className="hover:bg-gray-50">
-                  {/* Rank */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    #{product.rank}
-                  </td>
-
-                  {/* ASIN */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                    {product.asin}
-                  </td>
-
-                  {/* Title */}
-                  <td className="px-6 py-4 text-sm text-gray-700">
-                    <div className="max-w-xs truncate" title={product.title || ''}>
-                      {product.title || 'N/A'}
-                    </div>
-                  </td>
-
-                  {/* Score */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    <span className="font-semibold text-blue-600">
-                      {productScore.toFixed(1)}
-                    </span>
-                  </td>
-
-                  {/* ROI with tooltip */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <span className={`font-semibold ${
-                        roiPct >= 30 ? 'text-green-600' :
-                        roiPct >= 15 ? 'text-yellow-600' :
-                        'text-red-600'
-                      }`}>
-                        {roiPct.toFixed(1)}%
-                      </span>
-                      <Tooltip
-                        content={
-                          <ROITooltip
-                            currentROI={roiPct}
-                            marketSellPrice={marketSellPrice}
-                            marketBuyPrice={marketBuyPrice}
-                          />
-                        }
-                      >
-                        <InfoIcon />
-                      </Tooltip>
-                    </div>
-                  </td>
-
-                  {/* Velocity with tooltip */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <div className="flex flex-col items-center">
-                        <span className="font-semibold">{velocityScore.toFixed(0)}</span>
-                        <div className="w-16 bg-gray-200 rounded-full h-1.5 mt-1">
-                          <div
-                            className="bg-blue-500 h-1.5 rounded-full"
-                            style={{ width: `${Math.min(velocityScore, 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                      <Tooltip
-                        content={
-                          <VelocityTooltip
-                            score={velocityScore}
-                            breakdown={product.velocity_breakdown}
-                          />
-                        }
-                      >
-                        <InfoIcon />
-                      </Tooltip>
-                    </div>
-                  </td>
-
-                  {/* Max Buy (35%) with tooltip */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <span className="font-semibold text-green-600">
-                        ${maxBuyPrice35pct.toFixed(2)}
-                      </span>
-                      <Tooltip
-                        content={
-                          <MaxBuyTooltip
-                            maxBuyPrice={maxBuyPrice35pct}
-                            marketSellPrice={marketSellPrice}
-                            targetROI={35}
-                          />
-                        }
-                      >
-                        <InfoIcon />
-                      </Tooltip>
-                    </div>
-                  </td>
-
-                  {/* Market Sell */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    <span className="text-gray-700">
-                      ${marketSellPrice.toFixed(2)}
-                    </span>
-                  </td>
-
-                  {/* Market Buy */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    <span className="text-gray-700">
-                      ${marketBuyPrice.toFixed(2)}
-                    </span>
-                  </td>
-
-                  {/* Amazon Badges */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    <AmazonBadges
-                      amazonOnListing={product.amazon_on_listing}
-                      amazonBuybox={product.amazon_buybox}
-                      size="sm"
-                    />
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    <button
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                      onClick={() => window.open(`https://www.amazon.com/dp/${product.asin}`, '_blank')}
-                    >
-                      Voir
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {processedProducts.map((product) => (
+              <ViewResultsRow
+                key={product.asin}
+                product={product}
+                isExpanded={expandedRow === product.asin}
+                onToggle={() => setExpandedRow(expandedRow === product.asin ? null : product.asin)}
+              />
+            ))}
           </tbody>
         </table>
       </div>

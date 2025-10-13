@@ -57,6 +57,7 @@ class ViewsService {
     if (enableFeatureFlag) {
       headers['X-Feature-Flags-Override'] = JSON.stringify({
         view_specific_scoring: true,
+        amazon_check_enabled: true,
       })
     }
 

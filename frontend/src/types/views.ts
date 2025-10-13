@@ -47,6 +47,25 @@ export interface RawMetrics {
 }
 
 /**
+ * Velocity breakdown (Phase 2.5A Hybrid)
+ * Detailed components for tooltip display
+ */
+export interface VelocityBreakdown {
+  bsr_score?: number
+  bsr_avg?: number
+  bsr_percentile?: number
+  sales_activity_score?: number
+  estimated_sales_30d?: number
+  bsr_drops_30d?: number
+  buybox_score?: number
+  buybox_uptime_pct?: number | null  // null if data not available
+  stability_score?: number
+  price_volatility_pct?: number
+  price_range_30d?: { min: number; max: number }
+  velocity_tier?: 'fast' | 'medium' | 'slow' | 'very_slow'
+}
+
+/**
  * Score calculé pour un produit
  * Phase 2.5A: Amazon Check fields added
  */
@@ -71,6 +90,13 @@ export interface ProductScore {
   // Phase 2.5A - Amazon Check fields
   amazon_on_listing: boolean  // Amazon has any offer on this product
   amazon_buybox: boolean       // Amazon currently owns the Buy Box
+
+  // Phase 2.5A HYBRID - Market Analysis + Recommendations
+  market_sell_price?: number        // Current market sell price (Amazon/marketplace)
+  market_buy_price?: number         // Current FBA buy price (3rd party sellers)
+  current_roi_pct?: number          // ROI if buying/selling at current market prices
+  max_buy_price_35pct?: number      // Recommended max buy price for 35% ROI target
+  velocity_breakdown?: VelocityBreakdown  // Detailed velocity components for tooltip
 
   error?: string
 }

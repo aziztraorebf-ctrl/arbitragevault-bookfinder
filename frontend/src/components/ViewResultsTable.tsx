@@ -17,6 +17,10 @@
 import { useState, useMemo } from 'react';
 import type { ProductScore, ViewScoreMetadata } from '../types/views';
 import { AmazonBadges } from './AmazonBadges';
+import { Tooltip, InfoIcon } from './Tooltip';
+import { ROITooltip } from './tooltips/ROITooltip';
+import { VelocityTooltip } from './tooltips/VelocityTooltip';
+import { MaxBuyTooltip } from './tooltips/MaxBuyTooltip';
 
 interface ViewResultsTableProps {
   products: ProductScore[];
@@ -81,21 +85,28 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
   const avgScore = metadata.avg_score;
 
   const handleExportCSV = () => {
-    // Create CSV content
-    const headers = ['ASIN', 'Title', 'Score', 'Rank', 'ROI %', 'Velocity', 'Stability', 'Amazon Listed', 'Buy Box'];
+    // Create CSV content with BOM for Excel FR/EU compatibility
+    const BOM = '\uFEFF';
+    const headers = [
+      'RANK', 'ASIN', 'TITLE', 'SCORE', 'ROI', 'VELOCITY', 'ESTIMATED_SALES_30D',
+      'MAX_BUY_35PCT', 'MARKET_SELL', 'MARKET_BUY', 'AMAZON_LISTED', 'AMAZON_BUYBOX'
+    ];
     const rows = processedProducts.map(p => [
+      p.rank,
       p.asin,
       `"${p.title || 'N/A'}"`,
       p.score.toFixed(2),
-      p.rank,
-      p.raw_metrics.roi_pct.toFixed(2),
-      p.raw_metrics.velocity_score.toFixed(2),
-      p.raw_metrics.stability_score.toFixed(2),
+      `${p.raw_metrics.roi_pct.toFixed(2)}%`,
+      p.raw_metrics.velocity_score.toFixed(0),
+      p.velocity_breakdown?.estimated_sales_30d || 0,
+      `$${p.max_buy_price_35pct?.toFixed(2) || '0.00'}`,
+      `$${p.market_sell_price?.toFixed(2) || '0.00'}`,
+      `$${p.market_buy_price?.toFixed(2) || '0.00'}`,
       p.amazon_on_listing ? 'Yes' : 'No',
       p.amazon_buybox ? 'Yes' : 'No'
     ]);
 
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const csvContent = BOM + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
 
     // Download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -258,16 +269,25 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
                 ASIN
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Titre
+                Title
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Score
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ROI %
+                ROI
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Velocity
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Max Buy (35%)
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Market Sell
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Market Buy
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Amazon
@@ -280,42 +300,114 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
           <tbody className="bg-white divide-y divide-gray-200">
             {processedProducts.map((product) => (
               <tr key={product.asin} className="hover:bg-gray-50">
+                {/* Rank */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   #{product.rank}
                 </td>
+
+                {/* ASIN */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                   {product.asin}
                 </td>
+
+                {/* Title */}
                 <td className="px-6 py-4 text-sm text-gray-700">
                   <div className="max-w-xs truncate" title={product.title || ''}>
                     {product.title || 'N/A'}
                   </div>
                 </td>
+
+                {/* Score */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                   <span className="font-semibold text-blue-600">
                     {product.score.toFixed(1)}
                   </span>
                 </td>
+
+                {/* ROI with tooltip */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                  <span className={`font-semibold ${
-                    product.raw_metrics.roi_pct >= 30 ? 'text-green-600' :
-                    product.raw_metrics.roi_pct >= 15 ? 'text-yellow-600' :
-                    'text-red-600'
-                  }`}>
-                    {product.raw_metrics.roi_pct.toFixed(1)}%
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                  <div className="flex flex-col items-center">
-                    <span className="font-semibold">{product.raw_metrics.velocity_score.toFixed(0)}</span>
-                    <div className="w-16 bg-gray-200 rounded-full h-1.5 mt-1">
-                      <div
-                        className="bg-blue-500 h-1.5 rounded-full"
-                        style={{ width: `${Math.min(product.raw_metrics.velocity_score, 100)}%` }}
-                      ></div>
-                    </div>
+                  <div className="flex items-center justify-center gap-1">
+                    <span className={`font-semibold ${
+                      product.raw_metrics.roi_pct >= 30 ? 'text-green-600' :
+                      product.raw_metrics.roi_pct >= 15 ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      {product.raw_metrics.roi_pct.toFixed(1)}%
+                    </span>
+                    <Tooltip
+                      content={
+                        <ROITooltip
+                          currentROI={product.raw_metrics.roi_pct}
+                          marketSellPrice={product.market_sell_price}
+                          marketBuyPrice={product.market_buy_price}
+                        />
+                      }
+                    >
+                      <InfoIcon />
+                    </Tooltip>
                   </div>
                 </td>
+
+                {/* Velocity with tooltip */}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <div className="flex flex-col items-center">
+                      <span className="font-semibold">{product.raw_metrics.velocity_score.toFixed(0)}</span>
+                      <div className="w-16 bg-gray-200 rounded-full h-1.5 mt-1">
+                        <div
+                          className="bg-blue-500 h-1.5 rounded-full"
+                          style={{ width: `${Math.min(product.raw_metrics.velocity_score, 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    <Tooltip
+                      content={
+                        <VelocityTooltip
+                          score={product.raw_metrics.velocity_score}
+                          breakdown={product.velocity_breakdown}
+                        />
+                      }
+                    >
+                      <InfoIcon />
+                    </Tooltip>
+                  </div>
+                </td>
+
+                {/* Max Buy (35%) with tooltip */}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="font-semibold text-green-600">
+                      ${product.max_buy_price_35pct?.toFixed(2) || '0.00'}
+                    </span>
+                    <Tooltip
+                      content={
+                        <MaxBuyTooltip
+                          maxBuyPrice={product.max_buy_price_35pct || 0}
+                          marketSellPrice={product.market_sell_price}
+                          targetROI={35}
+                        />
+                      }
+                    >
+                      <InfoIcon />
+                    </Tooltip>
+                  </div>
+                </td>
+
+                {/* Market Sell */}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                  <span className="text-gray-700">
+                    ${product.market_sell_price?.toFixed(2) || '0.00'}
+                  </span>
+                </td>
+
+                {/* Market Buy */}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                  <span className="text-gray-700">
+                    ${product.market_buy_price?.toFixed(2) || '0.00'}
+                  </span>
+                </td>
+
+                {/* Amazon Badges */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                   <AmazonBadges
                     amazonOnListing={product.amazon_on_listing}
@@ -323,6 +415,8 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
                     size="sm"
                   />
                 </td>
+
+                {/* Actions */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                   <button
                     className="text-blue-600 hover:text-blue-800 font-medium"

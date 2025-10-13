@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { viewsService } from '../services/viewsService'
-import type { ProductScore, StrategyProfile } from '../types/views'
+import type { ProductScore, StrategyProfile, ViewScoreMetadata } from '../types/views'
+import { ViewResultsTable } from '../components/ViewResultsTable'
 
 export default function AutoSourcing() {
   const [identifiers, setIdentifiers] = useState<string>('')
   const [strategy, setStrategy] = useState<StrategyProfile>('velocity')
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<ProductScore[]>([])
+  const [metadata, setMetadata] = useState<ViewScoreMetadata | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleAnalyze = async () => {
@@ -41,6 +43,7 @@ export default function AutoSourcing() {
       )
 
       setResults(response.products)
+      setMetadata(response.metadata)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'analyse')
     } finally {
@@ -51,6 +54,7 @@ export default function AutoSourcing() {
   const handleClear = () => {
     setIdentifiers('')
     setResults([])
+    setMetadata(null)
     setError(null)
   }
 
@@ -125,79 +129,12 @@ export default function AutoSourcing() {
           </div>
         )}
 
-        {/* Results Section */}
-        {results.length > 0 && (
-          <div className="bg-white rounded-xl shadow-md overflow-hidden">
-            <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Résultats ({results.length} produits)
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Scores calculés avec priorité <span className="font-semibold">Velocity (0.7)</span> pour AutoSourcing
-              </p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ASIN
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Titre
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Score
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Velocity
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ROI %
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Stability
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {results.map((product, idx) => (
-                    <tr key={product.asin || idx} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                        {product.asin || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900 max-w-md truncate">
-                        {product.title || 'Titre non disponible'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-                            product.score >= 20
-                              ? 'bg-purple-100 text-purple-800'
-                              : product.score >= 10
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {product.score.toFixed(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900 font-semibold">
-                        {(product.raw_metrics.velocity_score ?? 0).toFixed(1)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
-                        {(product.raw_metrics.roi_pct ?? 0).toFixed(1)}%
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
-                        {(product.raw_metrics.stability_score ?? 0).toFixed(1)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {/* Results Section - Using ViewResultsTable */}
+        {results.length > 0 && metadata && (
+          <ViewResultsTable
+            products={results}
+            metadata={metadata}
+          />
         )}
 
         {/* Info Footer */}

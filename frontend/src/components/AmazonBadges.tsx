@@ -3,7 +3,7 @@
  *
  * Displays Amazon presence indicators for products:
  * - Blue badge: Amazon has an offer on the listing
- * - Green badge: Amazon currently owns the Buy Box
+ * - Red badge: Amazon currently owns the Buy Box (high competition)
  *
  * Used in product tables, cards, and detail views.
  */
@@ -21,9 +21,13 @@ export function AmazonBadges({
   size = 'md',
   showTooltip = true
 }: AmazonBadgesProps) {
-  // Don't render anything if no Amazon presence
+  // Show "No Amazon" text when no Amazon presence
   if (!amazonOnListing && !amazonBuybox) {
-    return null;
+    return (
+      <span className="inline-flex items-center text-sm text-gray-500">
+        ❌ No Amazon
+      </span>
+    );
   }
 
   // Size classes
@@ -60,8 +64,8 @@ export function AmazonBadges({
 
       {amazonBuybox && (
         <span
-          className={`inline-flex items-center rounded-full bg-green-100 text-green-800 font-medium ${sizeClass}`}
-          title={showTooltip ? 'Amazon currently owns the Buy Box' : undefined}
+          className={`inline-flex items-center rounded-full bg-red-100 text-red-800 font-medium ${sizeClass}`}
+          title={showTooltip ? 'Amazon owns the Buy Box - High competition' : undefined}
         >
           <svg
             className="w-3 h-3 mr-1"
@@ -114,8 +118,8 @@ export function AmazonBadgesCompact({
 
       {amazonBuybox && (
         <span
-          className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-800"
-          title={showTooltip ? 'Amazon Buy Box' : undefined}
+          className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-800"
+          title={showTooltip ? 'Amazon Buy Box - High competition' : undefined}
         >
           <svg
             className="w-4 h-4"

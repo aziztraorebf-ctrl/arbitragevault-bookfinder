@@ -22,7 +22,12 @@ from app.services.scoring_v2 import (
 )
 from app.services.business_config_service import BusinessConfigService, get_business_config_service
 from app.services.amazon_check_service import check_amazon_presence  # Phase 2.5A
-from app.core.calculations import calculate_roi_metrics, calculate_velocity_score, VelocityData  # Phase 2.5A ROI/Velocity fix
+from app.core.calculations import (
+    calculate_roi_metrics,
+    calculate_velocity_score,
+    calculate_max_buy_price,  # Phase 2.5A Hybrid solution
+    VelocityData
+)
 from decimal import Decimal
 
 logger = logging.getLogger(__name__)
@@ -309,6 +314,35 @@ async def score_products_for_view(
                         logger.warning(f"[CALC_ERROR] {asin}: {calc_error}, defaulting ROI/Velocity to 0")
                         parsed["roi"] = {"roi_percentage": 0.0}
                         parsed["velocity_score"] = 0.0
+                        velocity_result = {}
+
+                    # Phase 2.5A HYBRID: Calculate Max Buy Price (35% ROI target)
+                    max_buy_price_35pct = Decimal("0.00")
+                    market_sell_price = Decimal("0.00")
+                    market_buy_price = Decimal("0.00")
+
+                    try:
+                        if current_price and current_price > 0:
+                            market_sell_price = Decimal(str(current_price))
+                            max_buy_price_35pct = calculate_max_buy_price(
+                                sell_price=market_sell_price,
+                                target_roi_pct=35.0,
+                                category="books",
+                                config=config
+                            )
+                            logger.debug(f"[MAX_BUY] {asin}: ${max_buy_price_35pct}")
+
+                        if fba_price and fba_price > 0:
+                            market_buy_price = Decimal(str(fba_price))
+
+                    except Exception as max_buy_error:
+                        logger.warning(f"[MAX_BUY_ERROR] {asin}: {max_buy_error}, defaulting to 0")
+
+                    # Phase 2.5A HYBRID: Enrich velocity breakdown with estimated sales
+                    velocity_breakdown = velocity_result.copy() if velocity_result else {}
+                    rank_drops = velocity_result.get("rank_drops_30d", 0) if velocity_result else 0
+                    estimated_sales_30d = int(rank_drops * 1.5) if rank_drops else 0
+                    velocity_breakdown["estimated_sales_30d"] = estimated_sales_30d
 
                     # Compute view-specific score
                     score_result = compute_view_score(
@@ -338,7 +372,13 @@ async def score_products_for_view(
                         "error": None,
                         "amazon_on_listing": amazon_on_listing,  # Phase 2.5A
                         "amazon_buybox": amazon_buybox,  # Phase 2.5A
-                        "title": title
+                        "title": title,
+                        # Phase 2.5A HYBRID - Market Analysis + Recommendations
+                        "market_sell_price": float(market_sell_price),
+                        "market_buy_price": float(market_buy_price),
+                        "current_roi_pct": score_result["raw_metrics"].get("roi_pct", 0.0),
+                        "max_buy_price_35pct": float(max_buy_price_35pct),
+                        "velocity_breakdown": velocity_breakdown
                     })
                     successful_scores += 1
 

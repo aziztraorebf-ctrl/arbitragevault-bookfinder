@@ -280,6 +280,106 @@ class KeepaRawParser:
         return (unix_ms // 60000) - 21564000
 
 
+class KeepaTimestampExtractor:
+    """
+    Extracts data freshness timestamp from Keepa response.
+    Multi-level fallback strategy for maximum reliability.
+    """
+
+    @staticmethod
+    def extract_data_freshness_timestamp(raw_data: Dict[str, Any]) -> Optional[datetime]:
+        """
+        Extract the most relevant timestamp showing data freshness.
+
+        PRIORITY (most reliable to least reliable):
+        1. lastPriceChange: Last detected price change by Keepa
+        2. Last timestamp in CSV array BUY_BOX (most important price)
+        3. Last timestamp in CSV array NEW (fallback)
+        4. lastUpdate (last resort, often outdated)
+
+        Args:
+            raw_data: Raw Keepa API response
+
+        Returns:
+            datetime object or None if no data available
+        """
+        asin = raw_data.get("asin", "unknown")
+        keepa_epoch = 971222400  # Keepa epoch: 21 Oct 2000 00:00:00 GMT
+
+        # ═══════════════════════════════════════════════════════
+        # PRIORITY 1: lastPriceChange (RECOMMENDED)
+        # ═══════════════════════════════════════════════════════
+        last_price_change = raw_data.get("lastPriceChange", -1)
+
+        if last_price_change != -1:
+            unix_timestamp = keepa_epoch + (last_price_change * 60)
+            timestamp = datetime.fromtimestamp(unix_timestamp)
+
+            # Verify timestamp is reasonable (< 30 days)
+            age_days = (datetime.now() - timestamp).days
+            if age_days < 30:
+                logger.info(f"ASIN {asin}: Using lastPriceChange timestamp: {timestamp} ({age_days} days old)")
+                return timestamp
+            else:
+                logger.warning(f"ASIN {asin}: lastPriceChange too old ({age_days} days), trying fallback")
+
+        # ═══════════════════════════════════════════════════════
+        # PRIORITY 2: Last timestamp in CSV arrays
+        # ═══════════════════════════════════════════════════════
+        csv_data = raw_data.get("csv", [])
+
+        if csv_data:
+            # Priority: BUY_BOX (index 12) > NEW (index 1) > AMAZON (index 0)
+            priority_arrays = [
+                (12, "BUY_BOX"),  # Most relevant for arbitrage
+                (1, "NEW"),       # Fallback
+                (0, "AMAZON")     # Last resort
+            ]
+
+            for array_idx, array_name in priority_arrays:
+                if array_idx < len(csv_data):
+                    price_array = csv_data[array_idx]
+
+                    # Check array exists and has data
+                    if price_array and len(price_array) >= 2:
+                        # Format: [ts1, price1, ts2, price2, ...]
+                        # Last timestamp = second-to-last element
+                        last_timestamp_keepa = price_array[-2]
+                        last_price = price_array[-1]
+
+                        # Verify valid data (-1 = null in Keepa)
+                        if last_timestamp_keepa != -1 and last_price != -1:
+                            unix_timestamp = keepa_epoch + (last_timestamp_keepa * 60)
+                            timestamp = datetime.fromtimestamp(unix_timestamp)
+
+                            age_days = (datetime.now() - timestamp).days
+                            logger.info(
+                                f"ASIN {asin}: Using {array_name} array timestamp: {timestamp} "
+                                f"({age_days} days old, price=${last_price/100:.2f})"
+                            )
+                            return timestamp
+
+        # ═══════════════════════════════════════════════════════
+        # PRIORITY 3: lastUpdate (LAST RESORT)
+        # ═══════════════════════════════════════════════════════
+        last_update = raw_data.get("lastUpdate", -1)
+
+        if last_update != -1:
+            unix_timestamp = keepa_epoch + (last_update * 60)
+            timestamp = datetime.fromtimestamp(unix_timestamp)
+            age_days = (datetime.now() - timestamp).days
+
+            logger.warning(
+                f"ASIN {asin}: Fallback to lastUpdate: {timestamp} ({age_days} days old) "
+                f"- May be inaccurate"
+            )
+            return timestamp
+
+        # No data available
+        logger.error(f"ASIN {asin}: No timestamp data available in Keepa response")
+        return None
+
+
 class KeepaBSRExtractor:
     """
     Business logic layer for BSR extraction and validation.
@@ -476,12 +576,12 @@ def parse_keepa_product(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         product_data["parsing_timestamp"] = datetime.now().isoformat()
         product_data["keepa_product_code"] = raw_data.get("productCode")
 
-        # Extract last_updated_at timestamp from Keepa (for frontend transparency)
-        last_update_keepa = raw_data.get("lastUpdate", -1)
-        if last_update_keepa != -1:
-            keepa_epoch = 971222400  # Keepa epoch: 21 Oct 2000 (Unix timestamp)
-            unix_timestamp = keepa_epoch + (last_update_keepa * 60)
-            product_data["last_updated_at"] = datetime.fromtimestamp(unix_timestamp).isoformat()
+        # Extract data freshness timestamp with multi-level fallback strategy
+        timestamp_extractor = KeepaTimestampExtractor()
+        freshness_timestamp = timestamp_extractor.extract_data_freshness_timestamp(raw_data)
+
+        if freshness_timestamp:
+            product_data["last_updated_at"] = freshness_timestamp.isoformat()
         else:
             product_data["last_updated_at"] = None
 

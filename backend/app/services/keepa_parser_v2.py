@@ -476,6 +476,15 @@ def parse_keepa_product(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         product_data["parsing_timestamp"] = datetime.now().isoformat()
         product_data["keepa_product_code"] = raw_data.get("productCode")
 
+        # Extract last_updated_at timestamp from Keepa (for frontend transparency)
+        last_update_keepa = raw_data.get("lastUpdate", -1)
+        if last_update_keepa != -1:
+            keepa_epoch = 971222400  # Keepa epoch: 21 Oct 2000 (Unix timestamp)
+            unix_timestamp = keepa_epoch + (last_update_keepa * 60)
+            product_data["last_updated_at"] = datetime.fromtimestamp(unix_timestamp).isoformat()
+        else:
+            product_data["last_updated_at"] = None
+
         logger.info(f"✅ Successfully parsed {asin}: price=${product_data.get('current_price')}, BSR={current_bsr}")
         return product_data
 

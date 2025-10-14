@@ -328,7 +328,8 @@ class KeepaService:
                     domain=domain_str,  # ✅ Use string, not integer
                     stats=180,          # Get 180-day statistics
                     history=True,       # Include price history
-                    offers=20           # Include offer data
+                    offers=20,          # Include offer data
+                    update=0            # ✅ FORCE LIVE DATA: update=0 means scrape Amazon NOW (costs 2-3 tokens)
                 )
 
             products = await loop.run_in_executor(None, _sync_query)

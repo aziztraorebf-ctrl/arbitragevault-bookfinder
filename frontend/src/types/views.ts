@@ -99,6 +99,9 @@ export interface ProductScore {
   max_buy_price_35pct?: number      // Recommended max buy price for 35% ROI target
   velocity_breakdown?: VelocityBreakdown  // Detailed velocity components for tooltip
 
+  // Data freshness timestamp (ISO 8601 format)
+  last_updated_at?: string | null   // Keepa lastUpdate converted to datetime
+
   error?: string
 }
 

@@ -292,7 +292,14 @@ class KeepaService:
 
         cached_data = None if force_refresh else self._get_from_cache(cache_key)
         if cached_data:
+            self.logger.info(f"[CACHE HIT] Serving cached data for {identifier}")
             return cached_data
+
+        # Log cache bypass or miss
+        if force_refresh:
+            self.logger.info(f"[FORCE REFRESH] Bypassing cache for {identifier}, requesting LIVE data with update=0")
+        else:
+            self.logger.info(f"[CACHE MISS] No valid cache for {identifier}, requesting data from Keepa")
 
         try:
             # Import official keepa library
@@ -323,13 +330,18 @@ class KeepaService:
                 }
                 domain_str = domain_map.get(domain, 'US')  # Default to US
 
+                # Use update=0 to force live data when force_refresh=True
+                update_param = 0 if force_refresh else None
+
+                self.logger.info(f"[KEEPA API] Calling with update={update_param} for {identifier}")
+
                 return api.query(
                     identifier,
                     domain=domain_str,  # ✅ Use string, not integer
                     stats=180,          # Get 180-day statistics
                     history=True,       # Include price history
                     offers=20,          # Include offer data
-                    update=0            # ✅ FORCE LIVE DATA: update=0 means scrape Amazon NOW (costs 2-3 tokens)
+                    update=update_param # ✅ update=0 forces live Amazon scraping (2-3 tokens), None uses cache
                 )
 
             products = await loop.run_in_executor(None, _sync_query)
@@ -341,8 +353,20 @@ class KeepaService:
 
             product = products[0]
 
+            # Log data freshness
+            keepa_epoch = 971222400  # Keepa epoch: 21 Oct 2000
+            last_price_change = product.get("lastPriceChange", -1)
+            if last_price_change != -1:
+                unix_ts = keepa_epoch + (last_price_change * 60)
+                from datetime import datetime
+                age_days = (datetime.now() - datetime.fromtimestamp(unix_ts)).days
+                self.logger.info(f"[KEEPA DATA] Received data for {identifier}, lastPriceChange: {age_days} days old")
+            else:
+                self.logger.info(f"[KEEPA DATA] Received data for {identifier}, no lastPriceChange available")
+
             # Cache the result (pricing data = shorter TTL)
             self._set_cache(cache_key, product, cache_type='pricing')
+            self.logger.info(f"[CACHE SET] Cached data for {identifier} with TTL={self._cache_ttl['pricing']}")
 
             return product
 

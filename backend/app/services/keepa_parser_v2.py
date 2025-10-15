@@ -269,15 +269,27 @@ class KeepaRawParser:
 
     @staticmethod
     def _keepa_to_datetime(keepa_time: int) -> datetime:
-        """Convert Keepa timestamp to Python datetime."""
-        unix_ms = (keepa_time + 21564000) * 60000
-        return datetime.fromtimestamp(unix_ms / 1000)
+        """
+        Convert Keepa timestamp to Python datetime.
+
+        Official formula from Keepa Support (Oct 15, 2025):
+        unix_seconds = (keepa_time + 21564000) * 60
+
+        IMPORTANT: Uses SECONDS, not milliseconds!
+        """
+        from app.utils.keepa_utils import keepa_to_datetime
+        result = keepa_to_datetime(keepa_time)
+        return result if result is not None else datetime.now()
 
     @staticmethod
     def _datetime_to_keepa(dt: datetime) -> int:
-        """Convert Python datetime to Keepa timestamp."""
-        unix_ms = int(dt.timestamp() * 1000)
-        return (unix_ms // 60000) - 21564000
+        """
+        Convert Python datetime to Keepa timestamp.
+
+        Inverse of _keepa_to_datetime().
+        """
+        from app.utils.keepa_utils import datetime_to_keepa
+        return datetime_to_keepa(dt)
 
 
 class KeepaTimestampExtractor:
@@ -303,8 +315,9 @@ class KeepaTimestampExtractor:
         Returns:
             datetime object or None if no data available
         """
+        from app.utils.keepa_utils import keepa_to_datetime
+
         asin = raw_data.get("asin", "unknown")
-        keepa_epoch = 971222400  # Keepa epoch: 21 Oct 2000 00:00:00 GMT
 
         # ═══════════════════════════════════════════════════════
         # PRIORITY 1: lastPriceChange (RECOMMENDED)
@@ -312,16 +325,18 @@ class KeepaTimestampExtractor:
         last_price_change = raw_data.get("lastPriceChange", -1)
 
         if last_price_change != -1:
-            unix_timestamp = keepa_epoch + (last_price_change * 60)
-            timestamp = datetime.fromtimestamp(unix_timestamp)
+            timestamp = keepa_to_datetime(last_price_change)
 
-            # Verify timestamp is reasonable (< 30 days)
-            age_days = (datetime.now() - timestamp).days
-            if age_days < 30:
-                logger.info(f"ASIN {asin}: Using lastPriceChange timestamp: {timestamp} ({age_days} days old)")
-                return timestamp
+            if timestamp is None:
+                logger.warning(f"ASIN {asin}: Failed to convert lastPriceChange={last_price_change}")
             else:
-                logger.warning(f"ASIN {asin}: lastPriceChange too old ({age_days} days), trying fallback")
+                # Verify timestamp is reasonable (< 365 days = 1 year)
+                age_days = (datetime.now() - timestamp).days
+                if age_days < 365:
+                    logger.info(f"ASIN {asin}: Using lastPriceChange timestamp: {timestamp} ({age_days} days old)")
+                    return timestamp
+                else:
+                    logger.warning(f"ASIN {asin}: lastPriceChange too old ({age_days} days), trying fallback")
 
         # ═══════════════════════════════════════════════════════
         # PRIORITY 2: Last timestamp in CSV arrays
@@ -349,15 +364,15 @@ class KeepaTimestampExtractor:
 
                         # Verify valid data (-1 = null in Keepa)
                         if last_timestamp_keepa != -1 and last_price != -1:
-                            unix_timestamp = keepa_epoch + (last_timestamp_keepa * 60)
-                            timestamp = datetime.fromtimestamp(unix_timestamp)
+                            timestamp = keepa_to_datetime(last_timestamp_keepa)
 
-                            age_days = (datetime.now() - timestamp).days
-                            logger.info(
-                                f"ASIN {asin}: Using {array_name} array timestamp: {timestamp} "
-                                f"({age_days} days old, price=${last_price/100:.2f})"
-                            )
-                            return timestamp
+                            if timestamp:
+                                age_days = (datetime.now() - timestamp).days
+                                logger.info(
+                                    f"ASIN {asin}: Using {array_name} array timestamp: {timestamp} "
+                                    f"({age_days} days old, price=${last_price/100:.2f})"
+                                )
+                                return timestamp
 
         # ═══════════════════════════════════════════════════════
         # PRIORITY 3: lastUpdate (LAST RESORT)
@@ -365,15 +380,15 @@ class KeepaTimestampExtractor:
         last_update = raw_data.get("lastUpdate", -1)
 
         if last_update != -1:
-            unix_timestamp = keepa_epoch + (last_update * 60)
-            timestamp = datetime.fromtimestamp(unix_timestamp)
-            age_days = (datetime.now() - timestamp).days
+            timestamp = keepa_to_datetime(last_update)
 
-            logger.warning(
-                f"ASIN {asin}: Fallback to lastUpdate: {timestamp} ({age_days} days old) "
-                f"- May be inaccurate"
-            )
-            return timestamp
+            if timestamp:
+                age_days = (datetime.now() - timestamp).days
+                logger.warning(
+                    f"ASIN {asin}: Fallback to lastUpdate: {timestamp} ({age_days} days old) "
+                    f"- May be inaccurate"
+                )
+                return timestamp
 
         # No data available
         logger.error(f"ASIN {asin}: No timestamp data available in Keepa response")

@@ -353,14 +353,20 @@ class KeepaService:
 
             product = products[0]
 
-            # Log data freshness
-            keepa_epoch = 971222400  # Keepa epoch: 21 Oct 2000
+            # Log data freshness using official conversion
+            from app.utils.keepa_utils import keepa_to_datetime
+
             last_price_change = product.get("lastPriceChange", -1)
             if last_price_change != -1:
-                unix_ts = keepa_epoch + (last_price_change * 60)
-                from datetime import datetime
-                age_days = (datetime.now() - datetime.fromtimestamp(unix_ts)).days
-                self.logger.info(f"[KEEPA DATA] Received data for {identifier}, lastPriceChange: {age_days} days old")
+                timestamp = keepa_to_datetime(last_price_change)
+                if timestamp:
+                    age_days = (datetime.now() - timestamp).days
+                    self.logger.info(
+                        f"[KEEPA DATA] ✅ Received data for {identifier}, "
+                        f"lastPriceChange: {timestamp.isoformat()} ({age_days} days old)"
+                    )
+                else:
+                    self.logger.warning(f"[KEEPA DATA] Failed to convert lastPriceChange={last_price_change}")
             else:
                 self.logger.info(f"[KEEPA DATA] Received data for {identifier}, no lastPriceChange available")
 

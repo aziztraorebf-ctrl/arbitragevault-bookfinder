@@ -251,6 +251,81 @@ def validate_keepa_data_structure(product: dict) -> bool:
     return True
 
 
-# Convenience constants
+# Convenience constants (kept for backwards compatibility)
 KEEPA_NULL_VALUE = -1  # Keepa uses -1 to represent null/missing values
 KEEPA_PRICE_DIVISOR = 100  # Prices stored in cents, divide by 100 for dollars
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# KEEPA TIME CONVERSION (Official Specification)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def keepa_to_datetime(keepa_time: Optional[int]) -> Optional['datetime']:
+    """
+    Convert Keepa time (minutes) to UTC datetime.
+
+    Official formula from Keepa Support (October 15, 2025):
+    unix_seconds = (keepa_time + 21564000) * 60
+
+    Args:
+        keepa_time: Keepa timestamp in minutes (-1 or None = null)
+
+    Returns:
+        datetime object (UTC) or None if invalid
+
+    Example:
+        >>> keepa_to_datetime(7777548)
+        datetime.datetime(2025, 10, 15, 1, 48, 0)  # UTC
+
+        >>> keepa_to_datetime(-1)
+        None
+
+        >>> keepa_to_datetime(None)
+        None
+
+    Source:
+        Keepa Support Email (Oct 15, 2025):
+        "A Keepa Time Minutes value of 7777548 converts to
+        Oct 15 2025 03:48:00 GMT+0200, not July 25 2015.
+        For seconds: (keepaTime + 21564000) × 60."
+    """
+    from datetime import datetime
+    from app.utils.keepa_constants import KEEPA_TIME_OFFSET_MINUTES, KEEPA_NULL_VALUE
+
+    if keepa_time is None or keepa_time == KEEPA_NULL_VALUE:
+        return None
+
+    try:
+        unix_seconds = (keepa_time + KEEPA_TIME_OFFSET_MINUTES) * 60
+        return datetime.utcfromtimestamp(unix_seconds)
+    except (ValueError, OSError, OverflowError) as e:
+        logger.error(f"Failed to convert keepa_time {keepa_time}: {e}")
+        return None
+
+
+def datetime_to_keepa(dt: 'datetime') -> int:
+    """
+    Convert Python datetime to Keepa time (minutes).
+
+    Inverse of keepa_to_datetime().
+
+    Args:
+        dt: datetime object (UTC recommended)
+
+    Returns:
+        Keepa timestamp in minutes
+
+    Example:
+        >>> from datetime import datetime
+        >>> dt = datetime(2025, 10, 15, 1, 48, 0)
+        >>> datetime_to_keepa(dt)
+        7777548
+
+    Note:
+        If dt is not UTC, results may be incorrect.
+        Always pass UTC datetime objects.
+    """
+    from app.utils.keepa_constants import KEEPA_TIME_OFFSET_MINUTES
+
+    unix_seconds = int(dt.timestamp())
+    return (unix_seconds // 60) - KEEPA_TIME_OFFSET_MINUTES

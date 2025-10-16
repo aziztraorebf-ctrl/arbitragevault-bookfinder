@@ -66,13 +66,22 @@ class KeepaRawParser:
     @staticmethod
     def extract_current_values(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Extract current values from product['data'] arrays using keepa library format.
+        Extract current values from product['stats']['current'] array (OFFICIAL Keepa pattern).
 
-        The keepa Python library transforms API responses into structured data:
-        - product['data']['NEW'] = array of New prices (latest = current)
-        - product['data']['SALES'] = array of BSR values (latest = current)
-        - product['data']['AMAZON'] = array of Amazon prices
-        - etc.
+        CRITICAL FIX (Oct 15, 2025): Changed from product['data'] to product['stats']['current']
+        - product['data']['NEW'] = HISTORICAL array (for charts) ❌ WRONG for current prices
+        - product['stats']['current'][1] = CURRENT snapshot value ✅ CORRECT
+
+        Keepa stats.current[] indices (official Keepa API structure):
+          0: AMAZON - Amazon price
+          1: NEW - Marketplace New price (3rd party + Amazon)
+          2: USED - Used price
+          3: SALES - Sales Rank (BSR) - NOT a price!
+          4: LISTPRICE - List price
+          10: NEW_FBA - FBA price (3rd party only)
+          18: BUY_BOX_SHIPPING - Buy Box price with shipping
+
+        Reference: https://github.com/keepacom/api_backend/blob/master/src/main/java/com/keepa/api/backend/structs/Product.java
 
         Args:
             raw_data: Keepa product dict from keepa.Keepa().query()
@@ -83,45 +92,62 @@ class KeepaRawParser:
         current_values = {}
         asin = raw_data.get('asin', 'unknown')
 
-        # Get 'data' section (created by keepa lib)
-        data = raw_data.get('data', {})
+        # Get 'stats.current' array (official Keepa pattern)
+        stats = raw_data.get('stats', {})
+        current_array = stats.get('current', [])
 
-        if not data:
-            logger.warning(f"ASIN {asin}: 'data' section not available")
+        if not current_array:
+            logger.warning(f"ASIN {asin}: 'stats.current' array not available")
             return current_values
 
-        # Helper to extract latest value from array (numpy or list)
-        # Source verified: Keepa SDK v1.3.0 - numpy arrays with -1 for null
-        def get_latest(key: str, is_price: bool = False) -> Optional[Any]:
-            """
-            Extract latest valid value from Keepa data array using numpy-safe helpers.
+        # Helper to safely extract value from current array
+        def get_current(index: int, is_price: bool = False) -> Optional[Any]:
+            """Extract value from stats.current[index] with null checking."""
+            if index >= len(current_array):
+                return None
 
-            Uses extract_latest_value() to avoid "ambiguous truth value" errors.
-            """
-            return extract_latest_value(data, key, is_price=is_price, null_value=KEEPA_NULL_VALUE)
+            value = current_array[index]
 
-        # Extract current values from data arrays
+            # -1 = null value in Keepa
+            if value is None or value == KEEPA_NULL_VALUE:
+                return None
+
+            # Convert price from cents to Decimal
+            if is_price:
+                return float(value / KEEPA_PRICE_DIVISOR)
+
+            return value
+
+        # Extract current values using official indices
         extractors = [
-            ('AMAZON', 'amazon_price', True),      # Amazon price
-            ('NEW', 'new_price', True),            # New price
-            ('USED', 'used_price', True),          # Used price
-            ('SALES', 'bsr', False),               # BSR (Sales Rank) - INTEGER!
-            ('LISTPRICE', 'list_price', True),     # List price
-            ('NEW_FBA', 'fba_price', True),        # FBA price
-            ('BUY_BOX_SHIPPING', 'buybox_price', True),  # Buy Box price
-            ('COUNT_NEW', 'new_count', False),     # New offer count
-            ('COUNT_USED', 'used_count', False),   # Used offer count
-            ('RATING', 'rating', False),           # Rating (0-50)
-            ('COUNT_REVIEWS', 'review_count', False),  # Review count
+            (0, 'amazon_price', True),      # Amazon price
+            (1, 'new_price', True),         # New price (3rd party + Amazon)
+            (2, 'used_price', True),        # Used price
+            (3, 'bsr', False),              # BSR (Sales Rank) - INTEGER!
+            (4, 'list_price', True),        # List price
+            (10, 'fba_price', True),        # FBA price (3rd party only)
+            (18, 'buybox_price', True),     # Buy Box price with shipping
         ]
 
-        for data_key, output_key, is_price in extractors:
-            value = get_latest(data_key, is_price)
+        for index, output_key, is_price in extractors:
+            value = get_current(index, is_price)
             if value is not None:
                 current_values[output_key] = value
                 logger.debug(f"ASIN {asin}: {output_key} = {value}")
 
-        logger.info(f"✅ ASIN {asin}: Extracted {len(current_values)} current values from keepa lib format")
+        # Extract offer counts from separate fields (not in current array)
+        data = raw_data.get('data', {})
+        if data:
+            # Get latest offer counts from data arrays (these are not in stats.current)
+            new_count = extract_latest_value(data, 'COUNT_NEW', is_price=False, null_value=KEEPA_NULL_VALUE)
+            used_count = extract_latest_value(data, 'COUNT_USED', is_price=False, null_value=KEEPA_NULL_VALUE)
+
+            if new_count is not None:
+                current_values['new_count'] = new_count
+            if used_count is not None:
+                current_values['used_count'] = used_count
+
+        logger.info(f"✅ ASIN {asin}: Extracted {len(current_values)} current values from stats.current array")
 
         return current_values
 

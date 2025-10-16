@@ -10,7 +10,7 @@ interface ResultsTableProps {
 export default function ResultsTable({ data, onExport }: ResultsTableProps) {
   const [filterRating, setFilterRating] = useState<string>('all');
   const [filterMinROI, setFilterMinROI] = useState<number>(0);
-  const [sortBy, setSortBy] = useState<'roi' | 'bsr' | 'velocity'>('roi');
+  const [sortBy, setSortBy] = useState<'roi' | 'roi_used' | 'bsr' | 'velocity'>('roi_used');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Filtrer et trier les résultats
@@ -55,6 +55,11 @@ export default function ResultsTable({ data, onExport }: ResultsTableProps) {
           const aROI = 'roi_percentage' in aVal.roi ? parseFloat(aVal.roi.roi_percentage) : -999;
           const bROI = 'roi_percentage' in bVal.roi ? parseFloat(bVal.roi.roi_percentage) : -999;
           compareValue = aROI - bROI;
+          break;
+        case 'roi_used':
+          const aROIUsed = aVal.pricing?.used?.roi_percentage ?? -999;
+          const bROIUsed = bVal.pricing?.used?.roi_percentage ?? -999;
+          compareValue = aROIUsed - bROIUsed;
           break;
         case 'bsr':
           compareValue = (aVal.current_bsr || 999999) - (bVal.current_bsr || 999999);
@@ -194,10 +199,11 @@ export default function ResultsTable({ data, onExport }: ResultsTableProps) {
             <label className="block text-xs font-medium text-gray-700 mb-1">Trier par</label>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'roi' | 'bsr' | 'velocity')}
+              onChange={(e) => setSortBy(e.target.value as 'roi' | 'roi_used' | 'bsr' | 'velocity')}
               className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
             >
-              <option value="roi">ROI</option>
+              <option value="roi_used">ROI USED (recommandé)</option>
+              <option value="roi">ROI Legacy</option>
               <option value="bsr">BSR</option>
               <option value="velocity">Velocity</option>
             </select>
@@ -229,13 +235,16 @@ export default function ResultsTable({ data, onExport }: ResultsTableProps) {
                 Titre
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Prix
+                Prix Vente
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 BSR
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ROI
+                💚 Prix USED
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                ROI USED
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Velocity
@@ -265,10 +274,31 @@ export default function ResultsTable({ data, onExport }: ResultsTableProps) {
                     ${analysis.current_price?.toFixed(2) || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-700">
-                    {analysis.current_bsr?.toLocaleString() || 'N/A'}
+                    {analysis.current_bsr ? `#${analysis.current_bsr.toLocaleString()}` : 'N/A'}
                   </td>
+                  {/* Prix USED Column */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    {formatROI(analysis.roi)}
+                    {analysis.pricing?.used?.available && analysis.pricing.used.current_price !== null ? (
+                      <span className="font-semibold text-blue-700">
+                        ${analysis.pricing.used.current_price.toFixed(2)}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">Non dispo</span>
+                    )}
+                  </td>
+                  {/* ROI USED Column */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                    {analysis.pricing?.used?.roi_percentage !== null && analysis.pricing?.used?.roi_percentage !== undefined ? (
+                      <span className={`font-semibold ${
+                        analysis.pricing.used.roi_percentage >= 30 ? 'text-green-600' :
+                        analysis.pricing.used.roi_percentage >= 15 ? 'text-yellow-600' :
+                        'text-red-600'
+                      }`}>
+                        {analysis.pricing.used.roi_percentage >= 0 ? '+' : ''}{analysis.pricing.used.roi_percentage.toFixed(1)}%
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                     <div className="flex flex-col items-center">

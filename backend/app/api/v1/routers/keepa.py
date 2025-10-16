@@ -68,12 +68,27 @@ class ScoreBreakdown(BaseModel):
     level: str
     notes: str
 
+class PricingDetail(BaseModel):
+    """Pricing details for a specific condition (NEW or USED)."""
+    current_price: Optional[float] = Field(None, description="Current market price for this condition")
+    target_buy_price: float = Field(..., description="Target buy price for desired ROI")
+    roi_percentage: Optional[float] = Field(None, description="ROI if bought at current price")
+    net_profit: Optional[float] = Field(None, description="Net profit if bought at current price")
+    available: bool = Field(..., description="Whether this condition is currently available")
+    recommended: bool = Field(..., description="Whether this is the recommended buying option")
+
 class AnalysisResult(BaseModel):
     """Complete analysis result for a product."""
     asin: str
     title: Optional[str]
     current_price: Optional[float] = Field(None, description="Current price from Keepa")
     current_bsr: Optional[int] = Field(None, description="Current sales rank")
+
+    # NEW: Pricing breakdown USED vs NEW
+    pricing: Dict[str, PricingDetail] = Field(
+        default={},
+        description="Separated pricing for 'used' and 'new' conditions"
+    )
     roi: Dict[str, Any]
     velocity: Dict[str, Any]
     
@@ -315,6 +330,78 @@ async def analyze_product(
         else:
             strategy_profile = config.get("active_strategy", "balanced")
 
+        # *** NEW: USED vs NEW pricing breakdown ***
+        pricing_breakdown = {}
+
+        # Extract USED and NEW prices from parsed data
+        used_price = parsed_data.get('current_used_price')
+        new_price = parsed_data.get('current_fbm_price')  # NEW third-party price
+        target_roi = config.get('roi', {}).get('target_roi_percent', 30)
+
+        # Calculate USED pricing (RECOMMENDED for FBA arbitrage)
+        if used_price and used_price > 0:
+            used_roi = calculate_roi_metrics(
+                current_price=current_price,
+                estimated_buy_cost=Decimal(str(used_price)),
+                product_weight_lbs=weight_decimal,
+                category="books",
+                config=config
+            )
+            # Calculate target buy price for USED
+            target_buy_used = float(current_price) * (1 - target_roi / 100)
+
+            pricing_breakdown['used'] = PricingDetail(
+                current_price=float(used_price),
+                target_buy_price=target_buy_used,
+                roi_percentage=used_roi.get('roi_percentage'),
+                net_profit=used_roi.get('net_profit'),
+                available=True,
+                recommended=True  # USED is recommended for FBA
+            )
+        else:
+            # USED not available - show target price only
+            target_buy_used = float(current_price) * (1 - target_roi / 100)
+            pricing_breakdown['used'] = PricingDetail(
+                current_price=None,
+                target_buy_price=target_buy_used,
+                roi_percentage=None,
+                net_profit=None,
+                available=False,
+                recommended=True
+            )
+
+        # Calculate NEW pricing (ALTERNATIVE option)
+        if new_price and new_price > 0:
+            new_roi = calculate_roi_metrics(
+                current_price=current_price,
+                estimated_buy_cost=Decimal(str(new_price)),
+                product_weight_lbs=weight_decimal,
+                category="books",
+                config=config
+            )
+            # Calculate target buy price for NEW
+            target_buy_new = float(current_price) * (1 - target_roi / 100)
+
+            pricing_breakdown['new'] = PricingDetail(
+                current_price=float(new_price),
+                target_buy_price=target_buy_new,
+                roi_percentage=new_roi.get('roi_percentage'),
+                net_profit=new_roi.get('net_profit'),
+                available=True,
+                recommended=False  # NEW is alternative, not recommended
+            )
+        else:
+            # NEW not available - show target price only
+            target_buy_new = float(current_price) * (1 - target_roi / 100)
+            pricing_breakdown['new'] = PricingDetail(
+                current_price=None,
+                target_buy_price=target_buy_new,
+                roi_percentage=None,
+                net_profit=None,
+                available=False,
+                recommended=False
+            )
+
         # Legacy recommendation logic (maintained for compatibility)
         recommendation = "PASS"
         risk_factors = []
@@ -335,6 +422,10 @@ async def analyze_product(
             title=keepa_data.get('title', 'Unknown'),
             current_price=float(current_price) if current_price else None,
             current_bsr=parsed_data.get('current_bsr'),
+
+            # NEW: USED vs NEW pricing breakdown
+            pricing=pricing_breakdown,
+
             roi=roi_result,
             velocity=velocity_result,
 

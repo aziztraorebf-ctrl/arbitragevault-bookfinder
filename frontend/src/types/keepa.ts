@@ -42,11 +42,27 @@ export interface ScoreBreakdown {
   notes: string;
 }
 
+export interface PricingDetail {
+  current_price: number | null;
+  target_buy_price: number;
+  roi_percentage: number | null;
+  net_profit: number | null;
+  available: boolean;
+  recommended: boolean;
+}
+
 export interface AnalysisResult {
   asin: string;
   title: string | null;
   current_price: number | null;
   current_bsr: number | null;
+
+  // NEW: USED vs NEW pricing breakdown
+  pricing?: {
+    used?: PricingDetail;
+    new?: PricingDetail;
+  };
+
   roi: ROIMetrics | { error: string };
   velocity: VelocityMetrics | { error: string };
   velocity_score: number;

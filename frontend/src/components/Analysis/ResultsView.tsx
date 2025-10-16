@@ -250,16 +250,22 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
                       <ArrowUpDown className="w-3 h-3 ml-1" />
                     </div>
                   </th>
-                  <th 
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    BSR
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    💚 Prix USED
+                  </th>
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('roi_percentage')}
                   >
                     <div className="flex items-center">
-                      ROI %
+                      ROI USED
                       <ArrowUpDown className="w-3 h-3 ml-1" />
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('velocity_score')}
                   >
@@ -294,16 +300,33 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title={result?.title ?? 'N/A'}>
                       {result?.title ?? 'N/A'}
                     </td>
+                    {/* BSR Column */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
+                      {result?.current_bsr ? `#${result.current_bsr.toLocaleString()}` : 'N/A'}
+                    </td>
+                    {/* Prix USED Column */}
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`font-medium ${
-                        result?.roi?.is_profitable ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {/* ✅ Optional chaining + fallback */}
-                        {result?.roi?.roi_percentage != null 
-                          ? formatROI(parseFloat(result.roi.roi_percentage.toString()))
-                          : 'N/A'
-                        }
-                      </span>
+                      {result?.pricing?.used?.available && result.pricing.used.current_price !== null ? (
+                        <span className="font-semibold text-blue-700">
+                          ${result.pricing.used.current_price.toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">Non dispo</span>
+                      )}
+                    </td>
+                    {/* ROI USED Column */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {result?.pricing?.used?.roi_percentage !== null && result?.pricing?.used?.roi_percentage !== undefined ? (
+                        <span className={`font-medium ${
+                          result.pricing.used.roi_percentage >= 30 ? 'text-green-600' :
+                          result.pricing.used.roi_percentage >= 15 ? 'text-yellow-600' :
+                          'text-red-600'
+                        }`}>
+                          {formatROI(result.pricing.used.roi_percentage)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex items-center">

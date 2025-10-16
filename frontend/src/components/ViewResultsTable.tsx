@@ -289,16 +289,13 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
                 Velocity
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Max Buy (35%)
+                BSR
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Market Sell
+                💚 Prix USED
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Market Buy
-              </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Amazon
+                ROI USED
               </th>
             </tr>
           </thead>

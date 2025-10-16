@@ -1,8 +1,9 @@
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState, useRef, useMemo, type ChangeEvent } from 'react';
 import { keepaService } from '../services/keepaService';
 import type { IngestResponse } from '../types/keepa';
 import ProgressBar from '../components/ProgressBar';
-import ResultsTable from '../components/ResultsTable';
+import { ViewResultsTable } from '../components/ViewResultsTable';
+import { batchResultsToProductScores } from '../utils/analysisAdapter';
 
 export default function AnalyseManuelle() {
   // États principaux
@@ -393,7 +394,19 @@ export default function AnalyseManuelle() {
       />
 
       {/* Section Résultats */}
-      <ResultsTable data={results} />
+      {results && results.results.length > 0 && (
+        <ViewResultsTable
+          products={useMemo(() => batchResultsToProductScores(results.results), [results])}
+          metadata={{
+            view_type: 'analyse_manuelle' as any,
+            weights_used: { roi: 0.6, velocity: 0.4, stability: 0.0 },
+            total_products: results.total_items,
+            successful_scores: results.successful,
+            failed_scores: results.failed,
+            avg_score: 50 // Placeholder
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -4,10 +4,11 @@
  */
 
 import type { ProductScore } from '../types/views'
+import type { ProductScoreWithBSR } from '../utils/analysisAdapter'
 import { AccordionContent } from './accordions/AccordionContent'
 
 interface ViewResultsRowProps {
-  product: ProductScore
+  product: ProductScore | ProductScoreWithBSR
   isExpanded: boolean
   onToggle: () => void
 }
@@ -20,6 +21,9 @@ export function ViewResultsRow({ product, isExpanded, onToggle }: ViewResultsRow
   const marketBuyPrice = product.market_buy_price ?? 0
   const maxBuyPrice35pct = product.max_buy_price_35pct ?? 0
   const productScore = product.score ?? 0
+
+  // BSR - Extension custom pour Keepa
+  const currentBsr = ('current_bsr' in product) ? (product as ProductScoreWithBSR).current_bsr : null
 
   return (
     <>
@@ -84,39 +88,41 @@ export function ViewResultsRow({ product, isExpanded, onToggle }: ViewResultsRow
           </div>
         </td>
 
-        {/* Max Buy (35%) */}
-        <td className="px-4 py-3 text-center text-sm font-medium text-purple-600">
-          ${maxBuyPrice35pct.toFixed(2)}
+        {/* BSR */}
+        <td className="px-4 py-3 text-center text-sm font-medium text-gray-700">
+          {currentBsr ? `#${currentBsr.toLocaleString()}` : 'N/A'}
         </td>
 
-        {/* Market Sell */}
-        <td className="px-4 py-3 text-center text-sm font-medium text-green-700">
-          ${marketSellPrice.toFixed(2)}
-        </td>
-
-        {/* Market Buy */}
-        <td className="px-4 py-3 text-center text-sm font-medium text-blue-700">
-          ${marketBuyPrice.toFixed(2)}
-        </td>
-
-        {/* Amazon Badge */}
-        <td className="px-4 py-3 text-center">
-          {product.amazon_on_listing && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              🔵 Amazon Listed
+        {/* Prix USED */}
+        <td className="px-4 py-3 text-center text-sm">
+          {marketBuyPrice > 0 ? (
+            <span className="font-semibold text-blue-700">
+              ${marketBuyPrice.toFixed(2)}
             </span>
+          ) : (
+            <span className="text-gray-400 text-xs">Non dispo</span>
           )}
-          {product.amazon_buybox && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 mt-1">
-              📦 Buy Box
+        </td>
+
+        {/* ROI USED */}
+        <td className="px-4 py-3 text-center text-sm">
+          {product.current_roi_pct !== undefined && product.current_roi_pct !== null ? (
+            <span className={`font-semibold ${
+              product.current_roi_pct >= 30 ? 'text-green-600' :
+              product.current_roi_pct >= 15 ? 'text-yellow-600' :
+              'text-red-600'
+            }`}>
+              {product.current_roi_pct >= 0 ? '+' : ''}{product.current_roi_pct.toFixed(1)}%
             </span>
+          ) : (
+            <span className="text-gray-400">—</span>
           )}
         </td>
       </tr>
 
       {/* Accordéon Row */}
       <tr>
-        <td colSpan={11} className="p-0">
+        <td colSpan={9} className="p-0">
           <AccordionContent product={product} isExpanded={isExpanded} />
         </td>
       </tr>

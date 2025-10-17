@@ -270,8 +270,16 @@ async def score_products_for_view(
 
             for identifier in request.identifiers:
                 try:
-                    # Fetch Keepa data for this product
+                    # Fetch Keepa data for this product (with retry for incomplete data)
                     product_data = await keepa_service.get_product_data(identifier, force_refresh=False)
+
+                    # Check if data is incomplete (missing critical fields)
+                    if product_data:
+                        parsed_temp = parse_keepa_product(product_data)
+                        if not parsed_temp.get("current_fba_price") or not parsed_temp.get("current_price"):
+                            logger.warning(f"Incomplete data for {identifier}, forcing refresh...")
+                            # Force refresh to get complete data
+                            product_data = await keepa_service.get_product_data(identifier, force_refresh=True)
 
                     if not product_data:
                         logger.warning(f"No Keepa data found for {identifier}")

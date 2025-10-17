@@ -21,14 +21,21 @@ export function ViewResultsRow({ product, isExpanded, onToggle }: ViewResultsRow
   const productScore = product.score ?? 0
 
   // USED vs NEW pricing - NEW: Priority à pricing.used si disponible
+  console.log('ViewResultsRow product:', product.asin, {
+    pricing: product.pricing,
+    market_buy_price: product.market_buy_price,
+    current_roi_pct: product.current_roi_pct,
+    raw_metrics: product.raw_metrics
+  })
   const usedPrice = product.pricing?.used?.current_price ?? product.market_buy_price ?? 0
   const usedROI = product.pricing?.used?.roi_percentage
     ? parseFloat(product.pricing.used.roi_percentage)
     : (product.current_roi_pct ?? product.raw_metrics?.roi_pct ?? 0)
+  console.log('ViewResultsRow calculated:', { usedPrice, usedROI })
   const maxBuyPrice35pct = product.max_buy_price_35pct ?? 0
 
-  // BSR - Extension custom pour Keepa
-  const currentBsr = ('current_bsr' in product) ? (product as ProductScoreWithBSR).current_bsr : null
+  // BSR - Now directly from ProductScore type
+  const currentBsr = product.current_bsr ?? (('current_bsr' in product) ? (product as ProductScoreWithBSR).current_bsr : null)
 
   return (
     <>
@@ -127,7 +134,7 @@ export function ViewResultsRow({ product, isExpanded, onToggle }: ViewResultsRow
 
       {/* Accordéon Row */}
       <tr>
-        <td colSpan={9} className="p-0">
+        <td colSpan={10} className="p-0">
           <AccordionContent product={product} isExpanded={isExpanded} />
         </td>
       </tr>

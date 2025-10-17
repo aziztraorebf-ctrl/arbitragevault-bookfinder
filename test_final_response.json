@@ -1,0 +1,70 @@
+{
+    "products": [
+        {
+            "asin": "0593655036",
+            "score": 47.69,
+            "rank": 1,
+            "strategy_profile": "balanced",
+            "weights_applied": {
+                "roi": 0.3,
+                "velocity": 0.7,
+                "stability": 0.1
+            },
+            "components": {
+                "roi_contribution": 0.0,
+                "velocity_contribution": 42.69,
+                "stability_contribution": 5.0
+            },
+            "raw_metrics": {
+                "roi_pct": -1824.0,
+                "velocity_score": 60.99,
+                "stability_score": 50.0
+            },
+            "error": null,
+            "amazon_on_listing": true,
+            "amazon_buybox": true,
+            "title": "The Anxious Generation: How the Great Rewiring of Childhood Is Causing an Epidemic of Mental Illness",
+            "market_sell_price": 0.16,
+            "market_buy_price": 0.3,
+            "current_roi_pct": -1824.0,
+            "max_buy_price_35pct": 0.0,
+            "velocity_breakdown": {
+                "velocity_score": 60.99,
+                "rank_percentile_30d": 90.0,
+                "rank_drops_30d": 47,
+                "buybox_uptime_30d": 0.0,
+                "offers_volatility": 5.51,
+                "component_scores": {
+                    "rank_percentile_score": 27.0,
+                    "rank_improvement_score": 25,
+                    "buybox_score": 0.0,
+                    "stability_score": 8.99
+                },
+                "calculation_type": "velocity_analysis",
+                "window_days": 30,
+                "data_points": {
+                    "bsr_points": 102,
+                    "price_points": 61,
+                    "buybox_points": 0,
+                    "offers_points": 0
+                },
+                "timestamp": "2025-10-13T02:52:56.523518",
+                "velocity_tier": "medium",
+                "estimated_sales_30d": 70
+            }
+        }
+    ],
+    "metadata": {
+        "view_type": "auto_sourcing",
+        "weights_used": {
+            "roi": 0.3,
+            "velocity": 0.7,
+            "stability": 0.1
+        },
+        "total_products": 1,
+        "successful_scores": 1,
+        "failed_scores": 0,
+        "avg_score": 47.69,
+        "strategy_requested": "balanced"
+    }
+}

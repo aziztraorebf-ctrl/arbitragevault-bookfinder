@@ -102,6 +102,9 @@ export interface ProductScore {
   // Data freshness timestamp (ISO 8601 format)
   last_updated_at?: string | null   // Keepa lastUpdate converted to datetime
 
+  // BSR field
+  current_bsr?: number | null
+
   // USED vs NEW pricing breakdown
   pricing?: {
     used?: {

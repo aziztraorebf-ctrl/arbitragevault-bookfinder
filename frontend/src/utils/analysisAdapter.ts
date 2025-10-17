@@ -39,7 +39,7 @@ export function analysisResultToProductScore(
   const score = ratingScores[analysis.overall_rating] || 30
 
   // Extract velocity breakdown from backend velocity object
-  const velocityBreakdown = analysis.velocity && 'error' not in analysis.velocity
+  const velocityBreakdown = analysis.velocity && !('error' in analysis.velocity)
     ? {
         bsr_score: analysis.velocity.rank_percentile_30d,
         rank_drops_30d: analysis.velocity.rank_drops_30d,

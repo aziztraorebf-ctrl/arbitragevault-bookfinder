@@ -42,6 +42,8 @@ export default function MesNiches() {
         true // Enable feature flag for dev/test
       )
 
+      console.log('MesNiches API response:', response)
+      console.log('First product:', response.products[0])
       setResults(response.products)
       setMetadata(response.metadata)
     } catch (err) {

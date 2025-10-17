@@ -184,6 +184,12 @@ export default function AnalyseManuelle() {
     console.log('Success:', message);
   };
 
+  // Convertir les résultats Keepa en ProductScore pour ViewResultsTable
+  const productScores = useMemo(() => {
+    if (!results) return [];
+    return batchResultsToProductScores(results.results);
+  }, [results]);
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Titre principal */}
@@ -396,7 +402,7 @@ export default function AnalyseManuelle() {
       {/* Section Résultats */}
       {results && results.results.length > 0 && (
         <ViewResultsTable
-          products={useMemo(() => batchResultsToProductScores(results.results), [results])}
+          products={productScores}
           metadata={{
             view_type: 'analyse_manuelle' as any,
             weights_used: { roi: 0.6, velocity: 0.4, stability: 0.0 },

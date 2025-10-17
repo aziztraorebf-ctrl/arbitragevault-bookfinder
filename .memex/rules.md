@@ -1,13 +1,43 @@
 # ArbitrageVault - Règles et Spécifications Projet
 
-## STATUT MAJEUR - MIGRATION NEON RÉUSSIE ✅
+## STATUT MAJEUR - FIX BUSINESSCONFIG DÉPLOYÉ ✅
 
 ### Nouvelle Architecture Production - HYBRID RENDER + NEON
-**Backend Status:** v1.6.3 - Migré vers Neon PostgreSQL avec succès
+**Backend Status:** v2.0.2 - Fix BusinessConfig déployé (commit d1addf3)
 **Production:** Backend Render + Database Neon - Connection pool issues résolues
 **Service Backend:** `srv-d3c9sbt6ubrc73ejrusg` (arbitragevault-backend-v2)
 **Database:** Neon PostgreSQL Project `wild-poetry-07211341` Branch `production`
 **Développement:** Context7 Documentation-First + BUILD-TEST-VALIDATE + MCP Integration
+
+### Fix BusinessConfig - 5 Octobre 2025 ✅
+**Problème résolu :** BusinessConfig objects accédés sans extraction `.data` attribute
+**Root Cause :** SQLAlchemy objects utilisés directement comme dictionnaires
+**Impact :** Config DB loading échouait → fallback hardcoded config → BSR mapping manquant
+**Solution :** Extraire `.data` de BusinessConfig objects avant opérations dictionnaire
+**PR #10 :** https://github.com/aziztraorebf-ctrl/arbitragevault-bookfinder/pull/10
+**Commit :** d1addf393fd34acbfce83108f9a546e0f84489a5
+
+**ERREUR FIXÉE :**
+```python
+# ❌ AVANT (buggy)
+global_config = await self._load_config_by_scope(session, "global")
+# Retourne BusinessConfig object, pas dict !
+
+# ✅ APRÈS (correct)
+global_config_obj = await self._load_config_by_scope(session, "global")
+global_config = global_config_obj.data if global_config_obj else await self._load_fallback_config()
+# Extrait .data attribute qui contient le JSON dict
+```
+
+**VALIDATION :**
+- ✅ Logs Render : Plus d'erreur `'BusinessConfig' object has no attribute 'items'` depuis déploiement (21:12:20 UTC)
+- ✅ API : Retourne HTTP 200 sur `/api/v1/keepa/ingest`
+- ⚠️  BSR Investigation : `current_bsr` reste null - problème NON lié au BusinessConfig
+  - Hypothèse : Keepa API ne retourne pas `stats.current[3]` pour certains produits
+  - Parser Keepa correct : Extrait `current_bsr` si présent dans `stats.current[3]`
+  - Mapping API correct : `current_bsr=parsed_data.get('current_bsr')`
+  - Schéma correct : `current_bsr: Optional[int]` dans AnalysisResult
+  - **Prochaine étape :** Investiguer réponse brute Keepa API pour vérifier présence BSR data
 
 ## ARCHITECTURE HYBRID VALIDÉE ✅
 

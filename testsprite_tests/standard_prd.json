@@ -1,0 +1,291 @@
+{
+  "meta": {
+    "project": "ArbitrageVault Backend",
+    "date": "2025-09-26",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "ArbitrageVault is a production-ready FastAPI backend service designed for book arbitrage analysis integrating real-time Amazon marketplace data via Keepa API. It offers comprehensive strategic analytics, batch processing, user authentication, and robust database connection management optimized for modern deployment environments such as Render.",
+  "core_goals": [
+    "Provide reliable and scalable backend services for book arbitrage analysis with real-time data retrieval.",
+    "Ensure database stability and performance with async connection pooling and SSL support in a production environment.",
+    "Implement secure JWT-based user authentication and session management.",
+    "Deliver advanced business logic for profit and velocity scoring with strategic recommendations.",
+    "Offer batch processing capabilities for efficient handling of multiple analyses.",
+    "Enable health monitoring endpoints for system and database readiness.",
+    "Maintain comprehensive API documentation and robust testing with seamless integration to frontend systems."
+  ],
+  "key_features": [
+    "Health Check API with liveness and readiness probes including database connectivity validation.",
+    "AsyncIO PostgreSQL Database Manager using SQLAlchemy with optimized connection pooling and SSL support for Render platform.",
+    "Pydantic-based configuration management with automatic transformation for asyncpg database URLs.",
+    "JWT-based Authentication API supporting user registration, login, and session management.",
+    "Detailed Book Analysis API performing ROI, profit, velocity, and risk calculations with market data processing.",
+    "Batch Processing API handling multiple book analysis requests with progress tracking.",
+    "Keepa Integration API providing Amazon product data retrieval, price history, and product search capabilities.",
+    "Advanced business logic engine implementing multiple strategic scoring views such as Profit Hunter and Velocity.",
+    "Comprehensive RESTful routing adhering to best practices for CRUD and status update operations.",
+    "Robust error handling and resilience mechanisms including retry logic and fallback handling for API limits."
+  ],
+  "user_flow_summary": [
+    "User registers and authenticates using JWT-based Authentication API.",
+    "Authenticated user submits single or batch ASINs for analysis via Keepa Integration API.",
+    "System fetches product and market data from Keepa and processes it through the Business Logic Engine.",
+    "User receives detailed analysis including ROI, velocity scores, risk assessment, and strategic recommendations.",
+    "User can query batch processing statuses and retrieve updated analysis results.",
+    "Health endpoints continuously monitor application and database readiness for maintenance and load balancing.",
+    "Developers monitor API status, logs, and deploy updates via integrated Render MCP diagnostics.",
+    "Frontend integrates with backend APIs for a seamless experience in niche bookmarking, analysis results browsing, and batch processing management."
+  ],
+  "validation_criteria": [
+    "Successful TLS/SSL connection to PostgreSQL database without sslmode errors.",
+    "Health endpoints respond appropriately: liveness returns alive status and readiness returns accurate database health status.",
+    "All backend API endpoints respond with expected data structures and handle error cases with proper HTTP status codes.",
+    "Authentication mechanisms securely issue and validate JWT tokens with correct session lifecycle management.",
+    "Business logic calculations match expected ROI, velocity, risk, and profit metrics validated against test cases.",
+    "Batch processing handles large inputs efficiently, maintaining system responsiveness and data integrity.",
+    "Integration with Keepa API respects rate limits and returns accurate, real-time product data consistently.",
+    "Codebase passes all unit, integration, and end-to-end test suites with performance benchmarks met (e.g., analysis response < 2s).",
+    "Database connection pool settings optimize resource usage on Render with no connection leak or premature closures.",
+    "Repository pattern implementations are corrected to include required model arguments, eliminating initialization errors.",
+    "API documentation is complete, reflecting all current endpoints and their schemas for developer usability."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "python",
+      "fastapi",
+      "sqlalchemy",
+      "asyncpg",
+      "postgresql",
+      "uvicorn",
+      "alembic",
+      "pydantic",
+      "pytest"
+    ],
+    "features": [
+      {
+        "name": "Health Check API",
+        "description": "Health endpoints for liveness and readiness probes with database connectivity check",
+        "files": [
+          "app/api/v1/routers/health.py",
+          "app/core/db.py"
+        ],
+        "api_doc": {
+          "paths": {
+            "/api/v1/health/live": {
+              "get": {
+                "summary": "Liveness probe - check if application is running",
+                "responses": {
+                  "200": {
+                    "description": "Application is alive",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string",
+                              "example": "alive"
+                            },
+                            "service": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "string"
+                            },
+                            "environment": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/v1/health/ready": {
+              "get": {
+                "summary": "Readiness probe - check if application is ready to serve traffic",
+                "responses": {
+                  "200": {
+                    "description": "Application is ready (database connected)",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string",
+                              "example": "ready"
+                            },
+                            "service": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "string"
+                            },
+                            "environment": {
+                              "type": "string"
+                            },
+                            "checks": {
+                              "type": "object",
+                              "properties": {
+                                "database": {
+                                  "type": "string",
+                                  "example": "healthy"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "503": {
+                    "description": "Application is not ready (database issues)",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string",
+                              "example": "not_ready"
+                            },
+                            "service": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "string"
+                            },
+                            "environment": {
+                              "type": "string"
+                            },
+                            "checks": {
+                              "type": "object",
+                              "properties": {
+                                "database": {
+                                  "type": "string",
+                                  "example": "unhealthy"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Database Management",
+        "description": "AsyncIO database connection manager with SQLAlchemy, connection pooling, and health checks for PostgreSQL on Render",
+        "files": [
+          "app/core/db.py",
+          "app/core/settings.py"
+        ],
+        "api_doc": {
+          "components": {
+            "schemas": {
+              "DatabaseManager": {
+                "type": "object",
+                "description": "Manages database connections with connection pooling optimized for Render PostgreSQL Basic (256MB)",
+                "properties": {
+                  "initialize": {
+                    "description": "Initialize database engine with SSL for Render PostgreSQL"
+                  },
+                  "health_check": {
+                    "description": "Check database connectivity with SELECT 1 query"
+                  },
+                  "get_session": {
+                    "description": "Get async database session"
+                  },
+                  "close": {
+                    "description": "Close database engine and dispose connections"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Application Settings",
+        "description": "Pydantic-based configuration management with database URL transformation for asyncpg compatibility",
+        "files": [
+          "app/core/settings.py"
+        ],
+        "api_doc": {
+          "components": {
+            "schemas": {
+              "Settings": {
+                "type": "object",
+                "description": "Application configuration with automatic postgresql:// to postgresql+asyncpg:// transformation",
+                "properties": {
+                  "database_url": {
+                    "type": "string",
+                    "description": "PostgreSQL connection URL with auto asyncpg transformation"
+                  },
+                  "app_env": {
+                    "type": "string",
+                    "example": "production"
+                  },
+                  "debug": {
+                    "type": "boolean"
+                  },
+                  "app_name": {
+                    "type": "string",
+                    "example": "ArbitrageVault API"
+                  },
+                  "version": {
+                    "type": "string",
+                    "example": "1.6.3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Authentication API",
+        "description": "JWT-based authentication with user registration, login, and session management",
+        "files": [
+          "app/api/v1/routers/auth.py",
+          "app/core/auth.py",
+          "app/core/security.py"
+        ]
+      },
+      {
+        "name": "Book Analysis API",
+        "description": "Book arbitrage analysis with profit calculations and market data processing",
+        "files": [
+          "app/api/v1/routers/analyses.py",
+          "app/repositories/analysis_repository.py",
+          "app/services/analysis_service.py"
+        ]
+      },
+      {
+        "name": "Batch Processing API",
+        "description": "Batch processing for multiple book analyses with queue management",
+        "files": [
+          "app/api/v1/routers/batches.py",
+          "app/repositories/batch_repository.py",
+          "app/services/batch_service.py"
+        ]
+      },
+      {
+        "name": "Keepa Integration API",
+        "description": "Integration with Keepa API for Amazon product data retrieval and pricing history",
+        "files": [
+          "app/api/v1/routers/keepa.py",
+          "app/services/keepa_service.py"
+        ]
+      }
+    ]
+  }
+}

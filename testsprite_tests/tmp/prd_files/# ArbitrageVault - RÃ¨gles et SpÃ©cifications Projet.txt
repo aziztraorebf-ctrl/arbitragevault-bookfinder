@@ -1,0 +1,214 @@
+# ArbitrageVault - Règles et Spécifications Projet
+
+## PHASE PRODUCTION RENDER - SSL RÉSOLU + UPGRADE POSTGRESQL ✅
+
+### Contexte Actuel - RENDER DEPLOYMENT 95% OPÉRATIONNEL 
+**Backend Status:** v1.6.3 - UV + Python 3.12.8 + SQLAlchemy 2.0 Async + PostgreSQL Basic
+**Frontend Status:** En développement - React 18 + TypeScript + Vite planifié
+**Production:** Render - Backend opérationnel avec architecture moderne + SSL résolu
+**Développement:** Méthodologie Documentation-First + BUILD-TEST-VALIDATE + MCP Integration
+
+### SSL PROBLEM SOLVED - SOLUTIONS VALIDÉES EN PRODUCTION ✅
+
+#### Correction SSL Critique - SUCCESS CONFIRMÉ
+**Problème Initial :** `"connect() got an unexpected keyword argument 'sslmode'"`
+**Erreur Cause :** asyncpg ne supporte pas `sslmode` URL parameter comme psycopg2
+**Solution Validée :**
+```python
+# MAUVAIS (erreur sslmode)
+database_url = f"{database_url}?sslmode=require"  
+
+# CORRECT (working solution)
+connect_args = {"ssl": "require"} if "render.com" in database_url else {}
+create_async_engine(..., connect_args=connect_args)
+```
+
+**Résultat :** Plus d'erreur SSL, connexions établies, API opérationnelle
+
+#### PostgreSQL Upgrade - RENDER BASIC PLAN
+**Migration :** FREE → Basic-256mb ($6.30/mois)
+**Raisons :** 
+- Plan gratuit: connexions limitées + expire 30 jours
+- Problèmes "connection was closed in the middle of operation" 
+- Solution durable pour production
+
+**Configuration Database Optimisée :**
+```python
+pool_size=2,           # Au lieu de 20 pour Render compatibility
+max_overflow=5,        # Au lieu de 30 pour Render compatibility 
+pool_timeout=30,       # Connection acquisition timeout
+pool_recycle=1800,     # Recycle connections after 30 minutes
+pool_pre_ping=True,    # Verify connection liveness
+```
+
+### MCP Integration Mastery - DIAGNOSTIC EN TEMPS RÉEL
+
+#### Render MCP - Monitoring Production
+**Configuration Validée :**
+```json
+{
+  "server_name": "render", 
+  "runtime": "executable",
+  "args": ["C:\\...\\render-mcp-server_v0.2.2.exe"],
+  "env": {"RENDER_API_KEY": "from_memex_secrets"}
+}
+```
+
+**Capacités Critiques :**
+- ✅ **Real-time error diagnosis** via `list_logs` avec filtres
+- ✅ **Deployment monitoring** via `list_deploys`, `get_deploy` 
+- ✅ **Service health tracking** via `get_service`
+- ✅ **Database status** via `get_postgres`
+
+#### Context7 MCP - Documentation-First Debugging
+**Pattern de Recherche Validé :**
+```
+1. resolve-library-id → Identifier library Context7-compatible
+2. get-library-docs → Documentation officielle (SQLAlchemy, asyncpg)
+3. Appliquer solutions documentées → Éviter erreurs courantes
+```
+
+**Libraries Critiques pour Render :**
+- `/websites/sqlalchemy_en_20` - Pool configuration, SSL setup
+- `/magicstack/asyncpg` - SSL parameters, connection strings  
+- `/websites/render` - Deployment limitations, best practices
+
+### Database Configuration - POSTGRESQL BASIC RENDER
+
+#### Database Upgrade Details - OPERATIONAL
+```
+Database ID: dpg-d3ca0ea4d50c73ccrut0-a
+Plan: basic_256mb ($6.30/mois)
+Status: Available 
+Instance: 256 MB RAM, 0.1 CPU, 1 GB Storage
+Region: Oregon
+```
+
+#### Connection Configuration - WORKING
+**Environment Variables Production :**
+```bash
+DATABASE_URL=postgresql+asyncpg://[user]:[pass]@[host]:5432/[db]
+PYTHON_VERSION=3.12.8
+PYTHONPATH=backend
+UV_VERSION=0.7.12
+```
+
+**URL Transformation (settings.py) :**
+```python
+# Auto-transform pour async compatibility
+v.replace("postgresql://", "postgresql+asyncpg://", 1)
+```
+
+### PROBLÈMES IDENTIFIÉS - EN COURS DE RÉSOLUTION
+
+#### 1. Database Health Check - STATUS: INVESTIGATING
+**Symptôme :** `/api/v1/health/ready` retourne `{"checks": {"database": "unhealthy"}}`
+**Code Responsable :** `db_manager.health_check()` dans `health.py`
+**Impact :** 
+- ✅ **Non-bloquant** pour API endpoints non-database
+- ✅ **Non-bloquant** pour frontend development
+- ❌ **Bloquant** pour endpoints utilisant database (auth, analyses)
+
+#### 2. Repository Instanciation Bug - STATUS: IDENTIFIED  
+**Erreur :** `"BaseRepository.__init__() missing 1 required positional argument: 'model'"`
+**Cause :** Repositories mal instanciés
+```python
+# INCORRECT
+repo = AnalysisRepository(db)  
+
+# CORRECT  
+repo = AnalysisRepository(db, Analysis)
+```
+
+**Fichiers à Corriger :**
+- `app/api/v1/routers/analyses.py` (3 instances)
+- `app/api/v1/routers/batches.py` (4 instances)
+- Autres routers utilisant repositories
+
+### Deployment Methodology - MCP-ENHANCED BUILD-TEST-VALIDATE
+
+#### Error Resolution Pattern - PROVEN EFFECTIVE
+```
+1. Context7 research → Documentation officielle first
+2. list_logs MCP → Real-time error identification
+3. get_deploy MCP → Deployment status monitoring  
+4. Code correction → Based on official docs
+5. Commit + push → Auto-deployment trigger
+6. Real-time validation → MCP monitoring + endpoint testing
+```
+
+#### Commit Pattern pour Render
+```bash
+git commit -m "[type]: [component] - [technical change]
+
+Problem: [Exact error from Render logs]
+Solution: [Precise technical solution via Context7/MCP]
+MCP Tools Used: [list_logs, get_deploy, etc.]
+Expected result: [measurable outcome]
+
+Generated with [Memex](https://memex.tech)
+Co-Authored-By: Memex <noreply@memex.tech>"
+```
+
+### API Status - PARTIALLY OPERATIONAL
+
+#### Endpoints Status - CURRENT
+- ✅ **Root + Documentation:** https://arbitragevault-backend-v2.onrender.com/docs
+- ✅ **Liveness:** /api/v1/health/live (always responds)
+- ⚠️ **Readiness:** /api/v1/health/ready (database dependency issue)
+- ❌ **Database-dependent endpoints:** Repository instanciation bug
+
+#### Functional Assessment
+- **95-98% Infrastructure:** Deployée et stable
+- **SSL + Connection Pool:** Résolu et optimisé
+- **Documentation + Monitoring:** Opérationnel  
+- **Code bugs:** 2 problèmes identifiés, solutions connues
+
+### PROCHAINES ACTIONS CRITIQUES - PLAN VALIDÉ
+
+#### Approche TestSprite - RECOMMANDÉE
+**Objectif :** Diagnostic systématique des problèmes database restants
+**Configuration :**
+```
+Type: Backend testing
+Local Port: 8000 (FastAPI)
+Test Scope: Codebase (analyse complète)
+Focus: Database connection issues, health_check failures
+```
+
+**Pipeline TestSprite :**
+1. `testsprite_bootstrap_tests` → Initialisation backend analysis
+2. `testsprite_generate_code_summary` → Architecture database mapping  
+3. `testsprite_generate_backend_test_plan` → Test plan database-focused
+4. `testsprite_generate_code_and_execute` → Automated testing + reporting
+
+#### Alternative : Diagnostic Chirurgical
+Si TestSprite ne résoud pas le problème:
+1. Examiner `db_manager.health_check()` ligne par ligne
+2. Test de connexion database simplifié
+3. Identifier failure point exact
+
+### Lessons Learned - EXPERTISE DÉVELOPPÉE
+
+#### Render Deployment Mastery
+**SSL avec asyncpg :** Utiliser `connect_args={"ssl": "require"}`, pas sslmode URL
+**Pool Configuration :** Adapter aux limitations Render (pool_size=2, max_overflow=5)
+**Monitoring :** MCP Render essential pour real-time debugging
+**Upgrade Strategy :** Plan gratuit vers Basic justifié pour stabilité
+
+#### MCP-Enhanced Development
+**Context7 First :** Documentation officielle avant solutions empiriques
+**Real-time Monitoring :** Transform deployment debugging experience  
+**Structured Approach :** BUILD-TEST-VALIDATE avec validation MCP
+
+#### Development Philosophy
+**Problems Hierarchy :** SSL/Infrastructure > Code bugs > Feature development
+**Clean Code First :** Résoudre bugs identifiés avant nouvelles features
+**Systematic Approach :** TestSprite pour diagnostics complexes vs trial-and-error
+
+---
+
+**Dernière mise à jour :** 28 septembre 2025 - SSL RÉSOLU, PostgreSQL UPGRADED, 95% DÉPLOYÉ
+**Status :** Infrastructure production-ready, 2 code bugs identifiés avec solutions connues
+**Achievement :** SSL mastery + MCP-enhanced debugging + Render deployment expertise
+**Next Phase :** TestSprite diagnostic → Code cleanup → Frontend development

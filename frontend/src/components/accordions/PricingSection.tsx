@@ -122,7 +122,7 @@ export function PricingSection({ analysis, isExpanded = false }: PricingSectionP
            pricingUsed.roi_percentage !== null &&
            pricingUsed.roi_percentage >= 30 && (
             <div className="mt-3 p-2 bg-green-100 border border-green-300 rounded text-xs text-green-900 font-medium">
-              ✅ Excellente opportunité FBA USED ! ROI > 30%
+              ✅ Excellente opportunité FBA USED ! ROI &gt; 30%
             </div>
           )}
         </div>

@@ -475,7 +475,9 @@ async def score_products_for_view(
                         "max_buy_price_35pct": float(max_buy_price_35pct),
                         "velocity_breakdown": velocity_breakdown,
                         # NEW: USED vs NEW pricing breakdown
-                        "pricing": pricing_breakdown if pricing_breakdown else None
+                        "pricing": pricing_breakdown if pricing_breakdown else None,
+                        # ADD: BSR for display
+                        "current_bsr": current_bsr if current_bsr else None
                     })
                     successful_scores += 1
 

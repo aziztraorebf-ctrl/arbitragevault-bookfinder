@@ -1,0 +1,42 @@
+[
+  {
+    "id": "TC001",
+    "title": "health check api liveness probe",
+    "description": "Test the /api/v1/health/live endpoint to verify it returns a 200 status with the correct JSON structure indicating the application is alive."
+  },
+  {
+    "id": "TC002",
+    "title": "health check api readiness probe database healthy",
+    "description": "Test the /api/v1/health/ready endpoint to verify it returns a 200 status with the correct JSON structure indicating the application is ready and the database connection is healthy."
+  },
+  {
+    "id": "TC003",
+    "title": "health check api readiness probe database unhealthy",
+    "description": "Simulate database connectivity issues and test the /api/v1/health/ready endpoint to verify it returns a 503 status with the correct JSON structure indicating the application is not ready and the database connection is unhealthy."
+  },
+  {
+    "id": "TC004",
+    "title": "database manager initialize with ssl",
+    "description": "Test the database manager initialization to ensure the database engine is created with SSL support and connection pooling optimized for Render PostgreSQL."
+  },
+  {
+    "id": "TC005",
+    "title": "database manager health check query",
+    "description": "Test the database manager's health check method to verify it successfully executes a SELECT 1 query and returns a healthy status."
+  },
+  {
+    "id": "TC006",
+    "title": "database manager get async session",
+    "description": "Test the database manager's get_session method to ensure it returns a valid asynchronous database session."
+  },
+  {
+    "id": "TC007",
+    "title": "database manager close connections",
+    "description": "Test the database manager's close method to verify it properly closes the database engine and disposes of all connections."
+  },
+  {
+    "id": "TC008",
+    "title": "application settings database url transformation",
+    "description": "Test the application settings to verify that a PostgreSQL URL starting with postgresql:// is automatically transformed to postgresql+asyncpg:// for asyncpg compatibility."
+  }
+]

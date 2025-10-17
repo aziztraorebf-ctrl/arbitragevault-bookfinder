@@ -102,6 +102,26 @@ export interface ProductScore {
   // Data freshness timestamp (ISO 8601 format)
   last_updated_at?: string | null   // Keepa lastUpdate converted to datetime
 
+  // USED vs NEW pricing breakdown
+  pricing?: {
+    used?: {
+      current_price: number | null
+      target_buy_price: number
+      roi_percentage: string | null
+      net_profit: string | null
+      available: boolean
+      recommended: boolean
+    }
+    new?: {
+      current_price: number | null
+      target_buy_price: number
+      roi_percentage: string | null
+      net_profit: string | null
+      available: boolean
+      recommended: boolean
+    }
+  }
+
   error?: string
 }
 

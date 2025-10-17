@@ -120,6 +120,12 @@ class ProductScore(BaseModel):
         description="Detailed velocity components for tooltip display - Phase 2.5A Hybrid"
     )
 
+    # NEW: USED vs NEW pricing breakdown
+    pricing: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Separated pricing for 'used' and 'new' conditions with ROI breakdown"
+    )
+
 
 class ViewScoreMetadata(BaseModel):
     """Metadata for view score response."""
@@ -366,6 +372,73 @@ async def score_products_for_view(
                     estimated_sales_30d = int(rank_drops * 1.5) if rank_drops else 0
                     velocity_breakdown["estimated_sales_30d"] = estimated_sales_30d
 
+                    # NEW: USED vs NEW pricing breakdown (same logic as keepa.py)
+                    pricing_breakdown = {}
+                    used_price = parsed.get('current_used_price')
+                    new_price = parsed.get('current_fbm_price')
+                    weight_decimal = Decimal(str(parsed.get('weight', 1.0)))
+                    target_roi = config.get('roi', {}).get('target_roi_percent', 30)
+
+                    # Calculate USED pricing (RECOMMENDED for FBA arbitrage)
+                    if used_price and used_price > 0 and current_price:
+                        used_roi = calculate_roi_metrics(
+                            current_price=Decimal(str(current_price)),
+                            estimated_buy_cost=Decimal(str(used_price)),
+                            product_weight_lbs=weight_decimal,
+                            category="books",
+                            config=config
+                        )
+                        target_buy_used = float(current_price) * (1 - target_roi / 100)
+                        pricing_breakdown['used'] = {
+                            'current_price': float(used_price),
+                            'target_buy_price': target_buy_used,
+                            'roi_percentage': used_roi.get('roi_percentage'),
+                            'net_profit': used_roi.get('net_profit'),
+                            'available': True,
+                            'recommended': True
+                        }
+                    elif current_price:
+                        # USED not available - show target price only
+                        target_buy_used = float(current_price) * (1 - target_roi / 100)
+                        pricing_breakdown['used'] = {
+                            'current_price': None,
+                            'target_buy_price': target_buy_used,
+                            'roi_percentage': None,
+                            'net_profit': None,
+                            'available': False,
+                            'recommended': True
+                        }
+
+                    # Calculate NEW pricing (ALTERNATIVE option)
+                    if new_price and new_price > 0 and current_price:
+                        new_roi = calculate_roi_metrics(
+                            current_price=Decimal(str(current_price)),
+                            estimated_buy_cost=Decimal(str(new_price)),
+                            product_weight_lbs=weight_decimal,
+                            category="books",
+                            config=config
+                        )
+                        target_buy_new = float(current_price) * (1 - target_roi / 100)
+                        pricing_breakdown['new'] = {
+                            'current_price': float(new_price),
+                            'target_buy_price': target_buy_new,
+                            'roi_percentage': new_roi.get('roi_percentage'),
+                            'net_profit': new_roi.get('net_profit'),
+                            'available': True,
+                            'recommended': False
+                        }
+                    elif current_price:
+                        # NEW not available - show target price only
+                        target_buy_new = float(current_price) * (1 - target_roi / 100)
+                        pricing_breakdown['new'] = {
+                            'current_price': None,
+                            'target_buy_price': target_buy_new,
+                            'roi_percentage': None,
+                            'net_profit': None,
+                            'available': False,
+                            'recommended': False
+                        }
+
                     # Compute view-specific score
                     score_result = compute_view_score(
                         parsed_data=parsed,
@@ -400,7 +473,9 @@ async def score_products_for_view(
                         "market_buy_price": float(market_buy_price),
                         "current_roi_pct": score_result["raw_metrics"].get("roi_pct", 0.0),
                         "max_buy_price_35pct": float(max_buy_price_35pct),
-                        "velocity_breakdown": velocity_breakdown
+                        "velocity_breakdown": velocity_breakdown,
+                        # NEW: USED vs NEW pricing breakdown
+                        "pricing": pricing_breakdown if pricing_breakdown else None
                     })
                     successful_scores += 1
 

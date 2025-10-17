@@ -18,9 +18,14 @@ export function ViewResultsRow({ product, isExpanded, onToggle }: ViewResultsRow
   const roiPct = product.raw_metrics?.roi_pct ?? 0
   const velocityScore = product.raw_metrics?.velocity_score ?? 0
   const marketSellPrice = product.market_sell_price ?? 0
-  const marketBuyPrice = product.market_buy_price ?? 0
-  const maxBuyPrice35pct = product.max_buy_price_35pct ?? 0
   const productScore = product.score ?? 0
+
+  // USED vs NEW pricing - NEW: Priority à pricing.used si disponible
+  const usedPrice = product.pricing?.used?.current_price ?? product.market_buy_price ?? 0
+  const usedROI = product.pricing?.used?.roi_percentage
+    ? parseFloat(product.pricing.used.roi_percentage)
+    : (product.current_roi_pct ?? product.raw_metrics?.roi_pct ?? 0)
+  const maxBuyPrice35pct = product.max_buy_price_35pct ?? 0
 
   // BSR - Extension custom pour Keepa
   const currentBsr = ('current_bsr' in product) ? (product as ProductScoreWithBSR).current_bsr : null
@@ -95,9 +100,9 @@ export function ViewResultsRow({ product, isExpanded, onToggle }: ViewResultsRow
 
         {/* Prix USED */}
         <td className="px-4 py-3 text-center text-sm">
-          {marketBuyPrice > 0 ? (
+          {usedPrice > 0 ? (
             <span className="font-semibold text-blue-700">
-              ${marketBuyPrice.toFixed(2)}
+              ${usedPrice.toFixed(2)}
             </span>
           ) : (
             <span className="text-gray-400 text-xs">Non dispo</span>
@@ -106,13 +111,13 @@ export function ViewResultsRow({ product, isExpanded, onToggle }: ViewResultsRow
 
         {/* ROI USED */}
         <td className="px-4 py-3 text-center text-sm">
-          {product.current_roi_pct !== undefined && product.current_roi_pct !== null ? (
+          {usedROI !== undefined && usedROI !== null ? (
             <span className={`font-semibold ${
-              product.current_roi_pct >= 30 ? 'text-green-600' :
-              product.current_roi_pct >= 15 ? 'text-yellow-600' :
+              usedROI >= 30 ? 'text-green-600' :
+              usedROI >= 15 ? 'text-yellow-600' :
               'text-red-600'
             }`}>
-              {product.current_roi_pct >= 0 ? '+' : ''}{product.current_roi_pct.toFixed(1)}%
+              {usedROI >= 0 ? '+' : ''}{usedROI.toFixed(1)}%
             </span>
           ) : (
             <span className="text-gray-400">—</span>

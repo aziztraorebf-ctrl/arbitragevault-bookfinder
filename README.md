@@ -114,6 +114,12 @@ npm run dev
 - **[Architecture Guide](./backend/ARCHITECTURE.md)**: Technical architecture details
 - **[Deployment Guide](./backend/DEPLOYMENT.md)**: Production deployment procedures
 
+### **Development Tools & MCP**
+- **[MCP Keepa Quick Start](./MCP_KEEPA_QUICK_START.md)**: 2-minute introduction (⭐ START HERE)
+- **[MCP Keepa Usage Guide](./docs/MCP_KEEPA_USAGE.md)**: Complete usage documentation with 5 real use cases
+- **[MCP Keepa Test Commands](./MCP_KEEPA_TEST_COMMANDS.md)**: 7 practical tests with expected results
+- **[MCP Keepa Implementation](./MCP_KEEPA_IMPLEMENTATION_SUMMARY.md)**: Overview and benefits
+
 ---
 
 **Current Version**: v2.0.0 (Backend Production Ready)  

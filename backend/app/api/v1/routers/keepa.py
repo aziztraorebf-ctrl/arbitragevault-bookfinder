@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field, validator
 from app.services.keepa_service import KeepaService, get_keepa_service
 from app.services.business_config_service import BusinessConfigService, get_business_config_service
 from app.services.keepa_parser_v2 import parse_keepa_product
+from app.services.unified_analysis import build_unified_product_v2  # Phase 4
 from app.core.calculations import (
     calculate_roi_metrics, calculate_velocity_score, VelocityData,
     compute_advanced_velocity_score, compute_advanced_stability_score,
@@ -33,6 +34,7 @@ class IngestBatchRequest(BaseModel):
     config_profile: str = Field("default", description="Configuration profile to use")
     force_refresh: bool = Field(False, description="Force refresh cached data")
     async_threshold: int = Field(100, description="Use async job mode if > this many items")
+    source_price: Optional[float] = Field(None, description="Acquisition cost per item (used for ROI calculation). If not provided, uses config default.")
 
     @validator('identifiers')
     def validate_identifiers(cls, v):
@@ -157,20 +159,56 @@ def normalize_identifier(identifier: str) -> str:
 
 async def analyze_product(
     asin: str,
-    keepa_data: Dict[str, Any], 
+    keepa_data: Dict[str, Any],
     config: Dict[str, Any],
-    keepa_service: KeepaService
+    keepa_service: KeepaService,
+    source_price: Optional[float] = None  # Phase 4: Add source_price parameter
 ) -> AnalysisResult:
     """
     Analyze a single product with given config.
-    *** FIXED VERSION - Based on working debug endpoint implementation ***
+    *** PHASE 4: Uses build_unified_product_v2() for unified pricing extraction ***
+
+    Args:
+        asin: Product ASIN
+        keepa_data: Raw Keepa API response
+        config: Business configuration
+        keepa_service: Keepa service instance
+        source_price: Optional source/acquisition price override
     """
     try:
-        # Parse Keepa data
+        # ====== PHASE 4: Use build_unified_product_v2() ======
+        unified_product = await build_unified_product_v2(
+            raw_keepa=keepa_data,
+            keepa_service=keepa_service,
+            config=config,
+            view_type='analyse_manuelle',
+            compute_score=False,
+            source_price=source_price
+        )
+
+        # If there was an error, return early
+        if 'error' in unified_product:
+            logger.error(f"[PHASE4] Error in unified builder for {asin}: {unified_product['error']}")
+            return AnalysisResult(
+                asin=asin,
+                title=keepa_data.get('title', 'Unknown'),
+                current_price=None,
+                current_bsr=None,
+                roi={"error": unified_product['error']},
+                velocity={},
+                velocity_score=50,
+                price_stability_score=50,
+                confidence_score=10,
+                overall_rating="PASS",
+            )
+
+        # Extract data from unified product for backward compatibility
+        current_price_raw = unified_product.get('pricing', {}).get('current_prices', {}).get('amazon')
+        if not current_price_raw:
+            current_price_raw = unified_product.get('pricing', {}).get('current_prices', {}).get('used')
+
+        # Parse Keepa data (legacy, for backward compat)
         parsed_data = parse_keepa_product(keepa_data)
-        
-        # *** FIX TICKET #001: Robust price handling ***
-        current_price_raw = parsed_data.get('current_price')
         
         # Handle case where no valid price is found
         if current_price_raw is None or current_price_raw <= 0:
@@ -571,8 +609,14 @@ async def ingest_batch(
                     
                     asin = keepa_data.get('asin', normalized_id)
 
-                    # Analyze product
-                    analysis = await analyze_product(asin, keepa_data, config, keepa_service)
+                    # Analyze product with optional source_price override
+                    analysis = await analyze_product(
+                        asin,
+                        keepa_data,
+                        config,
+                        keepa_service,
+                        source_price=request.source_price  # Pass from request
+                    )
 
                     # ✨ DEV/TEST ONLY: Validation logging if feature flags overridden
                     if "X-Feature-Flags-Override" in http_request.headers:

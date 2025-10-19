@@ -28,7 +28,7 @@ from app.core.calculations import (
     calculate_max_buy_price,  # Phase 2.5A Hybrid solution
     VelocityData
 )
-from app.services.unified_analysis import build_unified_product, UnifiedProductSchema
+from app.services.unified_analysis import build_unified_product, build_unified_product_v2  # Phase 4, UnifiedProductSchema
 from decimal import Decimal
 
 logger = logging.getLogger(__name__)
@@ -291,21 +291,22 @@ async def score_products_for_view(
                     if not product_data:
                         logger.warning(f"No Keepa data found for {identifier}")
                         failed_scores += 1
-                        # Use unified error structure
-                        error_product = await build_unified_product(
+                        # Use unified error structure (Phase 4)
+                        error_product = await build_unified_product_v2(
                             raw_keepa={},
                             keepa_service=keepa_service,
                             config=config,
                             view_type=view_type,
-                            strategy=request.strategy
+                            strategy=request.strategy,
+                            compute_score=True
                         )
                         error_product["asin"] = identifier
                         error_product["error"] = "No data available from Keepa"
                         scored_products.append(error_product)
                         continue
 
-                    # UNIFIED ANALYSIS - Use single source of truth
-                    unified_product = await build_unified_product(
+                    # UNIFIED ANALYSIS - Use single source of truth (Phase 4)
+                    unified_product = await build_unified_product_v2(
                         raw_keepa=product_data,
                         keepa_service=keepa_service,
                         config=config,
@@ -320,13 +321,14 @@ async def score_products_for_view(
                 except Exception as e:
                     logger.error(f"Failed to score product {identifier}: {e}")
                     failed_scores += 1
-                    # Use unified error structure
-                    error_product = await build_unified_product(
+                    # Use unified error structure (Phase 4)
+                    error_product = await build_unified_product_v2(
                         raw_keepa={},
                         keepa_service=keepa_service,
                         config=config,
                         view_type=view_type,
-                        strategy=request.strategy
+                        strategy=request.strategy,
+                        compute_score=True
                     )
                     error_product["asin"] = identifier
                     error_product["error"] = str(e)

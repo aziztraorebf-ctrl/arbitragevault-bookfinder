@@ -788,9 +788,219 @@ def _safe_decimal(value: Any) -> Optional[Decimal]:
         return None
 
 
+# ==================== UNIFIED PARSER FOR PHASE 1 ====================
+
+
+def parse_keepa_product_unified(raw_keepa: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    UNIFIED parser - Extracts ALL data from Keepa response.
+    Used by ALL endpoints: Analyse Manuelle + Mes Niches + AutoSourcing
+
+    Extracts:
+    - Current prices (Amazon, New, Used, FBA)
+    - BSR (Sales Rank)
+    - Offers detailed with conditions
+    - History data
+    - Metadata
+
+    Returns: Complete structured dict ready for analysis
+    """
+    asin = raw_keepa.get('asin', 'unknown')
+    parsed = {
+        'asin': asin,
+        'title': raw_keepa.get('title'),
+        'errors': []
+    }
+
+    # Step 1: Extract current prices from stats.current array
+    stats = raw_keepa.get('stats', {})
+    current_array = stats.get('current', [])
+
+    if current_array and len(current_array) > 0:
+        # Using KeepaCSVType indices
+        parsed['current_amazon_price'] = _extract_price(current_array, 0)
+        parsed['current_new_price'] = _extract_price(current_array, 1)
+        parsed['current_used_price'] = _extract_price(current_array, 2)
+        parsed['current_bsr'] = _extract_integer(current_array, 3)
+        parsed['current_list_price'] = _extract_price(current_array, 4)
+        parsed['current_fba_price'] = _extract_price(current_array, 10)
+        parsed['current_buybox_price'] = _extract_price(current_array, 18) if len(current_array) > 18 else None
+
+        logger.debug(
+            f"ASIN {asin}: Extracted current prices - "
+            f"Amazon=${parsed['current_amazon_price']}, "
+            f"New=${parsed['current_new_price']}, "
+            f"Used=${parsed['current_used_price']}, "
+            f"FBA=${parsed['current_fba_price']}, "
+            f"BSR={parsed['current_bsr']}"
+        )
+    else:
+        parsed['errors'].append("No stats.current array found")
+        logger.warning(f"ASIN {asin}: No stats.current array available")
+
+    # Step 2: Extract offers with conditions (GAME CHANGER!)
+    offers = raw_keepa.get('offers', [])
+    if offers:
+        offers_by_condition = _group_offers_by_condition(offers)
+        parsed['offers_by_condition'] = offers_by_condition
+        logger.debug(f"ASIN {asin}: Grouped {len(offers)} offers by condition")
+    else:
+        parsed['offers_by_condition'] = {}
+        logger.debug(f"ASIN {asin}: No offers found")
+
+    # Step 3: Extract price history from csv
+    csv = raw_keepa.get('csv', [])
+    if csv and len(csv) > 10:
+        parsed['history_new'] = csv[1] if len(csv) > 1 else None
+        parsed['history_used'] = csv[2] if len(csv) > 2 else None
+        parsed['history_fba'] = csv[10] if len(csv) > 10 else None
+        logger.debug(f"ASIN {asin}: Extracted price history")
+
+    # Step 4: Extract metadata
+    parsed['category_tree'] = raw_keepa.get('categoryTree', [])
+    parsed['rating'] = _extract_rating(current_array) if current_array and len(current_array) > 15 else None
+    parsed['review_count'] = _extract_integer(current_array, 16) if current_array and len(current_array) > 16 else None
+
+    logger.info(f"✅ ASIN {asin}: Unified parse complete - offers_by_condition: {list(parsed['offers_by_condition'].keys())}")
+
+    return parsed
+
+
+def _extract_price(array: List, index: int) -> Optional[float]:
+    """Extract price from array at index, convert from cents to dollars."""
+    if index >= len(array):
+        return None
+
+    value = array[index]
+    if value is None or value == KEEPA_NULL_VALUE or value == -1:
+        return None
+
+    try:
+        return float(value) / KEEPA_PRICE_DIVISOR
+    except (ValueError, TypeError):
+        return None
+
+
+def _extract_integer(array: List, index: int) -> Optional[int]:
+    """Extract integer from array at index."""
+    if index >= len(array):
+        return None
+
+    value = array[index]
+    if value is None or value == KEEPA_NULL_VALUE or value == -1:
+        return None
+
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+
+
+def _extract_rating(array: List) -> Optional[float]:
+    """Extract rating from array index 15 (Keepa stores as 0-50, we convert to 0-5)."""
+    if len(array) <= 15:
+        return None
+
+    value = array[15]
+    if value is None or value == KEEPA_NULL_VALUE or value == -1:
+        return None
+
+    try:
+        # Keepa stores rating as 0-50 (e.g., 45 = 4.5 stars)
+        rating_raw = int(value)
+        return rating_raw / 10.0
+    except (ValueError, TypeError):
+        return None
+
+
+def _group_offers_by_condition(offers: List[Dict]) -> Dict[str, Dict[str, Any]]:
+    """
+    Group offers by condition (NEW, VERY_GOOD, GOOD, ACCEPTABLE).
+    Extract minimum price per condition.
+
+    Conditions (from Keepa):
+    - 1 = NEW
+    - 3 = Used - Very Good
+    - 4 = Used - Good
+    - 5 = Used - Acceptable
+    """
+    conditions_map = {
+        1: ('new', 'New'),
+        3: ('very_good', 'Used - Very Good'),
+        4: ('good', 'Used - Good'),
+        5: ('acceptable', 'Used - Acceptable')
+    }
+
+    grouped = {}
+
+    for condition_id, (condition_key, condition_label) in conditions_map.items():
+        # Find all offers with this condition
+        offers_for_condition = [
+            o for o in offers
+            if o.get('condition') == condition_id
+        ]
+
+        if offers_for_condition:
+            # Extract the minimum price offer
+            min_offer = _find_minimum_price_offer(offers_for_condition)
+
+            if min_offer:
+                # Extract price from offerCSV (latest price is first entry)
+                offer_csv = min_offer.get('offerCSV', [])
+                min_price_cents = None
+
+                if offer_csv:
+                    # offerCSV format: [[timestamp, price_cents, shipping_cents], ...]
+                    # Latest is first
+                    if isinstance(offer_csv[0], (list, tuple)) and len(offer_csv[0]) >= 2:
+                        min_price_cents = offer_csv[0][1]
+
+                if min_price_cents is not None:
+                    min_price_dollars = min_price_cents / KEEPA_PRICE_DIVISOR
+                else:
+                    min_price_dollars = None
+
+                # Count FBA offers
+                fba_count = sum(1 for o in offers_for_condition if o.get('isFBA'))
+
+                grouped[condition_key] = {
+                    'condition_id': condition_id,
+                    'condition_label': condition_label,
+                    'minimum_price': min_price_dollars,
+                    'minimum_price_cents': min_price_cents,
+                    'seller_count': len(offers_for_condition),
+                    'fba_count': fba_count,
+                    'sample_offer': {
+                        'seller_id': min_offer.get('sellerId'),
+                        'is_fba': min_offer.get('isFBA'),
+                        'is_prime': min_offer.get('isPrime'),
+                        'is_amazon': min_offer.get('isAmazon'),
+                        'shipping_cents': min_price_cents if offer_csv and len(offer_csv[0]) > 2 else 0
+                    }
+                }
+
+    return grouped
+
+
+def _find_minimum_price_offer(offers: List[Dict]) -> Optional[Dict]:
+    """Find offer with minimum price from a list of offers."""
+    if not offers:
+        return None
+
+    def get_price(offer):
+        """Extract latest price from offer."""
+        offer_csv = offer.get('offerCSV', [])
+        if offer_csv and isinstance(offer_csv[0], (list, tuple)) and len(offer_csv[0]) >= 2:
+            return offer_csv[0][1]
+        return float('inf')  # Invalid offers get highest price
+
+    return min(offers, key=get_price)
+
+
 # Backward compatibility exports
 __all__ = [
     'parse_keepa_product',
+    'parse_keepa_product_unified',
     'KeepaRawParser',
     'KeepaBSRExtractor',
     'KeepaCSVType'

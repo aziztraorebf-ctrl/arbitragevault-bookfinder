@@ -28,6 +28,7 @@ from app.core.calculations import (
     calculate_max_buy_price,  # Phase 2.5A Hybrid solution
     VelocityData
 )
+from app.services.unified_analysis import build_unified_product, UnifiedProductSchema
 from decimal import Decimal
 
 logger = logging.getLogger(__name__)
@@ -124,6 +125,12 @@ class ProductScore(BaseModel):
     pricing: Optional[Dict[str, Any]] = Field(
         None,
         description="Separated pricing for 'used' and 'new' conditions with ROI breakdown"
+    )
+
+    # BSR field for display in Mes Niches / AutoSourcing
+    current_bsr: Optional[int] = Field(
+        None,
+        description="Current Best Seller Rank (BSR) from Keepa data"
     )
 
 
@@ -284,227 +291,46 @@ async def score_products_for_view(
                     if not product_data:
                         logger.warning(f"No Keepa data found for {identifier}")
                         failed_scores += 1
-                        scored_products.append({
-                            "asin": identifier,
-                            "score": 0.0,
-                            "rank": 0,
-                            "strategy_profile": None,
-                            "weights_applied": {},
-                            "components": {},
-                            "raw_metrics": {},
-                            "error": "No data available from Keepa",
-                            "amazon_on_listing": False,  # Phase 2.5A default
-                            "amazon_buybox": False,  # Phase 2.5A default
-                            "title": None
-                        })
+                        # Use unified error structure
+                        error_product = await build_unified_product(
+                            raw_keepa={},
+                            keepa_service=keepa_service,
+                            config=config,
+                            view_type=view_type,
+                            strategy=request.strategy
+                        )
+                        error_product["asin"] = identifier
+                        error_product["error"] = "No data available from Keepa"
+                        scored_products.append(error_product)
                         continue
 
-                    # Parse Keepa product data
-                    parsed = parse_keepa_product(product_data)
-                    asin = parsed.get("asin", identifier)
-                    title = parsed.get("title")
-
-                    # Phase 2.5A FIX: Calculate ROI and Velocity metrics
-                    # These were missing from parse_keepa_product(), causing all scores = 0
-                    try:
-                        # Extract prices for ROI calculation
-                        current_price = parsed.get("current_price")
-                        fba_price = parsed.get("current_fba_price")
-
-                        # Calculate ROI if prices available
-                        if current_price and fba_price:
-                            roi_result = calculate_roi_metrics(
-                                current_price=Decimal(str(current_price)),
-                                estimated_buy_cost=Decimal(str(fba_price)),
-                                category="books",
-                                config=config
-                            )
-                            parsed["roi"] = {
-                                "roi_percentage": roi_result.get("roi_percentage", 0.0)
-                            }
-                            logger.debug(f"[ROI] {asin}: {roi_result.get('roi_percentage', 0)}%")
-                        else:
-                            parsed["roi"] = {"roi_percentage": 0.0}
-                            logger.debug(f"[ROI] {asin}: No price data, defaulting to 0%")
-
-                        # Calculate Velocity if BSR history available
-                        current_bsr = parsed.get("current_bsr")
-                        bsr_history = parsed.get("bsr_history", [])
-
-                        if current_bsr and bsr_history:
-                            velocity_data = VelocityData(
-                                current_bsr=current_bsr,
-                                bsr_history=bsr_history,
-                                price_history=parsed.get("price_history", []),
-                                buybox_history=[],
-                                offers_history=[]
-                            )
-                            velocity_result = calculate_velocity_score(velocity_data, config=config)
-                            parsed["velocity_score"] = velocity_result.get("velocity_score", 0.0)
-                            logger.debug(f"[VELOCITY] {asin}: {velocity_result.get('velocity_score', 0)}")
-                        else:
-                            parsed["velocity_score"] = 0.0
-                            logger.debug(f"[VELOCITY] {asin}: No BSR data, defaulting to 0")
-
-                    except Exception as calc_error:
-                        logger.warning(f"[CALC_ERROR] {asin}: {calc_error}, defaulting ROI/Velocity to 0")
-                        parsed["roi"] = {"roi_percentage": 0.0}
-                        parsed["velocity_score"] = 0.0
-                        velocity_result = {}
-
-                    # Phase 2.5A HYBRID: Calculate Max Buy Price (35% ROI target)
-                    max_buy_price_35pct = Decimal("0.00")
-                    market_sell_price = Decimal("0.00")
-                    market_buy_price = Decimal("0.00")
-
-                    try:
-                        if current_price and current_price > 0:
-                            market_sell_price = Decimal(str(current_price))
-                            max_buy_price_35pct = calculate_max_buy_price(
-                                sell_price=market_sell_price,
-                                target_roi_pct=35.0,
-                                category="books",
-                                config=config
-                            )
-                            logger.debug(f"[MAX_BUY] {asin}: ${max_buy_price_35pct}")
-
-                        if fba_price and fba_price > 0:
-                            market_buy_price = Decimal(str(fba_price))
-
-                    except Exception as max_buy_error:
-                        logger.warning(f"[MAX_BUY_ERROR] {asin}: {max_buy_error}, defaulting to 0")
-
-                    # Phase 2.5A HYBRID: Enrich velocity breakdown with estimated sales
-                    velocity_breakdown = velocity_result.copy() if velocity_result else {}
-                    rank_drops = velocity_result.get("rank_drops_30d", 0) if velocity_result else 0
-                    estimated_sales_30d = int(rank_drops * 1.5) if rank_drops else 0
-                    velocity_breakdown["estimated_sales_30d"] = estimated_sales_30d
-
-                    # NEW: USED vs NEW pricing breakdown (same logic as keepa.py)
-                    pricing_breakdown = {}
-                    used_price = parsed.get('current_used_price')
-                    new_price = parsed.get('current_fbm_price')
-                    weight_decimal = Decimal(str(parsed.get('weight', 1.0)))
-                    target_roi = config.get('roi', {}).get('target_roi_percent', 30)
-
-                    # Calculate USED pricing (RECOMMENDED for FBA arbitrage)
-                    if used_price and used_price > 0 and current_price:
-                        used_roi = calculate_roi_metrics(
-                            current_price=Decimal(str(current_price)),
-                            estimated_buy_cost=Decimal(str(used_price)),
-                            product_weight_lbs=weight_decimal,
-                            category="books",
-                            config=config
-                        )
-                        target_buy_used = float(current_price) * (1 - target_roi / 100)
-                        pricing_breakdown['used'] = {
-                            'current_price': float(used_price),
-                            'target_buy_price': target_buy_used,
-                            'roi_percentage': used_roi.get('roi_percentage'),
-                            'net_profit': used_roi.get('net_profit'),
-                            'available': True,
-                            'recommended': True
-                        }
-                    elif current_price:
-                        # USED not available - show target price only
-                        target_buy_used = float(current_price) * (1 - target_roi / 100)
-                        pricing_breakdown['used'] = {
-                            'current_price': None,
-                            'target_buy_price': target_buy_used,
-                            'roi_percentage': None,
-                            'net_profit': None,
-                            'available': False,
-                            'recommended': True
-                        }
-
-                    # Calculate NEW pricing (ALTERNATIVE option)
-                    if new_price and new_price > 0 and current_price:
-                        new_roi = calculate_roi_metrics(
-                            current_price=Decimal(str(current_price)),
-                            estimated_buy_cost=Decimal(str(new_price)),
-                            product_weight_lbs=weight_decimal,
-                            category="books",
-                            config=config
-                        )
-                        target_buy_new = float(current_price) * (1 - target_roi / 100)
-                        pricing_breakdown['new'] = {
-                            'current_price': float(new_price),
-                            'target_buy_price': target_buy_new,
-                            'roi_percentage': new_roi.get('roi_percentage'),
-                            'net_profit': new_roi.get('net_profit'),
-                            'available': True,
-                            'recommended': False
-                        }
-                    elif current_price:
-                        # NEW not available - show target price only
-                        target_buy_new = float(current_price) * (1 - target_roi / 100)
-                        pricing_breakdown['new'] = {
-                            'current_price': None,
-                            'target_buy_price': target_buy_new,
-                            'roi_percentage': None,
-                            'net_profit': None,
-                            'available': False,
-                            'recommended': False
-                        }
-
-                    # Compute view-specific score
-                    score_result = compute_view_score(
-                        parsed_data=parsed,
+                    # UNIFIED ANALYSIS - Use single source of truth
+                    unified_product = await build_unified_product(
+                        raw_keepa=product_data,
+                        keepa_service=keepa_service,
+                        config=config,
                         view_type=view_type,
-                        strategy_profile=request.strategy
+                        strategy=request.strategy,
+                        compute_score=True
                     )
 
-                    # Phase 2.5A: Amazon Check (if feature enabled)
-                    amazon_check_enabled = feature_flags.get("amazon_check_enabled", False)
-                    amazon_on_listing = False
-                    amazon_buybox = False
-
-                    if amazon_check_enabled:
-                        amazon_result = check_amazon_presence(product_data)
-                        amazon_on_listing = amazon_result.get("amazon_on_listing", False)
-                        amazon_buybox = amazon_result.get("amazon_buybox", False)
-
-                    scored_products.append({
-                        "asin": asin,
-                        "score": score_result["score"],
-                        "rank": 0,  # Will be assigned after sorting
-                        "strategy_profile": score_result["strategy_profile"],
-                        "weights_applied": score_result["weights_applied"],
-                        "components": score_result["components"],
-                        "raw_metrics": score_result["raw_metrics"],
-                        "error": None,
-                        "amazon_on_listing": amazon_on_listing,  # Phase 2.5A
-                        "amazon_buybox": amazon_buybox,  # Phase 2.5A
-                        "title": title,
-                        # Phase 2.5A HYBRID - Market Analysis + Recommendations
-                        "market_sell_price": float(market_sell_price),
-                        "market_buy_price": float(market_buy_price),
-                        "current_roi_pct": score_result["raw_metrics"].get("roi_pct", 0.0),
-                        "max_buy_price_35pct": float(max_buy_price_35pct),
-                        "velocity_breakdown": velocity_breakdown,
-                        # NEW: USED vs NEW pricing breakdown
-                        "pricing": pricing_breakdown if pricing_breakdown else None,
-                        # ADD: BSR for display
-                        "current_bsr": current_bsr if current_bsr else None
-                    })
+                    scored_products.append(unified_product)
                     successful_scores += 1
 
                 except Exception as e:
                     logger.error(f"Failed to score product {identifier}: {e}")
                     failed_scores += 1
-                    scored_products.append({
-                        "asin": identifier,
-                        "score": 0.0,
-                        "rank": 0,
-                        "strategy_profile": None,
-                        "weights_applied": {},
-                        "components": {},
-                        "raw_metrics": {},
-                        "error": str(e),
-                        "amazon_on_listing": False,  # Phase 2.5A default
-                        "amazon_buybox": False,  # Phase 2.5A default
-                        "title": None
-                    })
+                    # Use unified error structure
+                    error_product = await build_unified_product(
+                        raw_keepa={},
+                        keepa_service=keepa_service,
+                        config=config,
+                        view_type=view_type,
+                        strategy=request.strategy
+                    )
+                    error_product["asin"] = identifier
+                    error_product["error"] = str(e)
+                    scored_products.append(error_product)
 
             # 5. Sort by score descending and assign ranks
             scored_products.sort(key=lambda x: x["score"], reverse=True)

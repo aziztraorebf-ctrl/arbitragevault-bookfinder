@@ -17,7 +17,6 @@ export function ViewResultsRow({ product, isExpanded, onToggle }: ViewResultsRow
   // Defensive extraction des valeurs
   const roiPct = product.raw_metrics?.roi_pct ?? 0
   const velocityScore = product.raw_metrics?.velocity_score ?? 0
-  const marketSellPrice = product.market_sell_price ?? 0
   const productScore = product.score ?? 0
 
   // USED vs NEW pricing - NEW: Priority à pricing.used si disponible
@@ -32,7 +31,6 @@ export function ViewResultsRow({ product, isExpanded, onToggle }: ViewResultsRow
     ? parseFloat(product.pricing.used.roi_percentage)
     : (product.current_roi_pct ?? product.raw_metrics?.roi_pct ?? 0)
   console.log('ViewResultsRow calculated:', { usedPrice, usedROI })
-  const maxBuyPrice35pct = product.max_buy_price_35pct ?? 0
 
   // BSR - Now directly from ProductScore type
   const currentBsr = product.current_bsr ?? (('current_bsr' in product) ? (product as ProductScoreWithBSR).current_bsr : null)

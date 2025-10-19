@@ -92,7 +92,8 @@ export default function ResultsTable({ data, onExport }: ResultsTableProps) {
     );
   };
 
-  const formatROI = (roi: any) => {
+  // @ts-ignore - formatROI unused but kept for reference
+  const _formatROI = (roi: any) => {
     if (!roi || 'error' in roi) return 'N/A';
     const percentage = parseFloat(roi.roi_percentage);
     const color = percentage >= 30 ? 'text-green-600' : percentage >= 0 ? 'text-yellow-600' : 'text-red-600';

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push origin main --force-with-lease)",
+      "Bash(curl -s https://arbitragevault-backend.onrender.com/health)",
+      "Bash(curl -s http://localhost:5174)",
+      "Bash(git add -A)",
+      "Bash(git commit -m \"fix: resolve TypeScript compilation errors for Netlify deployment\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

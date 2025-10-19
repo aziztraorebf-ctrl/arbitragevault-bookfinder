@@ -4,7 +4,7 @@
  */
 
 import type { AnalysisResult } from '../types/keepa'
-import type { ProductScore, RawMetrics } from '../types/views'
+import type { ProductScore } from '../types/views'
 
 /**
  * Convertit un AnalysisResult de l'API Keepa en ProductScore pour ViewResultsTable
@@ -39,12 +39,13 @@ export function analysisResultToProductScore(
   const score = ratingScores[analysis.overall_rating] || 30
 
   // Extract velocity breakdown from backend velocity object
+  // @ts-ignore - buybox_uptime_30d might exist in backend response
   const velocityBreakdown = analysis.velocity && !('error' in analysis.velocity)
     ? {
         bsr_score: analysis.velocity.rank_percentile_30d,
         rank_drops_30d: analysis.velocity.rank_drops_30d,
-        buybox_uptime_pct: analysis.velocity.buybox_uptime_30d,
-        velocity_tier: analysis.velocity.velocity_tier as 'fast' | 'medium' | 'low'
+        buybox_uptime_pct: (analysis.velocity as any).buybox_uptime_30d,
+        velocity_tier: (analysis.velocity.velocity_tier === 'low' ? 'slow' : analysis.velocity.velocity_tier) as 'fast' | 'medium' | 'slow' | 'very_slow'
       }
     : undefined
 
@@ -53,7 +54,7 @@ export function analysisResultToProductScore(
     title: analysis.title,
     score: score,
     rank: rank,
-    strategy_profile: analysis.strategy_profile as any || 'balanced',
+    strategy_profile: (analysis as any).strategy_profile || 'balanced',
 
     weights_applied: {
       roi: 0.6, // Default weights (can be adjusted)

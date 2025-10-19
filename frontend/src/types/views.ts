@@ -105,7 +105,8 @@ export interface ProductScore {
   // BSR field
   current_bsr?: number | null
 
-  // USED vs NEW pricing breakdown
+  // USED vs NEW pricing breakdown (legacy)
+  // Phase 5: Unified pricing by condition
   pricing?: {
     used?: {
       current_price: number | null
@@ -123,6 +124,20 @@ export interface ProductScore {
       available: boolean
       recommended: boolean
     }
+    // Phase 5: Unified pricing by condition
+    by_condition?: Record<string, {
+      market_price: number
+      roi_pct: number
+      roi_value: number
+      seller_count: number
+      fba_count: number
+      is_recommended: boolean
+      net_revenue: number
+      amazon_fees: number
+    }>
+    recommended_condition?: string
+    current_prices?: Record<string, number | null>
+    source_price?: number
   }
 
   error?: string

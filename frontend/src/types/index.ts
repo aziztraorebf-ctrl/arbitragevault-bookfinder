@@ -116,6 +116,7 @@ export interface ConfiguredAnalysis {
 export interface AnalysisAPIResult {
   asin: string
   title: string
+  current_bsr?: number | null
   roi: {
     roi_percentage: number
     is_profitable: boolean
@@ -125,6 +126,39 @@ export interface AnalysisAPIResult {
   velocity: {
     velocity_score: number
     velocity_tier: string
+  }
+  // Pricing: Both legacy (used/new) and Phase 5 (by_condition)
+  pricing?: {
+    // Legacy: USED vs NEW breakdown
+    used?: {
+      current_price: number | null
+      target_buy_price: number
+      roi_percentage: string | null
+      net_profit: string | null
+      available: boolean
+      recommended: boolean
+    }
+    new?: {
+      current_price: number | null
+      target_buy_price: number
+      roi_percentage: string | null
+      net_profit: string | null
+      available: boolean
+      recommended: boolean
+    }
+    // Phase 5: Unified pricing by condition
+    by_condition?: Record<string, {
+      market_price: number
+      roi_pct: number
+      roi_value: number
+      seller_count: number
+      fba_count: number
+      is_recommended: boolean
+      net_revenue: number
+      amazon_fees: number
+    }>
+    recommended_condition?: string
+    source_price?: number
   }
   overall_rating: string
   readable_summary: string

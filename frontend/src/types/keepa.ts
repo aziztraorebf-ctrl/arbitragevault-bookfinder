@@ -57,10 +57,25 @@ export interface AnalysisResult {
   current_price: number | null;
   current_bsr: number | null;
 
-  // NEW: USED vs NEW pricing breakdown
+  // NEW: USED vs NEW pricing breakdown (legacy)
+  // ALSO: Phase 5 - pricing by condition (new, very_good, good, acceptable)
   pricing?: {
     used?: PricingDetail;
     new?: PricingDetail;
+    // Phase 5: Unified pricing by condition
+    by_condition?: Record<string, {
+      market_price: number;
+      roi_pct: number;
+      roi_value: number;
+      seller_count: number;
+      fba_count: number;
+      is_recommended: boolean;
+      net_revenue: number;
+      amazon_fees: number;
+    }>;
+    recommended_condition?: string;
+    current_prices?: Record<string, number | null>;
+    source_price?: number;
   };
 
   roi: ROIMetrics | { error: string };

@@ -10,6 +10,7 @@ from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi_mcp import FastApiMCP  # MCP integration
 
 from app.api.v1.routers import auth, health, analyses, batches, keepa, config, autosourcing, autoscheduler, views
 from app.routers import stock_estimate, strategic_views, niche_discovery, bookmarks
@@ -79,6 +80,12 @@ app.include_router(strategic_views.router, tags=["Strategic Views"])
 app.include_router(niche_discovery.router, tags=["Niche Discovery"])
 app.include_router(bookmarks.router, tags=["Bookmarks"])
 
+# === MCP INTEGRATION ===
+# Mount FastAPI-MCP server to enable direct AI integration
+# This creates an /mcp endpoint for Model Context Protocol access
+mcp_server = FastApiMCP(app)
+mcp_server.mount_http()  # Using HTTP transport for better compatibility
+logger.info("FastAPI-MCP server mounted at /mcp endpoint")
 
 # Global exception handler
 @app.exception_handler(Exception)

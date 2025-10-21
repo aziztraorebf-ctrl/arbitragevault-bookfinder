@@ -31,7 +31,7 @@ services:
   - type: web
     name: arbitragevault-backend-v2
     runtime: python
-    buildCommand: "uv sync --no-dev"
+    buildCommand: "uv sync --no-dev --extras mcp"
     startCommand: "uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: DATABASE_URL

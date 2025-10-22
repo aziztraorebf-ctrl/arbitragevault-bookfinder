@@ -509,8 +509,13 @@ async def build_unified_product_v2(
 
         # ====== STEP 6.5: Calculate ADVANCED SCORING (0-100 scale) ======
         # Extract history data for advanced scoring
-        bsr_history = parsed.get('bsr_history', [])
-        price_history = parsed.get('price_history', [])
+        # Ensure we always have lists, not ints or None
+        bsr_history_raw = parsed.get('bsr_history', [])
+        price_history_raw = parsed.get('price_history', [])
+
+        # Safety: Convert to empty list if not already a list
+        bsr_history = bsr_history_raw if isinstance(bsr_history_raw, list) else []
+        price_history = price_history_raw if isinstance(price_history_raw, list) else []
         data_age_days = 1  # Assume recent data (could be enhanced with actual age calculation)
 
         # Compute advanced scores

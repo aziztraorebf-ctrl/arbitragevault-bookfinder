@@ -297,6 +297,9 @@ def _calculate_rank_percentile(bsr_history: List[Tuple[datetime, int]], category
 
 def _count_rank_improvements(bsr_history: List[Tuple[datetime, int]]) -> int:
     """Count number of BSR improvements (rank decreases)."""
+    # Safety: Ensure bsr_history is a list
+    if not isinstance(bsr_history, list):
+        return 0
     if len(bsr_history) < 2:
         return 0
         
@@ -317,9 +320,10 @@ def _count_rank_improvements(bsr_history: List[Tuple[datetime, int]]) -> int:
 
 def _calculate_buybox_uptime(buybox_history: List[Tuple[datetime, bool]]) -> float:
     """Calculate percentage of time buybox was available."""
-    if not buybox_history:
+    # Safety: Ensure buybox_history is a list
+    if not isinstance(buybox_history, list) or not buybox_history:
         return 0.0
-    
+
     buybox_available_count = sum(1 for item in buybox_history if item[1])
     total_points = len(buybox_history)
     
@@ -327,12 +331,18 @@ def _calculate_buybox_uptime(buybox_history: List[Tuple[datetime, bool]]) -> flo
 
 
 def _calculate_offers_volatility(
-    offers_history: List[Tuple[datetime, int]], 
+    offers_history: List[Tuple[datetime, int]],
     price_history: List[Tuple[datetime, float]]
 ) -> float:
     """Calculate market volatility based on offer count and price changes."""
+    # Safety: Ensure inputs are lists
+    if not isinstance(offers_history, list):
+        offers_history = []
+    if not isinstance(price_history, list):
+        price_history = []
+
     volatility_score = 0.0
-    
+
     # Offers volatility (frequent changes in number of sellers)
     if len(offers_history) >= 2:
         offer_counts = [item[1] for item in offers_history if item[1] is not None]

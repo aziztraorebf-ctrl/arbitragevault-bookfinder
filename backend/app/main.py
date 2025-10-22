@@ -91,8 +91,8 @@ app.include_router(bookmarks.router, tags=["Bookmarks"])
 if MCP_AVAILABLE:
     try:
         mcp_server = FastApiMCP(app)
-        mcp_server.mount_http()  # Using HTTP transport for better compatibility
-        logger.info("FastAPI-MCP server mounted at /mcp endpoint")
+        mcp_server.mount_sse()  # Using SSE transport for Claude Code compatibility
+        logger.info("FastAPI-MCP server mounted at /mcp endpoint (SSE transport)")
     except Exception as e:
         logger.warning(f"Failed to mount FastAPI-MCP server: {e}")
 else:

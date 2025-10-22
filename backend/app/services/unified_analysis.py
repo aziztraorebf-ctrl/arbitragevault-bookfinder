@@ -165,7 +165,7 @@ async def build_unified_product(
         if not parsed.get("current_bsr") and raw_keepa:
             stats = raw_keepa.get('data', {}).get('stats', {})
             current_array = stats.get('current')
-            if current_array and len(current_array) > 3:
+            if current_array and isinstance(current_array, (list, tuple)) and len(current_array) > 3:
                 bsr_raw = current_array[3]
                 if bsr_raw is not None and bsr_raw != -1:
                     parsed["current_bsr"] = bsr_raw

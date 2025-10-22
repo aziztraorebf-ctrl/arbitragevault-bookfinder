@@ -975,7 +975,7 @@ def _group_offers_by_condition(offers: List[Dict]) -> Dict[str, Dict[str, Any]]:
                         'is_fba': min_offer.get('isFBA'),
                         'is_prime': min_offer.get('isPrime'),
                         'is_amazon': min_offer.get('isAmazon'),
-                        'shipping_cents': min_price_cents if offer_csv and len(offer_csv[0]) > 2 else 0
+                        'shipping_cents': min_price_cents if offer_csv and isinstance(offer_csv[0], (list, tuple)) and len(offer_csv[0]) > 2 else 0
                     }
                 }
 

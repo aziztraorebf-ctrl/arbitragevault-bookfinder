@@ -19,7 +19,12 @@ from app.services.pricing_service import (
 )
 from app.core.calculations import (
     calculate_max_buy_price,
-    VelocityData
+    VelocityData,
+    compute_advanced_velocity_score,
+    compute_advanced_stability_score,
+    compute_advanced_confidence_score,
+    compute_overall_rating,
+    generate_readable_summary
 )
 
 logger = logging.getLogger(__name__)
@@ -502,6 +507,92 @@ async def build_unified_product_v2(
         # ====== STEP 6: Calculate velocity metrics ======
         velocity_metrics = calculate_velocity_score(parsed, config)
 
+        # ====== STEP 6.5: Calculate ADVANCED SCORING (0-100 scale) ======
+        # Extract history data for advanced scoring
+        bsr_history = parsed.get('bsr_history', [])
+        price_history = parsed.get('price_history', [])
+        data_age_days = 1  # Assume recent data (could be enhanced with actual age calculation)
+
+        # Compute advanced scores
+        velocity_raw, velocity_normalized, velocity_level, velocity_notes = compute_advanced_velocity_score(
+            bsr_history, config
+        )
+
+        stability_raw, stability_normalized, stability_level, stability_notes = compute_advanced_stability_score(
+            price_history, config
+        )
+
+        confidence_raw, confidence_normalized, confidence_level, confidence_notes = compute_advanced_confidence_score(
+            price_history, bsr_history, data_age_days, config
+        )
+
+        # Calculate ROI percentage from best condition
+        best_roi_condition = pricing_metrics.get(
+            next((k for k, v in pricing_metrics.items() if v.get('is_recommended')), 'good'),
+            {}
+        )
+        roi_percentage = best_roi_condition.get('roi_pct', 0.0) * 100  # Convert to percentage
+
+        # Compute overall rating
+        overall_rating = compute_overall_rating(
+            roi_percentage, velocity_normalized, stability_normalized, confidence_normalized, config
+        )
+
+        # Build score breakdown
+        score_breakdown = {
+            "velocity": {
+                "score": velocity_normalized,
+                "raw": velocity_raw,
+                "level": velocity_level,
+                "notes": velocity_notes
+            },
+            "stability": {
+                "score": stability_normalized,
+                "raw": stability_raw,
+                "level": stability_level,
+                "notes": stability_notes
+            },
+            "confidence": {
+                "score": confidence_normalized,
+                "raw": confidence_raw,
+                "level": confidence_level,
+                "notes": confidence_notes
+            }
+        }
+
+        # Generate readable summary
+        scores_dict = {
+            "velocity": velocity_normalized,
+            "stability": stability_normalized,
+            "confidence": confidence_normalized
+        }
+        readable_summary = generate_readable_summary(roi_percentage, overall_rating, scores_dict, config)
+
+        # Determine recommendation based on overall rating
+        recommendation_map = {
+            "EXCELLENT": "STRONG BUY - Excellent opportunity",
+            "GOOD": "BUY - Good opportunity",
+            "FAIR": "CONSIDER - Marginal opportunity",
+            "PASS": "PASS - Does not meet criteria",
+            "ERROR": "ERROR - Analysis failed"
+        }
+        recommendation = recommendation_map.get(overall_rating, "PASS")
+
+        # Build risk factors list
+        risk_factors = []
+        if velocity_normalized < 50:
+            risk_factors.append("Low sales velocity")
+        if stability_normalized < 50:
+            risk_factors.append("Price volatility detected")
+        if confidence_normalized < 50:
+            risk_factors.append("Limited historical data")
+        if amazon_on_listing:
+            risk_factors.append("Amazon competing on listing")
+        if roi_percentage < 20:
+            risk_factors.append("Low ROI potential")
+        if not risk_factors:
+            risk_factors = ["No major risks identified"]
+
         # ====== STEP 7: Build core response ======
         response = {
             'asin': asin,
@@ -522,6 +613,19 @@ async def build_unified_product_v2(
             # Amazon presence
             'amazon_on_listing': amazon_on_listing,
             'amazon_buybox': amazon_buybox,
+
+            # Advanced scoring fields (0-100 scale) - NEW
+            'velocity_score': velocity_normalized,
+            'price_stability_score': stability_normalized,
+            'confidence_score': confidence_normalized,
+            'overall_rating': overall_rating,
+            'score_breakdown': score_breakdown,
+            'readable_summary': readable_summary,
+            'recommendation': recommendation,
+            'risk_factors': risk_factors,
+
+            # Strategy profile
+            'strategy_profile': strategy or 'balanced',
 
             # View-specific fields
             'view_type': view_type,
@@ -558,10 +662,27 @@ async def build_unified_product_v2(
         logger.error(f"[UNIFIED_V2] Error building {asin}: {str(e)}", exc_info=True)
         return {
             "asin": asin,
+            "title": None,
             "error": str(e),
             "view_type": view_type,
             "pricing": {},
             "velocity": {},
+            "current_bsr": None,
             "amazon_on_listing": False,
             "amazon_buybox": False,
+
+            # Error state for advanced scoring
+            "velocity_score": 0,
+            "price_stability_score": 0,
+            "confidence_score": 0,
+            "overall_rating": "ERROR",
+            "score_breakdown": {
+                "velocity": {"score": 0, "raw": 0.0, "level": "error", "notes": f"Analysis failed: {str(e)}"},
+                "stability": {"score": 0, "raw": 0.0, "level": "error", "notes": f"Analysis failed: {str(e)}"},
+                "confidence": {"score": 0, "raw": 0.0, "level": "error", "notes": f"Analysis failed: {str(e)}"}
+            },
+            "readable_summary": f"❌ Analysis failed: {str(e)}",
+            "recommendation": "ERROR",
+            "risk_factors": ["Analysis failed"],
+            "strategy_profile": None,
         }

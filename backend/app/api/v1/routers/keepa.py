@@ -186,315 +186,87 @@ async def analyze_product(
             source_price=source_price
         )
 
-        # If there was an error, return early
-        if 'error' in unified_product:
-            logger.error(f"[PHASE4] Error in unified builder for {asin}: {unified_product['error']}")
-            return AnalysisResult(
-                asin=asin,
-                title=keepa_data.get('title', 'Unknown'),
-                current_price=None,
-                current_bsr=None,
-                roi={"error": unified_product['error']},
-                velocity={},
-                velocity_score=50,
-                price_stability_score=50,
-                confidence_score=10,
-                overall_rating="PASS",
-            )
+        # ====== PHASE 4: Map unified_product directly to AnalysisResult ======
+        # build_unified_product_v2() now returns ALL required fields
 
-        # Extract data from unified product for backward compatibility
-        current_price_raw = unified_product.get('pricing', {}).get('current_prices', {}).get('amazon')
-        if not current_price_raw:
-            current_price_raw = unified_product.get('pricing', {}).get('current_prices', {}).get('used')
+        # Convert pricing structure to match AnalysisResult schema
+        pricing_unified = unified_product.get('pricing', {})
+        pricing_by_condition = pricing_unified.get('by_condition', {})
 
-        # Parse Keepa data (legacy, for backward compat)
-        parsed_data = parse_keepa_product(keepa_data)
-        
-        # Handle case where no valid price is found
-        if current_price_raw is None or current_price_raw <= 0:
-            return AnalysisResult(
-                asin=asin,
-                title=keepa_data.get('title', 'Unknown'),
-                current_price=None,
-                current_bsr=parsed_data.get('current_bsr'),
-                roi={"error": "No valid pricing data available"},
-                velocity={"error": "No pricing data for velocity analysis"},
-                
-                # NEW: Default values for advanced scoring
-                velocity_score=50,  # Neutral fallback
-                price_stability_score=50,  # Neutral fallback
-                confidence_score=10,  # Low confidence due to missing data
-                overall_rating="PASS",
-                score_breakdown={
-                    "velocity": ScoreBreakdown(score=50, raw=0.5, level="unknown", notes="No pricing data"),
-                    "stability": ScoreBreakdown(score=50, raw=0.5, level="unknown", notes="No pricing data"),
-                    "confidence": ScoreBreakdown(score=10, raw=0.1, level="low", notes="No pricing data")
-                },
-                readable_summary="❌ No valid pricing data available",
-                
-                # Legacy fields
-                recommendation="PASS",
-                risk_factors=["No valid pricing data"]
-            )
-        
-        # Calculate ROI metrics with valid price - EXACT SAME AS DEBUG ENDPOINT
-        current_price = Decimal(str(current_price_raw))
-
-        # *** STRATEGY REFACTOR V2: Direct ROI with real Keepa prices ***
-        from app.services.keepa_parser_v2 import (
-            _determine_target_sell_price,
-            _determine_buy_cost_used,
-            _auto_select_strategy
-        )
-
-        # Feature flag: use new direct ROI or fallback to inverse formula
-        use_direct_roi = config.get("feature_flags", {}).get("direct_roi_calculation", False)
-
-        if use_direct_roi:
-            # Direct ROI: Extract real Keepa prices
-            sell_price_raw = _determine_target_sell_price(parsed_data)
-            buy_cost_raw = _determine_buy_cost_used(parsed_data)
-
-            # Validation: buy_cost must be less than sell_price
-            if sell_price_raw and buy_cost_raw and buy_cost_raw < sell_price_raw:
-                current_price = sell_price_raw  # BuyBox USED target
-                estimated_cost = buy_cost_raw    # FBA USED purchase cost
-                calculation_method = "direct_keepa_prices"
-                logger.info(f"ASIN {asin}: Direct ROI - sell=${sell_price_raw}, buy=${buy_cost_raw}")
-            else:
-                # Fallback: Inverse formula if prices invalid
-                logger.warning(f"ASIN {asin}: Invalid Keepa prices (sell={sell_price_raw}, buy={buy_cost_raw}), using inverse formula")
-                strategy = config.get("active_strategy", "balanced")
-                estimated_cost = calculate_purchase_cost_from_strategy(
-                    sell_price=current_price,
-                    strategy=strategy,
-                    config=config
-                )
-                calculation_method = "inverse_formula_fallback"
-        else:
-            # Legacy: Use strategy-based purchase cost calculation with inverse ROI formula
-            strategy = config.get("active_strategy", "balanced")
-            estimated_cost = calculate_purchase_cost_from_strategy(
-                sell_price=current_price,
-                strategy=strategy,
-                config=config
-            )
-            calculation_method = "inverse_formula_legacy"
-        
-        # Weight handling - EXACT SAME AS DEBUG ENDPOINT  
-        weight_raw = parsed_data.get('weight', 1.0)
-        weight_decimal = Decimal(str(weight_raw))
-        
-        roi_result = calculate_roi_metrics(
-            current_price=current_price,
-            estimated_buy_cost=estimated_cost,
-            product_weight_lbs=weight_decimal,
-            category="books",
-            config=config
-        )
-        
-        # Velocity calculation - EXACT SAME AS DEBUG ENDPOINT
-        velocity_data = VelocityData(
-            current_bsr=parsed_data.get('current_bsr'),
-            bsr_history=parsed_data.get('bsr_history', []),
-            price_history=parsed_data.get('price_history', []),
-            buybox_history=parsed_data.get('buybox_history', []),
-            offers_history=parsed_data.get('offers_history', []),
-            category="books"
-        )
-        
-        velocity_result = calculate_velocity_score(velocity_data, config=config)
-        
-        # *** NEW: ADVANCED SCORING SYSTEM (v1.5.0) ***
-        
-        # Calculate advanced scores using our new functions
-        velocity_raw, velocity_normalized, velocity_level, velocity_notes = compute_advanced_velocity_score(
-            parsed_data.get('bsr_history', []), config
-        )
-        
-        stability_raw, stability_normalized, stability_level, stability_notes = compute_advanced_stability_score(
-            parsed_data.get('price_history', []), config
-        )
-        
-        # Calculate data age for confidence score
-        data_age_days = 1  # Assume recent data for now
-        confidence_raw, confidence_normalized, confidence_level, confidence_notes = compute_advanced_confidence_score(
-            parsed_data.get('price_history', []),
-            parsed_data.get('bsr_history', []),
-            data_age_days,
-            config
-        )
-        
-        # Calculate overall rating
-        roi_percentage = roi_result.get('roi_percentage', 0)
-        overall_rating = compute_overall_rating(
-            roi_percentage, velocity_normalized, stability_normalized, confidence_normalized, config
-        )
-        
-        # Build score breakdown
-        score_breakdown = {
-            "velocity": ScoreBreakdown(
-                score=velocity_normalized,
-                raw=velocity_raw,
-                level=velocity_level,
-                notes=velocity_notes
-            ),
-            "stability": ScoreBreakdown(
-                score=stability_normalized,
-                raw=stability_raw,
-                level=stability_level,
-                notes=stability_notes
-            ),
-            "confidence": ScoreBreakdown(
-                score=confidence_normalized,
-                raw=confidence_raw,
-                level=confidence_level,
-                notes=confidence_notes
-            )
-        }
-        
-        # Generate readable summary
-        scores_dict = {
-            "velocity": velocity_normalized,
-            "stability": stability_normalized,
-            "confidence": confidence_normalized
-        }
-        readable_summary = generate_readable_summary(roi_percentage, overall_rating, scores_dict, config)
-
-        # *** STRATEGY REFACTOR V2: Auto-select strategy profile ***
-        use_strategy_profiles = config.get("feature_flags", {}).get("strategy_profiles_v2", False)
-        if use_strategy_profiles:
-            strategy_profile = _auto_select_strategy(parsed_data)
-        else:
-            strategy_profile = config.get("active_strategy", "balanced")
-
-        # *** NEW: USED vs NEW pricing breakdown ***
+        # Map to PricingDetail format expected by AnalysisResult
         pricing_breakdown = {}
-
-        # Extract USED and NEW prices from parsed data
-        used_price = parsed_data.get('current_used_price')
-        new_price = parsed_data.get('current_fbm_price')  # NEW third-party price
-        target_roi = config.get('roi', {}).get('target_roi_percent', 30)
-
-        # Calculate USED pricing (RECOMMENDED for FBA arbitrage)
-        if used_price and used_price > 0:
-            used_roi = calculate_roi_metrics(
-                current_price=current_price,
-                estimated_buy_cost=Decimal(str(used_price)),
-                product_weight_lbs=weight_decimal,
-                category="books",
-                config=config
-            )
-            # Calculate target buy price for USED
-            target_buy_used = float(current_price) * (1 - target_roi / 100)
-
-            pricing_breakdown['used'] = PricingDetail(
-                current_price=float(used_price),
-                target_buy_price=target_buy_used,
-                roi_percentage=used_roi.get('roi_percentage'),
-                net_profit=used_roi.get('net_profit'),
-                available=True,
-                recommended=True  # USED is recommended for FBA
-            )
-        else:
-            # USED not available - show target price only
-            target_buy_used = float(current_price) * (1 - target_roi / 100)
-            pricing_breakdown['used'] = PricingDetail(
-                current_price=None,
-                target_buy_price=target_buy_used,
-                roi_percentage=None,
-                net_profit=None,
-                available=False,
-                recommended=True
+        for condition, details in pricing_by_condition.items():
+            pricing_breakdown[condition] = PricingDetail(
+                current_price=details.get('buy_price'),  # Current market buy price
+                target_buy_price=details.get('max_buy_price', 0),
+                roi_percentage=details.get('roi_pct', 0) * 100 if details.get('roi_pct') else None,
+                net_profit=details.get('profit'),
+                available=details.get('buy_price') is not None,
+                recommended=details.get('is_recommended', False)
             )
 
-        # Calculate NEW pricing (ALTERNATIVE option)
-        if new_price and new_price > 0:
-            new_roi = calculate_roi_metrics(
-                current_price=current_price,
-                estimated_buy_cost=Decimal(str(new_price)),
-                product_weight_lbs=weight_decimal,
-                category="books",
-                config=config
-            )
-            # Calculate target buy price for NEW
-            target_buy_new = float(current_price) * (1 - target_roi / 100)
-
-            pricing_breakdown['new'] = PricingDetail(
-                current_price=float(new_price),
-                target_buy_price=target_buy_new,
-                roi_percentage=new_roi.get('roi_percentage'),
-                net_profit=new_roi.get('net_profit'),
-                available=True,
-                recommended=False  # NEW is alternative, not recommended
-            )
-        else:
-            # NEW not available - show target price only
-            target_buy_new = float(current_price) * (1 - target_roi / 100)
-            pricing_breakdown['new'] = PricingDetail(
-                current_price=None,
-                target_buy_price=target_buy_new,
-                roi_percentage=None,
-                net_profit=None,
-                available=False,
-                recommended=False
+        # Convert score_breakdown dict to ScoreBreakdown objects
+        score_breakdown_raw = unified_product.get('score_breakdown', {})
+        score_breakdown_typed = {}
+        for key, breakdown in score_breakdown_raw.items():
+            score_breakdown_typed[key] = ScoreBreakdown(
+                score=breakdown.get('score', 0),
+                raw=breakdown.get('raw', 0.0),
+                level=breakdown.get('level', 'unknown'),
+                notes=breakdown.get('notes', '')
             )
 
-        # Legacy recommendation logic (maintained for compatibility)
-        recommendation = "PASS"
-        risk_factors = []
-
-        if overall_rating == "EXCELLENT":
-            recommendation = "STRONG BUY"
-        elif overall_rating == "GOOD":
-            recommendation = "BUY"
-        elif overall_rating == "FAIR":
-            recommendation = "WATCH"
-            risk_factors.append("Moderate metrics")
-        else:
-            recommendation = "PASS"
-            risk_factors.append("Below thresholds")
+        # Extract current price from unified pricing
+        current_price_raw = pricing_unified.get('current_prices', {}).get('amazon')
+        if not current_price_raw:
+            current_price_raw = pricing_unified.get('current_prices', {}).get('used')
 
         return AnalysisResult(
             asin=asin,
-            title=keepa_data.get('title', 'Unknown'),
-            current_price=float(current_price) if current_price else None,
-            current_bsr=parsed_data.get('current_bsr'),
+            title=unified_product.get('title'),
+            current_price=current_price_raw,
+            current_bsr=unified_product.get('current_bsr'),
 
-            # NEW: USED vs NEW pricing breakdown
+            # Pricing breakdown
             pricing=pricing_breakdown,
 
-            roi=roi_result,
-            velocity=velocity_result,
+            # ROI and velocity (legacy format for compatibility)
+            roi=unified_product.get('velocity', {}),  # Velocity metrics contain ROI data
+            velocity=unified_product.get('velocity', {}),
 
-            # NEW: Advanced scoring fields
-            velocity_score=velocity_normalized,
-            price_stability_score=stability_normalized,
-            confidence_score=confidence_normalized,
-            overall_rating=overall_rating,
-            score_breakdown=score_breakdown,
-            readable_summary=readable_summary,
+            # Advanced scoring (0-100 scale)
+            velocity_score=unified_product.get('velocity_score', 0),
+            price_stability_score=unified_product.get('price_stability_score', 0),
+            confidence_score=unified_product.get('confidence_score', 0),
+            overall_rating=unified_product.get('overall_rating', 'PASS'),
+            score_breakdown=score_breakdown_typed,
+            readable_summary=unified_product.get('readable_summary', ''),
 
-            # NEW: Strategy profile (v2)
-            strategy_profile=strategy_profile,
-            calculation_method=calculation_method,
+            # Strategy profile
+            strategy_profile=unified_product.get('strategy_profile'),
+            calculation_method=None,  # Not used in unified builder
 
-            # Legacy fields (maintained for compatibility)
-            recommendation=recommendation,
-            risk_factors=risk_factors
-        )
-        
+            # Recommendation and risk factors
+            recommendation=unified_product.get('recommendation', 'PASS'),
+            risk_factors=unified_product.get('risk_factors', [])
+
+
     except Exception as e:
-        # No logger calls that might cause issues
+        # Error handling with complete AnalysisResult structure
+        logger.error(f"[PHASE4] Error analyzing {asin}: {str(e)}", exc_info=True)
         return AnalysisResult(
             asin=asin,
-            title=keepa_data.get('title', 'Unknown'),
+            title=None,
             current_price=None,
             current_bsr=None,
+
+            # Empty pricing
+            pricing={},
+
             roi={"error": str(e)},
             velocity={"error": str(e)},
-            
-            # NEW: Error state for advanced scoring
+
+            # Error state for advanced scoring
             velocity_score=0,
             price_stability_score=0,
             confidence_score=0,
@@ -505,8 +277,10 @@ async def analyze_product(
                 "confidence": ScoreBreakdown(score=0, raw=0.0, level="error", notes=f"Analysis failed: {str(e)}")
             },
             readable_summary=f"❌ Analysis failed: {str(e)}",
-            
-            # Legacy fields
+
+            # Strategy and recommendation
+            strategy_profile=None,
+            calculation_method=None,
             recommendation="ERROR",
             risk_factors=["Analysis failed"]
         )

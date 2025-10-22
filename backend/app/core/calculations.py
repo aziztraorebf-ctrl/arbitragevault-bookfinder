@@ -504,19 +504,23 @@ def _generate_recommendation(roi_metrics: Dict, velocity_metrics: Dict, config: 
 def compute_advanced_velocity_score(bsr_history: List[Tuple[datetime, int]], config: Dict[str, Any]) -> Tuple[float, int, str, str]:
     """
     Calculate simplified velocity score (0-100) based on BSR trend.
-    
+
     Args:
         bsr_history: List of (datetime, bsr) pairs
         config: Configuration from business_rules.json
-        
+
     Returns:
         Tuple of (raw_score, normalized_0_100, level, notes)
     """
+    # Safety: Ensure bsr_history is a list
+    if not isinstance(bsr_history, list):
+        return (0.5, 50, "unknown", "Invalid data type for bsr_history")
+
     try:
         velocity_config = config.get("advanced_scoring", {}).get("velocity", {})
         min_points = velocity_config.get("min_data_points", 10)
         fallback_score = velocity_config.get("fallback_score", 50)
-        
+
         # Filter valid BSR data
         valid_bsr = [(dt, bsr) for dt, bsr in bsr_history if bsr and bsr > 0]
         
@@ -553,14 +557,18 @@ def compute_advanced_velocity_score(bsr_history: List[Tuple[datetime, int]], con
 def compute_advanced_stability_score(price_history: List[Tuple[datetime, float]], config: Dict[str, Any]) -> Tuple[float, int, str, str]:
     """
     Calculate price stability score (0-100) based on coefficient of variation.
-    
+
     Args:
         price_history: List of (datetime, price) pairs
         config: Configuration from business_rules.json
-        
+
     Returns:
         Tuple of (raw_score, normalized_0_100, level, notes)
     """
+    # Safety: Ensure price_history is a list
+    if not isinstance(price_history, list):
+        return (0.5, 50, "unknown", "Invalid data type for price_history")
+
     try:
         stability_config = config.get("advanced_scoring", {}).get("stability", {})
         min_points = stability_config.get("min_price_points", 10)
@@ -600,23 +608,29 @@ def compute_advanced_stability_score(price_history: List[Tuple[datetime, float]]
 
 
 def compute_advanced_confidence_score(
-    price_history: List[Tuple[datetime, float]], 
+    price_history: List[Tuple[datetime, float]],
     bsr_data: List[Tuple[datetime, int]],
     data_age_days: int,
     config: Dict[str, Any]
 ) -> Tuple[float, int, str, str]:
     """
     Calculate data confidence score (0-100) based on freshness, completeness, and BSR availability.
-    
+
     Args:
         price_history: List of (datetime, price) pairs
-        bsr_data: List of (datetime, bsr) pairs  
+        bsr_data: List of (datetime, bsr) pairs
         data_age_days: Age of most recent data in days
         config: Configuration from business_rules.json
-        
+
     Returns:
         Tuple of (raw_score, normalized_0_100, level, notes)
     """
+    # Safety: Ensure price_history and bsr_data are lists
+    if not isinstance(price_history, list):
+        return (0.5, 50, "unknown", "Invalid data type for price_history")
+    if not isinstance(bsr_data, list):
+        return (0.5, 50, "unknown", "Invalid data type for bsr_data")
+
     try:
         confidence_config = config.get("advanced_scoring", {}).get("confidence", {})
         freshness_threshold = confidence_config.get("data_freshness_days", 7)

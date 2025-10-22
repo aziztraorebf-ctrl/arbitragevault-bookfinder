@@ -88,15 +88,19 @@ app.include_router(bookmarks.router, tags=["Bookmarks"])
 
 # === MCP INTEGRATION ===
 # Mount FastAPI-MCP server if available (optional for production)
+print(f"[MCP DEBUG] MCP_AVAILABLE = {MCP_AVAILABLE}")
 if MCP_AVAILABLE:
     try:
+        print("[MCP DEBUG] Attempting to mount MCP server...")
         mcp_server = FastApiMCP(app)
         mcp_server.mount_sse()  # Using SSE transport for Claude Code compatibility
-        logger.info("FastAPI-MCP server mounted at /mcp endpoint (SSE transport)")
+        print("[MCP SUCCESS] FastAPI-MCP server mounted at /mcp endpoint (SSE transport)")
     except Exception as e:
-        logger.warning(f"Failed to mount FastAPI-MCP server: {e}")
+        print(f"[MCP ERROR] Failed to mount FastAPI-MCP server: {e}")
+        import traceback
+        traceback.print_exc()
 else:
-    logger.info("FastAPI-MCP not installed - running without MCP support")
+    print("[MCP INFO] FastAPI-MCP not installed - running without MCP support")
 
 # Global exception handler
 @app.exception_handler(Exception)

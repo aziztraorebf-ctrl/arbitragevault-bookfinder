@@ -249,7 +249,7 @@ async def analyze_product(
             # Recommendation and risk factors
             recommendation=unified_product.get('recommendation', 'PASS'),
             risk_factors=unified_product.get('risk_factors', [])
-
+        )
 
     except Exception as e:
         # Error handling with complete AnalysisResult structure

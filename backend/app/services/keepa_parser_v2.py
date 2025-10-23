@@ -848,13 +848,39 @@ def parse_keepa_product_unified(raw_keepa: Dict[str, Any]) -> Dict[str, Any]:
         parsed['offers_by_condition'] = {}
         logger.debug(f"ASIN {asin}: No offers found")
 
-    # Step 3: Extract price history from csv
+    # Step 3: Extract price history from csv arrays
     csv = raw_keepa.get('csv', [])
     if csv and len(csv) > 10:
+        # Raw arrays for compatibility
         parsed['history_new'] = csv[1] if len(csv) > 1 else None
         parsed['history_used'] = csv[2] if len(csv) > 2 else None
         parsed['history_fba'] = csv[10] if len(csv) > 10 else None
-        logger.debug(f"ASIN {asin}: Extracted price history")
+
+        # NEW: Extract structured history for advanced scoring
+        # BSR history from csv[3] (SALES rank)
+        bsr_csv = csv[3] if len(csv) > 3 else []
+        if bsr_csv and isinstance(bsr_csv, list) and len(bsr_csv) > 0:
+            parsed['bsr_history'] = _parse_csv_to_timeseries(bsr_csv, is_price=False)
+            logger.debug(f"ASIN {asin}: Extracted {len(parsed['bsr_history'])} BSR data points")
+        else:
+            parsed['bsr_history'] = []
+            logger.debug(f"ASIN {asin}: No BSR history available")
+
+        # Price history from csv[1] (NEW price)
+        price_csv = csv[1] if len(csv) > 1 else []
+        if price_csv and isinstance(price_csv, list) and len(price_csv) > 0:
+            parsed['price_history'] = _parse_csv_to_timeseries(price_csv, is_price=True)
+            logger.debug(f"ASIN {asin}: Extracted {len(parsed['price_history'])} price data points")
+        else:
+            parsed['price_history'] = []
+            logger.debug(f"ASIN {asin}: No price history available")
+
+        logger.debug(f"ASIN {asin}: Extracted history arrays")
+    else:
+        # No CSV data available
+        parsed['bsr_history'] = []
+        parsed['price_history'] = []
+        logger.warning(f"ASIN {asin}: No CSV data available for history extraction")
 
     # Step 4: Extract metadata
     parsed['category_tree'] = raw_keepa.get('categoryTree', [])
@@ -864,6 +890,47 @@ def parse_keepa_product_unified(raw_keepa: Dict[str, Any]) -> Dict[str, Any]:
     logger.info(f"✅ ASIN {asin}: Unified parse complete - offers_by_condition: {list(parsed['offers_by_condition'].keys())}")
 
     return parsed
+
+
+def _parse_csv_to_timeseries(csv_array: List[int], is_price: bool = True) -> List[Tuple[int, float]]:
+    """
+    Parse Keepa CSV array to timeseries [(timestamp_minutes, value), ...].
+
+    Args:
+        csv_array: Keepa CSV array format [timestamp1, value1, timestamp2, value2, ...]
+        is_price: If True, divide value by 100 (prices in cents). If False, keep as-is (BSR).
+
+    Returns:
+        List of (timestamp_minutes, value) tuples
+    """
+    if not csv_array or not isinstance(csv_array, list):
+        return []
+
+    timeseries = []
+    try:
+        # Keepa CSV format: [timestamp1, value1, timestamp2, value2, ...]
+        # Timestamps are in minutes since Keepa epoch (21 Oct 2000 00:00 UTC)
+        for i in range(0, len(csv_array) - 1, 2):
+            timestamp = csv_array[i]
+            value = csv_array[i + 1]
+
+            # Skip invalid values
+            if value is None or value == KEEPA_NULL_VALUE or value == -1:
+                continue
+
+            # Convert price from cents to dollars if needed
+            if is_price:
+                value_converted = float(value) / KEEPA_PRICE_DIVISOR
+            else:
+                value_converted = float(value)
+
+            timeseries.append((timestamp, value_converted))
+
+        return timeseries
+
+    except (IndexError, ValueError, TypeError) as e:
+        logger.warning(f"Error parsing CSV to timeseries: {e}")
+        return []
 
 
 def _extract_price(array: List, index: int) -> Optional[float]:

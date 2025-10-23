@@ -533,12 +533,17 @@ def compute_advanced_velocity_score(bsr_history: List[Tuple[datetime, int]], con
 
         # Filter valid BSR data
         valid_bsr = [(dt, bsr) for dt, bsr in bsr_history if bsr and bsr > 0]
-        
+
         if len(valid_bsr) < min_points:
             return (0.5, fallback_score, "unknown", f"Insufficient data: {len(valid_bsr)} points")
-        
+
+        # CRITICAL FIX: Sort by timestamp to ensure chronological order
+        # Parser extracts data in CSV order which may not be sorted
+        # We need oldest → newest for trend calculation
+        sorted_bsr = sorted(valid_bsr, key=lambda x: x[0])
+
         # Simple BSR trend calculation
-        bsr_values = [bsr for _, bsr in valid_bsr]
+        bsr_values = [bsr for _, bsr in sorted_bsr]
         recent_avg = statistics.mean(bsr_values[-7:]) if len(bsr_values) >= 7 else statistics.mean(bsr_values)
         older_avg = statistics.mean(bsr_values[:7]) if len(bsr_values) >= 14 else statistics.mean(bsr_values)
         

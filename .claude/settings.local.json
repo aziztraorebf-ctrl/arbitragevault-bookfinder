@@ -1,13 +1,24 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git push origin main --force-with-lease)",
-      "Bash(curl -s https://arbitragevault-backend.onrender.com/health)",
-      "Bash(curl -s http://localhost:5174)",
-      "Bash(git add -A)",
-      "Bash(git commit -m \"fix: resolve TypeScript compilation errors for Netlify deployment\")"
+      "Bash(curl:*)",
+      "Bash(git commit:*)",
+      "Bash(uv sync:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(timeout 180 bash:*)",
+      "Read(//c/Users/azizt/.claude/**)",
+      "Read(//c/Users/azizt/AppData/Roaming/Claude/**)",
+      "Bash(timeout 30 bash:*)",
+      "Bash(npm install:*)",
+      "Bash(python test_keepa_direct.py:*)",
+      "Bash(python api_helper.py:*)",
+      "Bash(python:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "outputStyle": "default"
 }

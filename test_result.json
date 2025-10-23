@@ -1,0 +1,70 @@
+{
+  "batch_id": "c78718c0-a1e6-436d-b087-d1a3fff11638",
+  "total_items": 1,
+  "processed": 1,
+  "successful": 1,
+  "failed": 0,
+  "results": [
+    {
+      "identifier": "0316769487",
+      "asin": "0316769487",
+      "status": "success",
+      "analysis": {
+        "asin": "0316769487",
+        "title": "The Catcher in the Rye",
+        "current_price": 7.03,
+        "current_bsr": 24377,
+        "pricing": {},
+        "roi": {
+          "velocity_score": 92.7,
+          "velocity_category": "fast",
+          "avg_daily_sales": 7.81,
+          "current_bsr": 24377
+        },
+        "velocity": {
+          "velocity_score": 92.7,
+          "velocity_category": "fast",
+          "avg_daily_sales": 7.81,
+          "current_bsr": 24377
+        },
+        "velocity_score": 50,
+        "price_stability_score": 50,
+        "confidence_score": 39,
+        "overall_rating": "EXCELLENT",
+        "score_breakdown": {
+          "velocity": {
+            "score": 50,
+            "raw": 0.5,
+            "level": "unknown",
+            "notes": "Insufficient data: 0 points"
+          },
+          "stability": {
+            "score": 50,
+            "raw": 0.5,
+            "level": "unknown",
+            "notes": "Insufficient price data: 0 points"
+          },
+          "confidence": {
+            "score": 39,
+            "raw": 0.39,
+            "level": "low",
+            "notes": "Fresh: 1.00, Complete: 0.00, BSR: 0.30"
+          }
+        },
+        "readable_summary": "Rating: EXCELLENT, ROI: 0.0%",
+        "strategy_profile": "balanced",
+        "calculation_method": null,
+        "recommendation": "STRONG BUY - Excellent opportunity",
+        "risk_factors": [
+          "Limited historical data",
+          "Amazon competing on listing",
+          "Low ROI potential"
+        ]
+      },
+      "error": null
+    }
+  ],
+  "job_id": null,
+  "status_url": null,
+  "trace_id": "f6e18243"
+}

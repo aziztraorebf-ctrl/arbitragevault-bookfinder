@@ -273,7 +273,7 @@ class AutoSourcingService:
         Returns:
             List of AutoSourcingPick objects meeting criteria
         """
-        config = self.business_config.get_config()
+        config = await self.business_config.get_effective_config(domain_id=1, category="books")
         picks = []
         
         for asin in asins:

@@ -432,10 +432,11 @@ class KeepaBSRExtractor:
         """
         Extract current BSR with multiple fallback strategies.
 
-        Priority order:
-        1. stats.current[3] (official current value)
-        2. Last point from csv[3] history (if recent)
-        3. stats.avg30[3] (30-day average as fallback)
+        Priority order (UPDATED based on real Keepa API structure):
+        1. salesRanks[categoryId][1] (current BSR value)
+        2. stats.current[3] (legacy format support)
+        3. Last point from csv[3] history (if recent)
+        4. stats.avg30[3] (30-day average as fallback)
 
         Args:
             raw_data: Raw Keepa API response
@@ -445,8 +446,31 @@ class KeepaBSRExtractor:
         """
         asin = raw_data.get("asin", "unknown")
 
-        # Strategy 1: Primary source - current[3]
-        # ✅ Compatibilité Keepa nouvelle et ancienne structure
+        # Strategy 1: NEW - salesRanks format (current Keepa API structure)
+        # Format: {"categoryId": [timestamp, bsr_value]}
+        sales_ranks = raw_data.get("salesRanks", {})
+        sales_rank_reference = raw_data.get("salesRankReference")
+
+        # Try main category first (only if valid reference)
+        if sales_rank_reference and sales_rank_reference != -1 and str(sales_rank_reference) in sales_ranks:
+            rank_data = sales_ranks[str(sales_rank_reference)]
+            if isinstance(rank_data, list) and len(rank_data) >= 2:
+                bsr = rank_data[1]  # BSR is second element
+                if bsr and bsr != -1:
+                    logger.info(f"ASIN {asin}: BSR {bsr} from salesRanks[{sales_rank_reference}]")
+                    return int(bsr)
+
+        # Fallback to any available category
+        if sales_ranks:
+            for category_id, rank_data in sales_ranks.items():
+                if isinstance(rank_data, list) and len(rank_data) >= 2:
+                    bsr = rank_data[1]
+                    if bsr and bsr != -1:
+                        logger.info(f"ASIN {asin}: BSR {bsr} from salesRanks[{category_id}]")
+                        return int(bsr)
+
+        # Strategy 2: Legacy - current[3] (older Keepa API format)
+        # Keep for backward compatibility
         current = raw_data.get("current")
         if not current:  # Fallback ancien format
             stats = raw_data.get("stats", {})
@@ -455,10 +479,10 @@ class KeepaBSRExtractor:
         if current and len(current) > KeepaCSVType.SALES:
             bsr = current[KeepaCSVType.SALES]
             if bsr and bsr != -1:
-                logger.info(f"ASIN {asin}: BSR {bsr} from current[3]")
+                logger.info(f"ASIN {asin}: BSR {bsr} from current[3] (legacy)")
                 return int(bsr)
 
-        # Strategy 2: Fallback to last historical point if recent
+        # Strategy 3: Fallback to last historical point if recent
         csv_data = raw_data.get("csv", [])
         if csv_data and len(csv_data) > KeepaCSVType.SALES:
             sales_data = csv_data[KeepaCSVType.SALES]
@@ -477,13 +501,14 @@ class KeepaBSRExtractor:
                     else:
                         logger.debug(f"ASIN {asin}: Historical BSR too old ({age_hours:.1f}h)")
 
-        # Strategy 3: Use 30-day average if available
-        avg30 = stats.get("avg30", [])
-        if avg30 and len(avg30) > KeepaCSVType.SALES:
-            avg_bsr = avg30[KeepaCSVType.SALES]
-            if avg_bsr and avg_bsr != -1:
-                logger.warning(f"ASIN {asin}: Using 30-day avg BSR {avg_bsr} as fallback")
-                return int(avg_bsr)
+        # Strategy 4: Use 30-day average if available (legacy support)
+        if 'stats' in locals():  # Only if stats was defined above
+            avg30 = stats.get("avg30", [])
+            if avg30 and len(avg30) > KeepaCSVType.SALES:
+                avg_bsr = avg30[KeepaCSVType.SALES]
+                if avg_bsr and avg_bsr != -1:
+                    logger.warning(f"ASIN {asin}: Using 30-day avg BSR {avg_bsr} as fallback")
+                    return int(avg_bsr)
 
         logger.warning(f"ASIN {asin}: No BSR data available from any source")
         return None
@@ -812,31 +837,51 @@ def parse_keepa_product_unified(raw_keepa: Dict[str, Any]) -> Dict[str, Any]:
         'errors': []
     }
 
-    # Step 1: Extract current prices from stats.current array
+    # Step 1: Extract BSR using our enhanced extractor
+    # IMPORTANT: Use KeepaBSRExtractor.extract_current_bsr() which handles salesRanks format
+    parsed['current_bsr'] = KeepaBSRExtractor.extract_current_bsr(raw_keepa)
+
+    # Step 1b: Extract current prices
+    # Try modern format first (directly in product object)
     stats = raw_keepa.get('stats', {})
     current_array = stats.get('current', [])
 
-    if current_array and len(current_array) > 0:
+    # Modern format: prices directly in product
+    if raw_keepa and ('buyBoxPrice' in raw_keepa or 'newPriceIsMAP' in raw_keepa):
+        # Extract from modern format
+        parsed['current_amazon_price'] = raw_keepa.get('amazonPrice')
+        parsed['current_new_price'] = raw_keepa.get('newPrice')
+        parsed['current_used_price'] = raw_keepa.get('usedPrice')
+        parsed['current_list_price'] = raw_keepa.get('listPrice')
+        parsed['current_fba_price'] = raw_keepa.get('fbaPrice')
+        parsed['current_buybox_price'] = raw_keepa.get('buyBoxPrice')
+
+        logger.debug(
+            f"ASIN {asin}: Modern format - "
+            f"New=${parsed['current_new_price']}, "
+            f"Used=${parsed['current_used_price']}, "
+            f"BSR={parsed['current_bsr']}"
+        )
+    # Legacy format: stats.current array
+    elif current_array and len(current_array) > 0:
         # Using KeepaCSVType indices
         parsed['current_amazon_price'] = _extract_price(current_array, 0)
         parsed['current_new_price'] = _extract_price(current_array, 1)
         parsed['current_used_price'] = _extract_price(current_array, 2)
-        parsed['current_bsr'] = _extract_integer(current_array, 3)
+        # BSR already extracted above
         parsed['current_list_price'] = _extract_price(current_array, 4)
         parsed['current_fba_price'] = _extract_price(current_array, 10)
         parsed['current_buybox_price'] = _extract_price(current_array, 18) if len(current_array) > 18 else None
 
         logger.debug(
-            f"ASIN {asin}: Extracted current prices - "
+            f"ASIN {asin}: Legacy format - "
             f"Amazon=${parsed['current_amazon_price']}, "
             f"New=${parsed['current_new_price']}, "
-            f"Used=${parsed['current_used_price']}, "
-            f"FBA=${parsed['current_fba_price']}, "
             f"BSR={parsed['current_bsr']}"
         )
     else:
-        parsed['errors'].append("No stats.current array found")
-        logger.warning(f"ASIN {asin}: No stats.current array available")
+        parsed['errors'].append("No pricing data found (neither modern nor legacy format)")
+        logger.warning(f"ASIN {asin}: No pricing data available")
 
     # Step 2: Extract offers with conditions (GAME CHANGER!)
     offers = raw_keepa.get('offers', [])

@@ -43,3 +43,21 @@ class InvalidTransitionError(AppException):
             message=message,
             details={"from_state": from_state, "to_state": to_state}
         )
+
+
+class NotFoundError(AppException):
+    """Raised when resource not found."""
+    def __init__(self, resource_type: str, resource_id: str = None):
+        super().__init__(
+            message=f"{resource_type} not found",
+            details={"resource_type": resource_type, "resource_id": resource_id}
+        )
+
+
+class ConflictError(AppException):
+    """Raised when resource conflict occurs."""
+    def __init__(self, message: str, resource_type: str = None, resource_id: str = None):
+        super().__init__(
+            message=message,
+            details={"resource_type": resource_type, "resource_id": resource_id}
+        )

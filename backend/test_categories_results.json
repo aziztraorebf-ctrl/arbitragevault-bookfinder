@@ -1,0 +1,42 @@
+{
+  "mode": "SIMULATION",
+  "categories_tested": 6,
+  "results": [
+    {
+      "category": "Books",
+      "id": 283155,
+      "status": "SIMULATED",
+      "typical_bsr": "10K-100K"
+    },
+    {
+      "category": "Baby Products",
+      "id": 165793011,
+      "status": "SIMULATED",
+      "typical_bsr": "5K-50K"
+    },
+    {
+      "category": "Home & Kitchen",
+      "id": 1055398,
+      "status": "SIMULATED",
+      "typical_bsr": "20K-200K"
+    },
+    {
+      "category": "Grocery & Gourmet Food",
+      "id": 16310091,
+      "status": "SIMULATED",
+      "typical_bsr": "10K-100K"
+    },
+    {
+      "category": "Health & Household",
+      "id": 3760901,
+      "status": "SIMULATED",
+      "typical_bsr": "15K-150K"
+    },
+    {
+      "category": "Pet Supplies",
+      "id": 2619533011,
+      "status": "SIMULATED",
+      "typical_bsr": "8K-80K"
+    }
+  ]
+}

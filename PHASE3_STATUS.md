@@ -1,7 +1,30 @@
 # Phase 3 - Status Global
 ## Product Discovery MVP
 
-**Dernière mise à jour**: 28 Octobre 2025
+**Dernière mise à jour**: 28 Octobre 2025 - 15:30
+
+---
+
+## 📊 Progress Global
+
+```
+Phase 3: Product Discovery MVP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+███████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  27%
+
+Complété:  5.5h / 20-24h totales
+Restant:  ~14.5-18.5h
+```
+
+| Phase | Durée Estimée | Durée Réelle | Status | Progress |
+|-------|---------------|--------------|--------|----------|
+| Planning | 2h | 2h | ✅ Terminé | 100% |
+| **Day 5.5** | **2h** | **2h** | **✅ Terminé** | **100%** |
+| **Day 6** | **3-4h** | **1.5h** | **✅ Terminé** | **100%** |
+| Day 7 | 4-5h | - | ⏳ À faire | 0% |
+| Day 8 | 3-4h | - | ⏳ À faire | 0% |
+| Day 9 | 3-4h | - | ⏳ À faire | 0% |
+| Day 10 | 3-4h | - | ⏳ À faire | 0% |
 
 ---
 
@@ -43,18 +66,56 @@
 
 ---
 
+### Day 6 - Frontend Foundation (1.5h)
+
+**Status**: ✅ **100% TERMINÉ**
+
+#### Livrables
+- ✅ Types TypeScript + Zod schemas (productDiscovery.ts - 181 lignes)
+- ✅ Service API avec validation (productDiscoveryService.ts - 221 lignes)
+- ✅ React Query hooks (useProductDiscovery.ts - 286 lignes)
+- ✅ Build TypeScript sans erreurs (0 errors)
+- ✅ Git commit + push (hash: 0f77dcc)
+
+#### Fichiers Créés
+
+| Fichier | Lignes | Description |
+|---------|--------|-------------|
+| `types/productDiscovery.ts` | 181 | Zod schemas + TypeScript types |
+| `services/productDiscoveryService.ts` | 221 | Service API validation Zod |
+| `hooks/useProductDiscovery.ts` | 286 | React Query hooks + cache |
+
+#### Corrections TypeScript
+1. ✅ Type-only imports (verbatimModuleSyntax)
+2. ✅ Zod v4 enum() signature fix
+3. ✅ z.record() 2 arguments required
+
+#### Métriques
+- **Total lignes code**: 688
+- **Build time**: 5.68s
+- **Bundle size**: 312 KB (gzip: 96 KB)
+- **Hooks créés**: 8 (query + mutation variants)
+- **Durée réelle**: 1.5h (vs estimé 3-4h)
+
+---
+
 ## ⏳ À FAIRE
 
-### Day 6 - Frontend Foundation (3-4h)
+### Day 7 - Mes Niches MVP (4-5h)
 
-**Status**: 🔜 **PRÊT À DÉMARRER**
+**Status**: 🔜 **READY TO START**
 
-#### Objectifs
-1. Créer API client TypeScript (`frontend/src/lib/api/`)
-2. Définir types Zod pour validation (`frontend/src/types/`)
-3. Créer React Query hooks (`frontend/src/hooks/`)
-4. Créer page Dashboard (`frontend/src/pages/`)
+#### Backend (2-3h)
+1. Endpoint `POST /api/v1/products/discover` (ASINs only)
+2. Endpoint `POST /api/v1/products/discover-with-scoring` (full)
+3. Integration avec Keepa Product Finder API
+4. Tests avec vraies données (cache hit/miss)
 
+#### Frontend (2h)
+1. Intégrer hooks dans page Mes Niches existante (sans changer UI)
+2. Remplacer mocks par vrais appels API
+3. Loading/Error states avec toast notifications
+4. Tests E2E (recherche Books, vérifier cache)
 #### Dépendances
 - ✅ Tables cache créées (Day 5.5)
 - ⏳ Endpoints API backend (Day 7)

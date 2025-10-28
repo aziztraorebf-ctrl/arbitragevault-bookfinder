@@ -554,13 +554,58 @@ A  backend/verify_cache_tables.py
 - [x] Git commit avec message descriptif
 - [x] Render deployment successful
 - [x] Documentation complète (ce rapport)
+- [x] **Tests robustesse validés (TTL, Cache Hit, Concurrent)**
 - [ ] Endpoints API utilisant cache (Day 7)
 - [ ] Frontend consommant API (Day 6-7)
 - [ ] Tests E2E avec vraies données (Day 10)
 
 ---
 
+## 🧪 Tests de Robustesse - VALIDÉS
+
+**Date tests**: 28 Octobre 2025
+**Rapport détaillé**: [phase3_tests_robustesse.md](phase3_tests_robustesse.md)
+
+### Résultats
+
+| Test | Objectif | Status |
+|------|----------|--------|
+| **TTL Expiration** | Purge entrées expirées | ✅ PASSÉ |
+| **Cache Hit Increment** | Tracking hit_count | ✅ PASSÉ |
+| **Concurrent Access** | 10 threads simultanés | ✅ PASSÉ |
+
+**Performance**:
+- 10 threads concurrents: 0.90s (90ms/opération)
+- 0 deadlock / 0 corruption de données
+- hit_count incrémente correctement [1,2,3,4,5]
+
+### Recommandations Production
+
+1. **Cleanup automatique** (hourly):
+```sql
+DELETE FROM product_discovery_cache WHERE expires_at < NOW();
+DELETE FROM product_scoring_cache WHERE expires_at < NOW();
+```
+
+2. **Monitoring métriques**:
+```sql
+SELECT
+    COUNT(*) as entries,
+    SUM(hit_count) as total_hits,
+    AVG(hit_count) as avg_reuse,
+    COUNT(*) FILTER (WHERE expires_at < NOW()) as expired
+FROM product_discovery_cache;
+```
+
+3. **Alerts conditions**:
+   - Cache size > 10,000 entrées
+   - Avg hit_count < 2 (cache inefficace)
+   - Expired entries > 20% total
+
+---
+
 **Rapport généré le**: 27 Octobre 2025
+**Tests validés le**: 28 Octobre 2025
 **Auteur**: Claude Code + Aziz
-**Version**: 1.0
-**Status**: ✅ Day 5.5 VALIDÉ - Prêt pour Day 6
+**Version**: 1.1
+**Status**: ✅ Day 5.5 VALIDÉ + TESTS ROBUSTESSE PASSÉS - Prêt pour Day 6

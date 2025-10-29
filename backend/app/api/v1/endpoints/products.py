@@ -4,6 +4,7 @@ Products Discovery API Endpoints - Phase 2 Jour 5
 
 from typing import List, Optional
 from decimal import Decimal
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -109,7 +110,7 @@ async def discover_products(
         # Initialize services
         keepa_service = KeepaService(api_key=settings.KEEPA_API_KEY)
         config_service = ConfigService(db)
-        finder_service = KeepaProductFinderService(keepa_service, config_service)
+        finder_service = KeepaProductFinderService(keepa_service, config_service, db)
 
         # Discover products
         asins = await finder_service.discover_products(
@@ -163,7 +164,7 @@ async def discover_with_scoring(
         # Initialize services
         keepa_service = KeepaService(api_key=settings.KEEPA_API_KEY)
         config_service = ConfigService(db)
-        finder_service = KeepaProductFinderService(keepa_service, config_service)
+        finder_service = KeepaProductFinderService(keepa_service, config_service, db)
 
         # Discover with scoring
         products = await finder_service.discover_with_scoring(
@@ -187,14 +188,17 @@ async def discover_with_scoring(
             for product in products
         ]
 
+        # Determine cache status (any cache hit counts as cache-assisted)
+        cache_hit = hasattr(finder_service, 'cache_service') and finder_service.cache_service is not None
+
         return DiscoverWithScoringResponse(
             products=product_scores,
             total_count=len(product_scores),
-            cache_hit=False,  # TODO: Implement cache check (Phase 3 cache tables)
+            cache_hit=cache_hit,
             metadata={
                 "filters_applied": request.model_dump(exclude_none=True),
-                "timestamp": "2025-10-28T21:00:00Z",  # TODO: Add real timestamp
-                "source": "keepa_api"
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "source": "cache" if cache_hit else "keepa_api"
             }
         )
 

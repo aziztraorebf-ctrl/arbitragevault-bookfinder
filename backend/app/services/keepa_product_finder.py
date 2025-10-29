@@ -20,9 +20,11 @@ import logging
 import json
 
 import httpx
+from sqlalchemy.orm import Session
 
 from app.services.config_service import ConfigService
 from app.services.keepa_service import KeepaService
+from app.services.cache_service import CacheService
 from app.schemas.config import CategoryConfig
 
 logger = logging.getLogger(__name__)
@@ -35,16 +37,29 @@ class KeepaProductFinderService:
     Utilise l'API directe Keepa pour production.
     """
 
-    def __init__(self, keepa_service: KeepaService, config_service: ConfigService):
+    def __init__(
+        self,
+        keepa_service: KeepaService,
+        config_service: ConfigService,
+        db: Optional[Session] = None
+    ):
         """
         Initialize Product Finder.
 
         Args:
             keepa_service: Service Keepa existant (avec httpx client)
             config_service: Service Config pour filtres business
+            db: Optional SQLAlchemy session for cache operations
         """
         self.keepa_service = keepa_service
         self.config_service = config_service
+        self.db = db
+        self.cache_service = CacheService(db) if db else None
+
+        if self.cache_service:
+            logger.info("[CACHE] CacheService initialized - cache enabled")
+        else:
+            logger.debug("[CACHE] No db session - cache disabled")
 
     async def discover_products(
         self,
@@ -237,13 +252,17 @@ class KeepaProductFinderService:
             batch = asins[i:i+100]
 
             try:
-                # Get product details
-                products = await self.keepa_service.get_products(
-                    asin_list=batch,
-                    domain=domain,
-                    stats=1,  # Include stats for BSR
-                    history=0  # No history needed
-                )
+                # Get product details via Keepa API
+                endpoint = "/product"
+                params = {
+                    "domain": domain,
+                    "asin": ",".join(batch),
+                    "stats": 1,  # Include stats for BSR
+                    "history": 0  # No history needed
+                }
+
+                response = await self.keepa_service._make_request(endpoint, params)
+                products = response.get("products", []) if response else []
 
                 # Filter by criteria
                 for product in products:
@@ -307,92 +326,179 @@ class KeepaProductFinderService:
             - velocity_score
             - recommendation
         """
-        # Step 1: Discover ASINs
-        asins = await self.discover_products(
-            domain=domain,
-            category=category,
-            bsr_min=bsr_min,
-            bsr_max=bsr_max,
-            price_min=price_min,
-            price_max=price_max,
-            max_results=max_results * 2  # Get more for filtering
-        )
+        # Step 1: Discover ASINs (with cache)
+        asins = []
+        discovery_cache_hit = False
+
+        if self.cache_service:
+            # Try cache first
+            cached_asins = self.cache_service.get_discovery_cache(
+                domain=domain,
+                category=category,
+                bsr_min=bsr_min,
+                bsr_max=bsr_max,
+                price_min=price_min,
+                price_max=price_max
+            )
+
+            if cached_asins:
+                asins = cached_asins
+                discovery_cache_hit = True
+                logger.info(f"[DISCOVERY] Cache HIT: {len(asins)} ASINs")
+            else:
+                logger.debug(f"[DISCOVERY] Cache MISS - calling Keepa API")
+
+        # If no cache or cache miss, call Keepa API
+        if not asins:
+            asins = await self.discover_products(
+                domain=domain,
+                category=category,
+                bsr_min=bsr_min,
+                bsr_max=bsr_max,
+                price_min=price_min,
+                price_max=price_max,
+                max_results=max_results * 2  # Get more for filtering
+            )
+
+            if self.cache_service and asins:
+                # Store in cache
+                cache_key = self.cache_service.set_discovery_cache(
+                    domain=domain,
+                    category=category,
+                    bsr_min=bsr_min,
+                    bsr_max=bsr_max,
+                    price_min=price_min,
+                    price_max=price_max,
+                    asins=asins
+                )
+                logger.debug(f"[DISCOVERY] Cached {len(asins)} ASINs (key: {cache_key[:8]}...)")
 
         if not asins:
             logger.warning("No ASINs discovered")
             return []
 
         # Step 2: Get product details
-        products = await self.keepa_service.get_products(
-            asin_list=asins,
-            domain=domain,
-            stats=1,
-            history=1  # Need history for velocity
-        )
+        endpoint = "/product"
+        params = {
+            "domain": domain,
+            "asin": ",".join(asins),
+            "stats": 1,
+            "history": 1  # Need history for velocity
+        }
 
-        # Step 3: Apply scoring and filters
+        response = await self.keepa_service._make_request(endpoint, params)
+        products = response.get("products", []) if response else []
+
+        # Step 3: Apply scoring and filters (with cache per product)
         scored_products = []
+        scoring_cache_hits = 0
+        scoring_cache_misses = 0
 
         # Get effective config
         effective_config = self.config_service.get_effective_config(category_id=category)
 
         for product in products:
             try:
-                # Extract metrics
                 asin = product.get("asin")
-                title = product.get("title", "Unknown")
-
-                stats = product.get("stats", {})
-                current = stats.get("current", [None, None, None, None])
-
-                price_cents = current[0] if len(current) > 0 else None
-                bsr = current[3] if len(current) > 3 else None
-
-                if not price_cents or not bsr:
+                if not asin:
                     continue
 
-                price = Decimal(str(price_cents / 100))
+                # Try scoring cache first
+                cached_scoring = None
+                if self.cache_service:
+                    cached_scoring = self.cache_service.get_scoring_cache(asin)
 
-                # Calculate ROI
-                source_price = price * effective_config.effective_roi.source_price_factor
-                fees = self._calculate_fees(price, effective_config.effective_fees)
-                profit = price - source_price - fees
-                roi_percent = float((profit / source_price) * Decimal("100"))
+                if cached_scoring:
+                    # Cache HIT - use cached scoring
+                    logger.debug(f"[SCORING] Cache HIT for ASIN {asin}")
+                    scoring_cache_hits += 1
 
-                # Apply ROI filter
-                if min_roi and roi_percent < min_roi:
-                    continue
+                    # Apply filters on cached data
+                    if min_roi and cached_scoring.get("roi_percent", 0) < min_roi:
+                        continue
+                    if min_velocity and cached_scoring.get("velocity_score", 0) < min_velocity:
+                        continue
 
-                # Calculate velocity score
-                velocity_score = self._calculate_velocity_score(
-                    bsr,
-                    effective_config.effective_velocity.tiers
-                )
+                    scored_products.append(cached_scoring)
+                else:
+                    # Cache MISS - calculate scoring
+                    logger.debug(f"[SCORING] Cache MISS for ASIN {asin} - calculating")
+                    scoring_cache_misses += 1
 
-                # Apply velocity filter
-                if min_velocity and velocity_score < min_velocity:
-                    continue
+                    # Extract metrics
+                    title = product.get("title", "Unknown")
+                    stats = product.get("stats", {})
+                    current = stats.get("current", [None, None, None, None])
 
-                # Get recommendation
-                recommendation = self._get_recommendation(
-                    roi_percent,
-                    velocity_score,
-                    effective_config
-                )
+                    price_cents = current[0] if len(current) > 0 else None
+                    bsr = current[3] if len(current) > 3 else None
 
-                scored_products.append({
-                    "asin": asin,
-                    "title": title[:100],  # Truncate long titles
-                    "price": float(price),
-                    "bsr": bsr,
-                    "roi_percent": roi_percent,
-                    "velocity_score": velocity_score,
-                    "recommendation": recommendation
-                })
+                    if not price_cents or not bsr:
+                        continue
+
+                    price = Decimal(str(price_cents / 100))
+
+                    # Calculate ROI
+                    source_price = price * effective_config.effective_roi.source_price_factor
+                    fees = self._calculate_fees(price, effective_config.effective_fees)
+                    profit = price - source_price - fees
+                    roi_percent = float((profit / source_price) * Decimal("100"))
+
+                    # Apply ROI filter
+                    if min_roi and roi_percent < min_roi:
+                        continue
+
+                    # Calculate velocity score
+                    velocity_score = self._calculate_velocity_score(
+                        bsr,
+                        effective_config.effective_velocity.tiers
+                    )
+
+                    # Apply velocity filter
+                    if min_velocity and velocity_score < min_velocity:
+                        continue
+
+                    # Get recommendation
+                    recommendation = self._get_recommendation(
+                        roi_percent,
+                        velocity_score,
+                        effective_config
+                    )
+
+                    scoring_result = {
+                        "asin": asin,
+                        "title": title[:100],  # Truncate long titles
+                        "price": float(price),
+                        "bsr": bsr,
+                        "roi_percent": roi_percent,
+                        "velocity_score": velocity_score,
+                        "recommendation": recommendation
+                    }
+
+                    # Store in cache
+                    if self.cache_service:
+                        self.cache_service.set_scoring_cache(
+                            asin=asin,
+                            product_data=scoring_result,
+                            keepa_data=product
+                        )
+                        logger.debug(f"[SCORING] Cached ASIN {asin} (ROI: {roi_percent:.1f}%)")
+
+                    scored_products.append(scoring_result)
 
             except Exception as e:
                 logger.error(f"Error scoring product {asin}: {e}")
                 continue
+
+        # Log cache metrics
+        total_products = scoring_cache_hits + scoring_cache_misses
+        if total_products > 0:
+            cache_hit_rate = (scoring_cache_hits / total_products) * 100
+            logger.info(
+                f"[METRICS] Scoring cache hit rate: {cache_hit_rate:.1f}% "
+                f"({scoring_cache_hits}/{total_products})"
+            )
+
 
         # Sort by combined score (ROI + Velocity)
         scored_products.sort(

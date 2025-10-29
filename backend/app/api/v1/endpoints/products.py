@@ -75,10 +75,11 @@ class DiscoverResponse(BaseModel):
 
 
 class DiscoverWithScoringResponse(BaseModel):
-    """Response with scored products."""
+    """Response with scored products - matches frontend ProductDiscoveryResponseSchema."""
     products: List[ProductScore]
-    count: int
-    filters_applied: dict
+    total_count: int
+    cache_hit: bool
+    metadata: dict
 
 
 @router.post("/discover", response_model=DiscoverResponse)
@@ -188,8 +189,13 @@ async def discover_with_scoring(
 
         return DiscoverWithScoringResponse(
             products=product_scores,
-            count=len(product_scores),
-            filters_applied=request.model_dump(exclude_none=True)
+            total_count=len(product_scores),
+            cache_hit=False,  # TODO: Implement cache check (Phase 3 cache tables)
+            metadata={
+                "filters_applied": request.model_dump(exclude_none=True),
+                "timestamp": "2025-10-28T21:00:00Z",  # TODO: Add real timestamp
+                "source": "keepa_api"
+            }
         )
 
     except Exception as e:

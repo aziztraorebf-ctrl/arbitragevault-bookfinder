@@ -7,10 +7,10 @@ from decimal import Decimal
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
 
-from app.database import get_db
+from app.core.db import get_db_session
 from app.services.keepa_service import KeepaService
 from app.services.config_service import ConfigService
 from app.services.keepa_product_finder import KeepaProductFinderService
@@ -86,7 +86,7 @@ class DiscoverWithScoringResponse(BaseModel):
 @router.post("/discover", response_model=DiscoverResponse)
 async def discover_products(
     request: DiscoverRequest,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ):
     """
     Discover products matching criteria.
@@ -139,7 +139,7 @@ async def discover_products(
 @router.post("/discover-with-scoring", response_model=DiscoverWithScoringResponse)
 async def discover_with_scoring(
     request: DiscoverWithScoringRequest,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ):
     """
     Discover and score products.

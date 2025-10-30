@@ -6,9 +6,9 @@ from typing import List, Optional
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.core.db import get_db_session
 from app.services.keepa_service import KeepaService
 from app.services.config_service import ConfigService
 from app.services.keepa_product_finder import KeepaProductFinderService
@@ -23,7 +23,7 @@ router = APIRouter()
 async def discover_niches_auto(
     count: int = Query(3, ge=1, le=5, description="Number of niches to discover"),
     shuffle: bool = Query(True, description="Randomize template selection"),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ):
     """
     Auto-discover curated niches - Phase 3 Day 9.

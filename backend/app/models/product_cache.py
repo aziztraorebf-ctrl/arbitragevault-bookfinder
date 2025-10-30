@@ -14,7 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.database import Base
+from app.core.db import Base
 
 
 class ProductDiscoveryCache(Base):

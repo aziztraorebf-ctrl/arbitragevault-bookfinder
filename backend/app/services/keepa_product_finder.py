@@ -13,7 +13,7 @@ Architecture Production-Ready :
 - Aucune dépendance serveur externe
 """
 
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Union
 from decimal import Decimal
 from datetime import datetime
 import logging
@@ -21,6 +21,7 @@ import json
 
 import httpx
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.config_service import ConfigService
 from app.services.keepa_service import KeepaService
@@ -41,7 +42,7 @@ class KeepaProductFinderService:
         self,
         keepa_service: KeepaService,
         config_service: ConfigService,
-        db: Optional[Session] = None
+        db: Optional[Union[Session, AsyncSession]] = None
     ):
         """
         Initialize Product Finder.
@@ -49,7 +50,7 @@ class KeepaProductFinderService:
         Args:
             keepa_service: Service Keepa existant (avec httpx client)
             config_service: Service Config pour filtres business
-            db: Optional SQLAlchemy session for cache operations
+            db: Optional SQLAlchemy session (sync or async) for cache operations
         """
         self.keepa_service = keepa_service
         self.config_service = config_service
@@ -332,7 +333,7 @@ class KeepaProductFinderService:
 
         if self.cache_service:
             # Try cache first
-            cached_asins = self.cache_service.get_discovery_cache(
+            cached_asins = await self.cache_service.get_discovery_cache(
                 domain=domain,
                 category=category,
                 bsr_min=bsr_min,
@@ -362,7 +363,7 @@ class KeepaProductFinderService:
 
             if self.cache_service and asins:
                 # Store in cache
-                cache_key = self.cache_service.set_discovery_cache(
+                cache_key = await self.cache_service.set_discovery_cache(
                     domain=domain,
                     category=category,
                     bsr_min=bsr_min,
@@ -395,7 +396,7 @@ class KeepaProductFinderService:
         scoring_cache_misses = 0
 
         # Get effective config
-        effective_config = self.config_service.get_effective_config(category_id=category)
+        effective_config = await self.config_service.get_effective_config(category_id=category)
 
         for product in products:
             try:
@@ -406,7 +407,7 @@ class KeepaProductFinderService:
                 # Try scoring cache first
                 cached_scoring = None
                 if self.cache_service:
-                    cached_scoring = self.cache_service.get_scoring_cache(asin)
+                    cached_scoring = await self.cache_service.get_scoring_cache(asin)
 
                 if cached_scoring:
                     # Cache HIT - use cached scoring
@@ -477,9 +478,14 @@ class KeepaProductFinderService:
 
                     # Store in cache
                     if self.cache_service:
-                        self.cache_service.set_scoring_cache(
+                        await self.cache_service.set_scoring_cache(
                             asin=asin,
-                            product_data=scoring_result,
+                            title=title,
+                            price=float(price),
+                            bsr=bsr,
+                            roi_percent=roi_percent,
+                            velocity_score=velocity_score,
+                            recommendation=recommendation,
                             keepa_data=product
                         )
                         logger.debug(f"[SCORING] Cached ASIN {asin} (ROI: {roi_percent:.1f}%)")

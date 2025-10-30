@@ -1,16 +1,18 @@
 """
-Cache Service - Phase 2 Jour 5
+Cache Service - Phase 2 Jour 5 (Updated Phase 3 Day 10 for Async Support)
 
 Gestion du cache PostgreSQL pour Product Finder.
+Supports both sync Session and async AsyncSession using SQLAlchemy 2.0.
 """
 
 import hashlib
 import json
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import and_, select
 
 from app.models.product_cache import (
     ProductDiscoveryCache,
@@ -28,13 +30,18 @@ class CacheService:
     - Cache scoring results (6h TTL)
     - Track search history
     - Automatic expiration
+
+    Supports both sync and async operations.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Union[Session, AsyncSession]):
         """Initialize cache service."""
         self.db = db
+        self.is_async = isinstance(db, AsyncSession)
 
-    def get_discovery_cache(
+    # ===== DISCOVERY CACHE =====
+
+    async def get_discovery_cache(
         self,
         domain: int,
         category: Optional[int] = None,
@@ -53,23 +60,39 @@ class CacheService:
             domain, category, bsr_min, bsr_max, price_min, price_max
         )
 
-        # Query cache
-        cache_entry = self.db.query(ProductDiscoveryCache).filter(
-            and_(
-                ProductDiscoveryCache.cache_key == cache_key,
-                ProductDiscoveryCache.expires_at > datetime.utcnow()
+        if self.is_async:
+            # Async query
+            stmt = select(ProductDiscoveryCache).filter(
+                and_(
+                    ProductDiscoveryCache.cache_key == cache_key,
+                    ProductDiscoveryCache.expires_at > datetime.utcnow()
+                )
             )
-        ).first()
+            result = await self.db.execute(stmt)
+            cache_entry = result.scalar_one_or_none()
 
-        if cache_entry:
-            # Update hit count
-            cache_entry.hit_count += 1
-            self.db.commit()
-            return cache_entry.asins
+            if cache_entry:
+                # Update hit count
+                cache_entry.hit_count += 1
+                await self.db.commit()
+                return cache_entry.asins
+        else:
+            # Sync query (fallback)
+            cache_entry = self.db.query(ProductDiscoveryCache).filter(
+                and_(
+                    ProductDiscoveryCache.cache_key == cache_key,
+                    ProductDiscoveryCache.expires_at > datetime.utcnow()
+                )
+            ).first()
+
+            if cache_entry:
+                cache_entry.hit_count += 1
+                self.db.commit()
+                return cache_entry.asins
 
         return None
 
-    def set_discovery_cache(
+    async def set_discovery_cache(
         self,
         domain: int,
         asins: List[str],
@@ -90,48 +113,92 @@ class CacheService:
             domain, category, bsr_min, bsr_max, price_min, price_max
         )
 
-        # Check if exists
-        existing = self.db.query(ProductDiscoveryCache).filter(
-            ProductDiscoveryCache.cache_key == cache_key
-        ).first()
-
-        if existing:
-            # Update existing
-            existing.asins = asins
-            existing.count = len(asins)
-            existing.created_at = datetime.utcnow()
-            existing.expires_at = datetime.utcnow() + timedelta(hours=ttl_hours)
-        else:
-            # Create new
-            cache_entry = ProductDiscoveryCache(
-                cache_key=cache_key,
-                domain=domain,
-                category=category,
-                bsr_min=bsr_min,
-                bsr_max=bsr_max,
-                price_min=price_min,
-                price_max=price_max,
-                asins=asins,
-                count=len(asins),
-                expires_at=datetime.utcnow() + timedelta(hours=ttl_hours)
+        if self.is_async:
+            # Check if exists
+            stmt = select(ProductDiscoveryCache).filter(
+                ProductDiscoveryCache.cache_key == cache_key
             )
-            self.db.add(cache_entry)
+            result = await self.db.execute(stmt)
+            existing = result.scalar_one_or_none()
 
-        self.db.commit()
+            if existing:
+                # Update existing
+                existing.asins = asins
+                existing.count = len(asins)
+                existing.created_at = datetime.utcnow()
+                existing.expires_at = datetime.utcnow() + timedelta(hours=ttl_hours)
+            else:
+                # Create new
+                cache_entry = ProductDiscoveryCache(
+                    cache_key=cache_key,
+                    domain=domain,
+                    category=category,
+                    bsr_min=bsr_min,
+                    bsr_max=bsr_max,
+                    price_min=price_min,
+                    price_max=price_max,
+                    asins=asins,
+                    count=len(asins),
+                    expires_at=datetime.utcnow() + timedelta(hours=ttl_hours)
+                )
+                self.db.add(cache_entry)
+
+            await self.db.commit()
+        else:
+            # Sync fallback
+            existing = self.db.query(ProductDiscoveryCache).filter(
+                ProductDiscoveryCache.cache_key == cache_key
+            ).first()
+
+            if existing:
+                existing.asins = asins
+                existing.count = len(asins)
+                existing.created_at = datetime.utcnow()
+                existing.expires_at = datetime.utcnow() + timedelta(hours=ttl_hours)
+            else:
+                cache_entry = ProductDiscoveryCache(
+                    cache_key=cache_key,
+                    domain=domain,
+                    category=category,
+                    bsr_min=bsr_min,
+                    bsr_max=bsr_max,
+                    price_min=price_min,
+                    price_max=price_max,
+                    asins=asins,
+                    count=len(asins),
+                    expires_at=datetime.utcnow() + timedelta(hours=ttl_hours)
+                )
+                self.db.add(cache_entry)
+
+            self.db.commit()
+
         return cache_key
 
-    def get_scoring_cache(self, asin: str) -> Optional[Dict[str, Any]]:
+    # ===== SCORING CACHE =====
+
+    async def get_scoring_cache(self, asin: str) -> Optional[Dict[str, Any]]:
         """
         Get cached scoring results for ASIN.
 
         Returns scoring data if cache hit, None if miss.
         """
-        cache_entry = self.db.query(ProductScoringCache).filter(
-            and_(
-                ProductScoringCache.asin == asin,
-                ProductScoringCache.expires_at > datetime.utcnow()
-            )
-        ).order_by(ProductScoringCache.created_at.desc()).first()
+        if self.is_async:
+            stmt = select(ProductScoringCache).filter(
+                and_(
+                    ProductScoringCache.asin == asin,
+                    ProductScoringCache.expires_at > datetime.utcnow()
+                )
+            ).order_by(ProductScoringCache.created_at.desc())
+
+            result = await self.db.execute(stmt)
+            cache_entry = result.scalar_one_or_none()
+        else:
+            cache_entry = self.db.query(ProductScoringCache).filter(
+                and_(
+                    ProductScoringCache.asin == asin,
+                    ProductScoringCache.expires_at > datetime.utcnow()
+                )
+            ).order_by(ProductScoringCache.created_at.desc()).first()
 
         if cache_entry:
             return {
@@ -146,7 +213,7 @@ class CacheService:
 
         return None
 
-    def set_scoring_cache(
+    async def set_scoring_cache(
         self,
         asin: str,
         title: str,
@@ -179,11 +246,17 @@ class CacheService:
         )
 
         self.db.add(cache_entry)
-        self.db.commit()
+
+        if self.is_async:
+            await self.db.commit()
+        else:
+            self.db.commit()
 
         return cache_entry.id
 
-    def record_search(
+    # ===== SEARCH HISTORY =====
+
+    async def record_search(
         self,
         search_params: Dict[str, Any],
         search_type: str,
@@ -224,11 +297,17 @@ class CacheService:
         )
 
         self.db.add(history)
-        self.db.commit()
+
+        if self.is_async:
+            await self.db.commit()
+        else:
+            self.db.commit()
 
         return history.id
 
-    def cleanup_expired(self) -> int:
+    # ===== MAINTENANCE =====
+
+    async def cleanup_expired(self) -> int:
         """
         Remove expired cache entries.
 
@@ -236,47 +315,103 @@ class CacheService:
         """
         count = 0
 
-        # Cleanup discovery cache
-        expired_discovery = self.db.query(ProductDiscoveryCache).filter(
-            ProductDiscoveryCache.expires_at < datetime.utcnow()
-        ).all()
+        if self.is_async:
+            # Cleanup discovery cache
+            stmt_discovery = select(ProductDiscoveryCache).filter(
+                ProductDiscoveryCache.expires_at < datetime.utcnow()
+            )
+            result = await self.db.execute(stmt_discovery)
+            expired_discovery = result.scalars().all()
 
-        for entry in expired_discovery:
-            self.db.delete(entry)
-            count += 1
+            for entry in expired_discovery:
+                await self.db.delete(entry)  # delete is async in AsyncSession
+                count += 1
 
-        # Cleanup scoring cache
-        expired_scoring = self.db.query(ProductScoringCache).filter(
-            ProductScoringCache.expires_at < datetime.utcnow()
-        ).all()
+            # Cleanup scoring cache
+            stmt_scoring = select(ProductScoringCache).filter(
+                ProductScoringCache.expires_at < datetime.utcnow()
+            )
+            result = await self.db.execute(stmt_scoring)
+            expired_scoring = result.scalars().all()
 
-        for entry in expired_scoring:
-            self.db.delete(entry)
-            count += 1
+            for entry in expired_scoring:
+                await self.db.delete(entry)  # delete is async in AsyncSession
+                count += 1
 
-        self.db.commit()
+            await self.db.commit()
+        else:
+            # Sync fallback
+            expired_discovery = self.db.query(ProductDiscoveryCache).filter(
+                ProductDiscoveryCache.expires_at < datetime.utcnow()
+            ).all()
+
+            for entry in expired_discovery:
+                self.db.delete(entry)
+                count += 1
+
+            expired_scoring = self.db.query(ProductScoringCache).filter(
+                ProductScoringCache.expires_at < datetime.utcnow()
+            ).all()
+
+            for entry in expired_scoring:
+                self.db.delete(entry)
+                count += 1
+
+            self.db.commit()
+
         return count
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    async def get_cache_stats(self) -> Dict[str, Any]:
         """
         Get cache statistics.
 
         Returns usage metrics.
         """
-        discovery_total = self.db.query(ProductDiscoveryCache).count()
-        discovery_active = self.db.query(ProductDiscoveryCache).filter(
-            ProductDiscoveryCache.expires_at > datetime.utcnow()
-        ).count()
+        if self.is_async:
+            # Async queries
+            discovery_total_stmt = select(ProductDiscoveryCache)
+            discovery_total_result = await self.db.execute(discovery_total_stmt)
+            discovery_total = len(discovery_total_result.scalars().all())
 
-        scoring_total = self.db.query(ProductScoringCache).count()
-        scoring_active = self.db.query(ProductScoringCache).filter(
-            ProductScoringCache.expires_at > datetime.utcnow()
-        ).count()
+            discovery_active_stmt = select(ProductDiscoveryCache).filter(
+                ProductDiscoveryCache.expires_at > datetime.utcnow()
+            )
+            discovery_active_result = await self.db.execute(discovery_active_stmt)
+            discovery_active = len(discovery_active_result.scalars().all())
 
-        search_count = self.db.query(SearchHistory).count()
+            scoring_total_stmt = select(ProductScoringCache)
+            scoring_total_result = await self.db.execute(scoring_total_stmt)
+            scoring_total = len(scoring_total_result.scalars().all())
 
-        # Calculate hit rate from search history
-        recent_searches = self.db.query(SearchHistory).limit(100).all()
+            scoring_active_stmt = select(ProductScoringCache).filter(
+                ProductScoringCache.expires_at > datetime.utcnow()
+            )
+            scoring_active_result = await self.db.execute(scoring_active_stmt)
+            scoring_active = len(scoring_active_result.scalars().all())
+
+            search_count_stmt = select(SearchHistory)
+            search_count_result = await self.db.execute(search_count_stmt)
+            search_count = len(search_count_result.scalars().all())
+
+            # Calculate hit rate
+            recent_searches_stmt = select(SearchHistory).limit(100)
+            recent_searches_result = await self.db.execute(recent_searches_stmt)
+            recent_searches = recent_searches_result.scalars().all()
+        else:
+            # Sync fallback
+            discovery_total = self.db.query(ProductDiscoveryCache).count()
+            discovery_active = self.db.query(ProductDiscoveryCache).filter(
+                ProductDiscoveryCache.expires_at > datetime.utcnow()
+            ).count()
+
+            scoring_total = self.db.query(ProductScoringCache).count()
+            scoring_active = self.db.query(ProductScoringCache).filter(
+                ProductScoringCache.expires_at > datetime.utcnow()
+            ).count()
+
+            search_count = self.db.query(SearchHistory).count()
+            recent_searches = self.db.query(SearchHistory).limit(100).all()
+
         total_api_calls = sum(s.api_calls_made for s in recent_searches)
         total_cache_hits = sum(s.cache_hits for s in recent_searches)
         hit_rate = (total_cache_hits / (total_api_calls + total_cache_hits) * 100) if (total_api_calls + total_cache_hits) > 0 else 0
@@ -300,6 +435,8 @@ class CacheService:
                 "api_calls_saved": total_cache_hits
             }
         }
+
+    # ===== UTILITIES =====
 
     def _generate_discovery_key(
         self,

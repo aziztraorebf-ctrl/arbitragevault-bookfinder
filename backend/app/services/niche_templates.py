@@ -6,9 +6,10 @@ Each template encodes expertise: category clusters, BSR sweet spots, price range
 """
 
 import random
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 from datetime import datetime
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.keepa_product_finder import KeepaProductFinderService
 from app.core.logging import get_logger
@@ -187,7 +188,7 @@ CURATED_NICHES = [
 
 
 async def discover_curated_niches(
-    db: Session,
+    db: Union[Session, AsyncSession],
     product_finder: KeepaProductFinderService,
     count: int = 3,
     shuffle: bool = True

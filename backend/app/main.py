@@ -4,6 +4,15 @@ IMPORTANT: This app uses FLAT settings structure (settings.app_name, NOT setting
 Compatible with Pydantic V2 - render deployment v52dd65d+
 """
 
+# === CRITICAL: Windows Event Loop Configuration MUST be first ===
+# ProactorEventLoop (Windows default) is incompatible with psycopg3
+# This MUST execute BEFORE any other imports that might create event loops
+import sys
+if sys.platform == "win32":
+    import asyncio
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+# ===================================================================
+
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
@@ -158,6 +167,13 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
+    import asyncio
+    import sys
+
+    # Fix for Windows: Use SelectorEventLoop for psycopg3 compatibility
+    # ProactorEventLoop (default on Windows) is not compatible with psycopg3 async
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     uvicorn.run(
         "app.main:app",

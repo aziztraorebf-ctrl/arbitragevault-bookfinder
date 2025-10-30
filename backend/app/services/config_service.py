@@ -6,13 +6,14 @@ and provides effective configuration calculation for specific contexts.
 """
 
 import json
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from uuid import uuid4
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import and_, or_, select
 
 from app.models.config import Configuration, CategoryOverride
 from app.schemas.config import (
@@ -26,11 +27,12 @@ from app.core.exceptions import NotFoundError, ConflictError
 class ConfigService:
     """Service for managing business configuration."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Union[Session, AsyncSession]):
         """Initialize configuration service."""
         self.db = db
+        self.is_async = isinstance(db, AsyncSession)
 
-    def create_configuration(self, config_data: ConfigCreate) -> ConfigResponse:
+    async def create_configuration(self, config_data: ConfigCreate) -> ConfigResponse:
         """
         Create a new configuration.
 
@@ -44,16 +46,21 @@ class ConfigService:
             ConflictError: If configuration name already exists
         """
         # Check if name already exists
-        existing = self.db.query(Configuration).filter(
-            Configuration.name == config_data.name
-        ).first()
+        if self.is_async:
+            stmt = select(Configuration).filter(Configuration.name == config_data.name)
+            result = await self.db.execute(stmt)
+            existing = result.scalar_one_or_none()
+        else:
+            existing = self.db.query(Configuration).filter(
+                Configuration.name == config_data.name
+            ).first()
 
         if existing:
             raise ConflictError(f"Configuration '{config_data.name}' already exists")
 
         # If this is set as active, deactivate others
         if config_data.is_active:
-            self._deactivate_all_configs()
+            await self._deactivate_all_configs()
 
         # Create configuration
         config = Configuration(
@@ -84,12 +91,16 @@ class ConfigService:
             config.category_overrides.append(category_override)
 
         self.db.add(config)
-        self.db.commit()
-        self.db.refresh(config)
+        if self.is_async:
+            await self.db.commit()
+            await self.db.refresh(config)
+        else:
+            self.db.commit()
+            self.db.refresh(config)
 
         return self._to_response(config)
 
-    def get_configuration(self, config_id: str) -> ConfigResponse:
+    async def get_configuration(self, config_id: str) -> ConfigResponse:
         """
         Get configuration by ID.
 
@@ -102,16 +113,21 @@ class ConfigService:
         Raises:
             NotFoundError: If configuration not found
         """
-        config = self.db.query(Configuration).filter(
-            Configuration.id == config_id
-        ).first()
+        if self.is_async:
+            stmt = select(Configuration).filter(Configuration.id == config_id)
+            result = await self.db.execute(stmt)
+            config = result.scalar_one_or_none()
+        else:
+            config = self.db.query(Configuration).filter(
+                Configuration.id == config_id
+            ).first()
 
         if not config:
             raise NotFoundError(f"Configuration '{config_id}' not found")
 
         return self._to_response(config)
 
-    def get_active_configuration(self) -> ConfigResponse:
+    async def get_active_configuration(self) -> ConfigResponse:
         """
         Get the currently active configuration.
 
@@ -121,17 +137,22 @@ class ConfigService:
         Raises:
             NotFoundError: If no active configuration exists
         """
-        config = self.db.query(Configuration).filter(
-            Configuration.is_active == True
-        ).first()
+        if self.is_async:
+            stmt = select(Configuration).filter(Configuration.is_active == True)
+            result = await self.db.execute(stmt)
+            config = result.scalar_one_or_none()
+        else:
+            config = self.db.query(Configuration).filter(
+                Configuration.is_active == True
+            ).first()
 
         if not config:
             # Create default configuration if none exists
-            return self.create_default_configuration()
+            return await self.create_default_configuration()
 
         return self._to_response(config)
 
-    def update_configuration(
+    async def update_configuration(
         self,
         config_id: str,
         update_data: ConfigUpdate
@@ -149,9 +170,14 @@ class ConfigService:
         Raises:
             NotFoundError: If configuration not found
         """
-        config = self.db.query(Configuration).filter(
-            Configuration.id == config_id
-        ).first()
+        if self.is_async:
+            stmt = select(Configuration).filter(Configuration.id == config_id)
+            result = await self.db.execute(stmt)
+            config = result.scalar_one_or_none()
+        else:
+            config = self.db.query(Configuration).filter(
+                Configuration.id == config_id
+            ).first()
 
         if not config:
             raise NotFoundError(f"Configuration '{config_id}' not found")
@@ -160,7 +186,7 @@ class ConfigService:
         update_dict = update_data.model_dump(exclude_unset=True)
 
         if 'is_active' in update_dict and update_dict['is_active']:
-            self._deactivate_all_configs()
+            await self._deactivate_all_configs()
 
         for field, value in update_dict.items():
             if field == 'category_overrides':
@@ -171,12 +197,16 @@ class ConfigService:
 
         config.updated_at = datetime.utcnow()
 
-        self.db.commit()
-        self.db.refresh(config)
+        if self.is_async:
+            await self.db.commit()
+            await self.db.refresh(config)
+        else:
+            self.db.commit()
+            self.db.refresh(config)
 
         return self._to_response(config)
 
-    def delete_configuration(self, config_id: str) -> None:
+    async def delete_configuration(self, config_id: str) -> None:
         """
         Delete a configuration.
 
@@ -187,9 +217,14 @@ class ConfigService:
             NotFoundError: If configuration not found
             ConflictError: If trying to delete active configuration
         """
-        config = self.db.query(Configuration).filter(
-            Configuration.id == config_id
-        ).first()
+        if self.is_async:
+            stmt = select(Configuration).filter(Configuration.id == config_id)
+            result = await self.db.execute(stmt)
+            config = result.scalar_one_or_none()
+        else:
+            config = self.db.query(Configuration).filter(
+                Configuration.id == config_id
+            ).first()
 
         if not config:
             raise NotFoundError(f"Configuration '{config_id}' not found")
@@ -198,9 +233,12 @@ class ConfigService:
             raise ConflictError("Cannot delete active configuration")
 
         self.db.delete(config)
-        self.db.commit()
+        if self.is_async:
+            await self.db.commit()
+        else:
+            self.db.commit()
 
-    def list_configurations(
+    async def list_configurations(
         self,
         skip: int = 0,
         limit: int = 100
@@ -215,10 +253,16 @@ class ConfigService:
         Returns:
             List of configurations
         """
-        configs = self.db.query(Configuration).offset(skip).limit(limit).all()
+        if self.is_async:
+            stmt = select(Configuration).offset(skip).limit(limit)
+            result = await self.db.execute(stmt)
+            configs = result.scalars().all()
+        else:
+            configs = self.db.query(Configuration).offset(skip).limit(limit).all()
+
         return [self._to_response(config) for config in configs]
 
-    def get_effective_config(
+    async def get_effective_config(
         self,
         category_id: Optional[int] = None,
         config_id: Optional[str] = None
@@ -237,9 +281,9 @@ class ConfigService:
         """
         # Get base configuration
         if config_id:
-            base_config = self.get_configuration(config_id)
+            base_config = await self.get_configuration(config_id)
         else:
-            base_config = self.get_active_configuration()
+            base_config = await self.get_active_configuration()
 
         # Start with base values
         effective_fees = FeeConfig(**base_config.fees.model_dump())
@@ -271,7 +315,7 @@ class ConfigService:
             applied_overrides=applied_overrides
         )
 
-    def create_default_configuration(self) -> ConfigResponse:
+    async def create_default_configuration(self) -> ConfigResponse:
         """
         Create a default configuration if none exists.
 
@@ -284,11 +328,18 @@ class ConfigService:
             is_active=True
         )
 
-        return self.create_configuration(default_config)
+        return await self.create_configuration(default_config)
 
-    def _deactivate_all_configs(self) -> None:
+    async def _deactivate_all_configs(self) -> None:
         """Deactivate all configurations."""
-        self.db.query(Configuration).update({'is_active': False})
+        if self.is_async:
+            from sqlalchemy import update
+            stmt = update(Configuration).values(is_active=False)
+            await self.db.execute(stmt)
+            await self.db.commit()
+        else:
+            self.db.query(Configuration).update({'is_active': False})
+            self.db.commit()
 
     def _update_category_overrides(
         self,

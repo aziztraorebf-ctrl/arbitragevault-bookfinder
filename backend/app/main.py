@@ -19,7 +19,7 @@ except ImportError:
     MCP_AVAILABLE = False
 
 from app.api.v1.routers import auth, health, analyses, batches, keepa, config, autosourcing, autoscheduler, views
-from app.api.v1.endpoints import products
+from app.api.v1.endpoints import products, niches, niches
 from app.routers import stock_estimate, strategic_views, niche_discovery, bookmarks
 from app.core.cors import configure_cors
 from app.core.db import lifespan
@@ -79,6 +79,8 @@ app.include_router(analyses.router, prefix="/api/v1/analyses", tags=["Analyses"]
 app.include_router(batches.router, prefix="/api/v1/batches", tags=["Batches"])
 app.include_router(keepa.router, prefix="/api/v1/keepa", tags=["Keepa"])
 app.include_router(products.router, prefix="/api/v1/products", tags=["Product Discovery"])
+app.include_router(niches.router, prefix="/api/v1/niches", tags=["Niche Discovery"])
+app.include_router(niches.router, prefix="/api/v1/niches", tags=["Niche Discovery"])
 app.include_router(config.router, prefix="/api/v1", tags=["Configuration"])
 app.include_router(views.router, prefix="/api/v1", tags=["Views"])
 app.include_router(autosourcing.router, prefix="/api/v1", tags=["AutoSourcing"])

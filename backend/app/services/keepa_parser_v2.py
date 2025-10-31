@@ -455,7 +455,9 @@ class KeepaBSRExtractor:
         if sales_rank_reference and sales_rank_reference != -1 and str(sales_rank_reference) in sales_ranks:
             rank_data = sales_ranks[str(sales_rank_reference)]
             if isinstance(rank_data, list) and len(rank_data) >= 2:
-                bsr = rank_data[1]  # BSR is second element
+                # salesRanks format: [timestamp1, bsr1, timestamp2, bsr2, ...]
+                # Last element is the most recent BSR
+                bsr = rank_data[-1]  # FIX: Read LAST element (current BSR), not second
                 if bsr and bsr != -1:
                     logger.info(f"ASIN {asin}: BSR {bsr} from salesRanks[{sales_rank_reference}]")
                     return int(bsr)
@@ -464,7 +466,7 @@ class KeepaBSRExtractor:
         if sales_ranks:
             for category_id, rank_data in sales_ranks.items():
                 if isinstance(rank_data, list) and len(rank_data) >= 2:
-                    bsr = rank_data[1]
+                    bsr = rank_data[-1]  # FIX: Read LAST element (current BSR)
                     if bsr and bsr != -1:
                         logger.info(f"ASIN {asin}: BSR {bsr} from salesRanks[{category_id}]")
                         return int(bsr)

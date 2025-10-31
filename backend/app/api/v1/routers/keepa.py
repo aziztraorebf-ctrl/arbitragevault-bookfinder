@@ -843,6 +843,7 @@ async def keepa_health_check(
                     "requests_made": keepa_service.metrics.requests_count
                 },
                 "cache": {
+                    "hit_rate": round(hit_rate, 2),  # Ajouté pour rétrocompatibilité
                     "hit_rate_percent": round(hit_rate, 2),
                     "total_entries": len(keepa_service._cache),
                     "hits": cache_stats.get('hits', 0),

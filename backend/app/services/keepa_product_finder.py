@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.config_service import ConfigService
-from app.services.keepa_service import KeepaService
+from app.services.keepa_service import KeepaService, ENDPOINT_COSTS
 from app.services.cache_service import CacheService
 from app.schemas.config import CategoryConfig
 
@@ -143,6 +143,13 @@ class KeepaProductFinderService:
         Cost: 50 tokens per request
         """
         try:
+            # ✅ PHASE 4.5: Pre-check budget for expensive bestsellers call (50 tokens)
+            # Note: _make_request() also checks, but this gives clearer error message
+            await self.keepa_service._ensure_sufficient_balance(
+                estimated_cost=ENDPOINT_COSTS.get("bestsellers", 50),
+                endpoint_name="bestsellers"
+            )
+
             # Call Keepa bestsellers endpoint
             endpoint = "/bestsellers"
             params = {
@@ -253,6 +260,13 @@ class KeepaProductFinderService:
             batch = asins[i:i+100]
 
             try:
+                # ✅ PHASE 4.5: Pre-check budget for batch product request
+                batch_cost = len(batch)  # 1 token per ASIN
+                await self.keepa_service._ensure_sufficient_balance(
+                    estimated_cost=batch_cost,
+                    endpoint_name=f"product_batch_{len(batch)}"
+                )
+
                 # Get product details via Keepa API
                 endpoint = "/product"
                 params = {
@@ -395,8 +409,16 @@ class KeepaProductFinderService:
         scoring_cache_hits = 0
         scoring_cache_misses = 0
 
-        # Get effective config
-        effective_config = await self.config_service.get_effective_config(category_id=category)
+        # Get effective config - use default if config service fails
+        try:
+            effective_config = await self.config_service.get_effective_config(category_id=category)
+        except Exception as e:
+            logger.warning(f"Config service failed, using defaults: {e}")
+            # Configuration par défaut simple
+            effective_config = {
+                "roi": {"target_pct_default": 30},
+                "fees": {"buffer_pct_default": 5}
+            }
 
         for product in products:
             try:

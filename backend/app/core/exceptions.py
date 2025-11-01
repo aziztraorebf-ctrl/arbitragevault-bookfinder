@@ -61,3 +61,17 @@ class ConflictError(AppException):
             message=message,
             details={"resource_type": resource_type, "resource_id": resource_id}
         )
+
+
+class InsufficientTokensError(AppException):
+    """Raised when Keepa API token balance is too low to proceed with request."""
+    def __init__(self, current_balance: int, required_tokens: int, endpoint: str = None):
+        super().__init__(
+            message=f"Insufficient Keepa tokens: {current_balance} available, {required_tokens} required",
+            details={
+                "current_balance": current_balance,
+                "required_tokens": required_tokens,
+                "endpoint": endpoint,
+                "deficit": required_tokens - current_balance
+            }
+        )

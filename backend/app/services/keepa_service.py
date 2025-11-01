@@ -14,6 +14,24 @@ from dataclasses import dataclass, field
 import httpx
 from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
+# Import our throttling system
+from .keepa_throttle import KeepaThrottle
+from ..core.exceptions import InsufficientTokensError
+
+# Keepa API endpoint costs (in tokens)
+ENDPOINT_COSTS = {
+    "product": 1,        # 1 token per ASIN (batch up to 100)
+    "bestsellers": 50,   # 50 tokens flat (returns up to 500k ASINs)
+    "deals": 5,          # 5 tokens per 150 deals
+    "search": 10,        # 10 tokens per result page
+    "category": 1,       # 1 token per category
+    "seller": 1,         # 1 token per seller
+}
+
+# Safety thresholds
+MIN_BALANCE_THRESHOLD = 10  # Refuse requests if balance < 10 tokens
+SAFETY_BUFFER = 20          # Warn if balance < 20 tokens
+
 # Circuit breaker states
 class CircuitState(Enum):
     CLOSED = "closed"
@@ -102,28 +120,44 @@ class KeepaService:
     def __init__(self, api_key: str, concurrency: int = 3):
         self.api_key = api_key
         self.concurrency = concurrency
-        
+
         # HTTP client with reasonable timeouts
         self.client = httpx.AsyncClient(
             timeout=httpx.Timeout(connect=10, read=30, write=10, pool=5),
             limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
         )
-        
+
         # Caching with different TTL by data type
         self._cache: Dict[str, CacheEntry] = {}
         self._cache_ttl = {
             'meta': timedelta(hours=24),      # Product metadata (stable)
-            'pricing': timedelta(minutes=30), # Prices (volatile)  
+            'pricing': timedelta(minutes=30), # Prices (volatile)
             'bsr': timedelta(minutes=60)      # BSR data (semi-volatile)
         }
-        
+
+        # Quick cache for repeated test calls (10 min TTL)
+        self._quick_cache: Dict[str, Tuple[Any, datetime]] = {}
+        self._quick_cache_ttl = timedelta(minutes=10)
+
         # Rate limiting and circuit breaker
         self._semaphore = asyncio.Semaphore(concurrency)
         self._circuit_breaker = CircuitBreaker()
-        
+
+        # Initialize throttle with production-optimized settings
+        self.throttle = KeepaThrottle(
+            tokens_per_minute=20,
+            burst_capacity=200,  # Increased for smooth AutoSourcing (5 niches × 40 products)
+            warning_threshold=80,  # 40% of burst capacity
+            critical_threshold=40   # 20% of burst capacity
+        )
+
+        # API balance tracking
+        self.last_api_balance_check = 0
+        self.api_balance_cache: Optional[int] = None
+
         # Metrics tracking
         self.metrics = TokenMetrics()
-        
+
         # Logging
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
@@ -137,7 +171,98 @@ class KeepaService:
     async def close(self):
         """Close HTTP client."""
         await self.client.aclose()
-    
+
+    async def check_api_balance(self) -> int:
+        """
+        Check current Keepa API token balance.
+        Uses cached value if checked within last 60 seconds.
+
+        Returns:
+            Current token balance from Keepa API
+        """
+        now = time.time()
+
+        # Use cached balance if recent (< 60 seconds old)
+        if self.api_balance_cache is not None and (now - self.last_api_balance_check) < 60:
+            return self.api_balance_cache
+
+        # Make lightweight request to get current balance
+        # Use /product with minimal params to minimize cost (1 token)
+        try:
+            response = await self.client.get(
+                f"{self.BASE_URL}/product",
+                params={
+                    "key": self.api_key,
+                    "domain": 1,
+                    "asin": "B00FLIJJSA"  # Known valid ASIN
+                }
+            )
+
+            # Extract tokens from response header
+            tokens_left = response.headers.get('tokens-left')
+            if tokens_left:
+                self.api_balance_cache = int(tokens_left)
+                self.last_api_balance_check = now
+                self.logger.info(f"✅ Keepa API balance: {self.api_balance_cache} tokens")
+                return self.api_balance_cache
+
+            # Fallback: assume sufficient balance if header missing
+            self.logger.warning("⚠️ Could not retrieve token balance from Keepa API header")
+            return MIN_BALANCE_THRESHOLD + 100  # Conservative fallback
+
+        except Exception as e:
+            self.logger.error(f"❌ Failed to check API balance: {e}")
+            # Fallback: assume sufficient balance to avoid blocking
+            return MIN_BALANCE_THRESHOLD + 100
+
+    async def _ensure_sufficient_balance(self, estimated_cost: int, endpoint_name: str = None):
+        """
+        Vérifie que le budget API Keepa est suffisant AVANT de faire la requête.
+
+        Args:
+            estimated_cost: Nombre de tokens estimé pour la requête
+            endpoint_name: Nom de l'endpoint pour logging/debugging
+
+        Raises:
+            InsufficientTokensError: Si balance < MIN_BALANCE_THRESHOLD
+        """
+        current_balance = await self.check_api_balance()
+
+        # Warn if balance is low but still above minimum
+        if current_balance < SAFETY_BUFFER:
+            self.logger.warning(
+                f"⚠️ Keepa token balance low: {current_balance} tokens "
+                f"(safety buffer: {SAFETY_BUFFER})"
+            )
+
+        # Block request if balance is critically low
+        if current_balance < MIN_BALANCE_THRESHOLD:
+            self.logger.error(
+                f"❌ Keepa token balance critically low: {current_balance} < {MIN_BALANCE_THRESHOLD}"
+            )
+            raise InsufficientTokensError(
+                current_balance=current_balance,
+                required_tokens=MIN_BALANCE_THRESHOLD,
+                endpoint=endpoint_name
+            )
+
+        # Block request if estimated cost exceeds available balance
+        if estimated_cost > current_balance:
+            self.logger.error(
+                f"❌ Insufficient tokens for {endpoint_name}: "
+                f"{estimated_cost} required, {current_balance} available"
+            )
+            raise InsufficientTokensError(
+                current_balance=current_balance,
+                required_tokens=estimated_cost,
+                endpoint=endpoint_name
+            )
+
+        self.logger.info(
+            f"✅ Balance check OK: {current_balance} tokens available "
+            f"(estimated cost: {estimated_cost}, endpoint: {endpoint_name})"
+        )
+
     def _get_cache_key(self, endpoint: str, params: Dict) -> str:
         """Generate cache key from endpoint and params."""
         # Sort params for consistent keys
@@ -178,21 +303,31 @@ class KeepaService:
         retry=retry_if_exception_type((httpx.TimeoutException, httpx.ConnectError))
     )
     async def _make_request(self, endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Make HTTP request with retry logic."""
-        
+        """Make HTTP request with retry logic and throttling."""
+
+        # Extract endpoint name for cost estimation
+        endpoint_name = endpoint.strip('/').split('?')[0]
+        estimated_cost = ENDPOINT_COSTS.get(endpoint_name, 1)  # Default to 1 token if unknown
+
+        # ✅ PHASE 4.5: Check API budget BEFORE making request
+        await self._ensure_sufficient_balance(estimated_cost, endpoint_name)
+
+        # Apply rate throttling BEFORE making request
+        await self.throttle.acquire(cost=1)
+
         # Check circuit breaker
         if not self._circuit_breaker.can_proceed():
             raise Exception(f"Circuit breaker OPEN - service unavailable")
-        
+
         # Add API key to params
         params_with_key = {**params, 'key': self.api_key}
-        
+
         url = f"{self.BASE_URL}{endpoint}"
-        
+
         try:
             start_time = time.time()
-            
-            async with self._semaphore:  # Throttling
+
+            async with self._semaphore:  # Concurrency limiting
                 response = await self.client.get(url, params=params_with_key)
             
             latency_ms = int((time.time() - start_time) * 1000)
@@ -246,19 +381,88 @@ class KeepaService:
             self.logger.error(f"Keepa API error: {e}")
             raise
     
+    async def check_api_balance(self) -> Optional[int]:
+        """
+        Check actual API token balance from Keepa.
+        Cached for 5 minutes to avoid excessive checks.
+        """
+        now = time.time()
+        if now - self.last_api_balance_check < 300:  # 5 min cache
+            return self.api_balance_cache
+
+        try:
+            # Direct request without throttle to check balance
+            params_with_key = {'key': self.api_key}
+            url = f"{self.BASE_URL}/token"
+
+            response = await self.client.get(url, params=params_with_key)
+
+            if response.status_code == 200:
+                data = response.json()
+                self.api_balance_cache = data.get('tokensLeft', 0)
+                self.last_api_balance_check = now
+
+                if self.api_balance_cache < 0:
+                    self.logger.error(
+                        f"🔴 Keepa API balance NEGATIVE: {self.api_balance_cache} tokens"
+                    )
+                    # Auto-pause if negative
+                    await asyncio.sleep(600)  # 10 min pause
+                elif self.api_balance_cache < 50:
+                    self.logger.warning(
+                        f"⚠️ Keepa API balance LOW: {self.api_balance_cache} tokens"
+                    )
+
+                return self.api_balance_cache
+        except Exception as e:
+            self.logger.warning(f"Could not check API balance: {e}")
+            return None
+
+    async def get_product_with_quick_cache(self, identifier: str) -> Optional[Dict[str, Any]]:
+        """
+        Get product with ultra-short cache for repeated test calls.
+        10 minute TTL for development testing.
+        """
+        cache_key = f"quick:product:{identifier}"
+
+        # Check quick cache
+        if cache_key in self._quick_cache:
+            cached_data, timestamp = self._quick_cache[cache_key]
+            if datetime.now() - timestamp < self._quick_cache_ttl:
+                self.logger.debug(f"💨 Quick cache HIT for {identifier}")
+                return cached_data
+
+        # Get from normal flow
+        result = await self.get_product(identifier)
+
+        if result:
+            # Store in quick cache
+            self._quick_cache[cache_key] = (result, datetime.now())
+
+            # Simple GC - clean if too many entries
+            if len(self._quick_cache) > 100:
+                cutoff = datetime.now() - self._quick_cache_ttl
+                self._quick_cache = {
+                    k: v for k, v in self._quick_cache.items()
+                    if v[1] > cutoff
+                }
+
+        return result
+
     async def health_check(self) -> Dict[str, Any]:
         """Check API health and get token status."""
         try:
-            # Use token-only endpoint to check health
-            data = await self._make_request('/token', {})
-            
-            tokens_left = data.get('tokensLeft', 0)
-            refill_in = data.get('refillIn', 0)  # minutes until refill
-            
+            # Check real API balance
+            balance = await self.check_api_balance()
+
+            # Use local throttle status too
+            local_tokens = self.throttle.available_tokens
+
             return {
-                "status": "healthy",
-                "tokens_left": tokens_left,
-                "refill_in_minutes": refill_in,
+                "status": "healthy" if balance and balance > 0 else "degraded",
+                "api_tokens_left": balance,
+                "local_tokens_available": local_tokens,
+                "throttle_healthy": self.throttle.is_healthy,
                 "circuit_breaker_state": self._circuit_breaker.state.value,
                 "requests_made": self.metrics.requests_count,
                 "cache_entries": len(self._cache)

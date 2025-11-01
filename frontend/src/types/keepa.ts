@@ -111,3 +111,13 @@ export interface IngestResponse {
   results: BatchResultItem[];
   trace_id: string;
 }
+
+// Phase 4.5: Keepa API Health/Balance
+export interface KeepaHealthResponse {
+  tokens: {
+    remaining: number;
+    refill_in_minutes: number;
+    total_used: number;
+    requests_made: number;
+  };
+}

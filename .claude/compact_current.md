@@ -39,11 +39,68 @@
 
 **Guide complet** : [.claude/SLASH_COMMANDS_GUIDE.md](./.claude/SLASH_COMMANDS_GUIDE.md)
 
+### 🚀 HOW TO USE THIS SYSTEM (CRITICAL!)
+
+**IMPORTANT: This is NOT automatic. You must do this at each session start.**
+
+#### À Chaque Nouvelle Session VS Code
+```
+1. Press Shift+P (Command Palette)
+2. Type: /load-context
+3. This loads compact_current.md + compact_master.md
+4. You'll see project context restored in 3-5 seconds
+```
+
+**Result**: You'll have full context of Phase 5 status, what's done, what's pending.
+
+#### During Your Session (Work Normally)
+- Code as usual
+- Git commit as normal (or use `/commit-phase` for auto-memory sync)
+- No special commands needed while working
+
+#### After Important Progress (Every 2-3 hours)
+```
+1. Press Shift+P
+2. Type: /update-compact
+3. System proposes context changes
+4. You review and confirm
+```
+
+**Result**: compact_current.md is updated with your progress
+
+#### At End of Session
+```
+1. Press Shift+P
+2. Type: /commit-phase
+3. System creates Git commit + updates CHANGELOG automatically
+```
+
+**Result**: All memory files synchronized with Git
+
+#### At End of Phase 5 (In ~2-3 weeks)
+```
+1. Press Shift+P
+2. Type: /new-phase
+3. System archives Phase 5 → compact_master.md
+4. Creates fresh Phase 6 in compact_current.md
+```
+
+**Result**: Full phase history preserved, ready for next phase
+
+---
+
+#### ⚠️ CRITICAL NOTES
+- **Nothing is automatic** - You must call `/load-context` at session start
+- **These 5 commands are in `.claude/slash-commands.json`** - Check there for full prompts
+- **This system prevents context loss** - Instead of rewriting everything each session
+- **Git is your source of truth** - All changes still committed to Git as usual
+
 ---
 
 ## 📝 CHANGELOG
 
 ### 2 Novembre 2025
+- 23:55 | ✅ **CONTEXT SYSTEM FINAL** - Commit 8bafd60 - Context Management System Complete
 - 23:50 | Création 5 Slash Commands + guide complet (.claude/slash-commands.json + SLASH_COMMANDS_GUIDE.md)
 - 23:45 | Validation plan Slash Commands par utilisateur (load-context, update-compact, new-phase, sync-plan, commit-phase)
 - 23:30 | Ajout sections QUICK REFERENCE + CHANGELOG + QUICK LINKS + COMPLETION CHECKLIST

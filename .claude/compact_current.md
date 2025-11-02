@@ -40,19 +40,28 @@
 
 **Guide complet** : [.claude/SLASH_COMMANDS_GUIDE.md](./.claude/SLASH_COMMANDS_GUIDE.md)
 
-### 🚀 HOW TO USE THIS SYSTEM (CRITICAL!)
+### 🚀 HOW TO USE THIS SYSTEM (NOW WORKING!)
 
-**IMPORTANT: This is NOT automatic. You must do this at each session start.**
+**✅ Real Claude Code Slash Commands - Official Anthropic Feature**
+
+Les 5 commands sont maintenant des **VRAIES slash commands Claude Code** dans `.claude/commands/`:
+- `/load-context` - Charge le contexte Phase 5
+- `/update-compact` - Propose mises à jour contexte
+- `/new-phase` - Archive Phase 5, crée Phase 6
+- `/sync-plan` - Valide cohérence des fichiers
+- `/commit-phase` - Git commit + sync memory
+
+Documentation officielle: https://docs.claude.com/en/docs/claude-code/slash-commands
 
 #### À Chaque Nouvelle Session VS Code
 ```
-1. Press Shift+P (Command Palette)
-2. Type: /load-context
-3. This loads compact_current.md + compact_master.md
-4. You'll see project context restored in 3-5 seconds
+1. Dans Claude Code, tape simplement: /load-context
+2. Claude reconnaît la command depuis .claude/commands/load-context.md
+3. Context est chargé automatiquement (3-5 sec)
+4. Tu vois QUICK REFERENCE avec status Phase 5
 ```
 
-**Result**: You'll have full context of Phase 5 status, what's done, what's pending.
+**Result**: Full context of Phase 5 status, what's done, what's pending - loaded instantly.
 
 #### During Your Session (Work Normally)
 - Code as usual

@@ -1,0 +1,64 @@
+{
+  "version": "1.0",
+  "description": "ArbitrageVault BookFinder - Slash Commands pour gestion Phase 5-6",
+  "commands": [
+    {
+      "name": "load-context",
+      "category": "context",
+      "description": "Charge les fichiers contexte depuis .claude/ (compact_current.md + compact_master.md)",
+      "icon": "📚",
+      "priority": "high",
+      "prompt": "Charge les fichiers .claude/compact_current.md et .claude/compact_master.md.\n\nLis-les complètement et résume en 3 phrases:\n1. Phase actuelle + statut global\n2. Principales tâches en cours\n3. Bloqueurs éventuels\n\nCela établit le contexte pour notre conversation.",
+      "keywords": ["context", "load", "memory", "charge"],
+      "usage": "À utiliser au début de chaque nouvelle session pour restaurer le contexte du projet"
+    },
+    {
+      "name": "update-compact",
+      "category": "memory",
+      "description": "Met à jour compact_current.md avec le progrès (propose changements pour validation)",
+      "icon": "📝",
+      "priority": "high",
+      "prompt": "Basé sur notre conversation actuelle, qu'est-ce qui a changé depuis le dernier /load-context?\n\nPropose 3-5 changements pour .claude/compact_current.md:\n- Nouvelles tâches complétées (déplacer de 🔧 En cours à ✅ Fait)\n- Statuts à corriger (phase, blockers, dépendances)\n- Prochaines étapes révisées\n- Mise à jour QUICK REFERENCE si applicable\n\nFormat de proposition:\n### Changement X\nFichier: .claude/compact_current.md\nSection: [Section Name]\nAvant: [texte actuel]\nAprès: [texte proposé]\nRaison: [pourquoi ce changement]\n\nAfter proposing, wait for user validation with 'OK' or specific edits before writing the file.",
+      "keywords": ["update", "progress", "compact", "sync", "current"],
+      "usage": "Après avoir réalisé des tâches importantes, propose les mises à jour du fichier contexte"
+    },
+    {
+      "name": "new-phase",
+      "category": "phase-management",
+      "description": "Archive la phase actuelle et crée une nouvelle phase (CONFIRMATION REQUISE)",
+      "icon": "🎯",
+      "priority": "critical",
+      "prompt": "⚠️ ATTENTION: Cette commande est destructive et nécessite confirmation.\n\nÉtape 1 - VÉRIFICATION:\n- Lis .claude/compact_current.md complètement\n- Identifie: numéro phase actuelle, date dernière update, nombre items CHECKLIST\n- Affiche résumé:\n  \"ARCHIVER Phase X (updated DD Mois YYYY, NN items)?\n   ✅ Fait: [N items]\n   🔧 En cours: [N items]\n   🧪 À tester: [N items]\n   🚀 Prochaines étapes: [N items]\"\n\nÉtape 2 - DEMANDER CONFIRMATION:\n- \"Confirmer archivage: OUI / NON\"\n- Attendre réponse explicite \"OUI\" (en majuscules)\n\nÉtape 3 - SI OUI:\n- Créer backup: .claude/compact_current.backup-phaseX-DDMMMYYYY\n- Archiver contenu phase X dans .claude/compact_master.md avec en-tête:\n  \"## 📦 Phase X - Archivée le DD Novembre 2025\"\n- Créer .claude/compact_current.md vierge avec structure Phase X+1:\n  \"# ArbitrageVault BookFinder - Phase X+1 - [Titre]\n   \n   🎯 Objectifs\n   - [À compléter]\n   \n   ✅ Fait\n   - [À compléter]\n   \n   🔧 En cours\n   - [À compléter]\n   \n   🧪 À tester\n   - [À compléter]\n   \n   🚀 Prochaines étapes\n   - [À compléter]\n   \n   ---\n   \n   ⚡ QUICK REFERENCE\n   | Métrique | Valeur |\n   |----------|--------|\n   | Phase | Phase X+1 |\n   | Statut | 🔜 En cours |\"\n- Afficher confirmation: \"✅ Phase X archivée, Phase X+1 créée\"\n\nÉtape 4 - SI NON:\n- Annuler sans modification\n- Afficher: \"Archivage annulé\"",
+      "keywords": ["new-phase", "archive", "phase", "next"],
+      "usage": "À la fin d'une phase majeure pour archiver et démarrer la suivante"
+    },
+    {
+      "name": "sync-plan",
+      "category": "validation",
+      "description": "Valide cohérence entre compact_master.md et compact_current.md",
+      "icon": "🔄",
+      "priority": "medium",
+      "prompt": "Lis .claude/compact_master.md et .claude/compact_current.md.\n\nValide ces points clés:\n\n✓ Validation 1: Phases complètes\n  - Toutes phases 1-6 documentées dans master? ✓/✗\n  - Phase actuelle (current) cohérente avec master? ✓/✗\n\n✓ Validation 2: Cohérence chronologique\n  - Pas de dates en désordre? ✓/✗\n  - Dernière update in current = plus récente? ✓/✗\n\n✓ Validation 3: Intégrité données\n  - Pas de TODO orphelins? ✓/✗\n  - Toutes références (links) valides? ✓/✗\n\n✓ Validation 4: Structure\n  - QUICK REFERENCE à jour? ✓/✗\n  - CHANGELOG synchronisé? ✓/✗\n\nSi problème trouvé:\n  - Détailler le problème (3-4 lignes max)\n  - Proposer correction\n  - Demander validation avant correction\n\nSi tout OK:\n  \"✅ Compact files synchronisés - Pas de divergences détectées\"",
+      "keywords": ["sync", "plan", "validate", "cohérence"],
+      "usage": "Hebdomadairement pour vérifier la cohérence entre les fichiers contexte"
+    },
+    {
+      "name": "commit-phase",
+      "category": "git",
+      "description": "Crée commit Git + met à jour compact_current.md avec message",
+      "icon": "💾",
+      "priority": "high",
+      "prompt": "Crée un commit Git cohérent et synchronise compact_current.md.\n\nÉtape 1 - PRÉPARATION:\n- Exécute: git status (affiche fichiers modifiés)\n- Affiche résumé: \"X files modified, Y files added\"\n\nÉtape 2 - PROPOSITION COMMIT:\n- Basé sur les fichiers modifiés, propose message commit:\n  Format: feat(phase-X-dayY): [Description courte 50 chars max]\n           \n           [Corps optionnel détaillant les changements]\n  \n  Exemples valides:\n  - \"feat(phase-5-day1): MesNiches UI update + Netlify deploy\"\n  - \"fix(phase-4): BSR extraction bug correction\"\n  - \"chore(cleanup): Remove debug scripts post-Phase 4\"\n\n- Affiche: \"Message proposé: [message]\"\n\nÉtape 3 - CONFIRMATION MESSAGE:\n- \"Accepter ce message? OUI / Proposer différent\"\n- Si différent: écouter utilisateur et reformuler\n\nÉtape 4 - EXÉCUTION COMMIT:\n- Si OUI: exécute git add . && git commit -m \"[message]\"\n- Affiche: \"✅ Commit [hash-court] créé\"\n\nÉtape 5 - SYNC MEMORY:\n- Met à jour .claude/compact_current.md CHANGELOG:\n  \"### [Jour Mois Année]\n   - HH:MM | Commit [hash-court] - [message]\"\n- Ajoute entrée QUICK REFERENCE si applicable (version, statut)\n\nÉtape 6 - CONFIRMATION FINALE:\n- Affiche: git log --oneline -3 (derniers 3 commits)\n- \"✅ Memory synchronisée, commit prêt pour push\"",
+      "keywords": ["commit", "git", "save", "phase"],
+      "usage": "À la fin d'une session de travail important pour sauvegarder progrès"
+    }
+  ],
+  "config": {
+    "auto_load_context": false,
+    "backup_enabled": true,
+    "backup_location": ".claude/backups/",
+    "validation_required": ["new-phase"],
+    "require_confirmation": ["new-phase", "commit-phase"],
+    "max_retries": 3
+  }
+}

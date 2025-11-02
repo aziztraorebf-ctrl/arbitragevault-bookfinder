@@ -66,7 +66,7 @@ export default function MesNiches() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">📚 Mes Niches</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Mes Niches</h1>
             <p className="text-gray-500 mt-1">
               Analyse optimisée ROI pour vos niches sauvegardées
             </p>
@@ -112,7 +112,7 @@ export default function MesNiches() {
               disabled={loading}
               className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
             >
-              {loading ? 'Analyse en cours...' : '🔍 Analyser avec scoring ROI prioritaire'}
+              {loading ? 'Analyse en cours...' : 'Analyser avec scoring ROI prioritaire'}
             </button>
             <button
               onClick={handleClear}
@@ -127,7 +127,7 @@ export default function MesNiches() {
         {/* Error Display */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800 text-sm">❌ {error}</p>
+            <p className="text-red-800 text-sm">Erreur: {error}</p>
           </div>
         )}
 
@@ -142,7 +142,7 @@ export default function MesNiches() {
         {/* Info Footer */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h3 className="text-sm font-semibold text-blue-900 mb-2">
-            💡 Scoring Mes Niches (Phase 2)
+            Info: Scoring Mes Niches (Phase 2)
           </h3>
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• Priorité <strong>ROI (poids 0.6)</strong> pour maximiser rentabilité</li>

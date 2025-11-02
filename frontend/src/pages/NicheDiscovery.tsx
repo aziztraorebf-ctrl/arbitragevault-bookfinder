@@ -84,7 +84,7 @@ export default function NicheDiscovery() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              🔍 Niche Discovery
+              Niche Discovery
             </h1>
             <p className="text-gray-600 text-lg">
               Découvrez des niches rentables en un clic ou personnalisez votre recherche
@@ -120,9 +120,8 @@ export default function NicheDiscovery() {
         {/* Results: Niches Cards */}
         {viewMode === 'niches' && niches.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <span>✨</span>
-              <span>Niches Découvertes</span>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Niches Découvertes
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {niches.map((niche) => (
@@ -149,7 +148,7 @@ export default function NicheDiscovery() {
                   }}
                   className="px-4 py-2 bg-white text-purple-600 border border-purple-300 rounded-lg font-medium hover:bg-purple-50 transition-colors flex items-center gap-2"
                 >
-                  <span>←</span>
+                  <span>&larr;</span>
                   <span>Retour aux niches</span>
                 </button>
               </div>
@@ -187,7 +186,6 @@ export default function NicheDiscovery() {
           niches.length === 0 &&
           products.length === 0 && (
             <div className="text-center py-12 bg-white rounded-xl shadow-md border border-gray-200">
-              <div className="text-6xl mb-4">🎯</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
                 Prêt à découvrir des niches rentables ?
               </h3>

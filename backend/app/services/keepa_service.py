@@ -313,7 +313,7 @@ class KeepaService:
         await self._ensure_sufficient_balance(estimated_cost, endpoint_name)
 
         # Apply rate throttling BEFORE making request
-        await self.throttle.acquire(cost=1)
+        await self.throttle.acquire(cost=estimated_cost)
 
         # Check circuit breaker
         if not self._circuit_breaker.can_proceed():

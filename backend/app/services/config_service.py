@@ -279,41 +279,85 @@ class ConfigService:
         Returns:
             Effective configuration with overrides applied
         """
-        # Get base configuration
-        if config_id:
-            base_config = await self.get_configuration(config_id)
-        else:
-            base_config = await self.get_active_configuration()
+        try:
+            # Get base configuration
+            if config_id:
+                base_config = await self.get_configuration(config_id)
+            else:
+                base_config = await self.get_active_configuration()
 
-        # Start with base values
-        effective_fees = FeeConfig(**base_config.fees.model_dump())
-        effective_roi = ROIConfig(**base_config.roi.model_dump())
-        effective_velocity = VelocityConfig(**base_config.velocity.model_dump())
-        applied_overrides = []
+            # Start with base values
+            effective_fees = FeeConfig(**base_config.fees.model_dump())
+            effective_roi = ROIConfig(**base_config.roi.model_dump())
+            effective_velocity = VelocityConfig(**base_config.velocity.model_dump())
+            applied_overrides = []
 
-        # Apply category overrides if category specified
-        if category_id:
-            for override in base_config.category_overrides:
-                if override.category_id == category_id:
-                    if override.fees:
-                        effective_fees = FeeConfig(**override.fees.model_dump())
-                        applied_overrides.append("fees")
-                    if override.roi:
-                        effective_roi = ROIConfig(**override.roi.model_dump())
-                        applied_overrides.append("roi")
-                    if override.velocity:
-                        effective_velocity = VelocityConfig(**override.velocity.model_dump())
-                        applied_overrides.append("velocity")
-                    break
+            # Apply category overrides if category specified
+            if category_id:
+                for override in base_config.category_overrides:
+                    if override.category_id == category_id:
+                        if override.fees:
+                            effective_fees = FeeConfig(**override.fees.model_dump())
+                            applied_overrides.append("fees")
+                        if override.roi:
+                            effective_roi = ROIConfig(**override.roi.model_dump())
+                            applied_overrides.append("roi")
+                        if override.velocity:
+                            effective_velocity = VelocityConfig(**override.velocity.model_dump())
+                            applied_overrides.append("velocity")
+                        break
 
-        return EffectiveConfig(
-            base_config=base_config,
-            category_id=category_id,
-            effective_fees=effective_fees,
-            effective_roi=effective_roi,
-            effective_velocity=effective_velocity,
-            applied_overrides=applied_overrides
-        )
+            return EffectiveConfig(
+                base_config=base_config,
+                category_id=category_id,
+                effective_fees=effective_fees,
+                effective_roi=effective_roi,
+                effective_velocity=effective_velocity,
+                applied_overrides=applied_overrides
+            )
+        except Exception:
+            # Rollback failed transaction to prevent InFailedSqlTransaction cascade
+            # This is critical for Windows + PostgreSQL to allow subsequent queries
+            if self.is_async:
+                await self.db.rollback()
+            else:
+                self.db.rollback()
+
+            # Return default config if table doesn't exist or any other error
+            # This is a temporary fix for Phase 4 - configurations table will be added later
+            from app.schemas.config import ConfigResponse
+            from datetime import datetime
+
+            default_fees = FeeConfig()
+            default_roi = ROIConfig()
+            default_velocity = VelocityConfig()
+            default_data_quality = DataQualityThresholds()
+            default_product_finder = ProductFinderConfig()
+
+            # Create a minimal default config response
+            default_config = ConfigResponse(
+                id="default",
+                name="Default Configuration",
+                description="Fallback configuration when table is missing",
+                fees=default_fees,
+                roi=default_roi,
+                velocity=default_velocity,
+                data_quality=default_data_quality,
+                product_finder=default_product_finder,
+                category_overrides=[],
+                is_active=True,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+
+            return EffectiveConfig(
+                base_config=default_config,
+                category_id=category_id,
+                effective_fees=default_fees,
+                effective_roi=default_roi,
+                effective_velocity=default_velocity,
+                applied_overrides=[]
+            )
 
     async def create_default_configuration(self) -> ConfigResponse:
         """

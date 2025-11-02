@@ -143,7 +143,7 @@ class KeepaProductFinderService:
         Cost: 50 tokens per request
         """
         try:
-            # ✅ PHASE 4.5: Pre-check budget for expensive bestsellers call (50 tokens)
+            # [OK] PHASE 4.5: Pre-check budget for expensive bestsellers call (50 tokens)
             # Note: _make_request() also checks, but this gives clearer error message
             await self.keepa_service._ensure_sufficient_balance(
                 estimated_cost=ENDPOINT_COSTS.get("bestsellers", 50),
@@ -260,7 +260,7 @@ class KeepaProductFinderService:
             batch = asins[i:i+100]
 
             try:
-                # ✅ PHASE 4.5: Pre-check budget for batch product request
+                # [OK] PHASE 4.5: Pre-check budget for batch product request
                 batch_cost = len(batch)  # 1 token per ASIN
                 await self.keepa_service._ensure_sufficient_balance(
                     estimated_cost=batch_cost,

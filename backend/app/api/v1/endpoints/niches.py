@@ -47,9 +47,9 @@ async def discover_niches_auto(
         "niches": [
           {
             "id": "tech-books-python",
-            "name": "📚 Livres Python Débutants $20-50",
+            "name": "[TECH] Python Books Beginners $20-50",
             "description": "...",
-            "icon": "🐍",
+            "icon": "PYTHON",
             "products_found": 7,
             "avg_roi": 35.2,
             "avg_velocity": 68.5,
@@ -99,7 +99,19 @@ async def discover_niches_auto(
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        import sys
+
+        # Log full traceback to file
+        error_log_path = "logs/niche_endpoint_error.log"
+        with open(error_log_path, "w", encoding="utf-8") as f:
+            f.write(f"Exception: {type(e).__name__}\n")
+            f.write(f"Message: {str(e)}\n\n")
+            f.write(f"Full traceback:\n")
+            traceback.print_exc(file=f)
+
+        # Return safe ASCII-only error
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {repr(str(e)[:200])}")
 
 
 @router.get("/health")

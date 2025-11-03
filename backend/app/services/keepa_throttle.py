@@ -136,6 +136,20 @@ class KeepaThrottle:
         self.total_wait_time = 0.0
         logger.info("📊 Throttle statistics reset")
 
+    def set_tokens(self, value: int):
+        """
+        Synchronize local token count with external balance.
+        Used to sync throttle state with actual Keepa API balance.
+
+        Args:
+            value: Token count from external source (Keepa API balance)
+        """
+        self.tokens = float(max(0, value))  # Ensure non-negative
+        self.last_refill = time.monotonic()
+        logger.info(
+            f"Throttle synchronized with external balance: {self.tokens:.0f} tokens"
+        )
+
     async def wait_for_tokens(self, required: int = 50):
         """
         Wait until we have a specific number of tokens available.

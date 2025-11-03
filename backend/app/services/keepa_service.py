@@ -206,14 +206,25 @@ class KeepaService:
                 self.logger.info(f"✅ Keepa API balance: {self.api_balance_cache} tokens")
                 return self.api_balance_cache
 
-            # Fallback: assume sufficient balance if header missing
-            self.logger.warning("⚠️ Could not retrieve token balance from Keepa API header")
-            return MIN_BALANCE_THRESHOLD + 100  # Conservative fallback
+            # No fallback - if header missing, raise error
+            self.logger.error("Cannot verify Keepa balance (missing 'tokens-left' header)")
+            raise InsufficientTokensError(
+                current_balance=0,
+                required=1,
+                message="Cannot verify Keepa API balance - missing response header"
+            )
 
+        except InsufficientTokensError:
+            # Re-raise balance check errors
+            raise
         except Exception as e:
+            # No fallback - if check fails, raise error
             self.logger.error(f"❌ Failed to check API balance: {e}")
-            # Fallback: assume sufficient balance to avoid blocking
-            return MIN_BALANCE_THRESHOLD + 100
+            raise InsufficientTokensError(
+                current_balance=0,
+                required=1,
+                message=f"Cannot verify Keepa API balance: {str(e)}"
+            )
 
     async def _ensure_sufficient_balance(self, estimated_cost: int, endpoint_name: str = None):
         """
@@ -227,6 +238,9 @@ class KeepaService:
             InsufficientTokensError: Si balance < MIN_BALANCE_THRESHOLD
         """
         current_balance = await self.check_api_balance()
+
+        # BUG FIX #3: Synchronize local throttle with actual Keepa balance
+        self.throttle.set_tokens(current_balance)
 
         # Warn if balance is low but still above minimum
         if current_balance < SAFETY_BUFFER:

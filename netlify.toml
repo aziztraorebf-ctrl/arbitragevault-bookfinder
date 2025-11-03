@@ -1,13 +1,37 @@
+# Netlify Configuration for ArbitrageVault BookFinder Frontend
+
 [build]
+  # Build directory - change to frontend folder
   base = "frontend"
-  publish = "dist"
+  # Build command - compile TypeScript and bundle with Vite
   command = "npm run build"
+  # Publish directory - Vite outputs to dist/
+  publish = "dist"
 
-[build.environment]
-  NODE_VERSION = "20"
+[env.production]
+  # Production backend URL - Render service
+  VITE_API_URL = "https://arbitragevault-bookfinder-backend.onrender.com"
+  VITE_NODE_ENV = "production"
 
-# SPA redirect for React Router
+[env.development]
+  # Development backend URL for preview deployments
+  VITE_API_URL = "https://arbitragevault-bookfinder-backend.onrender.com"
+  VITE_NODE_ENV = "development"
+
+# Critical for React Router / SPA
+# All routes should fall back to index.html to allow client-side routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Allow requests to Render backend
+    Access-Control-Allow-Origin = "https://arbitragevault-bookfinder-backend.onrender.com"

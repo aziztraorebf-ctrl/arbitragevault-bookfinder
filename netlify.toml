@@ -15,6 +15,7 @@
 
 [env.development]
   # Development backend URL for preview deployments
+  # Note: Currently points to production backend (no staging environment yet)
   VITE_API_URL = "https://arbitragevault-bookfinder-backend.onrender.com"
   VITE_NODE_ENV = "development"
 
@@ -33,5 +34,3 @@
     X-Frame-Options = "SAMEORIGIN"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    # Allow requests to Render backend
-    Access-Control-Allow-Origin = "https://arbitragevault-bookfinder-backend.onrender.com"

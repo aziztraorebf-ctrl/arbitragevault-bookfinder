@@ -19,7 +19,7 @@ from ..schemas.bookmark import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/api/bookmarks",
+    prefix="/bookmarks",
     tags=["Bookmarks"],
     responses={404: {"description": "Not found"}}
 )

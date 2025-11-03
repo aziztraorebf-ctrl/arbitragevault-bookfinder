@@ -96,7 +96,7 @@ app.include_router(autoscheduler.router, prefix="/api/v1", tags=["AutoScheduler 
 app.include_router(stock_estimate.router, tags=["Stock Estimate"])
 app.include_router(strategic_views.router, tags=["Strategic Views"])
 app.include_router(niche_discovery.router, tags=["Niche Discovery"])
-app.include_router(bookmarks.router, tags=["Bookmarks"])
+app.include_router(bookmarks.router, prefix="/api/v1", tags=["Bookmarks"])
 
 # === MCP INTEGRATION ===
 # Mount FastAPI-MCP server if available (optional for production)

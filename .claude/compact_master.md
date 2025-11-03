@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Mémoire Globale Projet
 
-**Dernière mise à jour** : 1 Novembre 2025
-**Version** : 1.0
-**Statut** : Phases 1-4 complétées, Phase 5 en préparation
+**Dernière mise à jour** : 3 Novembre 2025
+**Version** : 2.0
+**Statut** : Phases 1-5 complétées, Phase 6 en cours (Tests E2E & Debugging)
 
 ---
 
@@ -130,6 +130,71 @@
 
 **Commit final** : `093692e` (1 Nov 2025)
 **Documentation** : KNOWN_ISSUES.md créé
+
+### ✅ Phase 5 : Niche Bookmarks & Re-Run Feature (COMPLÉTÉ)
+**Durée** : ~6 heures (2-3 Nov 2025)
+**Objectif** : Sauvegarder niches découvertes et relancer analyses avec données fraîches
+
+**Livrables majeurs** :
+- Backend bookmarks endpoints (CRUD niches sauvegardées)
+- Database migration (table `saved_niches`)
+- Frontend React Query hooks pour bookmarks
+- Bouton "Save Niche" avec toast notifications
+- Page "Mes Niches" avec gestion complète (CREATE, READ, UPDATE, DELETE)
+- Re-run analysis avec `force_refresh` parameter
+- Strategic views avec target pricing
+
+**6 Commits Phase 5** :
+1. `7b92832` - Backend bookmarks endpoints + migration
+2. `92b9e81` - TypeScript service layer + React Query
+3. `1f010b1` - Save button + Toaster notifications
+4. `17b8710` - Mes Niches page (CRUD)
+5. `2f4aec2` - Frontend re-run implementation
+6. `00ff975` - Backend force_refresh support
+
+**2 Render Deployments (LIVE)** :
+- `dep-d440g3gdl3ps73f9nivg` - Bookmarks endpoints
+- `dep-d440qe2dbo4c73br2u3g` - force_refresh support
+
+**Code Metrics** :
+- Total lines : 1328
+- Files created : 11
+- Files modified : 6
+- TypeScript errors : 0
+- Database migrations : 1 applied
+
+**Documentation créée** :
+- `phase5_niche_bookmarks_completion_report.md` (508 lignes)
+- `niche_bookmarks_e2e_test_plan.md` (296 lignes)
+
+### 🟡 Phase 6 : Tests E2E & Debugging (EN COURS)
+**Durée** : En cours (3 Nov 2025)
+**Objectif** : Valider Phase 5 avec tests automatisés Playwright et corriger bugs
+
+**Infrastructure nouvelle** :
+- Playwright skill installée en standalone mode (`.claude/skills/playwright-skill/`)
+- Headless browser automation pour E2E testing
+- API response capturing et console error logging
+- Screenshots pour debug visuel
+
+**Tests E2E Plan** (5 scenarios) :
+1. **Surprise Me Flow** : Button click → 3+ niches appear ⏱️ RUNNING (bug detected)
+2. **Keepa Balance** : Display tokens with color coding ⏳ PENDING
+3. **Save Niche** : Toast notification + DB insert ⏳ PENDING
+4. **Mes Niches CRUD** : List, update, delete niches ⏳ PENDING
+5. **Re-run with Force Refresh** : Fresh Keepa data ⏳ PENDING
+
+**Bug #1 Identified** : "Surprise Me Returns 0 Niches
+- **Detection** : Playwright test + API response capture
+- **Symptom** : API returns `{niches: [], niches_count: 0}` (200 OK)
+- **Root Cause** : `discover_curated_niches()` filters rejecting ALL templates
+- **Suspected Filters** : ROI >= 10%, Velocity >= 20, Min 1 product
+- **Status** : Under investigation (logging added to identify failing filters)
+- **ETA Fix** : 30-60 minutes
+
+**Playwright Tests Created** :
+- `test-surprise-me.js` : Basic flow test
+- `test-surprise-debug.js` : Advanced debugging with API capture
 
 ---
 
@@ -321,23 +386,19 @@ ENVIRONMENT=production
 
 ## 🎯 Objectifs Phases Futures
 
-### Phase 5 : Frontend MVP (À VENIR)
-**Durée estimée** : 2-3 semaines
+### Phase 6 : Tests E2E & Debugging (EN COURS)
+Voir section Phase 6 ci-dessus pour détails en cours.
+
+### Phase 7 : Netlify Frontend Deployment & Optimization (À VENIR)
+**Durée estimée** : 1-2 jours
 
 **Objectifs** :
-- Dashboard overview (métriques clés)
-- Page "Mes Niches" (saved searches)
-- Config Manager (edit business rules)
-- AutoSourcing Results Viewer
-- Déploiement Netlify production
+- Deploy frontend sur Netlify production
+- Environment switching (local, staging, production)
+- Error boundary + error tracking (Sentry)
+- Performance optimization (lazy loading, code splitting)
 
-**Features prioritaires** :
-- Real-time Keepa balance display ✅ (déjà fait Phase 4.5.1)
-- Product cards avec ROI/vélocité
-- Filters par score/catégorie
-- User actions (favorite, ignore, to_buy)
-
-### Phase 6 : AutoSourcing Automation (À VENIR)
+### Phase 8 : AutoSourcing Automation (À VENIR)
 **Durée estimée** : 3-4 semaines
 
 **Objectifs** :
@@ -345,6 +406,7 @@ ENVIRONMENT=production
 - Profiles discovery réutilisables
 - Notifications opportunités
 - Export résultats CSV/PDF
+- Scheduler module avec pause/resume
 
 ---
 
@@ -361,6 +423,6 @@ ENVIRONMENT=production
 
 ---
 
-**Version** : 1.0
-**Dernière révision** : 1 Novembre 2025
-**Statut** : Phases 1-4 complétées, prêt pour Phase 5
+**Version** : 2.0
+**Dernière révision** : 3 Novembre 2025
+**Statut** : Phases 1-5 complétées, Phase 6 en cours (Tests E2E & Debugging)

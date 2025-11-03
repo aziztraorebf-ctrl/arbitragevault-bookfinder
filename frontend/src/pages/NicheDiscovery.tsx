@@ -3,7 +3,8 @@
  * One-click niche discovery with curated templates + manual search
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useNicheDiscoveryState } from '../hooks/useNicheDiscovery'
 import { CacheIndicator } from '../components/niche-discovery/CacheIndicator'
 import { AutoDiscoveryHero } from '../components/niche-discovery/AutoDiscoveryHero'
@@ -11,8 +12,11 @@ import { NicheCard } from '../components/niche-discovery/NicheCard'
 import { ManualFiltersSection } from '../components/niche-discovery/ManualFiltersSection'
 import { ProductsTable } from '../components/niche-discovery/ProductsTable'
 import type { ValidatedNiche } from '../services/nicheDiscoveryService'
+import type { ManualDiscoveryResponse } from '../services/nicheDiscoveryService'
+import type { SavedNiche } from '../types/bookmarks'
 
 export default function NicheDiscovery() {
+  const location = useLocation()
   const {
     discoverAuto,
     isDiscoveringAuto,
@@ -28,6 +32,22 @@ export default function NicheDiscovery() {
   const [lastExploration, setLastExploration] = useState<Date>()
   const [selectedNicheId, setSelectedNicheId] = useState<string>()
   const [viewMode, setViewMode] = useState<'niches' | 'products'>('niches')
+  const [rerunResults, setRerunResults] = useState<ManualDiscoveryResponse | null>(null)
+  const [fromNiche, setFromNiche] = useState<SavedNiche | null>(null)
+
+  useEffect(() => {
+    const state = location.state as {
+      rerunResults?: ManualDiscoveryResponse
+      fromNiche?: SavedNiche
+      isRefresh?: boolean
+    } | null
+
+    if (state?.rerunResults && state?.isRefresh) {
+      setRerunResults(state.rerunResults)
+      setFromNiche(state.fromNiche || null)
+      setViewMode('products')
+    }
+  }, [location.state])
 
   // Auto-discovery handler
   const handleAutoDiscover = () => {
@@ -63,13 +83,13 @@ export default function NicheDiscovery() {
     })
   }
 
-  // Current niches and products
   const niches = autoDiscoveryData?.metadata.niches || []
   const products = viewMode === 'products'
-    ? (nicheExplorationData?.products || manualDiscoveryData?.products || [])
+    ? (rerunResults?.products || nicheExplorationData?.products || manualDiscoveryData?.products || [])
     : []
 
   const cacheHit =
+    rerunResults?.cache_hit ||
     autoDiscoveryData?.cache_hit ||
     manualDiscoveryData?.cache_hit ||
     nicheExplorationData?.cache_hit ||
@@ -157,7 +177,9 @@ export default function NicheDiscovery() {
             <ProductsTable
               products={products}
               title={
-                selectedNiche
+                fromNiche
+                  ? `Analyse relancee: ${fromNiche.niche_name}`
+                  : selectedNiche
                   ? `${selectedNiche.icon} ${selectedNiche.name}`
                   : 'Résultats de recherche'
               }

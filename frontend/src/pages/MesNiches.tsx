@@ -5,13 +5,17 @@
  */
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { Loader2, Inbox } from 'lucide-react'
 import { useBookmarks, useDeleteBookmark } from '../hooks/useBookmarks'
 import { NicheListItem } from '../components/bookmarks/NicheListItem'
+import { bookmarksService } from '../services/bookmarksService'
+import { nicheDiscoveryService } from '../services/nicheDiscoveryService'
 import type { SavedNiche } from '../types/bookmarks'
 
 export default function MesNiches() {
+  const navigate = useNavigate()
   const { data, isLoading, error } = useBookmarks()
   const { mutate: deleteBookmark } = useDeleteBookmark()
   const [rerunningId, setRerunningId] = useState<string | null>(null)
@@ -37,15 +41,33 @@ export default function MesNiches() {
   }
 
   const handleRerun = async (niche: SavedNiche) => {
-    setRerunningId(niche.id)
+    try {
+      setRerunningId(niche.id)
 
-    // TODO: Task 5 - Re-run analysis implementation
-    // Will fetch filters and trigger new analysis
-    toast('Fonctionnalite en cours de developpement (Task 5)')
+      const { filters } = await bookmarksService.getBookmarkFilters(niche.id)
 
-    setTimeout(() => {
+      const result = await nicheDiscoveryService.discoverManual({
+        ...filters,
+        force_refresh: true,
+      })
+
+      navigate('/niche-discovery', {
+        state: {
+          rerunResults: result,
+          fromNiche: niche,
+          isRefresh: true,
+        },
+      })
+
+      toast.success(`Analyse relancee pour "${niche.niche_name}"`)
+    } catch (error: any) {
+      console.error('Error re-running analysis:', error)
+      toast.error(
+        `Erreur: ${error.response?.data?.detail || 'Impossible de relancer'}`
+      )
+    } finally {
       setRerunningId(null)
-    }, 1000)
+    }
   }
 
   return (

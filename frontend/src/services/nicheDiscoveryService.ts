@@ -57,6 +57,7 @@ export interface ManualDiscoveryFilters {
   min_roi?: number
   min_velocity?: number
   max_results?: number
+  force_refresh?: boolean
 }
 
 /**
@@ -132,14 +133,14 @@ export const nicheDiscoveryService = {
    * Manual discovery with user-specified filters
    * Endpoint: POST /api/v1/products/discover-with-scoring
    *
-   * @param filters - Discovery filters (category, BSR, price, ROI, velocity)
+   * @param filters - Discovery filters (category, BSR, price, ROI, velocity, force_refresh)
    * @returns List of products matching filters
    */
   async discoverManual(
     filters: ManualDiscoveryFilters
   ): Promise<ManualDiscoveryResponse> {
     try {
-      console.log('🔍 Manual discovery with filters:', filters)
+      console.log('Manual discovery with filters:', filters)
 
       const response = await api.post<ManualDiscoveryResponse>(
         '/api/v1/products/discover-with-scoring',
@@ -149,9 +150,10 @@ export const nicheDiscoveryService = {
         }
       )
 
-      console.log('✅ Manual discovery completed:', {
+      console.log('Manual discovery completed:', {
         productsCount: response.data.products.length,
         cacheHit: response.data.cache_hit,
+        forceRefresh: filters.force_refresh || false,
       })
 
       return response.data

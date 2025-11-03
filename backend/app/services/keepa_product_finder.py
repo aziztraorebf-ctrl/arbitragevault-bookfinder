@@ -324,12 +324,16 @@ class KeepaProductFinderService:
         price_max: Optional[float] = None,
         min_roi: Optional[float] = None,
         min_velocity: Optional[float] = None,
-        max_results: int = 50
+        max_results: int = 50,
+        force_refresh: bool = False
     ) -> List[Dict[str, Any]]:
         """
         Découvre produits avec scoring complet.
 
         Applique Config Service filters et retourne produits scorés.
+
+        Args:
+            force_refresh: If True, bypasses cache for product data
 
         Returns:
             Liste de produits avec métriques :
@@ -341,11 +345,11 @@ class KeepaProductFinderService:
             - velocity_score
             - recommendation
         """
-        # Step 1: Discover ASINs (with cache)
+        # Step 1: Discover ASINs (with cache, unless force_refresh)
         asins = []
         discovery_cache_hit = False
 
-        if self.cache_service:
+        if self.cache_service and not force_refresh:
             # Try cache first
             cached_asins = await self.cache_service.get_discovery_cache(
                 domain=domain,
@@ -362,6 +366,8 @@ class KeepaProductFinderService:
                 logger.info(f"[DISCOVERY] Cache HIT: {len(asins)} ASINs")
             else:
                 logger.debug(f"[DISCOVERY] Cache MISS - calling Keepa API")
+        elif force_refresh:
+            logger.info(f"[DISCOVERY] FORCE REFRESH - bypassing cache")
 
         # If no cache or cache miss, call Keepa API
         if not asins:
@@ -426,12 +432,12 @@ class KeepaProductFinderService:
                 if not asin:
                     continue
 
-                # Try scoring cache first
+                # Try scoring cache first (skip if force_refresh)
                 cached_scoring = None
-                if self.cache_service:
+                if self.cache_service and not force_refresh:
                     cached_scoring = await self.cache_service.get_scoring_cache(asin)
 
-                if cached_scoring:
+                if cached_scoring and not force_refresh:
                     # Cache HIT - use cached scoring
                     logger.debug(f"[SCORING] Cache HIT for ASIN {asin}")
                     scoring_cache_hits += 1

@@ -55,6 +55,7 @@ class DiscoverWithScoringRequest(BaseModel):
     min_roi: Optional[float] = Field(None, description="Minimum ROI %")
     min_velocity: Optional[float] = Field(None, ge=0, le=100, description="Minimum velocity score")
     max_results: int = Field(20, ge=1, le=100, description="Max products to return")
+    force_refresh: bool = Field(False, description="Force refresh Keepa data (bypass cache)")
 
 
 class ProductScore(BaseModel):
@@ -176,7 +177,8 @@ async def discover_with_scoring(
             price_max=request.price_max,
             min_roi=request.min_roi,
             min_velocity=request.min_velocity,
-            max_results=request.max_results
+            max_results=request.max_results,
+            force_refresh=request.force_refresh
         )
 
         # Close Keepa client

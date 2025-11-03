@@ -10,13 +10,13 @@
 
 [env.production]
   # Production backend URL - Render service
-  VITE_API_URL = "https://arbitragevault-bookfinder-backend.onrender.com"
+  VITE_API_URL = "https://arbitragevault-backend-v2.onrender.com"
   VITE_NODE_ENV = "production"
 
 [env.development]
   # Development backend URL for preview deployments
   # Note: Currently points to production backend (no staging environment yet)
-  VITE_API_URL = "https://arbitragevault-bookfinder-backend.onrender.com"
+  VITE_API_URL = "https://arbitragevault-backend-v2.onrender.com"
   VITE_NODE_ENV = "development"
 
 # Critical for React Router / SPA

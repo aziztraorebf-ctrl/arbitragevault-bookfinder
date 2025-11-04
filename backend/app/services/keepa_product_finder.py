@@ -310,6 +310,9 @@ class KeepaProductFinderService:
 
             except Exception as e:
                 logger.error(f"Error filtering batch: {e}")
+                if "429" in str(e) or "Rate limit" in str(e):
+                    logger.warning("Rate limit hit - stopping batch processing to prevent token depletion")
+                    break
                 continue
 
         return filtered_asins

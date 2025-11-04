@@ -1,11 +1,47 @@
 # Phase 5 - Session Actuelle
 
-**Dernière mise à jour** : 2025-11-02
-**Session** : Continuation - Keepa Token Exhaustion Investigation
+**Dernière mise à jour** : 2025-11-03
+**Session** : Token Control System Implementation - Protection Anti-Épuisement
 
 ---
 
-## CHANGELOG - Bugs Critiques & Fixes
+## [2025-11-03] FEATURE - Keepa Token Control System ✅ IMPLÉMENTÉ
+
+**Contexte** : Suite aux 4 bugs critiques d'épuisement tokens, implémentation d'un système de contrôle intelligent
+
+**Branch** : `feature/token-control`
+
+**Composants Implémentés** (6/10 tâches core) :
+1. `TOKEN_COSTS` Registry - Actions métier avec coûts (surprise_me=50, manual_search=10, auto_sourcing_job=200)
+2. `KeepaService.can_perform_action()` - Méthode de vérification balance
+3. `@require_tokens` Decorator - Guard FastAPI avec HTTP 429
+4. Protection `/api/v1/niches/discover` (50 tokens)
+5. Protection `/api/v1/products/discover_with_scoring` (10 tokens)
+6. Protection AutoSourcing batch job (200 tokens)
+
+**Tests** : 14/14 passing (0 failures)
+
+**API Changes** :
+- HTTP 429 avec headers `X-Token-Balance`, `X-Token-Required`, `Retry-After`
+- Structure erreur complète avec balance, required, deficit
+
+**Commits** :
+```
+267eb9a - docs: completion summary
+d4224f3 - feat: AutoSourcing explicit check
+4a6cc67 - feat: manual search protection
+f0b4bcf - feat: niche discovery protection
+c6f53b2 - feat: require_tokens decorator
+bfacaa5 - feat: can_perform_action method
+04f43da - feat: TOKEN_COSTS registry
+```
+
+**Status** : ✅ PRÊT POUR MERGE
+**Prochaine Étape** : PR vers `main` avec tests E2E production
+
+---
+
+## CHANGELOG - Bugs Critiques & Fixes (Sessions Précédentes)
 
 ### [2025-11-02] BUG CRITIQUE #1 - Throttle Cost Hardcodé
 **Symptôme** : Balance Keepa passée à -74 tokens malgré throttle implémenté
@@ -76,14 +112,23 @@ except Exception:
 
 **Status** : ✅ RÉSOLU - Déployé sur Render
 
+**Validation 100%** : Test avec vraie clé Keepa (commit `97ad670`)
+```
+BEFORE sync - Throttle: 200 tokens (optimiste)
+AFTER sync  - Throttle: 1200 tokens (synchronisé avec Keepa)
+SUCCESS: Throttle synchronized with Keepa balance
+Request succeeded: Product data retrieved
+```
+
 ---
 
 ## QUICK REFERENCE
 
 ### État Actuel
 - **Backend** : Déployé et live sur Render
-- **Keepa Balance** : -5 tokens (épuisé durant tests)
-- **Niche Discovery** : Retourne 0 niches (bloqué par HTTP 429)
+- **Keepa Balance** : Tokens récupérés (balance saine après reset quotidien)
+- **HTTP 429 Fix** : Déployé et validé en production (commit `c641614`)
+- **Niche Discovery** : Ready pour tests E2E complets
 - **Option B** : En cours - Intégration templates niches
 - **Option C** : En attente (page Configuration)
 
@@ -95,19 +140,20 @@ except Exception:
 
 ### Commits Récents
 ```
+c641614 fix(keepa): Add HTTP 429 detection to prevent retry loop (Bug #4 RESOLVED)
 a79045d fix(keepa): Synchronize throttle with Keepa balance (Bug #3 RESOLVED)
 4a400a3 fix(keepa): Use estimated_cost in throttle.acquire()
 7bf4c87 fix(backend): Add missing keepa_throttle.py module
-51aa21e fix(frontend): Remove emojis from TypeScript files
-39b28f1 docs: establish NO EMOJIS IN CODE rule
+97ad670 test: Validate throttle sync with real Keepa API
 ```
 
 ### Prochaines Étapes
 1. ✅ ~~Implémenter sync throttle avec balance réelle~~ (DONE - commit a79045d)
-2. Attendre récupération tokens Keepa (balance auto-refill 5-15 min)
-3. Tester `/api/v1/niches/discover` avec vraies données après récupération
-4. Compléter Option B (Niche Templates frontend)
-5. Option C - Page Configuration
+2. ✅ ~~Valider fix avec vraie clé Keepa API~~ (DONE - commit 97ad670)
+3. ✅ ~~Résoudre HTTP 429 retry loop~~ (DONE - commit c641614)
+4. Tester `/api/v1/niches/discover` E2E complet après récupération tokens
+5. Compléter Option B (Niche Templates frontend)
+6. Option C - Page Configuration
 
 ---
 
@@ -128,4 +174,65 @@ a79045d fix(keepa): Synchronize throttle with Keepa balance (Bug #3 RESOLVED)
 
 ---
 
-**Note** : Session continuation après épuisement contexte. Utilisateur a demandé mise à jour documentation avant de continuer fixes throttle ailleurs.
+### [2025-11-03] BUG CRITIQUE #4 - HTTP 429 Retry Loop Token Depletion ✅ RÉSOLU
+**Symptôme** : Après déploiement Netlify, tokens Keepa épuisés instantanément (193 → -17 en 1 seconde)
+
+**Root Cause** : `keepa_product_finder.py:312` - Exception handler avec `continue` causait retry immédiat sans backoff
+```python
+# BUG (ligne 312):
+except Exception as e:
+    logger.error(f"Error filtering batch: {e}")
+    continue  # RETRY IMMÉDIAT sur HTTP 429 !
+
+# FIX (lignes 311-316):
+except Exception as e:
+    logger.error(f"Error filtering batch: {e}")
+    if "429" in str(e) or "Rate limit" in str(e):
+        logger.warning("Rate limit hit - stopping batch processing to prevent token depletion")
+        break  # STOP AU LIEU DE RETRY
+    continue
+```
+
+**Impact Timeline** (Render logs 15:18:38-39 UTC) :
+```
+15:18:38.730 Rate limited (tokens unknown)
+15:18:38.731 Error filtering batch HTTP 429 [CONTINUE = RETRY]
+15:18:39.207 Rate limited (tokens unknown) [2e tentative]
+15:18:39.207 Error filtering batch HTTP 429 [CONTINUE = RETRY]
+15:18:39.387 Rate limited (tokens unknown) [3e tentative]
+15:18:39.387 Error filtering batch HTTP 429
+15:20:02.852 Balance NEGATIVE: -17 tokens
+```
+**Résultat** : 210 tokens consommés en 1 seconde (rafale de 3 HTTP 429)
+
+**Investigation Process** :
+1. Sentry MCP : 4 issues trouvées (BACKEND-19, 1A, 1C, 1B)
+2. Logger name `app.services.keepa_product_finder` identifié
+3. Trace call chain sur 6 couches jusqu'à ligne 312
+4. Fix appliqué avec détection conditionnelle HTTP 429
+
+**Fix Validé en Production** : Commit `c641614` (déployé Render)
+
+**Évidence Fix Fonctionnel** (Render logs 02:00:42 UTC) :
+```
+02:00:42.387 Rate limited by Keepa API (HTTP 429)
+02:00:42.387 Error filtering batch: HTTP 429
+02:00:42.559 Rate limit hit - stopping batch processing [FIX ACTIVÉ]
+02:00:42.560 No ASINs discovered [ARRÊT PROPRE]
+```
+Pattern répété 3 fois pour 3 niches différentes = fix 100% opérationnel
+
+**Comportement Avant/Après** :
+- **AVANT** : HTTP 429 → continue → retry instantané → 210 tokens/seconde
+- **APRÈS** : HTTP 429 → détection → break → 0 tokens supplémentaires
+
+**Graceful Degradation** :
+- API retourne 0 niches au lieu de crash loop
+- Frontend affiche résultat vide (comportement attendu)
+- Aucun token additionnel consommé après premier HTTP 429
+
+**Status** : ✅ RÉSOLU - Déployé et validé en production (logs 02:00-02:05 UTC)
+
+---
+
+**Note** : Session continuation après contexte épuisé. Debugging systématique avec Sentry MCP + Render logs + call chain tracing pour identifier root cause exact sur 593 lignes de code.

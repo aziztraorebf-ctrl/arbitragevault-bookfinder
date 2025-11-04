@@ -226,6 +226,50 @@ class KeepaService:
                 message=f"Cannot verify Keepa API balance: {str(e)}"
             )
 
+    async def can_perform_action(self, action: str) -> dict[str, any]:
+        """
+        Check if we have sufficient tokens for a business action.
+
+        Args:
+            action: Business action name from TOKEN_COSTS registry
+
+        Returns:
+            dict with:
+                - can_proceed (bool): Whether action can proceed
+                - current_balance (int): Current Keepa token balance
+                - required_tokens (int): Tokens required for action
+                - action (str): Action name (echoed back)
+
+        Raises:
+            ValueError: If action not found in TOKEN_COSTS
+        """
+        from app.core.token_costs import TOKEN_COSTS
+
+        if action not in TOKEN_COSTS:
+            raise ValueError(f"Unknown action '{action}' - not found in TOKEN_COSTS registry")
+
+        required = TOKEN_COSTS[action]["cost"]
+
+        # Get current balance from Keepa API
+        balance_info = await self.check_api_balance()
+        current = balance_info if isinstance(balance_info, int) else balance_info.get("tokensLeft", 0)
+
+        # Sync throttle with actual balance
+        self.throttle.set_tokens(current)
+
+        can_proceed = current >= required
+
+        self.logger.info(
+            f"Token check for '{action}': balance={current}, required={required}, can_proceed={can_proceed}"
+        )
+
+        return {
+            "can_proceed": can_proceed,
+            "current_balance": current,
+            "required_tokens": required,
+            "action": action
+        }
+
     async def _ensure_sufficient_balance(self, estimated_cost: int, endpoint_name: str = None):
         """
         Vérifie que le budget API Keepa est suffisant AVANT de faire la requête.

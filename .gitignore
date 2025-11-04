@@ -117,6 +117,9 @@ temp/
 # Render (legacy - removed)
 render.yaml
 
+# Git worktrees
+.worktrees/
+
 # E2E Validation responses (large JSON files from Keepa API)
 backend/e2e_validation_responses/
 backend/keepa_validation_response.json

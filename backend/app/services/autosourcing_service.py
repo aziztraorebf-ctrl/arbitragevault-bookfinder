@@ -25,7 +25,7 @@ from app.core.calculations import (
     compute_advanced_confidence_score,
     compute_overall_rating
 )
-from app.core.exceptions import AppException
+from app.core.exceptions import AppException, InsufficientTokensError
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class AutoSourcingService:
         self.business_config = BusinessConfigService()
 
     async def run_custom_search(
-        self, 
+        self,
         discovery_config: Dict[str, Any],
         scoring_config: Dict[str, Any],
         profile_name: str,
@@ -50,18 +50,40 @@ class AutoSourcingService:
     ) -> AutoSourcingJob:
         """
         Run a custom AutoSourcing search with user-defined criteria.
-        
+
         Args:
             discovery_config: Keepa search parameters
             scoring_config: Advanced scoring thresholds
             profile_name: Name for this search job
             profile_id: Optional saved profile ID
-            
+
         Returns:
             AutoSourcingJob with results populated
+
+        Raises:
+            InsufficientTokensError: If tokens insufficient for job
         """
+        # Explicit token check for batch job
+        check = await self.keepa_service.can_perform_action("auto_sourcing_job")
+
+        if not check["can_proceed"]:
+            logger.warning(
+                f"Insufficient tokens for AutoSourcing job: "
+                f"balance={check['current_balance']}, required={check['required_tokens']}"
+            )
+            raise InsufficientTokensError(
+                current_balance=check["current_balance"],
+                required_tokens=check["required_tokens"],
+                endpoint="auto_sourcing_job"
+            )
+
+        logger.info(
+            f"AutoSourcing job starting with sufficient tokens: "
+            f"balance={check['current_balance']}, required={check['required_tokens']}"
+        )
+
         logger.info(f"Starting AutoSourcing job: {profile_name}")
-        
+
         # Create job record
         job = AutoSourcingJob(
             profile_name=profile_name,

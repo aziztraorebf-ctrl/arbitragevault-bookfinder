@@ -1,0 +1,137 @@
+name: E2E Production Monitoring
+
+on:
+  schedule:
+    # Run every 30 minutes
+    - cron: '*/30 * * * *'
+
+  workflow_dispatch:
+    # Allow manual trigger
+
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/tests/e2e/**'
+      - '.github/workflows/e2e-monitoring.yml'
+
+jobs:
+  health-monitoring:
+    name: Health Monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/tests/e2e/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend/tests/e2e
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: backend/tests/e2e
+        run: npx playwright install chromium
+
+      - name: Run Health Monitoring Tests
+        working-directory: backend/tests/e2e
+        run: npx playwright test 01-health-monitoring --reporter=list
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-monitoring-results
+          path: backend/tests/e2e/test-results/
+          retention-days: 7
+
+  token-control:
+    name: Token Control Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/tests/e2e/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend/tests/e2e
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: backend/tests/e2e
+        run: npx playwright install chromium
+
+      - name: Run Token Control Tests
+        working-directory: backend/tests/e2e
+        run: npx playwright test 02-token-control --reporter=list
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: token-control-results
+          path: backend/tests/e2e/test-results/
+          retention-days: 7
+
+  niche-discovery:
+    name: Niche Discovery Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/tests/e2e/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend/tests/e2e
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: backend/tests/e2e
+        run: npx playwright install chromium
+
+      - name: Run Niche Discovery Tests
+        working-directory: backend/tests/e2e
+        run: npx playwright test 03-niche-discovery --reporter=list
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: niche-discovery-results
+          path: backend/tests/e2e/test-results/
+          retention-days: 7
+
+  notify-on-failure:
+    name: Notify on Failure
+    needs: [health-monitoring, token-control, niche-discovery]
+    if: failure()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send notification
+        run: |
+          echo "E2E tests failed! Check GitHub Actions logs for details."
+          echo "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

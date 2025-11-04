@@ -9,7 +9,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db_session
-from app.services.keepa_service import KeepaService
+from app.core.guards import require_tokens
+from app.services.keepa_service import KeepaService, get_keepa_service
 from app.services.config_service import ConfigService
 from app.services.keepa_product_finder import KeepaProductFinderService
 from app.services.niche_templates import discover_curated_niches
@@ -20,10 +21,12 @@ router = APIRouter()
 
 
 @router.get("/discover", response_model=DiscoverWithScoringResponse)
+@require_tokens("surprise_me")
 async def discover_niches_auto(
     count: int = Query(3, ge=1, le=5, description="Number of niches to discover"),
     shuffle: bool = Query(True, description="Randomize template selection"),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
+    keepa: KeepaService = Depends(get_keepa_service)
 ):
     """
     Auto-discover curated niches - Phase 3 Day 9.

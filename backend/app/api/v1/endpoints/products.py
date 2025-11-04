@@ -11,10 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
 
 from app.core.db import get_db_session
-from app.services.keepa_service import KeepaService
+from app.services.keepa_service import KeepaService, get_keepa_service
 from app.services.config_service import ConfigService
 from app.services.keepa_product_finder import KeepaProductFinderService
 from app.core.config import settings
+from app.core.guards import require_tokens
 
 router = APIRouter()
 
@@ -138,9 +139,11 @@ async def discover_products(
 
 
 @router.post("/discover-with-scoring", response_model=DiscoverWithScoringResponse)
+@require_tokens("manual_search")
 async def discover_with_scoring(
     request: DiscoverWithScoringRequest,
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
+    keepa: KeepaService = Depends(get_keepa_service)
 ):
     """
     Discover and score products.

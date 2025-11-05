@@ -1,12 +1,12 @@
 name: E2E Production Monitoring
 
 on:
-  schedule:
-    # Run every 30 minutes
-    - cron: '*/30 * * * *'
+  # DISABLED: Cron schedule consuming tokens (50 tokens every 30min = 2400 tokens/day)
+  # schedule:
+  #   - cron: '*/30 * * * *'
 
   workflow_dispatch:
-    # Allow manual trigger
+    # Allow manual trigger ONLY
 
   push:
     branches:

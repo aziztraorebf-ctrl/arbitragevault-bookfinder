@@ -837,7 +837,7 @@ async def keepa_health_check(
                 "timestamp": datetime.now().isoformat(),
                 "status": health_status.get("status", "unknown"),
                 "tokens": {
-                    "remaining": health_status.get("tokens_left", 0),
+                    "remaining": health_status.get("api_tokens_left", 0),
                     "refill_in_minutes": health_status.get("refill_in_minutes", 0),
                     "total_used": keepa_service.metrics.tokens_used,
                     "requests_made": keepa_service.metrics.requests_count

@@ -59,24 +59,26 @@ test.describe('AutoSourcing Flow', () => {
     // Wait a moment for data to load
     await page.waitForTimeout(2000);
 
-    // Check for jobs list or empty state
-    const jobsList = page.locator('[data-testid="jobs-list"], .jobs-list, table');
-    const emptyState = page.locator('text=/no jobs/i, text=/aucun job/i, text=/jobs récents/i');
+    // STRICT VALIDATION: Check for jobs list or empty state with XOR logic
+    const jobsList = page.locator('[data-testid="jobs-list"]');
+    const emptyState = page.locator('[data-testid="empty-jobs"]');
 
-    // Either jobs or empty state should be visible
+    // Wait for either state to appear
     const hasJobs = await jobsList.isVisible({ timeout: 5000 }).catch(() => false);
     const isEmpty = await emptyState.isVisible({ timeout: 5000 }).catch(() => false);
 
-    // If neither is found, just check that page loaded
-    if (!hasJobs && !isEmpty) {
-      console.log('Jobs display status unclear, verifying page structure...');
-      const pageContent = page.locator('main, .container, #root').first();
-      await expect(pageContent).toBeVisible();
-      console.log('Page loaded successfully (jobs display not deterministic)');
-    } else {
-      expect(hasJobs || isEmpty).toBe(true);
-      console.log(hasJobs ? 'Jobs list displayed' : 'Empty state displayed');
+    // STRICT XOR VALIDATION: Exactly one must be true
+    const validState = (hasJobs && !isEmpty) || (isEmpty && !hasJobs);
+
+    if (!validState) {
+      throw new Error(
+        `Invalid jobs display state: hasJobs=${hasJobs}, isEmpty=${isEmpty}. ` +
+        `Expected XOR: exactly one must be true, not both or neither.`
+      );
     }
+
+    expect(validState).toBe(true);
+    console.log(hasJobs ? 'Jobs list displayed (XOR valid)' : 'Empty state displayed (XOR valid)');
   });
 
   test('Test 2.3: Should open job configuration form', async ({ page }) => {
@@ -235,20 +237,39 @@ test.describe('AutoSourcing Flow', () => {
       const hasPicks = await picksContainer.isVisible({ timeout: 5000 }).catch(() => false);
 
       if (hasPicks) {
-        const picks = page.locator('[data-testid="pick"], .pick, .product-card, table tbody tr');
+        const picks = page.locator('[data-testid="pick"]');
         const picksCount = await picks.count();
 
         console.log(`Displayed ${picksCount} picks`);
-        expect(picksCount).toBeGreaterThanOrEqual(0);
 
-        // If picks exist, verify they have expected structure
-        if (picksCount > 0) {
-          const firstPick = picks.first();
-          await expect(firstPick).toBeVisible();
-          console.log('First pick is visible with expected structure');
-        }
+        // STRICT VALIDATION: Must have at least 1 pick
+        expect(picksCount).toBeGreaterThan(0);
+
+        // Verify first pick structure with data-testid attributes
+        const firstPick = picks.first();
+        await expect(firstPick).toBeVisible();
+
+        // STRICT VALIDATION: Verify all required data fields exist
+        const asinElement = firstPick.locator('[data-testid="pick-asin"]');
+        const titleElement = firstPick.locator('[data-testid="pick-title"]');
+        const roiElement = firstPick.locator('[data-testid="pick-roi"]');
+        const velocityElement = firstPick.locator('[data-testid="pick-velocity"]');
+
+        await expect(asinElement).toBeVisible();
+        await expect(titleElement).toBeVisible();
+        await expect(roiElement).toBeVisible();
+        await expect(velocityElement).toBeVisible();
+
+        // STRICT VALIDATION: Verify data format with regex
+        const roiText = await roiElement.textContent();
+        const velocityText = await velocityElement.textContent();
+
+        expect(roiText).toMatch(/ROI.*\d+\.?\d*%/i);
+        expect(velocityText).toMatch(/Velocity.*\d+/i);
+
+        console.log(`First pick validated: ASIN, title, ROI (${roiText}), velocity (${velocityText})`);
       } else {
-        console.log('Picks container not found - might be in different format or empty results');
+        throw new Error('Picks container not found - job should have results to display');
       }
     } else {
       console.log('No job results available to test display');

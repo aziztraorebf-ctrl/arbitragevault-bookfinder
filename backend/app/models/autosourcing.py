@@ -76,13 +76,14 @@ class AutoSourcingJob(Base):
     profile = relationship("SavedProfile", back_populates="jobs")
 
     def __repr__(self):
+        # Safe repr that works even with detached instances
         try:
-            status_str = self.status.value if self.status else "UNKNOWN"
-            profile = self.profile_name
-        except Exception:
-            status_str = "DETACHED"
-            profile = "DETACHED"
-        return f"<AutoSourcingJob(id={self.id}, profile='{profile}', status='{status_str}')>"
+            # Try to access id only - should work even if detached
+            job_id = self.id
+            return f"<AutoSourcingJob(id={job_id})>"
+        except:
+            # Complete fallback if even id fails
+            return "<AutoSourcingJob(detached)>"
 
 
 class AutoSourcingPick(Base):

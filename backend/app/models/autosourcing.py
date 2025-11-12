@@ -76,7 +76,13 @@ class AutoSourcingJob(Base):
     profile = relationship("SavedProfile", back_populates="jobs")
 
     def __repr__(self):
-        return f"<AutoSourcingJob(id={self.id}, profile='{self.profile_name}', status='{self.status.value}')>"
+        try:
+            status_str = self.status.value if self.status else "UNKNOWN"
+            profile = self.profile_name
+        except Exception:
+            status_str = "DETACHED"
+            profile = "DETACHED"
+        return f"<AutoSourcingJob(id={self.id}, profile='{profile}', status='{status_str}')>"
 
 
 class AutoSourcingPick(Base):

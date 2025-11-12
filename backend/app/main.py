@@ -120,10 +120,12 @@ async def global_exception_handler(request: Request, exc: Exception):
     """Global exception handler for unhandled errors."""
     logger.error(
         "Unhandled exception",
-        error=str(exc),
-        error_type=type(exc).__name__,
-        path=request.url.path,
-        method=request.method,
+        extra={
+            "error": str(exc),
+            "error_type": type(exc).__name__,
+            "path": request.url.path,
+            "method": request.method,
+        },
     )
 
     if settings.debug:

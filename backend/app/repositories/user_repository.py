@@ -34,12 +34,18 @@ class UserRepository(BaseRepository[User]):
             user = result.scalar_one_or_none()
             
             if user:
-                logger.info("User retrieved by email", email=email, user_id=user.id)
+                logger.info(
+                    "User retrieved by email",
+                    extra={"email": email, "user_id": user.id},
+                )
             
             return user
             
         except Exception as e:
-            logger.error("Failed to get user by email", email=email, error=str(e))
+            logger.error(
+                "Failed to get user by email",
+                extra={"email": email, "error": str(e)},
+            )
             raise
 
     async def is_email_taken(self, email: str, exclude_user_id: Optional[str] = None) -> bool:

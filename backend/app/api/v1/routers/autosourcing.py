@@ -155,20 +155,34 @@ async def run_custom_search(
     3. Filtering and ranking by user criteria
     4. Duplicate removal and result optimization
     """
+    import traceback
+    import logging
+
+    logger = logging.getLogger(__name__)
+
     try:
+        logger.info(f"[DEBUG] run-custom called with profile_name={request.profile_name}")
+        logger.info(f"[DEBUG] discovery_config: {request.discovery_config.dict()}")
+        logger.info(f"[DEBUG] scoring_config: {request.scoring_config.dict()}")
+
         job = await service.run_custom_search(
             discovery_config=request.discovery_config.dict(),
             scoring_config=request.scoring_config.dict(),
             profile_name=request.profile_name,
             profile_id=request.profile_id
         )
-        
+
+        logger.info(f"[DEBUG] Job created successfully: {job.id}")
         return job
-        
+
     except Exception as e:
+        logger.error(f"[ERROR] AutoSourcing search failed - Exception type: {type(e).__name__}")
+        logger.error(f"[ERROR] Exception message: {str(e)}")
+        logger.error(f"[ERROR] Full traceback:\n{traceback.format_exc()}")
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"AutoSourcing search failed: {str(e)}"
+            detail=f"AutoSourcing search failed: {type(e).__name__}: {str(e)}"
         )
 
 @router.get("/latest", response_model=Optional[AutoSourcingJobResponse])

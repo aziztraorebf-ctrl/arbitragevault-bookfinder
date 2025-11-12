@@ -136,7 +136,14 @@ class AutoSourcingService:
             
             await self.db.commit()
             await self.db.refresh(job)
-            
+
+            # Force load and materialize picks relationship before returning
+            # This prevents MissingGreenlet error when Pydantic tries to access
+            # lazy-loaded picks after session is closed
+            # Converting to list forces SQLAlchemy to evaluate the relationship
+            # and detach the objects, making them serializable
+            job.picks = list(job.picks) if job.picks else []
+
             logger.info(f"✅ AutoSourcing job completed: {job.id}")
             return job
             

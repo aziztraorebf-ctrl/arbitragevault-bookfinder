@@ -134,7 +134,7 @@ test.describe('AutoSourcing Flow', () => {
     console.log(`Proceeding with AutoSourcing job (balance: ${tokenBalance} >= ${MIN_TOKENS_FOR_DISCOVERY})`);
 
     // Try to submit job via API endpoint
-    const response = await request.post(`${BACKEND_URL}/api/v1/autosourcing/run_custom`, {
+    const response = await request.post(`${BACKEND_URL}/api/v1/autosourcing/run-custom`, {
       data: {
         profile_name: 'E2E Test Job Phase 5',
         discovery_config: {
@@ -180,6 +180,13 @@ test.describe('AutoSourcing Flow', () => {
       const data = await response.json();
       console.log('Validation errors:', JSON.stringify(data, null, 2));
       throw new Error(`Request validation failed: ${JSON.stringify(data)}`);
+    }
+
+    if (response.status() === 500) {
+      console.log('HTTP 500 - backend server error');
+      const errorText = await response.text();
+      console.log('Error response:', errorText);
+      throw new Error(`Backend error: ${errorText}`);
     }
 
     // Expect success

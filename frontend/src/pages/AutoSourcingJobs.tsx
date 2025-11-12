@@ -72,7 +72,7 @@ export default function AutoSourcingJobs() {
     setTokenError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/autosourcing/run_custom`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/autosourcing/run-custom`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

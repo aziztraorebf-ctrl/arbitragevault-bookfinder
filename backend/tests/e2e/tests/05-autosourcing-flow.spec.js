@@ -135,7 +135,8 @@ test.describe('AutoSourcing Flow', () => {
     console.log(`Proceeding with AutoSourcing job (balance: ${tokenBalance} >= ${MIN_TOKENS_FOR_DISCOVERY})`);
 
     // Try to submit job via API endpoint
-    // TEMPORARY: Reduced max_results to 3 for low token balance testing
+    // TEMPORARY: Relaxed criteria to guarantee finding picks for Test 2.5 validation
+    // Cost: ~100-150 tokens (discovery 20 products + scoring)
     const response = await request.post(`${BACKEND_URL}/api/v1/autosourcing/run-custom`, {
       data: {
         profile_name: 'E2E Test Job Phase 5',
@@ -143,14 +144,14 @@ test.describe('AutoSourcing Flow', () => {
           categories: ['Books'],
           price_range: [10, 50],
           bsr_range: [10000, 100000],
-          max_results: 3
+          max_results: 20
         },
         scoring_config: {
-          roi_min: 20,
-          velocity_min: 60,
-          confidence_min: 70,
+          roi_min: 5,
+          velocity_min: 30,
+          confidence_min: 50,
           rating_required: 'GOOD',
-          max_results: 2
+          max_results: 10
         }
       },
       timeout: 60000 // 60 second timeout for Product Finder

@@ -141,6 +141,19 @@ class AutoSourcingService:
             logger.debug(f"Final commit before return...")
             await self.db.commit()
 
+            # Reload job with picks relationship eagerly loaded to prevent MissingGreenlet
+            # when FastAPI serializes the response
+            logger.debug(f"Reloading job {job.id} with picks relationship...")
+            from sqlalchemy import select
+            from sqlalchemy.orm import selectinload
+
+            result = await self.db.execute(
+                select(AutoSourcingJob)
+                .where(AutoSourcingJob.id == job.id)
+                .options(selectinload(AutoSourcingJob.picks))
+            )
+            job = result.scalar_one()
+
             logger.info(f"✅ AutoSourcing job completed: {job.id}")
             return job
             

@@ -1,0 +1,29 @@
+{
+  "results": {
+    "schemas": {
+      "FeeConfig": "OK",
+      "ROIConfig": "OK",
+      "VelocityConfig": "OK"
+    },
+    "validation": {
+      "ROI_invalid": "OK",
+      "VelocityTier_invalid": "OK",
+      "Velocity_overlap": "OK"
+    },
+    "keepa": {
+      "price_extraction": "OK",
+      "roi_calculation": "OK",
+      "velocity_assignment": "OK",
+      "books_override": "OK"
+    },
+    "json": {
+      "json_serialization": "OK",
+      "size": 1003
+    }
+  },
+  "summary": {
+    "total": 11,
+    "passed": 11,
+    "success_rate": 100.0
+  }
+}

@@ -1,0 +1,573 @@
+{
+  "timestamp": "2025-10-26T00:18:17.173394",
+  "summary": {
+    "total_tested": 30,
+    "success": 11,
+    "no_data": 18,
+    "errors": 1
+  },
+  "results": {
+    "success": [
+      {
+        "asin": "0134685997",
+        "status": "success",
+        "current_bsr": 30881,
+        "velocity_metrics": {
+          "data_points_30d": 225,
+          "price_points_30d": 174,
+          "velocity_score": 80,
+          "velocity_tier": "PREMIUM",
+          "rank_drops_30d": 105,
+          "avg_bsr_30d": 64111.94666666666,
+          "bsr_trend": 9.45,
+          "price_stability": 92.52
+        },
+        "data_points": {
+          "bsr_history": 7400,
+          "price_history": 3239
+        }
+      },
+      {
+        "asin": "1260565955",
+        "status": "success",
+        "current_bsr": 493754,
+        "velocity_metrics": {
+          "data_points_30d": 129,
+          "price_points_30d": 64,
+          "velocity_score": 40,
+          "velocity_tier": "MEDIUM",
+          "rank_drops_30d": 29,
+          "avg_bsr_30d": 470571.1782945736,
+          "bsr_trend": -44.17,
+          "price_stability": 84.77
+        },
+        "data_points": {
+          "bsr_history": 7274,
+          "price_history": 5204
+        }
+      },
+      {
+        "asin": "0134173279",
+        "status": "success",
+        "current_bsr": 126828,
+        "velocity_metrics": {
+          "data_points_30d": 220,
+          "price_points_30d": 31,
+          "velocity_score": 40,
+          "velocity_tier": "MEDIUM",
+          "rank_drops_30d": 57,
+          "avg_bsr_30d": 288076.3090909091,
+          "bsr_trend": 27.09,
+          "price_stability": 89.59
+        },
+        "data_points": {
+          "bsr_history": 6928,
+          "price_history": 1406
+        }
+      },
+      {
+        "asin": "1265045631",
+        "status": "success",
+        "current_bsr": 3146600,
+        "velocity_metrics": {
+          "data_points_30d": 85,
+          "price_points_30d": 84,
+          "velocity_score": 30,
+          "velocity_tier": "LOW",
+          "rank_drops_30d": 18,
+          "avg_bsr_30d": 730787.694117647,
+          "bsr_trend": 74.88,
+          "price_stability": 95.36
+        },
+        "data_points": {
+          "bsr_history": 3775,
+          "price_history": 797
+        }
+      },
+      {
+        "asin": "0593655036",
+        "status": "success",
+        "current_bsr": 16094,
+        "velocity_metrics": {
+          "data_points_30d": 99,
+          "price_points_30d": 35,
+          "velocity_score": 80,
+          "velocity_tier": "PREMIUM",
+          "rank_drops_30d": 45,
+          "avg_bsr_30d": 66.64646464646465,
+          "bsr_trend": -16.41,
+          "price_stability": 95.45
+        },
+        "data_points": {
+          "bsr_history": 4044,
+          "price_history": 465
+        }
+      },
+      {
+        "asin": "1668026031",
+        "status": "success",
+        "current_bsr": 1452893,
+        "velocity_metrics": {
+          "data_points_30d": 116,
+          "price_points_30d": 4,
+          "velocity_score": 30,
+          "velocity_tier": "LOW",
+          "rank_drops_30d": 58,
+          "avg_bsr_30d": 3859.1810344827586,
+          "bsr_trend": 34.5,
+          "price_stability": 88.0
+        },
+        "data_points": {
+          "bsr_history": 6140,
+          "price_history": 221
+        }
+      },
+      {
+        "asin": "1098146891",
+        "status": "success",
+        "current_bsr": 747948,
+        "velocity_metrics": {
+          "data_points_30d": 152,
+          "price_points_30d": 6,
+          "velocity_score": 30,
+          "velocity_tier": "LOW",
+          "rank_drops_30d": 40,
+          "avg_bsr_30d": 336600.1381578947,
+          "bsr_trend": -47.68,
+          "price_stability": 99.56
+        },
+        "data_points": {
+          "bsr_history": 1650,
+          "price_history": 88
+        }
+      },
+      {
+        "asin": "1718501129",
+        "status": "success",
+        "current_bsr": 43293,
+        "velocity_metrics": {
+          "data_points_30d": 161,
+          "price_points_30d": 92,
+          "velocity_score": 80,
+          "velocity_tier": "PREMIUM",
+          "rank_drops_30d": 70,
+          "avg_bsr_30d": 41808.7701863354,
+          "bsr_trend": -84.99,
+          "price_stability": 97.28
+        },
+        "data_points": {
+          "bsr_history": 6823,
+          "price_history": 1633
+        }
+      },
+      {
+        "asin": "1718503261",
+        "status": "success",
+        "current_bsr": 117273,
+        "velocity_metrics": {
+          "data_points_30d": 192,
+          "price_points_30d": 0,
+          "velocity_score": 40,
+          "velocity_tier": "MEDIUM",
+          "rank_drops_30d": 52,
+          "avg_bsr_30d": 313429.765625,
+          "bsr_trend": -1.17,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 4207,
+          "price_history": 238
+        }
+      },
+      {
+        "asin": "1593279280",
+        "status": "success",
+        "current_bsr": 3204,
+        "velocity_metrics": {
+          "data_points_30d": 200,
+          "price_points_30d": 0,
+          "velocity_score": 100,
+          "velocity_tier": "PREMIUM",
+          "rank_drops_30d": 59,
+          "avg_bsr_30d": 196248.66,
+          "bsr_trend": -81.52,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 4256,
+          "price_history": 834
+        }
+      },
+      {
+        "asin": "1665925779",
+        "status": "success",
+        "current_bsr": 1154449,
+        "velocity_metrics": {
+          "data_points_30d": 30,
+          "price_points_30d": 0,
+          "velocity_score": 12,
+          "velocity_tier": "DEAD",
+          "rank_drops_30d": 1,
+          "avg_bsr_30d": 2660348.3666666667,
+          "bsr_trend": -136.67,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 655,
+          "price_history": 194
+        }
+      }
+    ],
+    "no_velocity_data": [
+      {
+        "asin": "0134895436",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "0063340240",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "0593579135",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "0593723597",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "0593713842",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "0593449274",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "B0CW1SXHZL",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "1492056200",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "0063283956",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "0593232097",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "0593652916",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "0063356562",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "1534482849",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "1665925760",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "B0BN84P9JK",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "B0D5BY7JWM",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "B0D4778Y2P",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      },
+      {
+        "asin": "B0995VKY1K",
+        "status": "success",
+        "current_bsr": null,
+        "velocity_metrics": {
+          "data_points_30d": 0,
+          "price_points_30d": 0,
+          "velocity_score": 0,
+          "velocity_tier": "UNKNOWN",
+          "rank_drops_30d": 0,
+          "avg_bsr_30d": null,
+          "bsr_trend": null,
+          "price_stability": null
+        },
+        "data_points": {
+          "bsr_history": 0,
+          "price_history": 0
+        }
+      }
+    ],
+    "errors": [
+      {
+        "asin": "9780060555665",
+        "status": "error",
+        "error": "No product data from Keepa"
+      }
+    ]
+  }
+}

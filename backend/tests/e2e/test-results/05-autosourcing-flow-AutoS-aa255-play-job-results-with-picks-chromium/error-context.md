@@ -1,0 +1,145 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e8]: A
+        - generic [ref=e9]: ArbitrageVault
+      - button [ref=e10] [cursor=pointer]:
+        - img [ref=e11]
+  - complementary [ref=e12]:
+    - navigation [ref=e13]:
+      - generic [ref=e14]:
+        - link "🏠 Dashboard" [ref=e16] [cursor=pointer]:
+          - /url: /dashboard
+          - generic [ref=e17]: 🏠
+          - generic [ref=e18]: Dashboard
+        - link "📋 Analyse Manuelle" [ref=e20] [cursor=pointer]:
+          - /url: /analyse
+          - generic [ref=e21]: 📋
+          - generic [ref=e22]: Analyse Manuelle
+        - link "🔍 Niche Discovery" [ref=e24] [cursor=pointer]:
+          - /url: /niche-discovery
+          - generic [ref=e25]: 🔍
+          - generic [ref=e26]: Niche Discovery
+        - link "📚 Mes Niches" [ref=e28] [cursor=pointer]:
+          - /url: /mes-niches
+          - generic [ref=e29]: 📚
+          - generic [ref=e30]: Mes Niches
+        - link "🤖 AutoScheduler" [ref=e33] [cursor=pointer]:
+          - /url: /autoscheduler
+          - generic [ref=e34]: 🤖
+          - generic [ref=e35]: AutoScheduler
+        - link "📊 AutoSourcing" [ref=e37] [cursor=pointer]:
+          - /url: /autosourcing
+          - generic [ref=e38]: 📊
+          - generic [ref=e39]: AutoSourcing
+        - link "📈 Analyse Stratégique" [ref=e41] [cursor=pointer]:
+          - /url: /analyse-strategique
+          - generic [ref=e42]: 📈
+          - generic [ref=e43]: Analyse Stratégique
+        - link "📦 Stock Estimates" [ref=e46] [cursor=pointer]:
+          - /url: /stock-estimates
+          - generic [ref=e47]: 📦
+          - generic [ref=e48]: Stock Estimates
+        - link "⚙️ Configuration" [ref=e51] [cursor=pointer]:
+          - /url: /config
+          - generic [ref=e52]: ⚙️
+          - generic [ref=e53]: Configuration
+  - main [ref=e55]:
+    - generic [ref=e57]:
+      - generic [ref=e58]:
+        - generic [ref=e59]:
+          - heading "AutoSourcing" [level=1] [ref=e60]
+          - paragraph [ref=e61]: Découverte automatique et analyse de produits
+        - generic [ref=e62]: Phase 6 • E2E Testing
+      - navigation [ref=e64]:
+        - button "Jobs de Découverte" [ref=e65] [cursor=pointer]
+        - button "Analyse Manuelle" [ref=e66] [cursor=pointer]
+      - generic [ref=e67]:
+        - heading "Jobs Récents" [level=2] [ref=e68]
+        - button "Nouvelle Recherche Personnalisée" [ref=e69] [cursor=pointer]
+      - generic [ref=e72]:
+        - generic [ref=e74] [cursor=pointer]:
+          - generic [ref=e75]:
+            - heading "E2E Test Job Phase 5" [level=3] [ref=e76]
+            - paragraph [ref=e77]: "ID: a922aec2-9331-4a90-bf1d-0979beac2125"
+            - paragraph [ref=e78]: 13/11/2025 02:31:09
+          - generic [ref=e79]:
+            - generic [ref=e80]: error
+            - paragraph [ref=e81]: 0 picks / 10 testés
+        - generic [ref=e83] [cursor=pointer]:
+          - generic [ref=e84]:
+            - heading "E2E Test Job Phase 5" [level=3] [ref=e85]
+            - paragraph [ref=e86]: "ID: f1387d83-8350-4ccd-b488-467e0200ac42"
+            - paragraph [ref=e87]: 12/11/2025 18:47:18
+          - generic [ref=e88]:
+            - generic [ref=e89]: error
+            - paragraph [ref=e90]: 0 picks / 10 testés
+        - generic [ref=e92] [cursor=pointer]:
+          - generic [ref=e93]:
+            - heading "E2E Test Job Phase 5" [level=3] [ref=e94]
+            - paragraph [ref=e95]: "ID: 5ddcb551-f8af-4ed9-b57b-8f83bcbbc620"
+            - paragraph [ref=e96]: 12/11/2025 18:37:15
+          - generic [ref=e97]:
+            - generic [ref=e98]: error
+            - paragraph [ref=e99]: 0 picks / 10 testés
+        - generic [ref=e101] [cursor=pointer]:
+          - generic [ref=e102]:
+            - heading "E2E Test Job Phase 5" [level=3] [ref=e103]
+            - paragraph [ref=e104]: "ID: 05267d2c-400e-4e5c-9296-9c272fe71c28"
+            - paragraph [ref=e105]: 12/11/2025 18:20:47
+          - generic [ref=e106]:
+            - generic [ref=e107]: success
+            - paragraph [ref=e108]: 0 picks / 10 testés
+        - generic [ref=e110] [cursor=pointer]:
+          - generic [ref=e111]:
+            - heading "E2E Test Job Phase 5" [level=3] [ref=e112]
+            - paragraph [ref=e113]: "ID: 87db4277-3d4a-4452-91f8-7c3a08154dff"
+            - paragraph [ref=e114]: 12/11/2025 18:14:08
+          - generic [ref=e115]:
+            - generic [ref=e116]: success
+            - paragraph [ref=e117]: 0 picks / 10 testés
+        - generic [ref=e119] [cursor=pointer]:
+          - generic [ref=e120]:
+            - heading "E2E Test Job Phase 5" [level=3] [ref=e121]
+            - paragraph [ref=e122]: "ID: f3800ddc-2d96-435d-9af7-4025ce8f8eae"
+            - paragraph [ref=e123]: 12/11/2025 18:07:18
+          - generic [ref=e124]:
+            - generic [ref=e125]: success
+            - paragraph [ref=e126]: 0 picks / 10 testés
+        - generic [ref=e128] [cursor=pointer]:
+          - generic [ref=e129]:
+            - heading "E2E Test Job Phase 5" [level=3] [ref=e130]
+            - paragraph [ref=e131]: "ID: d096c741-cb1d-499d-ab65-21e048966863"
+            - paragraph [ref=e132]: 12/11/2025 16:28:38
+          - generic [ref=e133]:
+            - generic [ref=e134]: success
+            - paragraph [ref=e135]: 0 picks / 10 testés
+        - generic [ref=e137] [cursor=pointer]:
+          - generic [ref=e138]:
+            - heading "New Deploy Test" [level=3] [ref=e139]
+            - paragraph [ref=e140]: "ID: 61b4e184-4024-49f4-8ff0-640fceb46ce9"
+            - paragraph [ref=e141]: 12/11/2025 16:09:48
+          - generic [ref=e142]:
+            - generic [ref=e143]: success
+            - paragraph [ref=e144]: 0 picks / 10 testés
+        - generic [ref=e146] [cursor=pointer]:
+          - generic [ref=e147]:
+            - heading "Test Fix" [level=3] [ref=e148]
+            - paragraph [ref=e149]: "ID: cd88bfdc-9495-46e1-a658-2a37014cb627"
+            - paragraph [ref=e150]: 12/11/2025 16:04:08
+          - generic [ref=e151]:
+            - generic [ref=e152]: success
+            - paragraph [ref=e153]: 0 picks / 10 testés
+        - generic [ref=e155] [cursor=pointer]:
+          - generic [ref=e156]:
+            - heading "E2E Test Job Phase 5" [level=3] [ref=e157]
+            - paragraph [ref=e158]: "ID: 6c9d6ae2-8f3d-4c65-8d68-44b0794eb17f"
+            - paragraph [ref=e159]: 12/11/2025 15:59:04
+          - generic [ref=e160]:
+            - generic [ref=e161]: success
+            - paragraph [ref=e162]: 1 picks / 10 testés
+```

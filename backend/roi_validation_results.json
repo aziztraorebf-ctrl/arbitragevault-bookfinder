@@ -1,0 +1,432 @@
+{
+  "timestamp": "2025-10-26T00:23:07.770843",
+  "source_price_used": 5.0,
+  "summary": {
+    "total_tested": 30,
+    "success": 11,
+    "no_price": 18,
+    "errors": 1
+  },
+  "results": {
+    "success": [
+      {
+        "asin": "0134685997",
+        "status": "success",
+        "prices": {
+          "amazon": 43.86,
+          "buy_box": 43.86,
+          "fba": 50.89,
+          "fbm": null,
+          "used": null
+        },
+        "fees": {
+          "referral_fee": 6.579,
+          "closing_fee": 1.8,
+          "fba_fee": 3.0,
+          "inbound_shipping": 0.4,
+          "prep_fee": 0.2,
+          "total": 11.979
+        },
+        "roi_metrics": {
+          "buy_price": 5.0,
+          "expected_sale_price": 43.86,
+          "total_fees": 11.979,
+          "profit": 26.88,
+          "roi_pct": 537.62,
+          "roi_tier": "EXCELLENT",
+          "margin_pct": 61.29
+        },
+        "title": "Effective Java"
+      },
+      {
+        "asin": "1260565955",
+        "status": "success",
+        "prices": {
+          "amazon": null,
+          "buy_box": 45.0,
+          "fba": 44.81,
+          "fbm": null,
+          "used": null
+        },
+        "fees": {
+          "referral_fee": 6.75,
+          "closing_fee": 1.8,
+          "fba_fee": 3.0,
+          "inbound_shipping": 0.4,
+          "prep_fee": 0.2,
+          "total": 12.15
+        },
+        "roi_metrics": {
+          "buy_price": 5.0,
+          "expected_sale_price": 45.0,
+          "total_fees": 12.15,
+          "profit": 27.85,
+          "roi_pct": 557.0,
+          "roi_tier": "EXCELLENT",
+          "margin_pct": 61.89
+        },
+        "title": "Biology"
+      },
+      {
+        "asin": "0134173279",
+        "status": "success",
+        "prices": {
+          "amazon": 38.66,
+          "buy_box": 19.23,
+          "fba": 19.23,
+          "fbm": null,
+          "used": null
+        },
+        "fees": {
+          "referral_fee": 2.8845,
+          "closing_fee": 1.8,
+          "fba_fee": 3.0,
+          "inbound_shipping": 0.4,
+          "prep_fee": 0.2,
+          "total": 8.2845
+        },
+        "roi_metrics": {
+          "buy_price": 5.0,
+          "expected_sale_price": 19.23,
+          "total_fees": 8.2845,
+          "profit": 5.95,
+          "roi_pct": 118.91,
+          "roi_tier": "EXCELLENT",
+          "margin_pct": 30.92
+        },
+        "title": "Python Distilled (Developer's Library)"
+      },
+      {
+        "asin": "1265045631",
+        "status": "success",
+        "prices": {
+          "amazon": 82.35,
+          "buy_box": 47.72,
+          "fba": 47.05,
+          "fbm": null,
+          "used": null
+        },
+        "fees": {
+          "referral_fee": 7.1579999999999995,
+          "closing_fee": 1.8,
+          "fba_fee": 3.0,
+          "inbound_shipping": 0.4,
+          "prep_fee": 0.2,
+          "total": 12.558
+        },
+        "roi_metrics": {
+          "buy_price": 5.0,
+          "expected_sale_price": 47.72,
+          "total_fees": 12.558,
+          "profit": 30.16,
+          "roi_pct": 603.24,
+          "roi_tier": "EXCELLENT",
+          "margin_pct": 63.21
+        },
+        "title": "ISE Business and Administrative Communication"
+      },
+      {
+        "asin": "0593655036",
+        "status": "success",
+        "prices": {
+          "amazon": 15.23,
+          "buy_box": 15.23,
+          "fba": 15.22,
+          "fbm": null,
+          "used": null
+        },
+        "fees": {
+          "referral_fee": 2.2845,
+          "closing_fee": 1.8,
+          "fba_fee": 3.0,
+          "inbound_shipping": 0.4,
+          "prep_fee": 0.2,
+          "total": 7.6845
+        },
+        "roi_metrics": {
+          "buy_price": 5.0,
+          "expected_sale_price": 15.23,
+          "total_fees": 7.6845,
+          "profit": 2.55,
+          "roi_pct": 50.91,
+          "roi_tier": "EXCELLENT",
+          "margin_pct": 16.71
+        },
+        "title": "The Anxious Generation: How the Great Rewiring of Childhood Is Causing an Epidemic of Mental Illness"
+      },
+      {
+        "asin": "1668026031",
+        "status": "success",
+        "prices": {
+          "amazon": 9.4,
+          "buy_box": 7.99,
+          "fba": 7.99,
+          "fbm": null,
+          "used": null
+        },
+        "fees": {
+          "referral_fee": 1.1985,
+          "closing_fee": 1.8,
+          "fba_fee": 3.0,
+          "inbound_shipping": 0.4,
+          "prep_fee": 0.2,
+          "total": 6.5985
+        },
+        "roi_metrics": {
+          "buy_price": 5.0,
+          "expected_sale_price": 7.99,
+          "total_fees": 6.5985,
+          "profit": -3.61,
+          "roi_pct": -72.17,
+          "roi_tier": "POOR",
+          "margin_pct": -45.16
+        },
+        "title": "Icebreaker: A Novel (The Maple Hills Series)"
+      },
+      {
+        "asin": "1098146891",
+        "status": "success",
+        "prices": {
+          "amazon": 51.1,
+          "buy_box": 51.1,
+          "fba": 50.46,
+          "fbm": null,
+          "used": null
+        },
+        "fees": {
+          "referral_fee": 7.665,
+          "closing_fee": 1.8,
+          "fba_fee": 3.0,
+          "inbound_shipping": 0.4,
+          "prep_fee": 0.2,
+          "total": 13.065
+        },
+        "roi_metrics": {
+          "buy_price": 5.0,
+          "expected_sale_price": 51.1,
+          "total_fees": 13.065,
+          "profit": 33.04,
+          "roi_pct": 660.7,
+          "roi_tier": "EXCELLENT",
+          "margin_pct": 64.65
+        },
+        "title": "System Design on AWS: Building and Scaling Enterprise Solutions"
+      },
+      {
+        "asin": "1718501129",
+        "status": "success",
+        "prices": {
+          "amazon": 41.14,
+          "buy_box": 32.41,
+          "fba": 32.41,
+          "fbm": null,
+          "used": null
+        },
+        "fees": {
+          "referral_fee": 4.8614999999999995,
+          "closing_fee": 1.8,
+          "fba_fee": 3.0,
+          "inbound_shipping": 0.4,
+          "prep_fee": 0.2,
+          "total": 10.2615
+        },
+        "roi_metrics": {
+          "buy_price": 5.0,
+          "expected_sale_price": 32.41,
+          "total_fees": 10.2615,
+          "profit": 17.15,
+          "roi_pct": 342.97,
+          "roi_tier": "EXCELLENT",
+          "margin_pct": 52.91
+        },
+        "title": "Black Hat Python, 2nd Edition: Python Programming for Hackers and Pentesters"
+      },
+      {
+        "asin": "1718503261",
+        "status": "success",
+        "prices": {
+          "amazon": 42.42,
+          "buy_box": 42.42,
+          "fba": 50.69,
+          "fbm": null,
+          "used": null
+        },
+        "fees": {
+          "referral_fee": 6.363,
+          "closing_fee": 1.8,
+          "fba_fee": 3.0,
+          "inbound_shipping": 0.4,
+          "prep_fee": 0.2,
+          "total": 11.763
+        },
+        "roi_metrics": {
+          "buy_price": 5.0,
+          "expected_sale_price": 42.42,
+          "total_fees": 11.763,
+          "profit": 25.66,
+          "roi_pct": 513.14,
+          "roi_tier": "EXCELLENT",
+          "margin_pct": 60.48
+        },
+        "title": "Evasive Malware: A Field Guide to Detecting, Analyzing, and Defeating Advanced Threats"
+      },
+      {
+        "asin": "1593279280",
+        "status": "success",
+        "prices": {
+          "amazon": null,
+          "buy_box": 40.65,
+          "fba": 36.94,
+          "fbm": null,
+          "used": null
+        },
+        "fees": {
+          "referral_fee": 6.097499999999999,
+          "closing_fee": 1.8,
+          "fba_fee": 3.0,
+          "inbound_shipping": 0.4,
+          "prep_fee": 0.2,
+          "total": 11.497499999999999
+        },
+        "roi_metrics": {
+          "buy_price": 5.0,
+          "expected_sale_price": 40.65,
+          "total_fees": 11.497499999999999,
+          "profit": 24.15,
+          "roi_pct": 483.05,
+          "roi_tier": "EXCELLENT",
+          "margin_pct": 59.42
+        },
+        "title": "Python Crash Course, 2nd Edition: A Hands-On, Project-Based Introduction to Programming"
+      },
+      {
+        "asin": "1665925779",
+        "status": "success",
+        "prices": {
+          "amazon": 7.99,
+          "buy_box": 7.99,
+          "fba": 12.23,
+          "fbm": null,
+          "used": null
+        },
+        "fees": {
+          "referral_fee": 1.1985,
+          "closing_fee": 1.8,
+          "fba_fee": 3.0,
+          "inbound_shipping": 0.4,
+          "prep_fee": 0.2,
+          "total": 6.5985
+        },
+        "roi_metrics": {
+          "buy_price": 5.0,
+          "expected_sale_price": 7.99,
+          "total_fees": 6.5985,
+          "profit": -3.61,
+          "roi_pct": -72.17,
+          "roi_tier": "POOR",
+          "margin_pct": -45.16
+        },
+        "title": "Alice's Adventures in Wonderland (1)"
+      }
+    ],
+    "no_price": [
+      {
+        "asin": "0134895436",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "0063340240",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "0593579135",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "0593723597",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "0593713842",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "0593449274",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "B0CW1SXHZL",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "1492056200",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "0063283956",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "0593232097",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "0593652916",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "0063356562",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "1534482849",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "1665925760",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "B0BN84P9JK",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "B0D5BY7JWM",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "B0D4778Y2P",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      },
+      {
+        "asin": "B0995VKY1K",
+        "status": "no_price",
+        "error": "No valid sale price found"
+      }
+    ],
+    "errors": [
+      {
+        "asin": "9780060555665",
+        "status": "error",
+        "error": "No product data from Keepa"
+      }
+    ]
+  }
+}

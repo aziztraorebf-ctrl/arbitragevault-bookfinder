@@ -1,0 +1,84 @@
+
+>> GET /keepa/0316769487/metrics
+
+============================================================
+  Metrics for 0316769487
+============================================================
+{
+  "asin": "0316769487",
+  "analysis": {
+    "asin": "0316769487",
+    "title": "The Catcher in the Rye",
+    "current_price": 7.03,
+    "current_bsr": 44652,
+    "pricing": {},
+    "roi": {
+      "velocity_score": 86.6,
+      "velocity_category": "fast",
+      "avg_daily_sales": 5.98,
+      "current_bsr": 44652
+    },
+    "velocity": {
+      "velocity_score": 86.6,
+      "velocity_category": "fast",
+      "avg_daily_sales": 5.98,
+      "current_bsr": 44652
+    },
+    "velocity_score": 0,
+    "price_stability_score": 67,
+    "confidence_score": 100,
+    "overall_rating": "EXCELLENT",
+    "score_breakdown": {
+      "velocity": {
+        "score": 0,
+        "raw": 0.0,
+        "level": "poor",
+        "notes": "5754 BSR data points, -38699.08% trend"
+      },
+      "stability": {
+        "score": 67,
+        "raw": 0.6786638332993982,
+        "level": "good",
+        "notes": "CV: 0.321, price range: $0.09-$7.03"
+      },
+      "confidence": {
+        "score": 100,
+        "raw": 1.0,
+        "level": "high",
+        "notes": "Fresh: 1.00, Complete: 1.00, BSR: 1.00"
+      }
+    },
+    "readable_summary": "Rating: EXCELLENT, ROI: 0.0%",
+    "strategy_profile": "balanced",
+    "calculation_method": null,
+    "recommendation": "STRONG BUY - Excellent opportunity",
+    "risk_factors": [
+      "Low sales velocity",
+      "Amazon competing on listing",
+      "Low ROI potential"
+    ]
+  },
+  "config_audit": {
+    "version": "1.0",
+    "hash": "-3973567668327778460",
+    "profile": "default",
+    "effective_at": "2025-10-23T02:36:45.907943",
+    "changes_applied": []
+  },
+  "keepa_metadata": {
+    "snapshot_at": "2025-10-23T02:36:45.907966",
+    "cache_hit": false,
+    "tokens_used": 0,
+    "tokens_remaining": null,
+    "data_freshness_hours": 1.0
+  },
+  "trace_id": "61e00f8f"
+}
+
+[SCORES]
+  Velocity: 0
+  Stability: 67
+  Confidence: 100
+  Rating: EXCELLENT
+
+[SAUVEGARDE] Résultat dans: last_api_result.json

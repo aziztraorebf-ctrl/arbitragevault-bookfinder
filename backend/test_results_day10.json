@@ -1,0 +1,69 @@
+{
+  "timestamp": "2025-10-29T23:03:19.086951",
+  "tests": [
+    {
+      "name": "Backend Health Check",
+      "passed": true,
+      "message": "Backend is alive",
+      "detail": {
+        "status": "alive",
+        "service": "ArbitrageVault API",
+        "version": "1.6.3",
+        "environment": "development"
+      }
+    },
+    {
+      "name": "Niches Service Health",
+      "passed": true,
+      "message": "Niches service is healthy",
+      "detail": {
+        "status": "healthy",
+        "service": "Niche Discovery",
+        "api_key_configured": true,
+        "endpoints": [
+          "/niches/discover"
+        ]
+      }
+    },
+    {
+      "name": "Auto-Discover Niches (count=3)",
+      "passed": false,
+      "message": "No niches discovered",
+      "detail": {
+        "status": 200,
+        "niches_found": 0,
+        "total_count": 0,
+        "cache_hit": false,
+        "mode": "auto",
+        "niches": []
+      }
+    },
+    {
+      "name": "Niches Discovery (shuffle=false)",
+      "passed": true,
+      "message": "Got 0 niches (deterministic)",
+      "detail": {
+        "niches_count": 0
+      }
+    },
+    {
+      "name": "Single Niche Discovery (count=1)",
+      "passed": false,
+      "message": "Expected 1 niche, got 0",
+      "detail": null
+    },
+    {
+      "name": "Max 5 Niches Discovery (count=5)",
+      "passed": true,
+      "message": "Got 0 niches",
+      "detail": {
+        "niches_count": 0
+      }
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "passed": 4,
+    "failed": 2
+  }
+}

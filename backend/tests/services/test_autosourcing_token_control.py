@@ -38,6 +38,15 @@ def mock_db():
     db.add = Mock()
     db.commit = AsyncMock()
     db.refresh = AsyncMock()
+
+    # Mock execute() for selectinload reload pattern
+    # Return a result with scalar_one() that returns a mock job
+    mock_result = AsyncMock()
+    mock_job = AsyncMock()
+    mock_job.picks = []  # Empty picks list
+    mock_result.scalar_one = Mock(return_value=mock_job)
+    db.execute = AsyncMock(return_value=mock_result)
+
     return db
 
 
@@ -100,3 +109,75 @@ async def test_run_custom_search_logs_skip_when_insufficient(mock_keepa_insuffic
 
     # Verify log message
     assert "Insufficient tokens for AutoSourcing job" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_run_custom_search_returns_job_with_accessible_picks():
+    """
+    Test that run_custom_search returns job with picks relationship loaded.
+
+    Regression test for MissingGreenlet error when FastAPI serializes response.
+    The picks relationship MUST be eagerly loaded before returning from service,
+    otherwise accessing job.picks after session commit raises MissingGreenlet.
+    """
+    from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+    from sqlalchemy.pool import StaticPool
+    from app.models.base import Base
+    from app.models.autosourcing import AutoSourcingJob, AutoSourcingPick
+
+    # Create isolated async test engine for ONLY AutoSourcing tables
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
+        echo=False
+    )
+
+    # Create only AutoSourcing tables (not business_config with JSONB)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all, tables=[
+            AutoSourcingJob.__table__,
+            AutoSourcingPick.__table__
+        ])
+
+    # Create session with expire_on_commit=False
+    async_session = AsyncSession(bind=engine, expire_on_commit=False)
+
+    try:
+        # Create mock KeepaService with sufficient tokens
+        mock_keepa = Mock()
+        mock_keepa.can_perform_action = AsyncMock(return_value={
+            "can_proceed": True,
+            "current_balance": 300,
+            "required_tokens": 200,
+            "action": "auto_sourcing_job"
+        })
+
+        # Create service with real async DB session
+        service = AutoSourcingService(db_session=async_session, keepa_service=mock_keepa)
+
+        # Mock internal methods to avoid Keepa API calls
+        service._discover_products = AsyncMock(return_value=["B001TEST", "B002TEST"])
+        service._score_and_filter_products = AsyncMock(return_value=[])
+        service._remove_recent_duplicates = AsyncMock(return_value=[])
+
+        # Execute run_custom_search
+        job = await service.run_custom_search(
+            profile_name="TDD Test Job",
+            discovery_config={"categories": ["Books"]},
+            scoring_config={"roi_min": 20}
+        )
+
+        # CRITICAL ASSERTION: Accessing job.picks should NOT raise MissingGreenlet
+        # This will FAIL before fix because picks is lazy-loaded and session is closed
+        try:
+            picks_list = job.picks
+            assert isinstance(picks_list, list), "job.picks should return a list"
+        except Exception as e:
+            if "MissingGreenlet" in str(e) or "greenlet_spawn" in str(e):
+                pytest.fail(f"MissingGreenlet error when accessing job.picks: {e}")
+            else:
+                raise
+    finally:
+        await async_session.close()
+        await engine.dispose()

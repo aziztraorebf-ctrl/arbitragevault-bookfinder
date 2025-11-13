@@ -1,0 +1,3566 @@
+{
+  "timestamp": "2025-10-24T10:02:33.451368",
+  "scripts_found": [
+    {
+      "name": "test_keepa_endpoints_smoke.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_endpoints_smoke.py",
+      "size": 10445,
+      "lines": 270,
+      "modified": "2025-08-21T21:46:12.644196",
+      "score": 65,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_endpoints.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\app\\tests\\integration\\test_keepa_endpoints.py",
+      "size": 13573,
+      "lines": 366,
+      "modified": "2025-08-21T21:46:12.637740",
+      "score": 65,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_phase1_unified_parser.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_phase1_unified_parser.py",
+      "size": 5520,
+      "lines": 145,
+      "modified": "2025-10-18T21:32:33.444492",
+      "score": 65,
+      "reasons": [
+        "Récent (5j)",
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_phase2_pricing_metrics.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_phase2_pricing_metrics.py",
+      "size": 8286,
+      "lines": 204,
+      "modified": "2025-10-18T21:45:43.709487",
+      "score": 65,
+      "reasons": [
+        "Récent (5j)",
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_phase3_unified_builder.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_phase3_unified_builder.py",
+      "size": 10729,
+      "lines": 234,
+      "modified": "2025-10-18T21:48:11.424381",
+      "score": 65,
+      "reasons": [
+        "Récent (5j)",
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_phase4_endpoint_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_phase4_endpoint_integration.py",
+      "size": 5638,
+      "lines": 172,
+      "modified": "2025-10-18T21:54:36.551057",
+      "score": 65,
+      "reasons": [
+        "Récent (5j)",
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_phase5_offers_validation.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_phase5_offers_validation.py",
+      "size": 13713,
+      "lines": 333,
+      "modified": "2025-10-18T22:03:05.909833",
+      "score": 65,
+      "reasons": [
+        "Récent (5j)",
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_core_services.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_core_services.py",
+      "size": 30568,
+      "lines": 706,
+      "modified": "2025-08-30T18:59:44.994959",
+      "score": 60,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls"
+      ]
+    },
+    {
+      "name": "analyze_bsr_history.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\analyze_bsr_history.py",
+      "size": 6723,
+      "lines": 168,
+      "modified": "2025-10-22T22:37:24.363528",
+      "score": 60,
+      "reasons": [
+        "Récent (1j)",
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_parser_local.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_parser_local.py",
+      "size": 2004,
+      "lines": 64,
+      "modified": "2025-10-22T21:53:04.515885",
+      "score": 60,
+      "reasons": [
+        "Récent (1j)",
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "validate_velocity_fix.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\validate_velocity_fix.py",
+      "size": 8537,
+      "lines": 221,
+      "modified": "2025-10-22T23:17:59.565344",
+      "score": 60,
+      "reasons": [
+        "Récent (1j)",
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_autosourcing_structure.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_autosourcing_structure.py",
+      "size": 6564,
+      "lines": 169,
+      "modified": "2025-08-23T22:23:11.329573",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_business_config_smoke.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_business_config_smoke.py",
+      "size": 7342,
+      "lines": 199,
+      "modified": "2025-08-21T21:46:12.641707",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_components_direct.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_components_direct.py",
+      "size": 9143,
+      "lines": 240,
+      "modified": "2025-08-27T21:55:43.805608",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_concurrent.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_concurrent.py",
+      "size": 4775,
+      "lines": 133,
+      "modified": "2025-08-20T23:08:02.062192",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_config_integration_smoke.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_config_integration_smoke.py",
+      "size": 11196,
+      "lines": 287,
+      "modified": "2025-08-21T21:46:12.642688",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_e2e_bsr_pipeline.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_e2e_bsr_pipeline.py",
+      "size": 9803,
+      "lines": 265,
+      "modified": "2025-10-07T10:50:26.409707",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_parser_v2_simple.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_parser_v2_simple.py",
+      "size": 6372,
+      "lines": 207,
+      "modified": "2025-10-07T10:50:26.412498",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_stock_estimate.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_stock_estimate.py",
+      "size": 5567,
+      "lines": 162,
+      "modified": "2025-08-25T20:51:52.838924",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_stock_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_stock_integration.py",
+      "size": 6271,
+      "lines": 176,
+      "modified": "2025-08-25T20:51:52.839892",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_bookmark_service.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\app\\tests\\test_bookmark_service.py",
+      "size": 10063,
+      "lines": 272,
+      "modified": "2025-09-02T20:31:59.399268",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_analysis_repository.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_analysis_repository.py",
+      "size": 18761,
+      "lines": 489,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_base_repository_concurrent.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_base_repository_concurrent.py",
+      "size": 11923,
+      "lines": 277,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_base_repository_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_base_repository_integration.py",
+      "size": 13280,
+      "lines": 357,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_base_repository_performance.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_base_repository_performance.py",
+      "size": 6723,
+      "lines": 179,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_base_repository_scale.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_base_repository_scale.py",
+      "size": 10172,
+      "lines": 254,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_base_repository_simple.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_base_repository_simple.py",
+      "size": 5443,
+      "lines": 147,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_basic_models.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_basic_models.py",
+      "size": 3496,
+      "lines": 109,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_parser_v2.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_keepa_parser_v2.py",
+      "size": 11791,
+      "lines": 328,
+      "modified": "2025-10-07T10:50:26.412498",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_models_extended.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_models_extended.py",
+      "size": 15465,
+      "lines": 420,
+      "modified": "2025-08-19T11:03:06.850720",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_models_simple.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_models_simple.py",
+      "size": 8036,
+      "lines": 252,
+      "modified": "2025-08-19T11:03:06.852229",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_niche_discovery.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_niche_discovery.py",
+      "size": 13308,
+      "lines": 331,
+      "modified": "2025-09-01T00:01:15.159402",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_pagination_sorting.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_pagination_sorting.py",
+      "size": 14895,
+      "lines": 389,
+      "modified": "2025-08-19T11:03:06.853263",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "concurrency_test.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\audit\\benchmarks\\concurrency_test.py",
+      "size": 12473,
+      "lines": 304,
+      "modified": "2025-08-20T21:12:40.506058",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_amazon_check_service.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_amazon_check_service.py",
+      "size": 11254,
+      "lines": 350,
+      "modified": "2025-10-11T23:21:57.377487",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_price_extraction.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_keepa_price_extraction.py",
+      "size": 4869,
+      "lines": 121,
+      "modified": "2025-10-15T21:33:20.791162",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_time_conversion.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_keepa_time_conversion.py",
+      "size": 6872,
+      "lines": 203,
+      "modified": "2025-10-15T10:16:49.706379",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_utils.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_keepa_utils.py",
+      "size": 6811,
+      "lines": 213,
+      "modified": "2025-10-08T10:42:11.270116",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_roi_calculation.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_roi_calculation.py",
+      "size": 9750,
+      "lines": 277,
+      "modified": "2025-10-09T09:37:42.241377",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_strategy_selection.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_strategy_selection.py",
+      "size": 8329,
+      "lines": 233,
+      "modified": "2025-10-10T10:03:43.196816",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_target_price.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_target_price.py",
+      "size": 8001,
+      "lines": 207,
+      "modified": "2025-08-28T21:47:24.903141",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_view_scoring.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_view_scoring.py",
+      "size": 15733,
+      "lines": 461,
+      "modified": "2025-10-11T14:25:12.913609",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_direct.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_keepa_direct.py",
+      "size": 2892,
+      "lines": 88,
+      "modified": "2025-10-22T09:20:41.450284",
+      "score": 55,
+      "reasons": [
+        "Récent (2j)",
+        "Logique business",
+        "Bien documenté",
+        "API calls"
+      ]
+    },
+    {
+      "name": "test_cas_limites_pipeline.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_cas_limites_pipeline.py",
+      "size": 17535,
+      "lines": 506,
+      "modified": "2025-10-07T10:50:26.409707",
+      "score": 50,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_service_direct.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_service_direct.py",
+      "size": 4468,
+      "lines": 132,
+      "modified": "2025-08-25T20:51:52.837932",
+      "score": 50,
+      "reasons": [
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_backend_corrections.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\e2e\\test_backend_corrections.py",
+      "size": 10738,
+      "lines": 246,
+      "modified": "2025-08-27T21:12:38.170658",
+      "score": 50,
+      "reasons": [
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_performance_load.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\e2e\\test_performance_load.py",
+      "size": 10578,
+      "lines": 257,
+      "modified": "2025-08-27T21:13:37.776761",
+      "score": 50,
+      "reasons": [
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_security_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\e2e\\test_security_integration.py",
+      "size": 10615,
+      "lines": 245,
+      "modified": "2025-08-27T21:14:33.399705",
+      "score": 50,
+      "reasons": [
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "analyze_keepa_csv3.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\analyze_keepa_csv3.py",
+      "size": 8317,
+      "lines": 142,
+      "modified": "2025-10-22T22:43:42.951013",
+      "score": 50,
+      "reasons": [
+        "Récent (1j)",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "debug_analysis.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_analysis.py",
+      "size": 5913,
+      "lines": 152,
+      "modified": "2025-08-22T13:01:17.902321",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "debug_endpoint_difference.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_endpoint_difference.py",
+      "size": 5221,
+      "lines": 133,
+      "modified": "2025-08-22T13:01:17.903321",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "debug_real_flow.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_real_flow.py",
+      "size": 5042,
+      "lines": 123,
+      "modified": "2025-08-22T13:01:17.904318",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "debug_with_keepa_api.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_with_keepa_api.py",
+      "size": 7113,
+      "lines": 175,
+      "modified": "2025-08-22T13:01:17.905318",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_advanced_scoring.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_advanced_scoring.py",
+      "size": 6289,
+      "lines": 186,
+      "modified": "2025-08-22T21:00:52.684368",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_api_target_price.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_api_target_price.py",
+      "size": 8058,
+      "lines": 187,
+      "modified": "2025-08-28T21:47:24.898039",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_bestsellers_parsing.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_bestsellers_parsing.py",
+      "size": 5586,
+      "lines": 129,
+      "modified": "2025-10-04T14:46:09.761213",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_calculations_smoke.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_calculations_smoke.py",
+      "size": 4981,
+      "lines": 144,
+      "modified": "2025-08-21T21:46:12.642688",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_end_to_end_production_ready.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_end_to_end_production_ready.py",
+      "size": 14684,
+      "lines": 338,
+      "modified": "2025-08-30T18:25:48.196863",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_final_keepa_validation.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_final_keepa_validation.py",
+      "size": 6071,
+      "lines": 148,
+      "modified": "2025-08-28T21:47:24.899036",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_delayed_refresh.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_delayed_refresh.py",
+      "size": 4895,
+      "lines": 151,
+      "modified": "2025-10-14T09:47:41.565243",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_epoch_fix_validation.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_epoch_fix_validation.py",
+      "size": 6255,
+      "lines": 182,
+      "modified": "2025-10-15T10:20:29.651694",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_force_refresh_fix.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_force_refresh_fix.py",
+      "size": 5503,
+      "lines": 161,
+      "modified": "2025-10-14T10:15:43.661971",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_fresh_asin.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_fresh_asin.py",
+      "size": 3562,
+      "lines": 108,
+      "modified": "2025-10-14T09:46:26.212988",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_smoke.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_smoke.py",
+      "size": 4028,
+      "lines": 115,
+      "modified": "2025-08-21T21:46:12.645195",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_update_param.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_update_param.py",
+      "size": 5063,
+      "lines": 145,
+      "modified": "2025-10-14T09:45:45.188441",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_price_fix_quick.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_price_fix_quick.py",
+      "size": 4394,
+      "lines": 101,
+      "modified": "2025-10-15T21:32:28.743854",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_real_keepa_secure.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_real_keepa_secure.py",
+      "size": 5889,
+      "lines": 148,
+      "modified": "2025-08-28T21:47:24.899036",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_recent_asins.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_recent_asins.py",
+      "size": 8616,
+      "lines": 225,
+      "modified": "2025-10-14T10:24:30.575400",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_sales_velocity.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_sales_velocity.py",
+      "size": 8630,
+      "lines": 237,
+      "modified": "2025-08-26T19:54:08.843275",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_server_startup.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_server_startup.py",
+      "size": 4493,
+      "lines": 124,
+      "modified": "2025-08-28T21:47:24.900033",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_strategic_views_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_strategic_views_integration.py",
+      "size": 7937,
+      "lines": 203,
+      "modified": "2025-08-28T21:47:24.901031",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_validate_prices_post_fix.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_validate_prices_post_fix.py",
+      "size": 6912,
+      "lines": 180,
+      "modified": "2025-10-15T10:55:45.770880",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "validate_amazon_check_real_data.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\validate_amazon_check_real_data.py",
+      "size": 7702,
+      "lines": 196,
+      "modified": "2025-10-11T23:47:34.232012",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "validate_e2e_all_views.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\validate_e2e_all_views.py",
+      "size": 15421,
+      "lines": 441,
+      "modified": "2025-10-12T00:27:09.700612",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "analyze_learning_python_bsr.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\analyze_learning_python_bsr.py",
+      "size": 4444,
+      "lines": 84,
+      "modified": "2025-10-22T23:22:05.615806",
+      "score": 45,
+      "reasons": [
+        "Récent (1j)",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_velocity_fix_local.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_velocity_fix_local.py",
+      "size": 3867,
+      "lines": 94,
+      "modified": "2025-10-22T22:58:24.704922",
+      "score": 45,
+      "reasons": [
+        "Récent (1j)",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "check_stats_current.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\check_stats_current.py",
+      "size": 2767,
+      "lines": 65,
+      "modified": "2025-10-04T14:24:36.149742",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "debug_keepa_format.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_keepa_format.py",
+      "size": 1901,
+      "lines": 64,
+      "modified": "2025-08-30T17:48:18.251005",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_audit_verified_asins.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_audit_verified_asins.py",
+      "size": 4621,
+      "lines": 129,
+      "modified": "2025-10-14T21:46:52.162464",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_autosourcing_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_autosourcing_integration.py",
+      "size": 8526,
+      "lines": 210,
+      "modified": "2025-08-23T19:00:18.671719",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_autosourcing_real.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_autosourcing_real.py",
+      "size": 3638,
+      "lines": 99,
+      "modified": "2025-08-23T23:27:10.754141",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_book_asins.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_book_asins.py",
+      "size": 4658,
+      "lines": 112,
+      "modified": "2025-08-25T20:51:52.835904",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_cascade_delete.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_cascade_delete.py",
+      "size": 2569,
+      "lines": 64,
+      "modified": "2025-08-20T23:15:50.225332",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_corrected_parsing.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_corrected_parsing.py",
+      "size": 3599,
+      "lines": 90,
+      "modified": "2025-10-04T14:29:26.445010",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_debug_endpoint.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_debug_endpoint.py",
+      "size": 1689,
+      "lines": 53,
+      "modified": "2025-08-22T13:01:17.906315",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_keepa_product_finder.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_product_finder.py",
+      "size": 2454,
+      "lines": 72,
+      "modified": "2025-08-23T23:23:01.331330",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_keepa_raw_fields.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_raw_fields.py",
+      "size": 3364,
+      "lines": 90,
+      "modified": "2025-10-11T23:07:31.404037",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_keepa_raw_investigation.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_raw_investigation.py",
+      "size": 11751,
+      "lines": 297,
+      "modified": "2025-10-13T22:33:02.374667",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_rest_api_direct.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_rest_api_direct.py",
+      "size": 5970,
+      "lines": 168,
+      "modified": "2025-10-14T09:49:03.773156",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_rest_api_raw.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_rest_api_raw.py",
+      "size": 10393,
+      "lines": 267,
+      "modified": "2025-10-14T10:37:35.374976",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_real_keepa_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_real_keepa_integration.py",
+      "size": 12555,
+      "lines": 327,
+      "modified": "2025-08-25T20:51:52.836901",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_simple_keepa.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_simple_keepa.py",
+      "size": 2510,
+      "lines": 70,
+      "modified": "2025-08-23T23:26:12.897914",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_simple_keepa_debug.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_simple_keepa_debug.py",
+      "size": 3453,
+      "lines": 97,
+      "modified": "2025-08-30T17:56:45.195073",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_simple_logic.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_simple_logic.py",
+      "size": 3486,
+      "lines": 100,
+      "modified": "2025-08-25T20:51:52.838924",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_performance.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\audits\\test_performance.py",
+      "size": 6187,
+      "lines": 161,
+      "modified": "2025-10-05T20:53:07.047626",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_batch_repository.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_batch_repository.py",
+      "size": 12987,
+      "lines": 340,
+      "modified": "2025-08-20T21:12:40.528033",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_user_repository.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_user_repository.py",
+      "size": 11979,
+      "lines": 320,
+      "modified": "2025-08-20T21:12:40.528033",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_contract.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\integration\\test_keepa_contract.py",
+      "size": 6988,
+      "lines": 188,
+      "modified": "2025-10-08T10:42:56.328242",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "validate_roi_v1_vs_v2.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tools\\validate_roi_v1_vs_v2.py",
+      "size": 11057,
+      "lines": 333,
+      "modified": "2025-10-10T10:50:49.896465",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_pgbouncer_endpoints.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_pgbouncer_endpoints.py",
+      "size": 8603,
+      "lines": 240,
+      "modified": "2025-09-28T20:16:11.565687",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "debug_keepa_response.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_keepa_response.py",
+      "size": 2689,
+      "lines": 81,
+      "modified": "2025-08-25T20:51:52.829823",
+      "score": 35,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls"
+      ]
+    },
+    {
+      "name": "test_endpoints.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_endpoints.py",
+      "size": 3358,
+      "lines": 87,
+      "modified": "2025-08-20T22:06:34.758954",
+      "score": 35,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls"
+      ]
+    },
+    {
+      "name": "test_keepa_endpoint.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_endpoint.py",
+      "size": 1966,
+      "lines": 51,
+      "modified": "2025-08-22T22:09:51.542788",
+      "score": 35,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls"
+      ]
+    },
+    {
+      "name": "test_perf_1000.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_perf_1000.py",
+      "size": 3379,
+      "lines": 82,
+      "modified": "2025-08-20T23:08:46.038999",
+      "score": 35,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls"
+      ]
+    },
+    {
+      "name": "debug_amazon_detection.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_amazon_detection.py",
+      "size": 1707,
+      "lines": 43,
+      "modified": "2025-08-30T18:44:37.493553",
+      "score": 30,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "debug_repo.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_repo.py",
+      "size": 876,
+      "lines": 27,
+      "modified": "2025-08-20T22:31:01.074065",
+      "score": 30,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_autosourcing_unit.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_autosourcing_unit.py",
+      "size": 6045,
+      "lines": 156,
+      "modified": "2025-08-23T22:15:59.472308",
+      "score": 30,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_direct.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_direct.py",
+      "size": 4316,
+      "lines": 138,
+      "modified": "2025-10-08T09:05:34.596794",
+      "score": 30,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_local_parse.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_local_parse.py",
+      "size": 997,
+      "lines": 31,
+      "modified": "2025-10-04T16:30:19.379381",
+      "score": 30,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_server_quick.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_server_quick.py",
+      "size": 1271,
+      "lines": 33,
+      "modified": "2025-08-22T21:02:06.019956",
+      "score": 30,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_target_price_manual.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_target_price_manual.py",
+      "size": 6802,
+      "lines": 145,
+      "modified": "2025-08-28T21:47:24.902143",
+      "score": 30,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_update_1_vs_0.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_update_1_vs_0.py",
+      "size": 8087,
+      "lines": 214,
+      "modified": "2025-10-14T10:28:47.453713",
+      "score": 30,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "validate_stock_estimate.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\validate_stock_estimate.py",
+      "size": 10403,
+      "lines": 257,
+      "modified": "2025-08-25T20:51:52.839892",
+      "score": 30,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_2024_bestseller.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_2024_bestseller.py",
+      "size": 1271,
+      "lines": 46,
+      "modified": "2025-10-14T21:49:31.479837",
+      "score": 25,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_end_to_end.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_end_to_end.py",
+      "size": 2005,
+      "lines": 59,
+      "modified": "2025-08-25T20:51:52.836901",
+      "score": 25,
+      "reasons": [
+        "Imports production",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_health.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_health.py",
+      "size": 881,
+      "lines": 25,
+      "modified": "2025-08-18T16:02:23.529370",
+      "score": 25,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "API calls",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_keepa_account_info.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_account_info.py",
+      "size": 1175,
+      "lines": 49,
+      "modified": "2025-10-14T21:50:54.361714",
+      "score": 25,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_security_simple.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_security_simple.py",
+      "size": 1964,
+      "lines": 57,
+      "modified": "2025-08-20T23:14:21.077997",
+      "score": 25,
+      "reasons": [
+        "Imports production",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_pgbouncer_config.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_pgbouncer_config.py",
+      "size": 6717,
+      "lines": 191,
+      "modified": "2025-09-28T20:08:06.682554",
+      "score": 25,
+      "reasons": [
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "check_table_structure.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\check_table_structure.py",
+      "size": 693,
+      "lines": 22,
+      "modified": "2025-08-25T21:13:45.830900",
+      "score": 15,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "debug_status.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_status.py",
+      "size": 776,
+      "lines": 26,
+      "modified": "2025-08-20T23:03:59.471342",
+      "score": 15,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_import.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_import.py",
+      "size": 381,
+      "lines": 17,
+      "modified": "2025-08-22T22:03:28.214319",
+      "score": 15,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_imports.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_imports.py",
+      "size": 531,
+      "lines": 20,
+      "modified": "2025-08-20T22:37:18.147719",
+      "score": 15,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_prod_config.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_prod_config.py",
+      "size": 637,
+      "lines": 23,
+      "modified": "2025-08-20T23:12:32.813088",
+      "score": 15,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "quick_test.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\quick_test.py",
+      "size": 581,
+      "lines": 18,
+      "modified": "2025-08-23T19:18:09.839023",
+      "score": 0,
+      "reasons": [
+        "API calls",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "wait_and_test.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\wait_and_test.py",
+      "size": 453,
+      "lines": 19,
+      "modified": "2025-08-23T19:02:08.617309",
+      "score": -10,
+      "reasons": [
+        "Trop petit"
+      ]
+    }
+  ],
+  "scripts_to_keep": [
+    {
+      "name": "test_keepa_endpoints_smoke.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_endpoints_smoke.py",
+      "size": 10445,
+      "lines": 270,
+      "modified": "2025-08-21T21:46:12.644196",
+      "score": 65,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_endpoints.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\app\\tests\\integration\\test_keepa_endpoints.py",
+      "size": 13573,
+      "lines": 366,
+      "modified": "2025-08-21T21:46:12.637740",
+      "score": 65,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_phase1_unified_parser.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_phase1_unified_parser.py",
+      "size": 5520,
+      "lines": 145,
+      "modified": "2025-10-18T21:32:33.444492",
+      "score": 65,
+      "reasons": [
+        "Récent (5j)",
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_phase2_pricing_metrics.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_phase2_pricing_metrics.py",
+      "size": 8286,
+      "lines": 204,
+      "modified": "2025-10-18T21:45:43.709487",
+      "score": 65,
+      "reasons": [
+        "Récent (5j)",
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_phase3_unified_builder.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_phase3_unified_builder.py",
+      "size": 10729,
+      "lines": 234,
+      "modified": "2025-10-18T21:48:11.424381",
+      "score": 65,
+      "reasons": [
+        "Récent (5j)",
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_phase4_endpoint_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_phase4_endpoint_integration.py",
+      "size": 5638,
+      "lines": 172,
+      "modified": "2025-10-18T21:54:36.551057",
+      "score": 65,
+      "reasons": [
+        "Récent (5j)",
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_phase5_offers_validation.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_phase5_offers_validation.py",
+      "size": 13713,
+      "lines": 333,
+      "modified": "2025-10-18T22:03:05.909833",
+      "score": 65,
+      "reasons": [
+        "Récent (5j)",
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_core_services.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_core_services.py",
+      "size": 30568,
+      "lines": 706,
+      "modified": "2025-08-30T18:59:44.994959",
+      "score": 60,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls"
+      ]
+    },
+    {
+      "name": "analyze_bsr_history.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\analyze_bsr_history.py",
+      "size": 6723,
+      "lines": 168,
+      "modified": "2025-10-22T22:37:24.363528",
+      "score": 60,
+      "reasons": [
+        "Récent (1j)",
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_parser_local.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_parser_local.py",
+      "size": 2004,
+      "lines": 64,
+      "modified": "2025-10-22T21:53:04.515885",
+      "score": 60,
+      "reasons": [
+        "Récent (1j)",
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "validate_velocity_fix.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\validate_velocity_fix.py",
+      "size": 8537,
+      "lines": 221,
+      "modified": "2025-10-22T23:17:59.565344",
+      "score": 60,
+      "reasons": [
+        "Récent (1j)",
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_autosourcing_structure.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_autosourcing_structure.py",
+      "size": 6564,
+      "lines": 169,
+      "modified": "2025-08-23T22:23:11.329573",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_business_config_smoke.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_business_config_smoke.py",
+      "size": 7342,
+      "lines": 199,
+      "modified": "2025-08-21T21:46:12.641707",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_components_direct.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_components_direct.py",
+      "size": 9143,
+      "lines": 240,
+      "modified": "2025-08-27T21:55:43.805608",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_concurrent.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_concurrent.py",
+      "size": 4775,
+      "lines": 133,
+      "modified": "2025-08-20T23:08:02.062192",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_direct.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_keepa_direct.py",
+      "size": 2892,
+      "lines": 88,
+      "modified": "2025-10-22T09:20:41.450284",
+      "score": 55,
+      "reasons": [
+        "Récent (2j)",
+        "Logique business",
+        "Bien documenté",
+        "API calls"
+      ]
+    },
+    {
+      "name": "test_keepa_direct.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_direct.py",
+      "size": 4316,
+      "lines": 138,
+      "modified": "2025-10-08T09:05:34.596794",
+      "score": 30,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    }
+  ],
+  "scripts_to_archive": [
+    {
+      "name": "test_config_integration_smoke.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_config_integration_smoke.py",
+      "size": 11196,
+      "lines": 287,
+      "modified": "2025-08-21T21:46:12.642688",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_e2e_bsr_pipeline.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_e2e_bsr_pipeline.py",
+      "size": 9803,
+      "lines": 265,
+      "modified": "2025-10-07T10:50:26.409707",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_parser_v2_simple.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_parser_v2_simple.py",
+      "size": 6372,
+      "lines": 207,
+      "modified": "2025-10-07T10:50:26.412498",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_stock_estimate.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_stock_estimate.py",
+      "size": 5567,
+      "lines": 162,
+      "modified": "2025-08-25T20:51:52.838924",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_stock_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_stock_integration.py",
+      "size": 6271,
+      "lines": 176,
+      "modified": "2025-08-25T20:51:52.839892",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_bookmark_service.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\app\\tests\\test_bookmark_service.py",
+      "size": 10063,
+      "lines": 272,
+      "modified": "2025-09-02T20:31:59.399268",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_analysis_repository.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_analysis_repository.py",
+      "size": 18761,
+      "lines": 489,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_base_repository_concurrent.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_base_repository_concurrent.py",
+      "size": 11923,
+      "lines": 277,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_base_repository_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_base_repository_integration.py",
+      "size": 13280,
+      "lines": 357,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_base_repository_performance.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_base_repository_performance.py",
+      "size": 6723,
+      "lines": 179,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_base_repository_scale.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_base_repository_scale.py",
+      "size": 10172,
+      "lines": 254,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_base_repository_simple.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_base_repository_simple.py",
+      "size": 5443,
+      "lines": 147,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_basic_models.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_basic_models.py",
+      "size": 3496,
+      "lines": 109,
+      "modified": "2025-08-20T21:12:40.518004",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_parser_v2.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_keepa_parser_v2.py",
+      "size": 11791,
+      "lines": 328,
+      "modified": "2025-10-07T10:50:26.412498",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_models_extended.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_models_extended.py",
+      "size": 15465,
+      "lines": 420,
+      "modified": "2025-08-19T11:03:06.850720",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_models_simple.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_models_simple.py",
+      "size": 8036,
+      "lines": 252,
+      "modified": "2025-08-19T11:03:06.852229",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_niche_discovery.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_niche_discovery.py",
+      "size": 13308,
+      "lines": 331,
+      "modified": "2025-09-01T00:01:15.159402",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_pagination_sorting.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_pagination_sorting.py",
+      "size": 14895,
+      "lines": 389,
+      "modified": "2025-08-19T11:03:06.853263",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "concurrency_test.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\audit\\benchmarks\\concurrency_test.py",
+      "size": 12473,
+      "lines": 304,
+      "modified": "2025-08-20T21:12:40.506058",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_amazon_check_service.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_amazon_check_service.py",
+      "size": 11254,
+      "lines": 350,
+      "modified": "2025-10-11T23:21:57.377487",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_price_extraction.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_keepa_price_extraction.py",
+      "size": 4869,
+      "lines": 121,
+      "modified": "2025-10-15T21:33:20.791162",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_time_conversion.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_keepa_time_conversion.py",
+      "size": 6872,
+      "lines": 203,
+      "modified": "2025-10-15T10:16:49.706379",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_utils.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_keepa_utils.py",
+      "size": 6811,
+      "lines": 213,
+      "modified": "2025-10-08T10:42:11.270116",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_roi_calculation.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_roi_calculation.py",
+      "size": 9750,
+      "lines": 277,
+      "modified": "2025-10-09T09:37:42.241377",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_strategy_selection.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_strategy_selection.py",
+      "size": 8329,
+      "lines": 233,
+      "modified": "2025-10-10T10:03:43.196816",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_target_price.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_target_price.py",
+      "size": 8001,
+      "lines": 207,
+      "modified": "2025-08-28T21:47:24.903141",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_view_scoring.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\unit\\test_view_scoring.py",
+      "size": 15733,
+      "lines": 461,
+      "modified": "2025-10-11T14:25:12.913609",
+      "score": 55,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_cas_limites_pipeline.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_cas_limites_pipeline.py",
+      "size": 17535,
+      "lines": 506,
+      "modified": "2025-10-07T10:50:26.409707",
+      "score": 50,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_service_direct.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_service_direct.py",
+      "size": 4468,
+      "lines": 132,
+      "modified": "2025-08-25T20:51:52.837932",
+      "score": 50,
+      "reasons": [
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_backend_corrections.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\e2e\\test_backend_corrections.py",
+      "size": 10738,
+      "lines": 246,
+      "modified": "2025-08-27T21:12:38.170658",
+      "score": 50,
+      "reasons": [
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_performance_load.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\e2e\\test_performance_load.py",
+      "size": 10578,
+      "lines": 257,
+      "modified": "2025-08-27T21:13:37.776761",
+      "score": 50,
+      "reasons": [
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_security_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\e2e\\test_security_integration.py",
+      "size": 10615,
+      "lines": 245,
+      "modified": "2025-08-27T21:14:33.399705",
+      "score": 50,
+      "reasons": [
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "analyze_keepa_csv3.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\analyze_keepa_csv3.py",
+      "size": 8317,
+      "lines": 142,
+      "modified": "2025-10-22T22:43:42.951013",
+      "score": 50,
+      "reasons": [
+        "Récent (1j)",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "debug_analysis.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_analysis.py",
+      "size": 5913,
+      "lines": 152,
+      "modified": "2025-08-22T13:01:17.902321",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "debug_endpoint_difference.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_endpoint_difference.py",
+      "size": 5221,
+      "lines": 133,
+      "modified": "2025-08-22T13:01:17.903321",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "debug_real_flow.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_real_flow.py",
+      "size": 5042,
+      "lines": 123,
+      "modified": "2025-08-22T13:01:17.904318",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "debug_with_keepa_api.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_with_keepa_api.py",
+      "size": 7113,
+      "lines": 175,
+      "modified": "2025-08-22T13:01:17.905318",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_advanced_scoring.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_advanced_scoring.py",
+      "size": 6289,
+      "lines": 186,
+      "modified": "2025-08-22T21:00:52.684368",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_api_target_price.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_api_target_price.py",
+      "size": 8058,
+      "lines": 187,
+      "modified": "2025-08-28T21:47:24.898039",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_bestsellers_parsing.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_bestsellers_parsing.py",
+      "size": 5586,
+      "lines": 129,
+      "modified": "2025-10-04T14:46:09.761213",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_calculations_smoke.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_calculations_smoke.py",
+      "size": 4981,
+      "lines": 144,
+      "modified": "2025-08-21T21:46:12.642688",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_end_to_end_production_ready.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_end_to_end_production_ready.py",
+      "size": 14684,
+      "lines": 338,
+      "modified": "2025-08-30T18:25:48.196863",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_final_keepa_validation.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_final_keepa_validation.py",
+      "size": 6071,
+      "lines": 148,
+      "modified": "2025-08-28T21:47:24.899036",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_delayed_refresh.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_delayed_refresh.py",
+      "size": 4895,
+      "lines": 151,
+      "modified": "2025-10-14T09:47:41.565243",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_epoch_fix_validation.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_epoch_fix_validation.py",
+      "size": 6255,
+      "lines": 182,
+      "modified": "2025-10-15T10:20:29.651694",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_force_refresh_fix.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_force_refresh_fix.py",
+      "size": 5503,
+      "lines": 161,
+      "modified": "2025-10-14T10:15:43.661971",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_fresh_asin.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_fresh_asin.py",
+      "size": 3562,
+      "lines": 108,
+      "modified": "2025-10-14T09:46:26.212988",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_smoke.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_smoke.py",
+      "size": 4028,
+      "lines": 115,
+      "modified": "2025-08-21T21:46:12.645195",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_update_param.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_update_param.py",
+      "size": 5063,
+      "lines": 145,
+      "modified": "2025-10-14T09:45:45.188441",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_price_fix_quick.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_price_fix_quick.py",
+      "size": 4394,
+      "lines": 101,
+      "modified": "2025-10-15T21:32:28.743854",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_real_keepa_secure.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_real_keepa_secure.py",
+      "size": 5889,
+      "lines": 148,
+      "modified": "2025-08-28T21:47:24.899036",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_recent_asins.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_recent_asins.py",
+      "size": 8616,
+      "lines": 225,
+      "modified": "2025-10-14T10:24:30.575400",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_sales_velocity.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_sales_velocity.py",
+      "size": 8630,
+      "lines": 237,
+      "modified": "2025-08-26T19:54:08.843275",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_server_startup.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_server_startup.py",
+      "size": 4493,
+      "lines": 124,
+      "modified": "2025-08-28T21:47:24.900033",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_strategic_views_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_strategic_views_integration.py",
+      "size": 7937,
+      "lines": 203,
+      "modified": "2025-08-28T21:47:24.901031",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_validate_prices_post_fix.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_validate_prices_post_fix.py",
+      "size": 6912,
+      "lines": 180,
+      "modified": "2025-10-15T10:55:45.770880",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "validate_amazon_check_real_data.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\validate_amazon_check_real_data.py",
+      "size": 7702,
+      "lines": 196,
+      "modified": "2025-10-11T23:47:34.232012",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "validate_e2e_all_views.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\validate_e2e_all_views.py",
+      "size": 15421,
+      "lines": 441,
+      "modified": "2025-10-12T00:27:09.700612",
+      "score": 45,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "analyze_learning_python_bsr.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\analyze_learning_python_bsr.py",
+      "size": 4444,
+      "lines": 84,
+      "modified": "2025-10-22T23:22:05.615806",
+      "score": 45,
+      "reasons": [
+        "Récent (1j)",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_velocity_fix_local.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_velocity_fix_local.py",
+      "size": 3867,
+      "lines": 94,
+      "modified": "2025-10-22T22:58:24.704922",
+      "score": 45,
+      "reasons": [
+        "Récent (1j)",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "check_stats_current.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\check_stats_current.py",
+      "size": 2767,
+      "lines": 65,
+      "modified": "2025-10-04T14:24:36.149742",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "debug_keepa_format.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_keepa_format.py",
+      "size": 1901,
+      "lines": 64,
+      "modified": "2025-08-30T17:48:18.251005",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_audit_verified_asins.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_audit_verified_asins.py",
+      "size": 4621,
+      "lines": 129,
+      "modified": "2025-10-14T21:46:52.162464",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_autosourcing_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_autosourcing_integration.py",
+      "size": 8526,
+      "lines": 210,
+      "modified": "2025-08-23T19:00:18.671719",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_autosourcing_real.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_autosourcing_real.py",
+      "size": 3638,
+      "lines": 99,
+      "modified": "2025-08-23T23:27:10.754141",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_book_asins.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_book_asins.py",
+      "size": 4658,
+      "lines": 112,
+      "modified": "2025-08-25T20:51:52.835904",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_cascade_delete.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_cascade_delete.py",
+      "size": 2569,
+      "lines": 64,
+      "modified": "2025-08-20T23:15:50.225332",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_corrected_parsing.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_corrected_parsing.py",
+      "size": 3599,
+      "lines": 90,
+      "modified": "2025-10-04T14:29:26.445010",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_debug_endpoint.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_debug_endpoint.py",
+      "size": 1689,
+      "lines": 53,
+      "modified": "2025-08-22T13:01:17.906315",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_keepa_product_finder.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_product_finder.py",
+      "size": 2454,
+      "lines": 72,
+      "modified": "2025-08-23T23:23:01.331330",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_keepa_raw_fields.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_raw_fields.py",
+      "size": 3364,
+      "lines": 90,
+      "modified": "2025-10-11T23:07:31.404037",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_keepa_raw_investigation.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_raw_investigation.py",
+      "size": 11751,
+      "lines": 297,
+      "modified": "2025-10-13T22:33:02.374667",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_rest_api_direct.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_rest_api_direct.py",
+      "size": 5970,
+      "lines": 168,
+      "modified": "2025-10-14T09:49:03.773156",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_rest_api_raw.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_rest_api_raw.py",
+      "size": 10393,
+      "lines": 267,
+      "modified": "2025-10-14T10:37:35.374976",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_real_keepa_integration.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_real_keepa_integration.py",
+      "size": 12555,
+      "lines": 327,
+      "modified": "2025-08-25T20:51:52.836901",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_simple_keepa.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_simple_keepa.py",
+      "size": 2510,
+      "lines": 70,
+      "modified": "2025-08-23T23:26:12.897914",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_simple_keepa_debug.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_simple_keepa_debug.py",
+      "size": 3453,
+      "lines": 97,
+      "modified": "2025-08-30T17:56:45.195073",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_simple_logic.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_simple_logic.py",
+      "size": 3486,
+      "lines": 100,
+      "modified": "2025-08-25T20:51:52.838924",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_performance.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\audits\\test_performance.py",
+      "size": 6187,
+      "lines": 161,
+      "modified": "2025-10-05T20:53:07.047626",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_batch_repository.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_batch_repository.py",
+      "size": 12987,
+      "lines": 340,
+      "modified": "2025-08-20T21:12:40.528033",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_user_repository.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\test_user_repository.py",
+      "size": 11979,
+      "lines": 320,
+      "modified": "2025-08-20T21:12:40.528033",
+      "score": 40,
+      "reasons": [
+        "Imports production",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_keepa_contract.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tests\\integration\\test_keepa_contract.py",
+      "size": 6988,
+      "lines": 188,
+      "modified": "2025-10-08T10:42:56.328242",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Tests pytest",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "validate_roi_v1_vs_v2.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\tools\\validate_roi_v1_vs_v2.py",
+      "size": 11057,
+      "lines": 333,
+      "modified": "2025-10-10T10:50:49.896465",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_pgbouncer_endpoints.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_pgbouncer_endpoints.py",
+      "size": 8603,
+      "lines": 240,
+      "modified": "2025-09-28T20:16:11.565687",
+      "score": 40,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "debug_keepa_response.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_keepa_response.py",
+      "size": 2689,
+      "lines": 81,
+      "modified": "2025-08-25T20:51:52.829823",
+      "score": 35,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls"
+      ]
+    },
+    {
+      "name": "test_endpoints.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_endpoints.py",
+      "size": 3358,
+      "lines": 87,
+      "modified": "2025-08-20T22:06:34.758954",
+      "score": 35,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls"
+      ]
+    },
+    {
+      "name": "test_keepa_endpoint.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_endpoint.py",
+      "size": 1966,
+      "lines": 51,
+      "modified": "2025-08-22T22:09:51.542788",
+      "score": 35,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls"
+      ]
+    },
+    {
+      "name": "test_perf_1000.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_perf_1000.py",
+      "size": 3379,
+      "lines": 82,
+      "modified": "2025-08-20T23:08:46.038999",
+      "score": 35,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls"
+      ]
+    },
+    {
+      "name": "debug_amazon_detection.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_amazon_detection.py",
+      "size": 1707,
+      "lines": 43,
+      "modified": "2025-08-30T18:44:37.493553",
+      "score": 30,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "debug_repo.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_repo.py",
+      "size": 876,
+      "lines": 27,
+      "modified": "2025-08-20T22:31:01.074065",
+      "score": 30,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_autosourcing_unit.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_autosourcing_unit.py",
+      "size": 6045,
+      "lines": 156,
+      "modified": "2025-08-23T22:15:59.472308",
+      "score": 30,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_local_parse.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_local_parse.py",
+      "size": 997,
+      "lines": 31,
+      "modified": "2025-10-04T16:30:19.379381",
+      "score": 30,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_server_quick.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_server_quick.py",
+      "size": 1271,
+      "lines": 33,
+      "modified": "2025-08-22T21:02:06.019956",
+      "score": 30,
+      "reasons": [
+        "Imports production",
+        "Logique business",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_target_price_manual.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_target_price_manual.py",
+      "size": 6802,
+      "lines": 145,
+      "modified": "2025-08-28T21:47:24.902143",
+      "score": 30,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_update_1_vs_0.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_update_1_vs_0.py",
+      "size": 8087,
+      "lines": 214,
+      "modified": "2025-10-14T10:28:47.453713",
+      "score": 30,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "validate_stock_estimate.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\validate_stock_estimate.py",
+      "size": 10403,
+      "lines": 257,
+      "modified": "2025-08-25T20:51:52.839892",
+      "score": 30,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "test_2024_bestseller.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_2024_bestseller.py",
+      "size": 1271,
+      "lines": 46,
+      "modified": "2025-10-14T21:49:31.479837",
+      "score": 25,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_end_to_end.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_end_to_end.py",
+      "size": 2005,
+      "lines": 59,
+      "modified": "2025-08-25T20:51:52.836901",
+      "score": 25,
+      "reasons": [
+        "Imports production",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_health.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_health.py",
+      "size": 881,
+      "lines": 25,
+      "modified": "2025-08-18T16:02:23.529370",
+      "score": 25,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "API calls",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_keepa_account_info.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_keepa_account_info.py",
+      "size": 1175,
+      "lines": 49,
+      "modified": "2025-10-14T21:50:54.361714",
+      "score": 25,
+      "reasons": [
+        "Logique business",
+        "Bien documenté",
+        "API calls",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_security_simple.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_security_simple.py",
+      "size": 1964,
+      "lines": 57,
+      "modified": "2025-08-20T23:14:21.077997",
+      "score": 25,
+      "reasons": [
+        "Imports production",
+        "Bien documenté"
+      ]
+    },
+    {
+      "name": "test_pgbouncer_config.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\test_pgbouncer_config.py",
+      "size": 6717,
+      "lines": 191,
+      "modified": "2025-09-28T20:08:06.682554",
+      "score": 25,
+      "reasons": [
+        "Bien documenté",
+        "API calls",
+        "Taille optimale"
+      ]
+    },
+    {
+      "name": "check_table_structure.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\check_table_structure.py",
+      "size": 693,
+      "lines": 22,
+      "modified": "2025-08-25T21:13:45.830900",
+      "score": 15,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "debug_status.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\debug_status.py",
+      "size": 776,
+      "lines": 26,
+      "modified": "2025-08-20T23:03:59.471342",
+      "score": 15,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_import.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_import.py",
+      "size": 381,
+      "lines": 17,
+      "modified": "2025-08-22T22:03:28.214319",
+      "score": 15,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_imports.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_imports.py",
+      "size": 531,
+      "lines": 20,
+      "modified": "2025-08-20T22:37:18.147719",
+      "score": 15,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "test_prod_config.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\test_prod_config.py",
+      "size": 637,
+      "lines": 23,
+      "modified": "2025-08-20T23:12:32.813088",
+      "score": 15,
+      "reasons": [
+        "Imports production",
+        "Bien documenté",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "quick_test.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\quick_test.py",
+      "size": 581,
+      "lines": 18,
+      "modified": "2025-08-23T19:18:09.839023",
+      "score": 0,
+      "reasons": [
+        "API calls",
+        "Trop petit"
+      ]
+    },
+    {
+      "name": "wait_and_test.py",
+      "path": "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\backend\\wait_and_test.py",
+      "size": 453,
+      "lines": 19,
+      "modified": "2025-08-23T19:02:08.617309",
+      "score": -10,
+      "reasons": [
+        "Trop petit"
+      ]
+    }
+  ],
+  "stats": {
+    "total_found": 126,
+    "kept": 17,
+    "archived": 109,
+    "lines_saved": 19143,
+    "size_saved_kb": 701.9794921875
+  }
+}

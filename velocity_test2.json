@@ -1,0 +1,81 @@
+
+>> GET /keepa/B08N5WRWNW/metrics
+
+============================================================
+  Metrics for B08N5WRWNW
+============================================================
+{
+  "asin": "B08N5WRWNW",
+  "analysis": {
+    "asin": "B08N5WRWNW",
+    "title": null,
+    "current_price": null,
+    "current_bsr": null,
+    "pricing": {},
+    "roi": {
+      "velocity_score": 0,
+      "velocity_category": "unknown",
+      "avg_daily_sales": null
+    },
+    "velocity": {
+      "velocity_score": 0,
+      "velocity_category": "unknown",
+      "avg_daily_sales": null
+    },
+    "velocity_score": 50,
+    "price_stability_score": 50,
+    "confidence_score": 39,
+    "overall_rating": "EXCELLENT",
+    "score_breakdown": {
+      "velocity": {
+        "score": 50,
+        "raw": 0.5,
+        "level": "unknown",
+        "notes": "Insufficient data: 0 points"
+      },
+      "stability": {
+        "score": 50,
+        "raw": 0.5,
+        "level": "unknown",
+        "notes": "Insufficient price data: 0 points"
+      },
+      "confidence": {
+        "score": 39,
+        "raw": 0.39,
+        "level": "low",
+        "notes": "Fresh: 1.00, Complete: 0.00, BSR: 0.30"
+      }
+    },
+    "readable_summary": "Rating: EXCELLENT, ROI: 0.0%",
+    "strategy_profile": "balanced",
+    "calculation_method": null,
+    "recommendation": "STRONG BUY - Excellent opportunity",
+    "risk_factors": [
+      "Limited historical data",
+      "Low ROI potential"
+    ]
+  },
+  "config_audit": {
+    "version": "1.0",
+    "hash": "2247707128696171826",
+    "profile": "default",
+    "effective_at": "2025-10-23T03:07:40.482394",
+    "changes_applied": []
+  },
+  "keepa_metadata": {
+    "snapshot_at": "2025-10-23T03:07:40.482416",
+    "cache_hit": false,
+    "tokens_used": 0,
+    "tokens_remaining": null,
+    "data_freshness_hours": 1.0
+  },
+  "trace_id": "c579c376"
+}
+
+[SCORES]
+  Velocity: 50
+  Stability: 50
+  Confidence: 39
+  Rating: EXCELLENT
+
+[SAUVEGARDE] Résultat dans: last_api_result.json

@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-10-26T12:15:42.448236",
+  "tests": {
+    "schemas": {
+      "FeeConfig": true,
+      "ROIConfig": true,
+      "VelocityConfig": true,
+      "DataQualityThresholds": true,
+      "ProductFinderConfig": true
+    },
+    "validation": {
+      "ROI_invalid_order": true,
+      "ROI_valid_order": true,
+      "VelocityTier_invalid_range": true,
+      "VelocityConfig_overlap": true,
+      "VelocityConfig_valid": true
+    },
+    "service_layer": {
+      "auto_create_default": false,
+      "effective_config": false
+    },
+    "keepa_integration": {
+      "keepa_integration": false
+    }
+  },
+  "metrics": {
+    "config_creation_time": "0.09ms",
+    "effective_config_time": "Failed",
+    "json_serialization_time": "Failed"
+  },
+  "errors": [
+    "Service layer: (psycopg2.errors.UndefinedTable) relation \"configurations\" does not exist\nLINE 2: FROM configurations \n             ^\n\n[SQL: SELECT configurations.id AS configurations_id, configurations.name AS configurations_name, configurations.description AS configurations_description, configurations.fees AS configurations_fees, configurations.roi AS configurations_roi, configurations.velocity AS configurations_velocity, configurations.data_quality AS configurations_data_quality, configurations.product_finder AS configurations_product_finder, configurations.is_active AS configurations_is_active, configurations.created_at AS configurations_created_at, configurations.updated_at AS configurations_updated_at \nFROM configurations \nWHERE configurations.is_active = true \n LIMIT %(param_1)s]\n[parameters: {'param_1': 1}]\n(Background on this error at: https://sqlalche.me/e/20/f405)",
+    "Effective config: (psycopg2.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block\n\n[SQL: SELECT configurations.id AS configurations_id, configurations.name AS configurations_name, configurations.description AS configurations_description, configurations.fees AS configurations_fees, configurations.roi AS configurations_roi, configurations.velocity AS configurations_velocity, configurations.data_quality AS configurations_data_quality, configurations.product_finder AS configurations_product_finder, configurations.is_active AS configurations_is_active, configurations.created_at AS configurations_created_at, configurations.updated_at AS configurations_updated_at \nFROM configurations \nWHERE configurations.is_active = true \n LIMIT %(param_1)s]\n[parameters: {'param_1': 1}]\n(Background on this error at: https://sqlalche.me/e/20/2j85)",
+    "Keepa integration: (psycopg2.errors.InFailedSqlTransaction) current transaction is aborted, commands ignored until end of transaction block\n\n[SQL: SELECT configurations.id AS configurations_id, configurations.name AS configurations_name, configurations.description AS configurations_description, configurations.fees AS configurations_fees, configurations.roi AS configurations_roi, configurations.velocity AS configurations_velocity, configurations.data_quality AS configurations_data_quality, configurations.product_finder AS configurations_product_finder, configurations.is_active AS configurations_is_active, configurations.created_at AS configurations_created_at, configurations.updated_at AS configurations_updated_at \nFROM configurations \nWHERE configurations.is_active = true \n LIMIT %(param_1)s]\n[parameters: {'param_1': 1}]\n(Background on this error at: https://sqlalche.me/e/20/2j85)"
+  ],
+  "warnings": [],
+  "summary": {
+    "total_tests": 13,
+    "passed_tests": 10,
+    "success_rate": 76.92307692307693,
+    "status": "FAILED"
+  }
+}

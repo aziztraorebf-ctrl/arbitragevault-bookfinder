@@ -1,0 +1,598 @@
+{
+  "timestamp": "2025-10-25T11:10:39.715463",
+  "report": {
+    "summary": {
+      "total_tests": 30,
+      "passed": 1,
+      "failed": 29,
+      "success_rate_pct": 3.33,
+      "target_rate_pct": 90.0,
+      "meets_criteria": false
+    },
+    "by_category": {
+      "best_seller": {
+        "total": 8,
+        "passed": 0,
+        "failed": 8
+      },
+      "mid_tier": {
+        "total": 6,
+        "passed": 0,
+        "failed": 6
+      },
+      "textbook": {
+        "total": 5,
+        "passed": 0,
+        "failed": 5
+      },
+      "electronics": {
+        "total": 4,
+        "passed": 0,
+        "failed": 4
+      },
+      "long_tail": {
+        "total": 4,
+        "passed": 0,
+        "failed": 4
+      },
+      "dead": {
+        "total": 2,
+        "passed": 0,
+        "failed": 2
+      },
+      "invalid": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      }
+    },
+    "performance": {
+      "avg_response_time_ms": 6414,
+      "min_response_time_ms": 1606,
+      "max_response_time_ms": 12411
+    },
+    "top_issues": {
+      "BSR not parsed (current_bsr = null)": 21,
+      "HTTP 404": 8
+    },
+    "failed_asins": [
+      {
+        "asin": "0593655036",
+        "category": "best_seller",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "1668026473",
+        "category": "best_seller",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0385348371",
+        "category": "best_seller",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "1250301696",
+        "category": "best_seller",
+        "error": {
+          "code": "PRODUCT_NOT_FOUND",
+          "message": "Product 1250301696 not found in Keepa",
+          "trace_id": "991030a1"
+        }
+      },
+      {
+        "asin": "0593418816",
+        "category": "best_seller",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0593728092",
+        "category": "best_seller",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0735219095",
+        "category": "best_seller",
+        "error": {
+          "code": "PRODUCT_NOT_FOUND",
+          "message": "Product 0735219095 not found in Keepa",
+          "trace_id": "4f39cca3"
+        }
+      },
+      {
+        "asin": "0316769177",
+        "category": "best_seller",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0062316095",
+        "category": "mid_tier",
+        "error": {
+          "code": "PRODUCT_NOT_FOUND",
+          "message": "Product 0062316095 not found in Keepa",
+          "trace_id": "d0b44fc6"
+        }
+      },
+      {
+        "asin": "0143127748",
+        "category": "mid_tier",
+        "error": {
+          "code": "PRODUCT_NOT_FOUND",
+          "message": "Product 0143127748 not found in Keepa",
+          "trace_id": "1e28d78d"
+        }
+      },
+      {
+        "asin": "1501110365",
+        "category": "mid_tier",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0553213695",
+        "category": "mid_tier",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0345816021",
+        "category": "mid_tier",
+        "error": {
+          "code": "PRODUCT_NOT_FOUND",
+          "message": "Product 0345816021 not found in Keepa",
+          "trace_id": "f0b5d5e7"
+        }
+      },
+      {
+        "asin": "1501139231",
+        "category": "mid_tier",
+        "error": {
+          "code": "PRODUCT_NOT_FOUND",
+          "message": "Product 1501139231 not found in Keepa",
+          "trace_id": "2f65e128"
+        }
+      },
+      {
+        "asin": "1449355730",
+        "category": "textbook",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0134685997",
+        "category": "textbook",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0132350882",
+        "category": "textbook",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0321125215",
+        "category": "textbook",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0201633612",
+        "category": "textbook",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "B07ZPKN6YR",
+        "category": "electronics",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "B0BSHF7LLL",
+        "category": "electronics",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "B09B8RXYR3",
+        "category": "electronics",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "B0D3QK6FC6",
+        "category": "electronics",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0136083250",
+        "category": "long_tail",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0201835959",
+        "category": "long_tail",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0470128720",
+        "category": "long_tail",
+        "error": {
+          "code": "PRODUCT_NOT_FOUND",
+          "message": "Product 0470128720 not found in Keepa",
+          "trace_id": "825ee69d"
+        }
+      },
+      {
+        "asin": "0201616416",
+        "category": "long_tail",
+        "error": {
+          "code": "PRODUCT_NOT_FOUND",
+          "message": "Product 0201616416 not found in Keepa",
+          "trace_id": "35543258"
+        }
+      },
+      {
+        "asin": "0470112840",
+        "category": "dead",
+        "error": "BSR not parsed (current_bsr = null)"
+      },
+      {
+        "asin": "0471486922",
+        "category": "dead",
+        "error": "BSR not parsed (current_bsr = null)"
+      }
+    ]
+  },
+  "detailed_results": [
+    {
+      "asin": "0593655036",
+      "category": "best_seller",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 3142
+    },
+    {
+      "asin": "1668026473",
+      "category": "best_seller",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 2603
+    },
+    {
+      "asin": "0385348371",
+      "category": "best_seller",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 12411
+    },
+    {
+      "asin": "1250301696",
+      "category": "best_seller",
+      "success": false,
+      "status_code": 404,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "HTTP 404"
+      ],
+      "response_time_ms": 11462
+    },
+    {
+      "asin": "0593418816",
+      "category": "best_seller",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 2418
+    },
+    {
+      "asin": "0593728092",
+      "category": "best_seller",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 3636
+    },
+    {
+      "asin": "0735219095",
+      "category": "best_seller",
+      "success": false,
+      "status_code": 404,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "HTTP 404"
+      ],
+      "response_time_ms": 11441
+    },
+    {
+      "asin": "0316769177",
+      "category": "best_seller",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 10752
+    },
+    {
+      "asin": "0062316095",
+      "category": "mid_tier",
+      "success": false,
+      "status_code": 404,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "HTTP 404"
+      ],
+      "response_time_ms": 11422
+    },
+    {
+      "asin": "0143127748",
+      "category": "mid_tier",
+      "success": false,
+      "status_code": 404,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "HTTP 404"
+      ],
+      "response_time_ms": 11438
+    },
+    {
+      "asin": "1501110365",
+      "category": "mid_tier",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 2811
+    },
+    {
+      "asin": "0553213695",
+      "category": "mid_tier",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 9370
+    },
+    {
+      "asin": "0345816021",
+      "category": "mid_tier",
+      "success": false,
+      "status_code": 404,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "HTTP 404"
+      ],
+      "response_time_ms": 11455
+    },
+    {
+      "asin": "1501139231",
+      "category": "mid_tier",
+      "success": false,
+      "status_code": 404,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "HTTP 404"
+      ],
+      "response_time_ms": 11435
+    },
+    {
+      "asin": "1449355730",
+      "category": "textbook",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 3218
+    },
+    {
+      "asin": "0134685997",
+      "category": "textbook",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 9266
+    },
+    {
+      "asin": "0132350882",
+      "category": "textbook",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 5395
+    },
+    {
+      "asin": "0321125215",
+      "category": "textbook",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 2799
+    },
+    {
+      "asin": "0201633612",
+      "category": "textbook",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 2910
+    },
+    {
+      "asin": "B07ZPKN6YR",
+      "category": "electronics",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 2561
+    },
+    {
+      "asin": "B0BSHF7LLL",
+      "category": "electronics",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 4679
+    },
+    {
+      "asin": "B09B8RXYR3",
+      "category": "electronics",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 2586
+    },
+    {
+      "asin": "B0D3QK6FC6",
+      "category": "electronics",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 2071
+    },
+    {
+      "asin": "0136083250",
+      "category": "long_tail",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 2234
+    },
+    {
+      "asin": "0201835959",
+      "category": "long_tail",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 2554
+    },
+    {
+      "asin": "0470128720",
+      "category": "long_tail",
+      "success": false,
+      "status_code": 404,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "HTTP 404"
+      ],
+      "response_time_ms": 11537
+    },
+    {
+      "asin": "0201616416",
+      "category": "long_tail",
+      "success": false,
+      "status_code": 404,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "HTTP 404"
+      ],
+      "response_time_ms": 11496
+    },
+    {
+      "asin": "0470112840",
+      "category": "dead",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 4968
+    },
+    {
+      "asin": "0471486922",
+      "category": "dead",
+      "success": false,
+      "status_code": 200,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": false,
+      "parsing_issues": [
+        "BSR not parsed (current_bsr = null)"
+      ],
+      "response_time_ms": 6746
+    },
+    {
+      "asin": "B000INVALID",
+      "category": "invalid",
+      "success": true,
+      "status_code": 404,
+      "bsr_parsed": null,
+      "bsr_in_expected_range": true,
+      "parsing_issues": [],
+      "response_time_ms": 1606
+    }
+  ]
+}

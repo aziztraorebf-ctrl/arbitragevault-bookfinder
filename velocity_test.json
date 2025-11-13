@@ -1,0 +1,10 @@
+
+>> GET /keepa/0316769487/metrics
+[ERREUR HTTP 404]
+{
+  "detail": {
+    "code": "PRODUCT_NOT_FOUND",
+    "message": "Product 0316769487 not found in Keepa",
+    "trace_id": "3453dfdb"
+  }
+}

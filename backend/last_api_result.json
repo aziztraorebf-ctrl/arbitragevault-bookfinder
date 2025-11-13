@@ -1,0 +1,69 @@
+{
+  "asin": "0593655036",
+  "analysis": {
+    "asin": "0593655036",
+    "title": "The Anxious Generation: How the Great Rewiring of Childhood Is Causing an Epidemic of Mental Illness",
+    "current_price": 15.23,
+    "current_bsr": 53,
+    "pricing": {},
+    "roi": {
+      "velocity_score": 100.0,
+      "velocity_category": "fast",
+      "avg_daily_sales": 10.0,
+      "current_bsr": 53
+    },
+    "velocity": {
+      "velocity_score": 100.0,
+      "velocity_category": "fast",
+      "avg_daily_sales": 10.0,
+      "current_bsr": 53
+    },
+    "velocity_score": 99,
+    "price_stability_score": 82,
+    "confidence_score": 100,
+    "overall_rating": "EXCELLENT",
+    "score_breakdown": {
+      "velocity": {
+        "score": 99,
+        "raw": 0.9995416774863672,
+        "level": "excellent",
+        "notes": "4041 BSR data points, 99.91% trend"
+      },
+      "stability": {
+        "score": 82,
+        "raw": 0.8209712888496294,
+        "level": "excellent",
+        "notes": "CV: 0.179, price range: $7.50-$32.00"
+      },
+      "confidence": {
+        "score": 100,
+        "raw": 1.0,
+        "level": "high",
+        "notes": "Fresh: 1.00, Complete: 1.00, BSR: 1.00"
+      }
+    },
+    "readable_summary": "Rating: EXCELLENT, ROI: 0.0%",
+    "strategy_profile": "balanced",
+    "calculation_method": null,
+    "recommendation": "STRONG BUY - Excellent opportunity",
+    "risk_factors": [
+      "Amazon competing on listing",
+      "Low ROI potential"
+    ]
+  },
+  "config_audit": {
+    "version": "1.0",
+    "hash": "-1760435318684858395",
+    "profile": "default",
+    "effective_at": "2025-10-25T15:14:37.335677",
+    "changes_applied": []
+  },
+  "keepa_metadata": {
+    "snapshot_at": "2025-10-25T15:14:37.335694",
+    "cache_hit": false,
+    "tokens_used": 0,
+    "tokens_remaining": null,
+    "data_freshness_hours": 1.0
+  },
+  "trace_id": "fd76f11b"
+}

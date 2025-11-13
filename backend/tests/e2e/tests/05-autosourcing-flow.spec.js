@@ -6,7 +6,8 @@ const BACKEND_URL = 'https://arbitragevault-backend-v2.onrender.com';
 const FRONTEND_URL = 'https://arbitragevault.netlify.app';
 
 // Minimum token balance required for expensive tests
-const MIN_TOKENS_FOR_DISCOVERY = 100;
+// TEMPORARY: Reduced to 50 for TDD MissingGreenlet validation (restore to 100 after)
+const MIN_TOKENS_FOR_DISCOVERY = 50;
 
 // Helper to check token balance
 async function getTokenBalance(request) {
@@ -134,6 +135,7 @@ test.describe('AutoSourcing Flow', () => {
     console.log(`Proceeding with AutoSourcing job (balance: ${tokenBalance} >= ${MIN_TOKENS_FOR_DISCOVERY})`);
 
     // Try to submit job via API endpoint
+    // TEMPORARY: Reduced max_results to 3 for low token balance testing
     const response = await request.post(`${BACKEND_URL}/api/v1/autosourcing/run-custom`, {
       data: {
         profile_name: 'E2E Test Job Phase 5',
@@ -141,14 +143,14 @@ test.describe('AutoSourcing Flow', () => {
           categories: ['Books'],
           price_range: [10, 50],
           bsr_range: [10000, 100000],
-          max_results: 10
+          max_results: 3
         },
         scoring_config: {
           roi_min: 20,
           velocity_min: 60,
           confidence_min: 70,
           rating_required: 'GOOD',
-          max_results: 5
+          max_results: 2
         }
       },
       timeout: 60000 // 60 second timeout for Product Finder

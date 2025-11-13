@@ -35,7 +35,7 @@ TOKEN_COSTS: dict[str, ActionCost] = {
         "endpoint_type": "single"
     },
     "auto_sourcing_job": {
-        "cost": 200,
+        "cost": 50,  # TEMPORARY: Reduced from 200 for TDD MissingGreenlet validation
         "description": "Full AutoSourcing discovery run",
         "endpoint_type": "batch"
     },

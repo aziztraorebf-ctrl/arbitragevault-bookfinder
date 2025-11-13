@@ -124,9 +124,153 @@ jobs:
           path: backend/tests/e2e/test-results/
           retention-days: 7
 
+  manual-search:
+    name: Manual Search Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/tests/e2e/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend/tests/e2e
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: backend/tests/e2e
+        run: npx playwright install chromium
+
+      - name: Run Manual Search Tests
+        working-directory: backend/tests/e2e
+        run: npx playwright test 04-manual-search-flow --reporter=list
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: manual-search-results
+          path: backend/tests/e2e/test-results/
+          retention-days: 7
+
+  autosourcing-flow:
+    name: AutoSourcing Flow Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/tests/e2e/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend/tests/e2e
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: backend/tests/e2e
+        run: npx playwright install chromium
+
+      - name: Run AutoSourcing Tests
+        working-directory: backend/tests/e2e
+        run: npx playwright test 05-autosourcing-flow --reporter=list
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: autosourcing-results
+          path: backend/tests/e2e/test-results/
+          retention-days: 7
+
+  token-error-ui:
+    name: Token Error UI Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/tests/e2e/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend/tests/e2e
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: backend/tests/e2e
+        run: npx playwright install chromium
+
+      - name: Run Token Error UI Tests
+        working-directory: backend/tests/e2e
+        run: npx playwright test 06-token-error-handling --reporter=list
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: token-error-ui-results
+          path: backend/tests/e2e/test-results/
+          retention-days: 7
+
+  navigation-flow:
+    name: Navigation Flow Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/tests/e2e/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend/tests/e2e
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: backend/tests/e2e
+        run: npx playwright install chromium
+
+      - name: Run Navigation Tests
+        working-directory: backend/tests/e2e
+        run: npx playwright test 07-navigation-flow --reporter=list
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navigation-results
+          path: backend/tests/e2e/test-results/
+          retention-days: 7
+
   notify-on-failure:
     name: Notify on Failure
-    needs: [health-monitoring, token-control, niche-discovery]
+    needs: [health-monitoring, token-control, niche-discovery, manual-search, autosourcing-flow, token-error-ui, navigation-flow]
     if: failure()
     runs-on: ubuntu-latest
 

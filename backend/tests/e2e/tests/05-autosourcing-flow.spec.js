@@ -6,8 +6,7 @@ const BACKEND_URL = 'https://arbitragevault-backend-v2.onrender.com';
 const FRONTEND_URL = 'https://arbitragevault.netlify.app';
 
 // Minimum token balance required for expensive tests
-// TEMPORARY: Reduced to 50 for TDD MissingGreenlet validation (restore to 100 after)
-const MIN_TOKENS_FOR_DISCOVERY = 50;
+const MIN_TOKENS_FOR_DISCOVERY = 100;
 
 // Helper to check token balance
 async function getTokenBalance(request) {

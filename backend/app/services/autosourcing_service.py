@@ -93,10 +93,14 @@ class AutoSourcingService:
             status=JobStatus.RUNNING,
             launched_at=datetime.utcnow()
         )
-        
+
+        logger.debug(f"Adding job to session: {profile_name}")
         self.db.add(job)
+        logger.debug(f"Committing job creation...")
         await self.db.commit()
+        logger.debug(f"Refreshing job from DB...")
         await self.db.refresh(job)
+        logger.debug(f"Job created with ID: {job.id}")
         
         start_time = datetime.utcnow()
         
@@ -134,16 +138,8 @@ class AutoSourcingService:
             job.status = JobStatus.SUCCESS
             job.total_selected = final_count
 
+            logger.debug(f"Final commit before return...")
             await self.db.commit()
-
-            # Eagerly load picks relationship to prevent lazy-load after session closes
-            # Use selectinload to fetch picks in same session context as job
-            stmt = select(AutoSourcingJob).where(
-                AutoSourcingJob.id == job.id
-            ).options(selectinload(AutoSourcingJob.picks))
-
-            result = await self.db.execute(stmt)
-            job = result.scalar_one()
 
             logger.info(f"✅ AutoSourcing job completed: {job.id}")
             return job

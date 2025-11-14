@@ -20,7 +20,8 @@ from app.core.settings import get_settings
 from app.schemas.autosourcing_safeguards import (
     CostEstimateRequest,
     CostEstimateResponse,
-    MAX_TOKENS_PER_JOB
+    MAX_TOKENS_PER_JOB,
+    TIMEOUT_PER_JOB
 )
 
 router = APIRouter(prefix="/autosourcing", tags=["AutoSourcing"])
@@ -222,9 +223,10 @@ async def run_custom_search(
     """
     Run custom AutoSourcing search with user-defined criteria.
 
-    VALIDATION ENFORCED (Phase 7.0):
-    - Jobs exceeding MAX_TOKENS_PER_JOB (200) are rejected with HTTP 400
-    - Jobs with insufficient balance are rejected with HTTP 429
+    SAFEGUARDS (Phase 7.0):
+    - Cost validation (MAX_TOKENS_PER_JOB)
+    - Balance validation (MIN_TOKEN_BALANCE_REQUIRED)
+    - Timeout protection (TIMEOUT_PER_JOB = 120s)
 
     This endpoint orchestrates the complete discovery pipeline:
     1. Product discovery via Keepa Product Finder
@@ -232,6 +234,7 @@ async def run_custom_search(
     3. Filtering and ranking by user criteria
     4. Duplicate removal and result optimization
     """
+    import asyncio
     import traceback
     import logging
 
@@ -245,20 +248,29 @@ async def run_custom_search(
         scoring_config=request.scoring_config.dict()
     )
 
+    # === TIMEOUT PROTECTION (Phase 7.0 Task 6) ===
     try:
-        logger.info(f"[DEBUG] run-custom called with profile_name={request.profile_name}")
-        logger.info(f"[DEBUG] discovery_config: {request.discovery_config.dict()}")
-        logger.info(f"[DEBUG] scoring_config: {request.scoring_config.dict()}")
+        async with asyncio.timeout(TIMEOUT_PER_JOB):
+            logger.info(f"[DEBUG] run-custom called with profile_name={request.profile_name}")
+            logger.info(f"[DEBUG] discovery_config: {request.discovery_config.dict()}")
+            logger.info(f"[DEBUG] scoring_config: {request.scoring_config.dict()}")
 
-        job = await service.run_custom_search(
-            discovery_config=request.discovery_config.dict(),
-            scoring_config=request.scoring_config.dict(),
-            profile_name=request.profile_name,
-            profile_id=request.profile_id
+            job = await service.run_custom_search(
+                discovery_config=request.discovery_config.dict(),
+                scoring_config=request.scoring_config.dict(),
+                profile_name=request.profile_name,
+                profile_id=request.profile_id
+            )
+
+            logger.info(f"[DEBUG] Job created successfully: {job.id}")
+            return job
+
+    except asyncio.TimeoutError:
+        # Job exceeded timeout limit
+        raise HTTPException(
+            status_code=408,
+            detail=f"Job exceeded timeout limit ({TIMEOUT_PER_JOB} seconds). Reduce search scope or narrow filters."
         )
-
-        logger.info(f"[DEBUG] Job created successfully: {job.id}")
-        return job
 
     except Exception as e:
         logger.error(f"[ERROR] AutoSourcing search failed - Exception type: {type(e).__name__}")

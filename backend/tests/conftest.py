@@ -312,17 +312,27 @@ async def make_repo(async_db_session):
     from app.repositories.batch_repository import BatchRepository
     from app.repositories.user_repository import UserRepository
     from app.repositories.analysis_repository import AnalysisRepository
-    
+
     def _make_repo(model_cls):
         """Create a repository instance for the given model class."""
         repo_map = {
             Batch: BatchRepository,
-            User: UserRepository, 
+            User: UserRepository,
             Analysis: AnalysisRepository
         }
         repo_cls = repo_map.get(model_cls)
         if not repo_cls:
             raise ValueError(f"No repository mapped for model: {model_cls}")
         return repo_cls(async_db_session, model_cls)
-    
+
     return _make_repo
+
+
+@pytest.fixture
+def mock_keepa_balance():
+    """Mock Keepa service check_api_balance to return test value."""
+    from unittest.mock import AsyncMock, patch
+
+    with patch('app.services.keepa_service.KeepaService.check_api_balance', new_callable=AsyncMock) as mock:
+        mock.return_value = 1000
+        yield mock

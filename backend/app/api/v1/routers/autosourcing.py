@@ -13,8 +13,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db_session
 from app.services.autosourcing_service import AutoSourcingService
 from app.services.keepa_service import KeepaService
+from app.services.autosourcing_cost_estimator import AutoSourcingCostEstimator
 from app.models.autosourcing import JobStatus, ActionStatus
 from app.core.settings import get_settings
+from app.schemas.autosourcing_safeguards import (
+    CostEstimateRequest,
+    CostEstimateResponse,
+    MAX_TOKENS_PER_JOB
+)
 
 router = APIRouter(prefix="/autosourcing", tags=["AutoSourcing"])
 
@@ -129,6 +135,11 @@ class OpportunityOfDayResponse(BaseModel):
 # DEPENDENCY INJECTION
 # ============================================================================
 
+async def get_keepa_service() -> KeepaService:
+    """Dependency to get Keepa service."""
+    settings = get_settings()
+    return KeepaService(api_key=settings.keepa_api_key)
+
 async def get_autosourcing_service(
     db: AsyncSession = Depends(get_db_session)
 ) -> AutoSourcingService:
@@ -140,6 +151,66 @@ async def get_autosourcing_service(
 # ============================================================================
 # CORE SEARCH ENDPOINTS
 # ============================================================================
+
+@router.post(
+    "/estimate",
+    response_model=CostEstimateResponse,
+    summary="Estimate AutoSourcing job cost",
+    description="""
+    Estimate token cost for an AutoSourcing job BEFORE execution.
+
+    Use this endpoint to:
+    - Preview token cost before job submission
+    - Check if job fits within budget limits
+    - Get warnings about expensive jobs
+
+    Returns cost breakdown and safety assessment without consuming tokens.
+    """
+)
+async def estimate_job_cost(
+    request: CostEstimateRequest,
+    keepa_service: KeepaService = Depends(get_keepa_service)
+):
+    """
+    Estimate cost of AutoSourcing job.
+
+    Args:
+        request: Cost estimation request with discovery config
+        keepa_service: Injected Keepa service
+
+    Returns:
+        Cost estimate with safety assessment
+    """
+    estimator = AutoSourcingCostEstimator()
+    estimated_tokens = estimator.estimate_total_job_cost(request.discovery_config)
+
+    # Get current balance
+    current_balance = await keepa_service.check_api_balance()
+
+    # Determine safety
+    safe_to_proceed = (
+        estimated_tokens <= MAX_TOKENS_PER_JOB and
+        current_balance >= estimated_tokens
+    )
+
+    # Generate warning if needed
+    warning_message = None
+    suggestion = None
+
+    if estimated_tokens > MAX_TOKENS_PER_JOB:
+        warning_message = f"Job cost ({estimated_tokens} tokens) exceeds MAX_TOKENS_PER_JOB ({MAX_TOKENS_PER_JOB})"
+        suggestion = "Reduce max_results or narrow category filters"
+    elif current_balance < estimated_tokens:
+        warning_message = f"Insufficient balance ({current_balance} tokens) for estimated cost ({estimated_tokens} tokens)"
+        suggestion = "Wait for token refill or reduce job scope"
+
+    return CostEstimateResponse(
+        estimated_tokens=estimated_tokens,
+        current_balance=current_balance,
+        safe_to_proceed=safe_to_proceed,
+        warning_message=warning_message,
+        suggestion=suggestion
+    )
 
 @router.post("/run-custom", response_model=AutoSourcingJobResponse)
 async def run_custom_search(

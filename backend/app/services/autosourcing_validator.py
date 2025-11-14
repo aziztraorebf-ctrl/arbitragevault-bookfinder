@@ -64,7 +64,7 @@ class AutoSourcingValidator:
             )
 
         # Get current token balance
-        current_balance = await self.keepa_service.get_token_balance()
+        current_balance = await self.keepa_service.check_api_balance()
 
         # Check if balance is sufficient
         if current_balance < MIN_TOKEN_BALANCE_REQUIRED:

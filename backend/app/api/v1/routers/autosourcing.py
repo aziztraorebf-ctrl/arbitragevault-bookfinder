@@ -14,6 +14,7 @@ from app.core.db import get_db_session
 from app.services.autosourcing_service import AutoSourcingService
 from app.services.keepa_service import KeepaService
 from app.services.autosourcing_cost_estimator import AutoSourcingCostEstimator
+from app.services.autosourcing_validator import AutoSourcingValidator
 from app.models.autosourcing import JobStatus, ActionStatus
 from app.core.settings import get_settings
 from app.schemas.autosourcing_safeguards import (
@@ -215,11 +216,16 @@ async def estimate_job_cost(
 @router.post("/run-custom", response_model=AutoSourcingJobResponse)
 async def run_custom_search(
     request: RunCustomSearchRequest,
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    keepa_service: KeepaService = Depends(get_keepa_service)
 ):
     """
     Run custom AutoSourcing search with user-defined criteria.
-    
+
+    VALIDATION ENFORCED (Phase 7.0):
+    - Jobs exceeding MAX_TOKENS_PER_JOB (200) are rejected with HTTP 400
+    - Jobs with insufficient balance are rejected with HTTP 429
+
     This endpoint orchestrates the complete discovery pipeline:
     1. Product discovery via Keepa Product Finder
     2. Advanced scoring with v1.5.0 system
@@ -230,6 +236,14 @@ async def run_custom_search(
     import logging
 
     logger = logging.getLogger(__name__)
+
+    # === VALIDATION BEFORE EXECUTION (Phase 7.0) ===
+    validator = AutoSourcingValidator(keepa_service=keepa_service)
+
+    await validator.validate_job_requirements(
+        discovery_config=request.discovery_config.dict(),
+        scoring_config=request.scoring_config.dict()
+    )
 
     try:
         logger.info(f"[DEBUG] run-custom called with profile_name={request.profile_name}")

@@ -21,7 +21,7 @@ def mock_cost_estimator():
 def mock_keepa_service():
     """Mock Keepa service for balance checks."""
     service = MagicMock()
-    service.get_token_balance = AsyncMock(return_value=1000)
+    service.check_api_balance = AsyncMock(return_value=1000)
     return service
 
 @pytest.fixture
@@ -68,7 +68,7 @@ async def test_validate_job_rejects_insufficient_balance(validator, mock_keepa_s
     scoring_config = {}
 
     # Mock balance below MIN_TOKEN_BALANCE_REQUIRED
-    mock_keepa_service.get_token_balance.return_value = 30
+    mock_keepa_service.check_api_balance.return_value = 30
 
     with pytest.raises(HTTPException) as exc_info:
         await validator.validate_job_requirements(discovery_config, scoring_config)

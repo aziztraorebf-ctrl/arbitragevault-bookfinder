@@ -20,6 +20,15 @@ const jobConfigSchema = z.object({
 
 type JobConfigFormData = z.infer<typeof jobConfigSchema>;
 
+interface CostEstimate {
+  estimated_tokens: number;
+  current_balance: number;
+  safe_to_proceed: boolean;
+  max_allowed: number;
+  warning_message?: string;
+  suggestion?: string;
+}
+
 interface AutoSourcingJobModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -34,6 +43,8 @@ const CATEGORIES = [
   'Toys & Games',
   'Health & Personal Care',
 ];
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://arbitragevault-backend-v2.onrender.com';
 
 const AutoSourcingJobModal: React.FC<AutoSourcingJobModalProps> = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState<JobConfigFormData>({
@@ -55,10 +66,44 @@ const AutoSourcingJobModal: React.FC<AutoSourcingJobModalProps> = ({ isOpen, onC
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [costEstimate, setCostEstimate] = useState<CostEstimate | null>(null);
+  const [isEstimating, setIsEstimating] = useState(false);
+  const [safeguardError, setSafeguardError] = useState<string | null>(null);
+
+  const handleEstimateCost = async () => {
+    setIsEstimating(true);
+    setSafeguardError(null);
+    setCostEstimate(null);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/v1/autosourcing/estimate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          discovery_config: formData.discovery_config,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'estimation');
+      }
+
+      const data = await response.json();
+      setCostEstimate(data);
+    } catch (error) {
+      console.error('Cost estimation error:', error);
+      setSafeguardError('Impossible d\'estimer le cout du job');
+    } finally {
+      setIsEstimating(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+    setSafeguardError(null);
 
     try {
       const validated = jobConfigSchema.parse(formData);
@@ -73,6 +118,26 @@ const AutoSourcingJobModal: React.FC<AutoSourcingJobModalProps> = ({ isOpen, onC
           fieldErrors[path] = err.message;
         });
         setErrors(fieldErrors);
+      } else if (error && typeof error === 'object' && 'response' in error) {
+        const responseError = error as { response?: { status?: number; data?: { detail?: { error?: string; estimated_tokens?: number; max_allowed?: number; suggestion?: string; balance?: number; required?: number } | string } } };
+
+        if (responseError.response?.status === 400) {
+          const detail = responseError.response.data?.detail;
+          if (typeof detail === 'object' && detail.error === 'JOB_TOO_EXPENSIVE') {
+            setSafeguardError(`Job trop couteux: ${detail.estimated_tokens} tokens requis (limite: ${detail.max_allowed}). ${detail.suggestion || ''}`);
+          } else {
+            setSafeguardError('Configuration du job invalide');
+          }
+        } else if (responseError.response?.status === 429) {
+          const detail = responseError.response.data?.detail;
+          if (typeof detail === 'object') {
+            setSafeguardError(`Tokens insuffisants: ${detail.balance}/${detail.required} disponibles`);
+          } else {
+            setSafeguardError('Tokens Keepa insuffisants');
+          }
+        } else if (responseError.response?.status === 408) {
+          setSafeguardError('Timeout du job - reduire la portee de recherche');
+        }
       }
     } finally {
       setIsSubmitting(false);
@@ -251,6 +316,40 @@ const AutoSourcingJobModal: React.FC<AutoSourcingJobModalProps> = ({ isOpen, onC
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={handleEstimateCost}
+                  disabled={isEstimating}
+                  className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {isEstimating ? 'Estimation...' : 'Estimer le Cout'}
+                </button>
+              </div>
+
+              {costEstimate && (
+                <div className={`mt-4 p-4 rounded-md ${costEstimate.safe_to_proceed ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
+                  <h4 className="font-semibold text-gray-900 mb-2">Estimation du Cout</h4>
+                  <div className="space-y-1 text-sm">
+                    <p>Tokens estimes: <span className="font-semibold">{costEstimate.estimated_tokens}</span></p>
+                    <p>Balance actuelle: <span className="font-semibold">{costEstimate.current_balance}</span></p>
+                    <p>Limite max: <span className="font-semibold">{costEstimate.max_allowed}</span></p>
+                    {costEstimate.warning_message && (
+                      <p className="text-yellow-700 mt-2">{costEstimate.warning_message}</p>
+                    )}
+                    {costEstimate.suggestion && (
+                      <p className="text-blue-700 mt-2">{costEstimate.suggestion}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {safeguardError && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-sm text-red-700">{safeguardError}</p>
+                </div>
+              )}
             </div>
 
             <div className="mb-6">

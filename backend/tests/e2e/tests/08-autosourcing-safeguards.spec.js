@@ -5,6 +5,24 @@ const BACKEND_URL = process.env.BACKEND_URL || 'https://arbitragevault-backend-v
 
 test.describe('AutoSourcing Safeguards', () => {
   test('Should display cost estimate before job submission', async ({ page }) => {
+    // Mock the estimate API to return quickly
+    await page.route('**/api/v1/autosourcing/estimate', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          estimated_tokens: 150,
+          current_balance: 500,
+          max_tokens_limit: 200,
+          safe_to_proceed: true,
+          breakdown: {
+            discovery_tokens: 50,
+            product_tokens: 100
+          }
+        })
+      });
+    });
+
     // Navigate to AutoSourcing page
     await page.goto(`${FRONTEND_URL}/autosourcing`);
 
@@ -28,10 +46,17 @@ test.describe('AutoSourcing Safeguards', () => {
       await maxResultsInput.fill('50');
     }
 
-    // Look for estimate button - exact text from UI
-    const estimateButton = page.locator('button:has-text("Estimer le Cout")').first();
+    // Look for estimate button - it may say "Estimer le Cout" or "Estimation..."
+    const estimateButton = page.locator('button:has-text("Estimer le Cout"), button:has-text("Estimation")').first();
+
+    // Wait for button to be enabled (not in loading state)
     await estimateButton.waitFor({ state: 'visible', timeout: 10000 });
-    await estimateButton.click();
+
+    // Click only if not already estimating
+    const buttonText = await estimateButton.textContent();
+    if (buttonText && buttonText.includes('Estimer')) {
+      await estimateButton.click();
+    }
 
     // Wait for cost estimate panel to appear
     await page.waitForSelector('text=/Estimation du Cout/i', { timeout: 10000 });

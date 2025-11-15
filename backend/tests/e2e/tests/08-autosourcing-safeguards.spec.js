@@ -19,8 +19,8 @@ test.describe('AutoSourcing Safeguards', () => {
     // Wait for modal to open
     await page.waitForSelector('h2:has-text("Nouvelle Recherche Personnalisée")', { timeout: 10000 });
 
-    // Fill job configuration
-    await page.fill('input[name="profile_name"], input[placeholder*="nom"], input[placeholder*="Name"]', 'Test Safeguards');
+    // Fill job configuration - using exact placeholder from production UI
+    await page.fill('input[placeholder*="Livres Techniques"]', 'Test Safeguards');
 
     // Set max results to a high value
     const maxResultsInput = page.locator('input[name="max_results"], input[placeholder*="max"], input[type="number"]').first();
@@ -28,8 +28,8 @@ test.describe('AutoSourcing Safeguards', () => {
       await maxResultsInput.fill('50');
     }
 
-    // Look for estimate button
-    const estimateButton = page.locator('button:has-text("Estimer"), button:has-text("Estimate"), button:has-text("Calculate")').first();
+    // Look for estimate button - exact text from UI
+    const estimateButton = page.locator('button:has-text("Estimer le Cout")').first();
     await estimateButton.waitFor({ state: 'visible', timeout: 10000 });
     await estimateButton.click();
 
@@ -75,11 +75,11 @@ test.describe('AutoSourcing Safeguards', () => {
     // Wait for modal to open
     await page.waitForSelector('h2:has-text("Nouvelle Recherche Personnalisée")', { timeout: 10000 });
 
-    // Fill minimal form
-    await page.fill('input[name="profile_name"], input[placeholder*="nom"], input[placeholder*="Name"]', 'Expensive Job');
+    // Fill minimal form - using exact placeholder from production UI
+    await page.fill('input[placeholder*="Livres Techniques"]', 'Expensive Job');
 
-    // Submit form
-    const submitButton = page.locator('button[type="submit"], button:has-text("Lancer"), button:has-text("Submit"), button:has-text("Run")').first();
+    // Submit form - using exact text from UI
+    const submitButton = page.locator('button:has-text("Lancer Recherche")').first();
     await submitButton.click();
 
     // Verify error message appears in red panel
@@ -120,11 +120,11 @@ test.describe('AutoSourcing Safeguards', () => {
     // Wait for modal to open
     await page.waitForSelector('h2:has-text("Nouvelle Recherche Personnalisée")', { timeout: 10000 });
 
-    // Fill minimal form
-    await page.fill('input[name="profile_name"], input[placeholder*="nom"], input[placeholder*="Name"]', 'Timeout Test');
+    // Fill minimal form - using exact placeholder from production UI
+    await page.fill('input[placeholder*="Livres Techniques"]', 'Timeout Test');
 
-    // Submit form
-    const submitButton = page.locator('button[type="submit"], button:has-text("Lancer"), button:has-text("Submit"), button:has-text("Run")').first();
+    // Submit form - using exact text from UI
+    const submitButton = page.locator('button:has-text("Lancer Recherche")').first();
     await submitButton.click();
 
     // Verify timeout error appears in red panel

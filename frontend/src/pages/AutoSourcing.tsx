@@ -87,16 +87,34 @@ export default function AutoSourcing() {
     setTokenError(null)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/autosourcing/run-custom`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/autosourcing/run_custom`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
 
+      // Handle HTTP 429 - Token insuffisants
       if (response.status === 429) {
         const tokenErrorInfo = parseTokenError(response)
         setTokenError(tokenErrorInfo)
-        return
+        const errorData = await response.json()
+        const detail = errorData.detail
+        if (typeof detail === 'object') {
+          throw { response: { status: 429, data: errorData } }
+        }
+        throw new Error('Tokens Keepa insuffisants')
+      }
+
+      // Handle HTTP 400 - JOB_TOO_EXPENSIVE
+      if (response.status === 400) {
+        const errorData = await response.json()
+        throw { response: { status: 400, data: errorData } }
+      }
+
+      // Handle HTTP 408 - Timeout
+      if (response.status === 408) {
+        const errorData = await response.json()
+        throw { response: { status: 408, data: errorData } }
       }
 
       if (!response.ok) {
@@ -106,8 +124,10 @@ export default function AutoSourcing() {
       const newJob = await response.json()
       setJobs([newJob, ...jobs])
       setSelectedJob(newJob)
+      setIsModalOpen(false) // Close modal on success
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la création du job')
+      // Re-throw the error to be handled by the modal
+      throw err
     } finally {
       setLoading(false)
     }

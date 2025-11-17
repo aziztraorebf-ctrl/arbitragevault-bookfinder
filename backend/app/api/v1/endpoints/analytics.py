@@ -269,6 +269,19 @@ async def get_product_decision(
             dead_inventory_data=dead_inventory_data
         )
 
+        recommendations = RiskScoringService.get_risk_recommendations(
+            risk_data['total_risk_score'],
+            risk_data['risk_level']
+        )
+
+        risk_response = RiskScoreResponseSchema(
+            asin=request.asin,
+            risk_score=risk_data['total_risk_score'],
+            risk_level=risk_data['risk_level'],
+            components=risk_data['components'],
+            recommendations=recommendations
+        )
+
         recommendation = RecommendationEngineService.generate_recommendation(
             asin=request.asin,
             title=request.title or 'Unknown',
@@ -291,7 +304,7 @@ async def get_product_decision(
             price_stability=price_stability_data,
             roi=roi_data,
             competition=competition_data,
-            risk=risk_data,
+            risk=risk_response,
             recommendation=recommendation
         )
 

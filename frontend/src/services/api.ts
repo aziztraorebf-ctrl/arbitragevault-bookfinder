@@ -223,6 +223,44 @@ export const apiService = {
       throw error
     }
   },
+
+  // Phase 8.0 Analytics - Product Decision
+  async getProductDecision(asin: string): Promise<any> {
+    try {
+      const response = await api.post('/api/v1/analytics/product-decision', {
+        asin,
+        estimated_buy_price: 5.00,
+        estimated_sell_price: 19.99,
+      })
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  },
+
+  // Phase 8.0 Analytics - ASIN Historical Trends
+  async getASINTrends(asin: string, days: number = 90): Promise<any> {
+    try {
+      const response = await api.get(`/api/v1/asin-history/trends/${asin}`, {
+        params: { days }
+      })
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  },
+
+  // Phase 8.0 Analytics - ASIN Historical Records
+  async getASINHistory(asin: string, days: number = 30, limit: number = 100): Promise<any> {
+    try {
+      const response = await api.get(`/api/v1/asin-history/records/${asin}`, {
+        params: { days, limit }
+      })
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  },
 }
 
 // Export functions for backward compatibility

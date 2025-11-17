@@ -108,14 +108,23 @@ class AutoSourcingService:
             # Phase 1: Discover products via Keepa
             logger.info("Phase 1: Product discovery via Keepa")
             discovered_asins = await self._discover_products(discovery_config)
-            
-            job.total_tested = len(discovered_asins)
-            logger.info(f"Discovered {len(discovered_asins)} products")
-            
+
+            logger.info(f"Discovered {len(discovered_asins)} products (may include duplicates)")
+
+            # Phase 1.5: Deduplicate ASINs to prevent analyzing same product multiple times
+            logger.info("Phase 1.5: ASIN deduplication")
+            unique_asins = await self.process_asins_with_deduplication(
+                discovered_asins,
+                max_to_analyze=discovery_config.get("max_results", 50)
+            )
+
+            job.total_tested = len(unique_asins)
+            logger.info(f"After deduplication: {len(unique_asins)} unique products to analyze")
+
             # Phase 2: Score and filter products
             logger.info("Phase 2: Advanced scoring and filtering")
             scored_picks = await self._score_and_filter_products(
-                discovered_asins, scoring_config, job.id
+                unique_asins, scoring_config, job.id
             )
             
             job.total_selected = len(scored_picks)
@@ -293,6 +302,53 @@ class AutoSourcingService:
         unique_asins = list(set(discovered))[:max_results]
         
         logger.info(f"Fallback simulation: {len(unique_asins)} ASINs from categories: {categories}")
+        return unique_asins
+
+    async def process_asins_with_deduplication(
+        self,
+        asins: List[str],
+        max_to_analyze: int = None
+    ) -> List[str]:
+        """
+        Deduplicate ASINs to prevent analyzing the same product multiple times.
+
+        Args:
+            asins: List of ASINs (may contain duplicates)
+            max_to_analyze: Optional limit on unique products
+
+        Returns:
+            List of unique ASINs preserving first occurrence order
+        """
+        # Track seen ASINs to preserve order of first occurrences
+        seen = set()
+        unique_asins = []
+
+        # Use max_to_analyze from safeguards if not specified
+        if max_to_analyze is None:
+            from app.schemas.autosourcing_safeguards import MAX_PRODUCTS_PER_SEARCH
+            max_to_analyze = MAX_PRODUCTS_PER_SEARCH
+
+        for asin in asins:
+            # Skip if already seen (duplicate)
+            if asin in seen:
+                logger.debug(f"Skipping duplicate ASIN: {asin}")
+                continue
+
+            # Stop if reached max limit
+            if len(unique_asins) >= max_to_analyze:
+                logger.info(f"Reached max unique ASINs limit: {max_to_analyze}")
+                break
+
+            # Add to results
+            seen.add(asin)
+            unique_asins.append(asin)
+
+        duplicates_removed = len(asins) - len(unique_asins)
+        logger.info(
+            f"Deduplication: {len(unique_asins)} unique ASINs from {len(asins)} input "
+            f"({duplicates_removed} duplicates removed)"
+        )
+
         return unique_asins
 
     async def _score_and_filter_products(

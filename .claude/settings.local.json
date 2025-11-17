@@ -60,7 +60,11 @@
       "Bash(mkdir:*)",
       "Bash(git rev-parse:*)",
       "Bash(gh run list:*)",
-      "Bash(npx playwright test:*)"
+      "Bash(npx playwright test:*)",
+      "Bash(git log:*)",
+      "Bash(git rm:*)",
+      "Bash(git checkout:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []

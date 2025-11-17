@@ -64,39 +64,42 @@ Test 3: Timeout enforcement - PASSED (4.4s)
 
 ---
 
-## Prochaine Phase - Phase 8.0: UI/UX Polish
+## Prochaine Phase - Phase 8.0: Advanced Analytics & Decision System
 
-**Focus:** Amelioration experience utilisateur et coherence visuelle
+**Focus:** Business intelligence et systeme de decision avancee
 
-### Phase 8.1: Visual Design Consistency
-- Harmonisation palette couleurs (Tailwind)
-- Typography standardisee
-- Iconographie coherente
-- Spacing/padding uniforme
+### Phase 8.1: Advanced Analytics Engine (Semaine 1)
+- Velocity Intelligence (BSR trends 7/30/90 days, seasonal patterns)
+- Price Stability Analysis (variance, competitive index)
+- ROI Net Calculation (all fees: referral, FBA, prep, shipping, returns, damages, storage)
+- Competition Analysis (seller count evolution, Amazon presence, FBA ratio)
+- Advanced Scoring Algorithm (weighted multi-criteria)
 
-### Phase 8.2: User Experience Flows
-- Navigation optimisee
-- Feedback utilisateur immediat
-- Loading states ameliores
-- Error recovery flows
+### Phase 8.2: Historical Data Layer (Semaine 1)
+- Database schema extension (3 new tables: asin_history, run_history, decision_outcomes)
+- ASIN Tracking Service (daily background job via Celery)
+- Run History Service (save all AutoSourcing execution configs + results)
+- Decision Outcome Tracking (predicted vs actual ROI)
+- Performance Metrics Dashboard
 
-### Phase 8.3: Responsive & Accessibility
-- Mobile-first responsive design
-- WCAG 2.1 Level AA compliance
-- Keyboard navigation
-- Screen reader support
+### Phase 8.3: Profit & Risk Model (Semaine 1)
+- Dead Inventory Detection (BSR thresholds category-specific, slow mover categories)
+- Storage Cost Impact (FBA fees 45-60 day model)
+- Risk Scoring Algorithm (5 components: dead inventory 35%, competition 25%, Amazon 20%, stability 10%, category 10%)
+- Break-Even Analysis (time to recoup costs with storage fees)
+- Final Recommendation Engine (5-tier: STRONG_BUY, BUY, CONSIDER, WATCH, SKIP/AVOID)
 
-### Phase 8.4: Performance & Feel
-- Animation micro-interactions
-- Optimisation bundle size
-- Lazy loading components
-- Perceived performance
+### Phase 8.4: Decision UI (Semaine 1)
+- ProductDecisionCard Component (React + TypeScript)
+- ScorePanel (Overall score + breakdown: ROI, velocity, stability, confidence)
+- RiskPanel (Risk score, risk level, Amazon presence warnings)
+- FinancialPanel (Buy price, net profit, ROI net, storage costs breakdown)
+- HistoricalTrendsChart (Recharts integration for BSR/price trends)
+- RecommendationBanner (Final recommendation with reason + time-to-sell estimate)
+- ActionButtons (Buy/Watch/Skip with optimistic UI updates)
 
-### Phase 8.5: Documentation Utilisateur
-- Guide utilisateur interactif
-- Tooltips contextuels
-- Onboarding flow
-- FAQ integration
+**Timeline:** 4 semaines total
+**Dependencies:** Phase 7.0 complete (token safeguards)
 
 ---
 
@@ -195,19 +198,20 @@ backend/tests/e2e/tests/
 
 ## Priorites Immediates
 
-### Phase 8.0 - Lancement
-1. **Audit UI actuel** - Identifier inconsistencies visuelles
-2. **Design system** - Creer palette couleurs + typography guide
-3. **Component library** - Standardiser boutons, inputs, cards
-4. **Responsive audit** - Tester toutes pages mobile/tablet
-5. **Accessibility scan** - Verifier WCAG compliance
+### Phase 8.0 - Lancement (Advanced Analytics & Decision)
+1. **Database Schema Extension** - Creer 3 nouvelles tables (asin_history, run_history, decision_outcomes)
+2. **Velocity Intelligence** - Implementer BSR trend analysis (7/30/90 days)
+3. **Risk Scoring Algorithm** - 5 components avec ponderation
+4. **Dead Inventory Detection** - Category-specific BSR thresholds
+5. **Decision UI Components** - ProductDecisionCard avec ScorePanel, RiskPanel, FinancialPanel
 
-### Quick Wins
-- Uniformiser boutons primaires/secondaires
-- Ajouter loading spinners consistants
-- Standardiser error messages styling
-- Ameliorer contrast ratios
-- Optimiser font loading
+### Phase 9.0 - Suivante (UI/UX Polish)
+Apres completion Phase 8.0, focus sur:
+- Visual Design Consistency (Tailwind design system)
+- User Experience Flows (navigation, loading states, error recovery)
+- Responsive & Accessibility (WCAG 2.1 Level AA)
+- Performance & Feel (micro-interactions, bundle optimization)
+- Documentation Utilisateur (tooltips, FAQ, onboarding)
 
 ---
 
@@ -253,6 +257,8 @@ backend/tests/e2e/tests/
 
 ---
 
-**Prochaine action:** Demarrer Phase 8.1 - Visual Design Consistency
-**Responsable:** Architecture + UX Development
-**Timeline estimee:** 2-3 semaines pour Phase 8.0 complete
+**Prochaine action:** Demarrer Phase 8.1 - Advanced Analytics Engine
+**Responsable:** Backend + Analytics Development
+**Timeline estimee:** 4 semaines pour Phase 8.0 complete (Advanced Analytics & Decision System)
+
+**Note roadmap:** Phase 8.0 corrigee - Focus Advanced Analytics (business-critical) avant UI/UX Polish (Phase 9.0)

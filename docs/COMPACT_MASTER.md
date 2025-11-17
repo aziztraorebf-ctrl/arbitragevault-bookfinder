@@ -282,49 +282,106 @@ GET  /api/v1/views/                       # List views
 
 ## Roadmap Futur
 
-### Phase 8.0: UI/UX Polish (Prochain)
-**Timeline:** 2-3 semaines
-**Focus:** Experience utilisateur et coherence visuelle
+### Phase 8.0: Advanced Analytics & Decision System (Prochain)
+**Timeline:** 4 semaines
+**Focus:** Business intelligence et systeme de decision avancee
+**Priority:** HIGH (business-critical features)
 
 **Sub-phases:**
-1. **8.1 Visual Design Consistency**
-   - Harmonisation palette couleurs
+1. **8.1 Advanced Analytics Engine (Semaine 1)**
+   - Velocity Intelligence (BSR trends 7/30/90 days, seasonal patterns)
+   - Price Stability Analysis (variance, competitive index)
+   - ROI Net Calculation (all fees: referral, FBA, prep, shipping, returns, damages, storage)
+   - Competition Analysis (seller count evolution, Amazon presence, FBA ratio)
+   - Advanced Scoring Algorithm (weighted multi-criteria)
+
+2. **8.2 Historical Data Layer (Semaine 1)**
+   - Database schema extension (3 new tables: asin_history, run_history, decision_outcomes)
+   - ASIN Tracking Service (daily background job via Celery)
+   - Run History Service (save all AutoSourcing execution configs + results)
+   - Decision Outcome Tracking (predicted vs actual ROI)
+   - Performance Metrics Dashboard
+
+3. **8.3 Profit & Risk Model (Semaine 1)**
+   - Dead Inventory Detection (BSR thresholds category-specific, slow mover categories)
+   - Storage Cost Impact (FBA fees 45-60 day model)
+   - Risk Scoring Algorithm (5 components: dead inventory 35%, competition 25%, Amazon 20%, stability 10%, category 10%)
+   - Break-Even Analysis (time to recoup costs with storage fees)
+   - Final Recommendation Engine (5-tier: STRONG_BUY, BUY, CONSIDER, WATCH, SKIP/AVOID)
+
+4. **8.4 Decision UI (Semaine 1)**
+   - ProductDecisionCard Component (React + TypeScript)
+   - ScorePanel (Overall score + breakdown: ROI, velocity, stability, confidence)
+   - RiskPanel (Risk score, risk level, Amazon presence warnings)
+   - FinancialPanel (Buy price, net profit, ROI net, storage costs breakdown)
+   - HistoricalTrendsChart (Recharts integration for BSR/price trends)
+   - RecommendationBanner (Final recommendation with reason + time-to-sell estimate)
+   - ActionButtons (Buy/Watch/Skip with optimistic UI updates)
+
+**Technologies:**
+- Backend: FastAPI + Celery (background jobs)
+- Database: PostgreSQL (3 new tables)
+- Frontend: React + Recharts (charting library)
+- Analytics: Custom algorithms (velocity, risk, recommendation)
+
+**Documentation:** `docs/PHASE_8.0_ADVANCED_ANALYTICS_DECISION.md`
+
+---
+
+### Phase 9.0: UI/UX Polish (Apres Phase 8.0)
+**Timeline:** 2-3 semaines
+**Focus:** Experience utilisateur et coherence visuelle
+**Priority:** MEDIUM (quality-of-life improvements)
+
+**Sub-phases:**
+1. **9.1 Visual Design Consistency**
+   - Harmonisation palette couleurs (Tailwind design tokens)
    - Typography standardisee
-   - Iconographie coherente
+   - Iconographie coherente (lucide-react)
    - Spacing uniforme
 
-2. **8.2 User Experience Flows**
-   - Navigation optimisee
-   - Feedback utilisateur immediat
-   - Loading states ameliores
-   - Error recovery flows
+2. **9.2 User Experience Flows**
+   - Navigation optimisee (breadcrumbs, sidebar active states)
+   - Feedback utilisateur immediat (toast notifications)
+   - Loading states ameliores (skeleton loaders)
+   - Error recovery flows (retry mechanisms)
 
-3. **8.3 Responsive & Accessibility**
-   - Mobile-first design
-   - WCAG 2.1 Level AA
-   - Keyboard navigation
+3. **9.3 Responsive & Accessibility**
+   - Mobile-first responsive design
+   - WCAG 2.1 Level AA compliance
+   - Keyboard navigation complete
    - Screen reader support
 
-4. **8.4 Performance & Feel**
+4. **9.4 Performance & Feel**
    - Micro-interactions animation
-   - Bundle size optimization
-   - Lazy loading
-   - Perceived performance
+   - Bundle size optimization (code splitting)
+   - Lazy loading components
+   - Perceived performance (optimistic UI)
 
-5. **8.5 Documentation Utilisateur**
-   - Guide interactif
+5. **9.5 Documentation Utilisateur**
+   - Guide interactif (react-joyride)
    - Tooltips contextuels
    - Onboarding flow
    - FAQ integration
 
-### Phase 9.0: Advanced Features (Future)
+**Technologies:**
+- Tailwind CSS (design system)
+- Radix UI (accessible components)
+- React Joyride (product tour)
+- Recharts (if needed for UI enhancements)
+
+**Documentation:** `docs/PHASE_9.0_UI_UX_POLISH_PLAN.md`
+
+---
+
+### Phase 10.0: Advanced Features (Future)
 **Potentielles features:**
 - Multi-user authentication
 - Real-time collaboration
-- Advanced analytics dashboard
 - Google Sheets export
 - Automated repricing alerts
 - Inventory management integration
+- Mobile app (React Native)
 
 ---
 

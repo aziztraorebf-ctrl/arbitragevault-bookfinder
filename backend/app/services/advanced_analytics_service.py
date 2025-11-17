@@ -2,7 +2,7 @@
 Advanced Analytics Service for Phase 8.0
 Implements velocity intelligence, price stability, ROI calculation, competition analysis.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
 from decimal import Decimal
 import statistics
@@ -52,7 +52,7 @@ class AdvancedAnalyticsService:
                 'risk_level': 'NO_DATA'
             }
 
-        now = datetime.now(datetime.timezone.utc)
+        now = datetime.now(timezone.utc)
         velocity_score = 100
 
         bsr_values_7d = []

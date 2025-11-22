@@ -243,7 +243,8 @@ async def run_custom_search(
     logger = logging.getLogger(__name__)
 
     # === VALIDATION BEFORE EXECUTION (Phase 7.0) ===
-    validator = AutoSourcingValidator(keepa_service=keepa_service)
+    settings = get_settings()
+    validator = AutoSourcingValidator(settings=settings, keepa_service=keepa_service)
 
     await validator.validate_job_requirements(
         discovery_config=request.discovery_config.dict(),

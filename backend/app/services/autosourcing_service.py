@@ -4,9 +4,10 @@ Integrates Keepa Product Finder with advanced scoring system v1.5.0.
 """
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional, Tuple
 from uuid import UUID, uuid4
+from fastapi import HTTPException
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, desc, func
@@ -26,6 +27,7 @@ from app.core.calculations import (
     compute_overall_rating
 )
 from app.core.exceptions import AppException, InsufficientTokensError
+from app.schemas.autosourcing_safeguards import TIMEOUT_PER_JOB
 
 logger = logging.getLogger(__name__)
 
@@ -101,73 +103,91 @@ class AutoSourcingService:
         logger.debug(f"Refreshing job from DB...")
         await self.db.refresh(job)
         logger.debug(f"Job created with ID: {job.id}")
-        
+
         start_time = datetime.utcnow()
-        
+
         try:
-            # Phase 1: Discover products via Keepa
-            logger.info("Phase 1: Product discovery via Keepa")
-            discovered_asins = await self._discover_products(discovery_config)
+            # Timeout protection INSIDE service to guarantee DB update
+            async with asyncio.timeout(TIMEOUT_PER_JOB):
+                # Phase 1: Discover products via Keepa
+                logger.info("Phase 1: Product discovery via Keepa")
+                discovered_asins = await self._discover_products(discovery_config)
 
-            logger.info(f"Discovered {len(discovered_asins)} products (may include duplicates)")
+                logger.info(f"Discovered {len(discovered_asins)} products (may include duplicates)")
 
-            # Phase 1.5: Deduplicate ASINs to prevent analyzing same product multiple times
-            logger.info("Phase 1.5: ASIN deduplication")
-            unique_asins = await self.process_asins_with_deduplication(
-                discovered_asins,
-                max_to_analyze=discovery_config.get("max_results", 50)
-            )
+                # Phase 1.5: Deduplicate ASINs to prevent analyzing same product multiple times
+                logger.info("Phase 1.5: ASIN deduplication")
+                unique_asins = await self.process_asins_with_deduplication(
+                    discovered_asins,
+                    max_to_analyze=discovery_config.get("max_results", 50)
+                )
 
-            job.total_tested = len(unique_asins)
-            logger.info(f"After deduplication: {len(unique_asins)} unique products to analyze")
+                job.total_tested = len(unique_asins)
+                logger.info(f"After deduplication: {len(unique_asins)} unique products to analyze")
 
-            # Phase 2: Score and filter products
-            logger.info("Phase 2: Advanced scoring and filtering")
-            scored_picks = await self._score_and_filter_products(
-                unique_asins, scoring_config, job.id
-            )
-            
-            job.total_selected = len(scored_picks)
-            logger.info(f"Selected {len(scored_picks)} top opportunities")
-            
-            # Phase 3: Remove duplicates from recent jobs  
-            logger.info("Phase 3: Duplicate detection")
-            unique_picks = await self._remove_recent_duplicates(scored_picks)
-            
-            final_count = len(unique_picks)
-            logger.info(f"Final results: {final_count} unique opportunities")
-            
-            # Save results
-            self.db.add_all(unique_picks)
+                # Phase 2: Score and filter products
+                logger.info("Phase 2: Advanced scoring and filtering")
+                scored_picks = await self._score_and_filter_products(
+                    unique_asins, scoring_config, job.id
+                )
 
-            # Update job status
-            end_time = datetime.utcnow()
-            job.duration_ms = int((end_time - start_time).total_seconds() * 1000)
-            job.completed_at = end_time
-            job.status = JobStatus.SUCCESS
-            job.total_selected = final_count
+                job.total_selected = len(scored_picks)
+                logger.info(f"Selected {len(scored_picks)} top opportunities")
 
-            logger.debug(f"Final commit before return...")
+                # Phase 3: Remove duplicates from recent jobs
+                logger.info("Phase 3: Duplicate detection")
+                unique_picks = await self._remove_recent_duplicates(scored_picks)
+
+                final_count = len(unique_picks)
+                logger.info(f"Final results: {final_count} unique opportunities")
+
+                # Save results
+                self.db.add_all(unique_picks)
+
+                # Update job status
+                end_time = datetime.utcnow()
+                job.duration_ms = int((end_time - start_time).total_seconds() * 1000)
+                job.completed_at = end_time
+                job.status = JobStatus.SUCCESS
+                job.total_selected = final_count
+
+                logger.debug(f"Final commit before return...")
+                await self.db.commit()
+
+                # Reload job with picks relationship eagerly loaded to prevent MissingGreenlet
+                # when FastAPI serializes the response
+                logger.debug(f"Reloading job {job.id} with picks relationship...")
+                from sqlalchemy import select
+                from sqlalchemy.orm import selectinload
+
+                result = await self.db.execute(
+                    select(AutoSourcingJob)
+                    .where(AutoSourcingJob.id == job.id)
+                    .options(selectinload(AutoSourcingJob.picks))
+                )
+                job = result.scalar_one()
+
+                logger.info(f"AutoSourcing job completed successfully: {job.id}")
+                return job
+
+        except asyncio.TimeoutError:
+            # Update job status BEFORE raising exception
+            job.status = JobStatus.FAILED
+            job.error_message = f"Job exceeded timeout limit ({TIMEOUT_PER_JOB} seconds)"
+            job.completed_at = datetime.now(timezone.utc)
+            job.duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
             await self.db.commit()
 
-            # Reload job with picks relationship eagerly loaded to prevent MissingGreenlet
-            # when FastAPI serializes the response
-            logger.debug(f"Reloading job {job.id} with picks relationship...")
-            from sqlalchemy import select
-            from sqlalchemy.orm import selectinload
+            logger.warning(f"Job {job.id} exceeded timeout ({TIMEOUT_PER_JOB}s)")
 
-            result = await self.db.execute(
-                select(AutoSourcingJob)
-                .where(AutoSourcingJob.id == job.id)
-                .options(selectinload(AutoSourcingJob.picks))
+            # Re-raise for router to handle HTTP 408
+            raise HTTPException(
+                status_code=408,
+                detail=f"Job exceeded timeout limit ({TIMEOUT_PER_JOB} seconds)"
             )
-            job = result.scalar_one()
 
-            logger.info(f"✅ AutoSourcing job completed: {job.id}")
-            return job
-            
         except Exception as e:
-            logger.error(f"❌ AutoSourcing job failed: {str(e)}")
+            logger.error(f"AutoSourcing job failed: {str(e)}")
             
             # Update job with error
             job.status = JobStatus.ERROR
@@ -382,9 +402,9 @@ class AutoSourcingService:
                 
                 if pick and self._meets_criteria(pick, scoring_config):
                     picks.append(pick)
-                    logger.debug(f"✅ {asin}: {pick.overall_rating} (ROI: {pick.roi_percentage}%)")
+                    logger.debug(f"PASS {asin}: {pick.overall_rating} (ROI: {pick.roi_percentage}%)")
                 else:
-                    logger.debug(f"❌ {asin}: Does not meet criteria")
+                    logger.debug(f"REJECT {asin}: Does not meet criteria")
                     
             except Exception as e:
                 logger.warning(f"Error scoring {asin}: {str(e)}")

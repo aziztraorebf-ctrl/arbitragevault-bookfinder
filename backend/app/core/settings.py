@@ -81,6 +81,17 @@ class Settings(BaseSettings):
     # API Keys
     keepa_api_key: Optional[str] = Field(default=None, alias="KEEPA_API_KEY")
 
+    # Keepa API Cost Configuration
+    keepa_product_finder_cost: int = Field(
+        default=10, alias="KEEPA_PRODUCT_FINDER_COST"
+    )  # tokens per page
+    keepa_product_details_cost: int = Field(
+        default=1, alias="KEEPA_PRODUCT_DETAILS_COST"
+    )  # tokens per ASIN
+    keepa_results_per_page: int = Field(
+        default=10, alias="KEEPA_RESULTS_PER_PAGE"
+    )  # Product Finder returns 10 results per page
+
     # Monitoring
     sentry_dsn: Optional[str] = Field(default=None, alias="SENTRY_DSN")
     environment: str = Field(default="development", alias="ENVIRONMENT")

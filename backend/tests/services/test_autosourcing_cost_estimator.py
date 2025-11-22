@@ -2,13 +2,23 @@
 Tests for AutoSourcing cost estimation service.
 """
 import pytest
+from unittest.mock import Mock
 from app.services.autosourcing_cost_estimator import AutoSourcingCostEstimator
 from app.schemas.autosourcing_safeguards import MAX_TOKENS_PER_JOB
 
 @pytest.fixture
-def estimator():
+def mock_settings():
+    """Fixture for mock settings."""
+    settings = Mock()
+    settings.keepa_product_finder_cost = 10
+    settings.keepa_product_details_cost = 1
+    settings.keepa_results_per_page = 10
+    return settings
+
+@pytest.fixture
+def estimator(mock_settings):
     """Fixture for cost estimator instance."""
-    return AutoSourcingCostEstimator()
+    return AutoSourcingCostEstimator(mock_settings)
 
 def test_estimate_discovery_cost_basic(estimator):
     """Test basic Product Finder cost calculation (10 tokens per page)."""

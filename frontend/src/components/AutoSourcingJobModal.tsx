@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
 import { z } from 'zod';
+import {
+  jobTooExpensiveErrorSchema,
+  insufficientTokensErrorSchema,
+  timeoutErrorSchema
+} from '../schemas/autosourcing';
 
 const jobConfigSchema = z.object({
   profile_name: z.string().min(3, 'Le nom doit contenir au moins 3 caractères'),
@@ -119,24 +124,40 @@ const AutoSourcingJobModal: React.FC<AutoSourcingJobModalProps> = ({ isOpen, onC
         });
         setErrors(fieldErrors);
       } else if (error && typeof error === 'object' && 'response' in error) {
-        const responseError = error as { response?: { status?: number; data?: { detail?: { error?: string; estimated_tokens?: number; max_allowed?: number; suggestion?: string; balance?: number; required?: number } | string } } };
+        const responseError = error as { response?: { status?: number; data?: { detail?: unknown } } };
 
         if (responseError.response?.status === 400) {
           const detail = responseError.response.data?.detail;
-          if (typeof detail === 'object' && detail.error === 'JOB_TOO_EXPENSIVE') {
-            setSafeguardError(`Job trop couteux: ${detail.estimated_tokens} tokens requis (limite: ${detail.max_allowed}). ${detail.suggestion || ''}`);
+
+          // Validate with Zod schema
+          const parseResult = jobTooExpensiveErrorSchema.safeParse(detail);
+          if (parseResult.success) {
+            const data = parseResult.data;
+            setSafeguardError(`Job trop couteux: ${data.estimated_tokens} tokens requis (limite: ${data.max_allowed}). ${data.suggestion || ''}`);
           } else {
             setSafeguardError('Configuration du job invalide');
           }
         } else if (responseError.response?.status === 429) {
           const detail = responseError.response.data?.detail;
-          if (typeof detail === 'object') {
-            setSafeguardError(`Tokens insuffisants: ${detail.balance}/${detail.required} disponibles`);
+
+          // Validate with Zod schema
+          const parseResult = insufficientTokensErrorSchema.safeParse(detail);
+          if (parseResult.success) {
+            const data = parseResult.data;
+            setSafeguardError(`Tokens insuffisants: ${data.balance}/${data.required} disponibles`);
           } else {
             setSafeguardError('Tokens Keepa insuffisants');
           }
         } else if (responseError.response?.status === 408) {
-          setSafeguardError('Timeout du job - reduire la portee de recherche');
+          const detail = responseError.response.data?.detail;
+
+          // Validate with Zod schema
+          const parseResult = timeoutErrorSchema.safeParse(detail);
+          if (parseResult.success) {
+            setSafeguardError(`Timeout du job - ${parseResult.data.detail}`);
+          } else {
+            setSafeguardError('Timeout du job - reduire la portee de recherche');
+          }
         }
       }
     } finally {

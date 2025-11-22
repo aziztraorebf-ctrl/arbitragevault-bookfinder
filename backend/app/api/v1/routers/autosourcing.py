@@ -171,7 +171,8 @@ async def get_autosourcing_service(
 )
 async def estimate_job_cost(
     request: CostEstimateRequest,
-    keepa_service: KeepaService = Depends(get_keepa_service)
+    keepa_service: KeepaService = Depends(get_keepa_service),
+    settings = Depends(get_settings)
 ):
     """
     Estimate cost of AutoSourcing job.
@@ -179,11 +180,12 @@ async def estimate_job_cost(
     Args:
         request: Cost estimation request with discovery config
         keepa_service: Injected Keepa service
+        settings: Application settings
 
     Returns:
         Cost estimate with safety assessment
     """
-    estimator = AutoSourcingCostEstimator()
+    estimator = AutoSourcingCostEstimator(settings)
     estimated_tokens = estimator.estimate_total_job_cost(request.discovery_config)
 
     # Get current balance

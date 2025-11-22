@@ -2,7 +2,7 @@
 AutoSourcing job validation service.
 Validates jobs before execution to prevent token exhaustion.
 """
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from fastapi import HTTPException
 from app.schemas.autosourcing_safeguards import (
     JobValidationResult,
@@ -11,23 +11,26 @@ from app.schemas.autosourcing_safeguards import (
 )
 from app.services.autosourcing_cost_estimator import AutoSourcingCostEstimator
 from app.services.keepa_service import KeepaService
+from app.core.settings import Settings, get_settings
 
 class AutoSourcingValidator:
     """Validates AutoSourcing jobs against cost and balance limits."""
 
     def __init__(
         self,
-        cost_estimator: AutoSourcingCostEstimator = None,
-        keepa_service: KeepaService = None
+        settings: Settings,
+        cost_estimator: Optional[AutoSourcingCostEstimator] = None,
+        keepa_service: Optional[KeepaService] = None
     ):
         """
         Initialize validator with dependencies.
 
         Args:
-            cost_estimator: Cost estimation service
+            settings: Application settings
+            cost_estimator: Cost estimation service (created if not provided)
             keepa_service: Keepa API service for balance checks
         """
-        self.cost_estimator = cost_estimator or AutoSourcingCostEstimator()
+        self.cost_estimator = cost_estimator or AutoSourcingCostEstimator(settings)
         self.keepa_service = keepa_service
 
     async def validate_job_requirements(

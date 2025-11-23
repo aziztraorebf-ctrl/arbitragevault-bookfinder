@@ -12,7 +12,7 @@ const TEST_NICHE_DATA = getRandomNicheData(TEST_SEED);
 
 test.describe('Niche Discovery Flow', () => {
   test('Should discover niches with auto mode', async ({ request }) => {
-    test.setTimeout(90000);  // 90s timeout for niche discovery (calls multiple Keepa APIs)
+    test.setTimeout(90000);
     console.log('Testing niche discovery auto endpoint...');
 
     const response = await request.get(`${BACKEND_URL}/api/v1/niches/discover`, {
@@ -20,7 +20,7 @@ test.describe('Niche Discovery Flow', () => {
         count: 3,
         shuffle: true
       },
-      timeout: 60000  // 60s timeout for Keepa API calls (default 30s insufficient)
+      timeout: 90000  // 90s timeout for Keepa API calls (niche discovery can take 60-90s)
     });
 
     console.log('Niche discovery response status:', response.status());

@@ -16,8 +16,8 @@
 
 const { test, expect } = require('@playwright/test')
 
-const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:8000'
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+const API_BASE_URL = process.env.VITE_API_URL || 'https://arbitragevault-backend-v2.onrender.com'
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://arbitragevault.netlify.app'
 
 // Test ASIN with known characteristics
 const TEST_ASIN = '0316769487' // Popular book for testing

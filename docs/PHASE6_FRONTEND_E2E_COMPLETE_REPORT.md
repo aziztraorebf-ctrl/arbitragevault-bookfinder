@@ -144,15 +144,23 @@ Frontend displays generic error messages for HTTP 429:
 - "Erreur lors de l'analyse" (error heading)
 - "Une erreur est survenue. Veuillez reessayer." (error description with retry button)
 
-**TokenErrorAlert Component Status:** NOT YET IMPLEMENTED
+**TokenErrorAlert Component Status:** NOT IMPLEMENTED
 
-Phase 6 plan specified TokenErrorAlert component with:
+Phase 6 plan originally specified TokenErrorAlert component with:
 - French message convivial
 - Balance/required/deficit visual badges
 - "Reessayer" button
 - Warning icon SVG
 
-This component can be implemented in future phase without breaking tests (tests will need update when component added).
+**DECISION (Phase 6 Corrections)**: Generic error messages are **acceptable for MVP**.
+
+Dedicated TokenErrorAlert component can be implemented in future phase if needed.
+This component would require:
+- Effort: ~2 hours
+- Files: frontend/src/components/TokenErrorAlert.tsx
+- Tests: Update 06-token-error-handling.spec.js expectations
+
+For now, tests validate generic error handling (current implementation).
 
 ### Pages Validees
 - Homepage (navigation visible)

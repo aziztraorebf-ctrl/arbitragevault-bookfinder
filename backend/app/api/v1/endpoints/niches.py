@@ -4,6 +4,8 @@ Niche Discovery API Endpoints - Phase 3 Day 9
 
 from typing import List, Optional
 from datetime import datetime
+import asyncio
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +20,10 @@ from app.core.config import settings
 from app.api.v1.endpoints.products import DiscoverWithScoringResponse
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+# Timeout protection for Keepa endpoints
+ENDPOINT_TIMEOUT = 30  # seconds
 
 
 @router.get("/discover", response_model=DiscoverWithScoringResponse)
@@ -78,13 +84,32 @@ async def discover_niches_auto(
         config_service = ConfigService(db)
         finder_service = KeepaProductFinderService(keepa_service, config_service, db)
 
-        # Discover curated niches
-        niches = await discover_curated_niches(
-            db=db,
-            product_finder=finder_service,
-            count=count,
-            shuffle=shuffle
-        )
+        # Log token balance BEFORE operation
+        balance_before = await keepa_service.check_api_balance()
+        logger.info(f"Niche discovery started - Token balance: {balance_before}")
+
+        # Discover curated niches with timeout protection
+        try:
+            niches = await asyncio.wait_for(
+                discover_curated_niches(
+                    db=db,
+                    product_finder=finder_service,
+                    count=count,
+                    shuffle=shuffle
+                ),
+                timeout=ENDPOINT_TIMEOUT
+            )
+        except asyncio.TimeoutError:
+            await keepa_service.close()
+            raise HTTPException(
+                status_code=408,
+                detail=f"Niche discovery timed out after {ENDPOINT_TIMEOUT}s. Try reducing count parameter."
+            )
+
+        # Log token balance AFTER operation
+        balance_after = await keepa_service.check_api_balance()
+        tokens_consumed = balance_before - balance_after
+        logger.info(f"Niche discovery completed - Tokens consumed: {tokens_consumed} (balance: {balance_after})")
 
         await keepa_service.close()
 
@@ -96,11 +121,15 @@ async def discover_niches_auto(
                 "mode": "auto",
                 "niches": niches,
                 "niches_count": len(niches),
+                "tokens_consumed": tokens_consumed,  # Add to response metadata
                 "timestamp": datetime.utcnow().isoformat() + "Z",
                 "source": "curated_templates"
             }
         )
 
+    except asyncio.TimeoutError:
+        # Already handled above, re-raise
+        raise
     except Exception as e:
         import traceback
         import sys

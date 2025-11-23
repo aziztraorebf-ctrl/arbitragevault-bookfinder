@@ -47,25 +47,41 @@
 
 ---
 
-### Phase 3 - Advanced Features (Complétée)
-**Période** : Jour 5-10
+### Phase 3 - Advanced Features + Parser Validation (Complétée) ✅
+**Période** : Jour 5-10 + Validation (2025-11-23)
 
 **Livrables** :
 - **Day 6-7** : Frontend foundation (React + Vite + Tailwind)
 - **Day 8** : PostgreSQL 2-level cache (API response + scoring cache)
 - **Day 9** : Niche Discovery avec curated templates
 - **Day 10** : Product Finder E2E validation (9/9 tests PASS)
+- **2025-11-23** : Keepa Parser v2 validation complète avec vraies données API
 
 **Features Clés** :
 - Auto-discovery niches (one-click avec templates curés)
 - Manual discovery (filtres BSR, prix, ROI, velocity)
 - Cache intelligent (24h TTL, Redis-like pattern)
 - Product Finder integration
+- **Integration tests avec vraie API Keepa (pas de mocks)**
+
+**Bugs Résolus Phase 3** :
+- **BSR extraction** : Lecture correcte stats.current avec fallback 4 niveaux
+- **Pool ASIN obsolète** : 3 ASINs remplacés (100% success vs 57.1%)
+- **Offers extraction** : Tests ajoutés pour validation complète
+- **None handling** : Robustesse pour produits out of stock
+
+**Validation Complète** :
+- 100% succès tests integration (7/7 ASINs actifs)
+- Source tracking précis (tous utilisent 'salesRanks')
+- Fallback chain robuste (gère absence données)
+- Token efficiency ~4 tokens/ASIN
+- Documentation complète (INTEGRATION_TEST_RESULTS.md)
 
 **Commits Clés** :
 - `642627c` : Niche Discovery templates + UI
 - `125a488` : PostgreSQL cache integration
 - `c565b13` : Product Discovery E2E validation
+- `2b5e6d6` : Integration tests extension + ASIN pool update
 
 ---
 
@@ -413,7 +429,53 @@ ENVIRONMENT=development
 
 ## PROCHAINES ÉTAPES
 
-### Phase 7 - Production Optimization & Analytics (PROPOSITION)
+### PRIORITÉ IMMÉDIATE - Audits Phase 2 et Phase 1
+
+#### Audit Phase 2 - Business Logic Validation
+**Objectif** : Valider calculs business (ROI, velocity, fees) avec vraies données
+
+**Scope** :
+- ROI calculation engine (Decimal precision)
+- Velocity scoring (BSR-based)
+- Fee calculation (FBA, referral, closing)
+- Configuration service (hiérarchique)
+- Advanced scoring system
+
+**Méthode** :
+- Tests integration avec vraies données Keepa
+- Validation calculs contre exemples manuels
+- Vérification precision Decimal
+- Edge cases (prix nuls, BSR extrêmes)
+
+**Bugs Connus à Valider** :
+- BSR parsing (corrigé commit b7aa103) - À re-valider
+- Division BSR par 100 (corrigé) - À re-valider
+- Fee calculation category-specific - À valider
+
+#### Audit Phase 1 - Foundation Validation
+**Objectif** : Valider infrastructure backend (database, API, models)
+
+**Scope** :
+- Repository pattern avec BaseRepository
+- User, Analysis, Batch models
+- Keepa service avec circuit breaker
+- Alembic migrations
+- Health endpoints
+
+**Méthode** :
+- Tests database avec vraies migrations
+- Validation CRUD operations
+- Test circuit breaker robustesse
+- Vérification health endpoints
+
+**Bugs Potentiels** :
+- Windows compatibility (ProactorEventLoop)
+- PostgreSQL connection pooling
+- Migration idempotence
+
+---
+
+### Phase 7 - Production Optimization & Analytics (APRÈS AUDITS)
 
 **Priorité 1 : Implement TokenErrorAlert Component**
 - Visual badges showing balance/required/deficit

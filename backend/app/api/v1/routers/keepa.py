@@ -822,22 +822,30 @@ async def keepa_health_check(
     """
     Enhanced health check with observability metrics.
     Includes token status, cache performance, and service metrics.
+
+    HIGH-3 Fix: Force balance refresh (bypass 60s cache) for accurate health status.
     """
     try:
         async with keepa_service:
+            # Force balance refresh for accurate health check
+            actual_balance = await keepa_service.check_api_balance()
+
+            # Sync throttle with real-time balance
+            keepa_service.throttle.set_tokens(actual_balance)
+
             health_status = await keepa_service.health_check()
             cache_stats = keepa_service.get_cache_stats()
-            
+
             # Calculate cache hit rate
             total_requests = cache_stats.get('hits', 0) + cache_stats.get('misses', 0)
             hit_rate = (cache_stats.get('hits', 0) / max(total_requests, 1)) * 100
-            
+
             return {
                 "service": "keepa",
                 "timestamp": datetime.now().isoformat(),
                 "status": health_status.get("status", "unknown"),
                 "tokens": {
-                    "remaining": health_status.get("api_tokens_left", 0),
+                    "remaining": actual_balance,  # Real-time value, not cached
                     "refill_in_minutes": health_status.get("refill_in_minutes", 0),
                     "total_used": keepa_service.metrics.tokens_used,
                     "requests_made": keepa_service.metrics.requests_count

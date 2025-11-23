@@ -108,11 +108,11 @@ class AutoSchedulerRunner:
         scheduled_hours = control_config.get("scheduled_hours", SCHEDULE_CONFIG["hours"])
         
         should_run = current_hour in scheduled_hours
-        
+
         if should_run:
-            logger.info(f"✅ Heure de run détectée: {current_hour}h (programmé: {scheduled_hours})")
+            logger.info(f"[OK] Heure de run détectée: {current_hour}h (programmé: {scheduled_hours})")
         else:
-            logger.debug(f"⏰ Pas l'heure de run: {current_hour}h (programmé: {scheduled_hours})")
+            logger.debug(f"[INFO] Pas l'heure de run: {current_hour}h (programmé: {scheduled_hours})")
         
         return should_run
     
@@ -261,12 +261,12 @@ class AutoSchedulerRunner:
                     "timestamp": datetime.now().isoformat()
                 }
                 
-                logger.info(f"✅ AutoScheduler {current_hour}h terminé", extra={"run_summary": run_summary})
+                logger.info(f"[OK] AutoScheduler {current_hour}h terminé", extra={"run_summary": run_summary})
                 return run_summary
-                
+
             except Exception as e:
                 self.metrics.record_error("run_execution", str(e))
-                logger.error(f"❌ Erreur AutoScheduler: {e}")
+                logger.error(f"[ERROR] Erreur AutoScheduler: {e}")
                 return None
     
     def _count_tiers(self, products: List[Dict]) -> Dict[str, int]:
@@ -291,17 +291,17 @@ class AutoSchedulerRunner:
 async def main():
     """Point d'entrée principal"""
     runner = AutoSchedulerRunner()
-    
-    logger.info("🎯 AutoScheduler démarré", extra={"config": SCHEDULE_CONFIG})
-    
+
+    logger.info("[INFO] AutoScheduler démarré", extra={"config": SCHEDULE_CONFIG})
+
     # Vérification lock file
     if runner.is_running():
-        logger.warning("⚠️ AutoScheduler déjà en cours - abandon")
+        logger.warning("[WARN] AutoScheduler déjà en cours - abandon")
         return
-    
+
     # Vérification horaire
     if not runner.should_run_now():
-        logger.info("⏳ Pas l'heure de run - arrêt")
+        logger.info("[INFO] Pas l'heure de run - arrêt")
         return
     
     # Exécution avec protection lock
@@ -312,18 +312,18 @@ async def main():
         result = await runner.run_autoscheduler()
         
         if result:
-            logger.info("🎉 AutoScheduler terminé avec succès")
-            
+            logger.info("[OK] AutoScheduler terminé avec succès")
+
             # Log résumé quotidien
             daily_summary = runner.metrics.log_daily_summary()
-            print("\n📊 RÉSUMÉ QUOTIDIEN:")
+            print("\n[INFO] RESUME QUOTIDIEN:")
             for key, value in daily_summary.items():
                 print(f"  {key}: {value}")
         else:
-            logger.warning("⚠️ AutoScheduler terminé sans résultat")
-    
+            logger.warning("[WARN] AutoScheduler terminé sans résultat")
+
     except Exception as e:
-        logger.error(f"💥 Erreur critique AutoScheduler: {e}")
+        logger.error(f"[ERROR] Erreur critique AutoScheduler: {e}")
         
     finally:
         runner.remove_lock()

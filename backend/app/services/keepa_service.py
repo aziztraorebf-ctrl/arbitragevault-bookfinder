@@ -203,11 +203,11 @@ class KeepaService:
             if tokens_left:
                 self.api_balance_cache = int(tokens_left)
                 self.last_api_balance_check = now
-                self.logger.info(f"✅ Keepa API balance: {self.api_balance_cache} tokens")
+                self.logger.info(f"[OK] Keepa API balance: {self.api_balance_cache} tokens")
                 return self.api_balance_cache
 
             # No fallback - if header missing, raise error
-            self.logger.error("Cannot verify Keepa balance (missing 'tokens-left' header)")
+            self.logger.error("[ERROR] Cannot verify Keepa balance (missing 'tokens-left' header)")
             raise InsufficientTokensError(
                 current_balance=0,
                 required=1,
@@ -219,7 +219,7 @@ class KeepaService:
             raise
         except Exception as e:
             # No fallback - if check fails, raise error
-            self.logger.error(f"❌ Failed to check API balance: {e}")
+            self.logger.error(f"[ERROR] Failed to check API balance: {e}")
             raise InsufficientTokensError(
                 current_balance=0,
                 required=1,
@@ -438,43 +438,6 @@ class KeepaService:
             self._circuit_breaker.record_failure()
             self.logger.error(f"Keepa API error: {e}")
             raise
-    
-    async def check_api_balance(self) -> Optional[int]:
-        """
-        Check actual API token balance from Keepa.
-        Cached for 5 minutes to avoid excessive checks.
-        """
-        now = time.time()
-        if now - self.last_api_balance_check < 300:  # 5 min cache
-            return self.api_balance_cache
-
-        try:
-            # Direct request without throttle to check balance
-            params_with_key = {'key': self.api_key}
-            url = f"{self.BASE_URL}/token"
-
-            response = await self.client.get(url, params=params_with_key)
-
-            if response.status_code == 200:
-                data = response.json()
-                self.api_balance_cache = data.get('tokensLeft', 0)
-                self.last_api_balance_check = now
-
-                if self.api_balance_cache < 0:
-                    self.logger.error(
-                        f"🔴 Keepa API balance NEGATIVE: {self.api_balance_cache} tokens"
-                    )
-                    # Auto-pause if negative
-                    await asyncio.sleep(600)  # 10 min pause
-                elif self.api_balance_cache < 50:
-                    self.logger.warning(
-                        f"⚠️ Keepa API balance LOW: {self.api_balance_cache} tokens"
-                    )
-
-                return self.api_balance_cache
-        except Exception as e:
-            self.logger.warning(f"Could not check API balance: {e}")
-            return None
 
     async def get_product_with_quick_cache(self, identifier: str) -> Optional[Dict[str, Any]]:
         """

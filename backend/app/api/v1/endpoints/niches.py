@@ -131,16 +131,8 @@ async def discover_niches_auto(
         # Already handled above, re-raise
         raise
     except Exception as e:
-        import traceback
-        import sys
-
-        # Log full traceback to file
-        error_log_path = "logs/niche_endpoint_error.log"
-        with open(error_log_path, "w", encoding="utf-8") as f:
-            f.write(f"Exception: {type(e).__name__}\n")
-            f.write(f"Message: {str(e)}\n\n")
-            f.write(f"Full traceback:\n")
-            traceback.print_exc(file=f)
+        # Log full traceback using Python logger (captured by Render automatically)
+        logger.error(f"Niche discovery error: {type(e).__name__}: {str(e)}", exc_info=True)
 
         # Return safe ASCII-only error
         raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {repr(str(e)[:200])}")

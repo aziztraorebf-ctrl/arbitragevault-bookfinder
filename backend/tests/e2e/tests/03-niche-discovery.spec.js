@@ -1,19 +1,26 @@
 // Niche Discovery E2E Tests - Phase 5
 // Valide le flow complet de decouverte de niches depuis le frontend
 const { test, expect } = require('@playwright/test');
+const { getRandomNicheData } = require('../test-utils/random-data');
 
 const BACKEND_URL = 'https://arbitragevault-backend-v2.onrender.com';
 const FRONTEND_URL = 'https://arbitragevault.netlify.app';
 
+// Use seed-based randomization for reproducibility
+const TEST_SEED = process.env.TEST_SEED || 'niche-discovery';
+const TEST_NICHE_DATA = getRandomNicheData(TEST_SEED);
+
 test.describe('Niche Discovery Flow', () => {
   test('Should discover niches with auto mode', async ({ request }) => {
+    test.setTimeout(90000);  // 90s timeout for niche discovery (calls multiple Keepa APIs)
     console.log('Testing niche discovery auto endpoint...');
 
     const response = await request.get(`${BACKEND_URL}/api/v1/niches/discover`, {
       params: {
         count: 3,
         shuffle: true
-      }
+      },
+      timeout: 60000  // 60s timeout for Keepa API calls (default 30s insufficient)
     });
 
     console.log('Niche discovery response status:', response.status());
@@ -95,18 +102,7 @@ test.describe('Niche Discovery Flow', () => {
     console.log('Testing create saved niche...');
 
     const response = await request.post(`${BACKEND_URL}/api/v1/bookmarks/niches`, {
-      data: {
-        niche_name: 'Test Niche E2E',
-        description: 'Created by Playwright E2E test',
-        category_id: 3920,
-        category_name: 'Books',
-        filters: {
-          bsr_range: [10000, 50000],
-          max_sellers: 3,
-          min_margin_percent: 30
-        },
-        last_score: 85.5
-      }
+      data: TEST_NICHE_DATA
     });
 
     console.log('Create saved niche response status:', response.status());
@@ -123,7 +119,7 @@ test.describe('Niche Discovery Flow', () => {
     // Valider structure response
     expect(data).toHaveProperty('id');
     expect(data).toHaveProperty('niche_name');
-    expect(data.niche_name).toBe('Test Niche E2E');
+    expect(data.niche_name).toBe(TEST_NICHE_DATA.niche_name);
 
     console.log('Created saved niche:', {
       id: data.id,

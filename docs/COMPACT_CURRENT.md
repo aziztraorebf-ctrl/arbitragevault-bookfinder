@@ -1,12 +1,12 @@
 # Compact Current - ArbitrageVault BookFinder
 
-**Date de mise a jour:** 23 Novembre 2025 - 03h30 UTC
-**Phase actuelle:** Phase 5.0 - VALIDEE (Audit Backward Complete)
+**Date de mise a jour:** 23 Novembre 2025 - 05h15 UTC
+**Phase actuelle:** Phase 4.0 - VALIDEE (Audit Backward Complete)
 **Version:** v8.0.0
 
 ---
 
-## Status Actuel - Audit Backward Complete (Phases 5, 6, 7, 8 Validees)
+## Status Actuel - Audit Backward Complete (Phases 4, 5, 6, 7, 8 Validees)
 
 ### Phase 7.0: AutoSourcing Safeguards - TERMINEE
 
@@ -159,25 +159,54 @@ Test 3: Timeout enforcement - PASSED (4.4s)
 
 ---
 
-## Prochaine Phase - Audit Phase 4: Business Configuration System
+### Phase 4.0: Business Configuration System - VALIDEE
 
-**Focus:** Code review et validation corrections Phase 4
+**Corrections appliquees:**
+- CRITICAL-1: Signature `InsufficientTokensError` fixee (2 call sites)
+- CRITICAL-2: 36 emojis supprimes dans 7 fichiers Python (.py)
+- HIGH-3: Decorator `@require_tokens` ajoute sur `/products/discover`
 
-**Methodologie audit (backward workflow):**
-1. Utiliser `superpowers:code-reviewer` pour analyse code Phase 4
-2. Utiliser `superpowers:planning` pour plans de correction
-3. Utiliser `superpowers:systematic-debugging` si bugs identifies
-4. Valider avec tests E2E (critere succes: 96%+ passing)
-5. Documenter resultats dans rapport validation
+**Validation E2E:**
+- 35/36 tests PASS (97.2% success rate)
+- Token balance: 1200 tokens (sain)
+- Budget protection functional
+- Phase 8 analytics: 5/5 tests PASS (100%)
+- Aucune regression detectee
 
-**Scope Phase 4:**
-- Business configuration management
-- Hierarchical config merging (global < domain < category)
-- Config versioning et audit trail
-- Preview system pour changements config
-- API endpoints config CRUD
+**Problemes identifies (code review):**
+- CRITICAL-1: `InsufficientTokensError` appele avec `required=` au lieu de `required_tokens=`
+- CRITICAL-2: 36 emojis violant CLAUDE.md compliance (pylint failures, encoding issues)
+- HIGH-3: Endpoint `/products/discover` expose sans protection `@require_tokens`
 
-**Pattern:** Backward audit (Phase 8 → 7 → 6 → 5 → **4** → ...)
+**Fichiers modifies:**
+1. `backend/app/services/keepa_service.py` - 2 edits signature + 7 emojis
+2. `backend/app/services/keepa_parser_v2.py` - 12 emojis
+3. `backend/app/services/autosourcing_service.py` - 6 emojis (tier classification)
+4. `backend/app/services/keepa_throttle.py` - 5 emojis (logging)
+5. `backend/app/services/unified_analysis.py` - 1 emoji
+6. `backend/app/services/sales_velocity_service.py` - 5 emojis (velocity tiers)
+7. `backend/app/services/autoscheduler_metrics.py` - 5 emojis (metrics logging)
+8. `backend/app/api/v1/endpoints/products.py` - Decorator ajoute ligne 88
+
+**Commits cles:**
+- `5dfe5d2` - fix(phase-4): apply CRITICAL-1, CRITICAL-2, HIGH-3 corrections from code review
+
+**Documentation:** `docs/PHASE4_VALIDATION_REPORT.md`
+
+---
+
+## Prochaine Phase - Audit Phase 3: Velocity Intelligence
+
+**Focus:** Code review et validation corrections Phase 3
+
+**Scope Phase 3:**
+- Sales velocity estimation (monthly/quarterly)
+- BSR parsing logic (`rank_data[1]` vs `rank_data[-1]` bug Phase 4.0 Day 1)
+- Velocity tier classification (PREMIUM/HIGH/MEDIUM/LOW/DEAD)
+- Opportunity scoring algorithm
+- Category-specific multipliers
+
+**Pattern:** Backward audit (Phase 8 → 7 → 6 → 5 → 4 → **3** → ...)
 
 ---
 
@@ -288,7 +317,8 @@ backend/tests/e2e/tests/
 - **Phase 7**: VALIDEE (3/3 tests E2E, 100%)
 - **Phase 6**: VALIDEE (35/36 tests E2E, 97.2%)
 - **Phase 5**: VALIDEE (35/36 tests E2E, 97.2%, score 85/100)
-- **Phase 4**: AUDIT EN COURS (backward workflow)
+- **Phase 4**: VALIDEE (35/36 tests E2E, 97.2%, 3 corrections critiques appliquees)
+- **Phase 3**: AUDIT EN COURS (backward workflow)
 
 ### Metriques Globales Validees
 - Total tests E2E: 36 tests
@@ -346,15 +376,15 @@ backend/tests/e2e/tests/
 
 ---
 
-**Prochaine action:** Audit Phase 4 - Business Configuration System
+**Prochaine action:** Audit Phase 3 - Velocity Intelligence
 **Responsable:** Code Review + Validation
-**Timeline estimee:** 1-2 semaines pour audit complet avec corrections
+**Timeline estimee:** 1-2 jours pour audit complet avec corrections
 
 **Commits recents:**
+- `5dfe5d2` - fix(phase-4): apply CRITICAL-1, CRITICAL-2, HIGH-3 corrections from code review
 - `2e2f90c` - fix(phase-5): apply 3 HIGH priority corrections from code review
 - `7fc59f7` - docs: add Phase 6 & Phase 8 complete validation report
 - `8184cf8` - hotfix(phase-6): fix FileNotFoundError in niches endpoint error handler
 - `7bd65b7` - fix(phase-6): fix Phase 8 E2E tests to use production URLs
-- `74a3af8` - fix(phase-6): apply 3 critical corrections from code review
 
-**Workflow backward audit:** Phase 8 → Phase 7 → Phase 6 → Phase 5 → **Phase 4 (prochain)** → Phase 3 → ...
+**Workflow backward audit:** Phase 8 → Phase 7 → Phase 6 → Phase 5 → Phase 4 → **Phase 3 (prochain)** → Phase 2 → ...

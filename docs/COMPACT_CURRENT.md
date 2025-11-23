@@ -1,12 +1,12 @@
 # Compact Current - ArbitrageVault BookFinder
 
-**Date de mise a jour:** 16 Novembre 2025 - 21h30 UTC
-**Phase actuelle:** Phase 8.0 In Progress (Modules 8.1-8.3 Complete: 75%)
-**Version:** v8.0.0-alpha
+**Date de mise a jour:** 23 Novembre 2025 - 03h30 UTC
+**Phase actuelle:** Phase 5.0 - VALIDEE (Audit Backward Complete)
+**Version:** v8.0.0
 
 ---
 
-## Status Actuel - Phase 8.0 Advanced Analytics & Decision System (IN PROGRESS)
+## Status Actuel - Audit Backward Complete (Phases 5, 6, 7, 8 Validees)
 
 ### Phase 7.0: AutoSourcing Safeguards - TERMINEE
 
@@ -64,42 +64,120 @@ Test 3: Timeout enforcement - PASSED (4.4s)
 
 ---
 
-## Prochaine Phase - Phase 8.0: Advanced Analytics & Decision System
+### Phase 5.0: Token Cost Control & Observability - VALIDEE
 
-**Focus:** Business intelligence et systeme de decision avancee
+**Objectifs atteints:**
+- Token tracking Keepa API avec logging transparent
+- Cost estimation system pour pre-flight checks
+- Observability metrics (Sentry integration)
+- Performance monitoring (<5s response time)
+- Circuit breaker protection active
 
-### Phase 8.1: Advanced Analytics Engine (Semaine 1)
-- Velocity Intelligence (BSR trends 7/30/90 days, seasonal patterns)
-- Price Stability Analysis (variance, competitive index)
-- ROI Net Calculation (all fees: referral, FBA, prep, shipping, returns, damages, storage)
-- Competition Analysis (seller count evolution, Amazon presence, FBA ratio)
-- Advanced Scoring Algorithm (weighted multi-criteria)
+**Corrections appliquees (Audit Backward):**
+- HIGH-1: Suppression emojis code Python executable (compliance CLAUDE.md)
+- HIGH-2: Suppression duplicate check_api_balance() methods
+- HIGH-3: Force balance refresh dans /keepa/health endpoint
 
-### Phase 8.2: Historical Data Layer (Semaine 1)
-- Database schema extension (3 new tables: asin_history, run_history, decision_outcomes)
-- ASIN Tracking Service (daily background job via Celery)
-- Run History Service (save all AutoSourcing execution configs + results)
-- Decision Outcome Tracking (predicted vs actual ROI)
-- Performance Metrics Dashboard
+**Validation E2E:**
+- 35/36 tests PASS (97.2% success rate)
+- Token consumption: 571 tokens (vraies donnees Keepa API)
+- Backend production stable (HTTP 200/408/429)
+- Circuit breaker state: closed, protection active
+- Concurrency limits: 3 requetes simultanees Keepa
+- Performance: Response time <5s target atteint
 
-### Phase 8.3: Profit & Risk Model (Semaine 1)
-- Dead Inventory Detection (BSR thresholds category-specific, slow mover categories)
-- Storage Cost Impact (FBA fees 45-60 day model)
-- Risk Scoring Algorithm (5 components: dead inventory 35%, competition 25%, Amazon 20%, stability 10%, category 10%)
-- Break-Even Analysis (time to recoup costs with storage fees)
-- Final Recommendation Engine (5-tier: STRONG_BUY, BUY, CONSIDER, WATCH, SKIP/AVOID)
+**Resultats audit code review:**
+- Score global: 85/100
+- 0 CRITICAL issues (Phase 5 plus mature que Phase 6 au moment implementation)
+- 3 HIGH issues corriges
+- 6 MEDIUM issues identifies (ameliorations optionnelles)
+- 3 LOW issues (dette technique)
 
-### Phase 8.4: Decision UI (Semaine 1)
-- ProductDecisionCard Component (React + TypeScript)
-- ScorePanel (Overall score + breakdown: ROI, velocity, stability, confidence)
-- RiskPanel (Risk score, risk level, Amazon presence warnings)
-- FinancialPanel (Buy price, net profit, ROI net, storage costs breakdown)
-- HistoricalTrendsChart (Recharts integration for BSR/price trends)
-- RecommendationBanner (Final recommendation with reason + time-to-sell estimate)
-- ActionButtons (Buy/Watch/Skip with optimistic UI updates)
+**Commits cles:**
+- `2e2f90c` - fix(phase-5): apply 3 HIGH priority corrections from code review
+- Corrections: Emojis suppression, duplicate method cleanup, health endpoint enhancement
 
-**Timeline:** 4 semaines total
-**Dependencies:** Phase 7.0 complete (token safeguards)
+**Documentation:** `docs/PHASE5_VALIDATION_REPORT.md`
+
+---
+
+### Phase 6.0: Token Control & Timeout Protection - VALIDEE
+
+**Corrections appliquees:**
+- CRITICAL-01: Timeout protection 30s via `asyncio.wait_for`
+- CRITICAL-02: TokenErrorAlert documentation complete
+- CRITICAL-03: Token logging (balance before/after + metadata)
+- Hotfix FileNotFoundError production (commit `8184cf8`)
+
+**Validation E2E:**
+- 35/36 tests PASS (97.2% success rate)
+- Backend production stable (HTTP 200/408, plus de HTTP 500)
+- Token consumption: 562 tokens sur 1200
+- Timeout protection active (test #9 echoue apres 30s = comportement souhaite)
+- Circuit breaker state: closed, protection active
+- Concurrency limits: 3 requetes simultanees Keepa
+
+**Bug critique resolu:**
+- `FileNotFoundError` lors ecriture logs dans directory inexistant sur Render
+- Fix: Utilisation Python logger (capture automatique par Render)
+- Commit: `8184cf8` - hotfix(phase-6): fix FileNotFoundError in niches endpoint
+
+**Documentation:** `docs/PHASE6_AND_PHASE8_VALIDATION_REPORT.md`
+
+---
+
+### Phase 8.0: Decision System Analytics - VALIDEE
+
+**Objectifs atteints:**
+- Advanced analytics endpoints (velocity, ROI, risk, recommendation)
+- Product Decision Card backend logic complete
+- Performance <500ms (actual: 134ms)
+- Historical trends API foundation
+
+**Endpoints valides:**
+- `POST /api/v1/analytics/calculate_analytics` - Complete analytics
+- `POST /api/v1/analytics/calculate_risk_score` - 5-component risk
+- `POST /api/v1/analytics/generate_recommendation` - Final decision
+- `POST /api/v1/analytics/product_decision` - Combined decision card
+- `GET /api/v1/asin-history/trends/{asin}` - Historical trends API
+
+**Validation E2E:**
+- 5/5 tests Phase 8 PASS (100%)
+- Product Decision Card: ROI 164.4%, Velocity 100, Risk LOW, Recommendation STRONG_BUY
+- High-risk scenario: Risk 84.25 (CRITICAL), ROI -34.1%, Recommendation AVOID
+- Performance: 134ms calculation (<500ms target)
+- Multiple endpoints: 3/3 responding correctly
+- Historical trends: 404 attendu (pas de donnees historiques)
+
+**Mystery Localhost resolu:**
+- Tests echouaient car backend etait casse (HTTP 500 FileNotFoundError)
+- Ce n'etait PAS un probleme d'URLs localhost
+- Apres deploiement hotfix `8184cf8`, tous tests Phase 8 passent
+- Commit `7bd65b7` avait deja fixe URLs localhost → production
+
+**Documentation:** `docs/PHASE6_AND_PHASE8_VALIDATION_REPORT.md`
+
+---
+
+## Prochaine Phase - Audit Phase 4: Business Configuration System
+
+**Focus:** Code review et validation corrections Phase 4
+
+**Methodologie audit (backward workflow):**
+1. Utiliser `superpowers:code-reviewer` pour analyse code Phase 4
+2. Utiliser `superpowers:planning` pour plans de correction
+3. Utiliser `superpowers:systematic-debugging` si bugs identifies
+4. Valider avec tests E2E (critere succes: 96%+ passing)
+5. Documenter resultats dans rapport validation
+
+**Scope Phase 4:**
+- Business configuration management
+- Hierarchical config merging (global < domain < category)
+- Config versioning et audit trail
+- Preview system pour changements config
+- API endpoints config CRUD
+
+**Pattern:** Backward audit (Phase 8 → 7 → 6 → 5 → **4** → ...)
 
 ---
 
@@ -198,20 +276,26 @@ backend/tests/e2e/tests/
 
 ## Priorites Immediates
 
-### Phase 8.0 - Lancement (Advanced Analytics & Decision)
-1. **Database Schema Extension** - Creer 3 nouvelles tables (asin_history, run_history, decision_outcomes)
-2. **Velocity Intelligence** - Implementer BSR trend analysis (7/30/90 days)
-3. **Risk Scoring Algorithm** - 5 components avec ponderation
-4. **Dead Inventory Detection** - Category-specific BSR thresholds
-5. **Decision UI Components** - ProductDecisionCard avec ScorePanel, RiskPanel, FinancialPanel
+### Audit Phase 5.0 - En Cours (Token Cost Control & Observability)
+1. **Code Review** - Analyser code Phase 5 avec `superpowers:code-reviewer`
+2. **Identifier Corrections** - Planifier corrections necessaires avec `superpowers:planning`
+3. **Debug si Besoin** - Utiliser `superpowers:systematic-debugging` pour bugs
+4. **Tests E2E** - Valider corrections avec suite E2E complete (critere: 96%+)
+5. **Documentation** - Rapport validation Phase 5
 
-### Phase 9.0 - Suivante (UI/UX Polish)
-Apres completion Phase 8.0, focus sur:
-- Visual Design Consistency (Tailwind design system)
-- User Experience Flows (navigation, loading states, error recovery)
-- Responsive & Accessibility (WCAG 2.1 Level AA)
-- Performance & Feel (micro-interactions, bundle optimization)
-- Documentation Utilisateur (tooltips, FAQ, onboarding)
+### Validation Status Phases
+- **Phase 8**: VALIDEE (5/5 tests E2E, 100%)
+- **Phase 7**: VALIDEE (3/3 tests E2E, 100%)
+- **Phase 6**: VALIDEE (35/36 tests E2E, 97.2%)
+- **Phase 5**: VALIDEE (35/36 tests E2E, 97.2%, score 85/100)
+- **Phase 4**: AUDIT EN COURS (backward workflow)
+
+### Metriques Globales Validees
+- Total tests E2E: 36 tests
+- Tests PASS: 35/36 (97.2%)
+- Token consumption: 562 tokens (tests avec vraies donnees Keepa)
+- Backend production: Stable (HTTP 200/408/429)
+- Performance analytics: 134ms (<500ms target)
 
 ---
 
@@ -219,15 +303,20 @@ Apres completion Phase 8.0, focus sur:
 
 ### Decisions Techniques Recentes
 1. **Error Propagation Pattern** - Parent component re-throws errors to child modal for display
-2. **API Mocking** - Playwright route mocks for reliable E2E tests
+2. **Python Logger > File I/O** - Render capture automatiquement logger Python (pas besoin logs/)
 3. **Endpoint Naming** - Use snake_case `/run_custom` not camelCase
 4. **Cost Estimation** - No token consumption for pre-flight checks
+5. **Timeout Protection** - `asyncio.wait_for(timeout=30)` previent requetes infinies
+6. **Token Logging** - Balance before/after + metadata dans responses
 
-### Lessons Learned Phase 7.0
-- Test selectors must match exact production UI text
-- API mocks essential for consistent E2E tests
-- Error handling requires both backend validation AND frontend display
-- Documentation critical for phase completion verification
+### Lessons Learned Phases 6-8
+- **Hotfix production bugs immediately** - FileNotFoundError casse tout le backend
+- **Backend validation first** - Tests frontend echouent si backend HTTP 500
+- **Red herrings exists** - Phase 8 localhost mystery etait backend casse, PAS URLs
+- **Timeout protection critical** - Previent requetes infinies qui epuisent tokens
+- **Token logging transparency** - Balance before/after dans metadata response
+- **Circuit breaker works** - Protection cascade failures active (state: closed)
+- **Real data E2E tests** - Tests finaux avec vraies donnees Keepa API (pas mocks)
 
 ### A Eviter
 - Ne pas utiliser emojis dans code executable (.py, .ts, .js)
@@ -257,8 +346,15 @@ Apres completion Phase 8.0, focus sur:
 
 ---
 
-**Prochaine action:** Demarrer Phase 8.1 - Advanced Analytics Engine
-**Responsable:** Backend + Analytics Development
-**Timeline estimee:** 4 semaines pour Phase 8.0 complete (Advanced Analytics & Decision System)
+**Prochaine action:** Audit Phase 4 - Business Configuration System
+**Responsable:** Code Review + Validation
+**Timeline estimee:** 1-2 semaines pour audit complet avec corrections
 
-**Note roadmap:** Phase 8.0 corrigee - Focus Advanced Analytics (business-critical) avant UI/UX Polish (Phase 9.0)
+**Commits recents:**
+- `2e2f90c` - fix(phase-5): apply 3 HIGH priority corrections from code review
+- `7fc59f7` - docs: add Phase 6 & Phase 8 complete validation report
+- `8184cf8` - hotfix(phase-6): fix FileNotFoundError in niches endpoint error handler
+- `7bd65b7` - fix(phase-6): fix Phase 8 E2E tests to use production URLs
+- `74a3af8` - fix(phase-6): apply 3 critical corrections from code review
+
+**Workflow backward audit:** Phase 8 → Phase 7 → Phase 6 → Phase 5 → **Phase 4 (prochain)** → Phase 3 → ...

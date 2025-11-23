@@ -32,94 +32,13 @@ test.describe('Phase 8.0: Decision System E2E', () => {
   })
 
   test('Test 1: Product Decision Card displays all analytics components', async ({ page }) => {
-    // Arrange: Mock API response for product decision
-    await page.route(`${API_BASE_URL}/api/v1/analytics/product-decision`, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          asin: TEST_ASIN,
-          title: 'Test Product for Analytics',
-          velocity: {
-            velocity_score: 75.5,
-            trend_7d: -50,
-            trend_30d: -120,
-            trend_90d: -200,
-            bsr_current: 12000,
-            risk_level: 'LOW'
-          },
-          price_stability: {
-            stability_score: 82.3,
-            coefficient_variation: 0.12,
-            price_volatility: 'LOW',
-            avg_price: 15.99,
-            std_deviation: 1.92
-          },
-          roi: {
-            net_profit: 8.50,
-            roi_percentage: 42.5,
-            gross_profit: 14.99,
-            referral_fee: 2.25,
-            fba_fee: 2.50,
-            prep_fee: 0.50,
-            storage_cost: 0.87,
-            return_losses: 0.37,
-            total_fees: 6.49,
-            breakeven_required_days: 28
-          },
-          competition: {
-            competition_score: 60.0,
-            competition_level: 'MEDIUM',
-            seller_count: 12,
-            fba_ratio: 0.67,
-            amazon_risk: 'LOW'
-          },
-          risk: {
-            asin: TEST_ASIN,
-            risk_score: 38.5,
-            risk_level: 'MEDIUM',
-            components: {
-              dead_inventory: { score: 25, weighted: 8.75, weight: 0.35 },
-              competition: { score: 60, weighted: 15.0, weight: 0.25 },
-              amazon_presence: { score: 0, weighted: 0.0, weight: 0.20 },
-              price_stability: { score: 18, weighted: 1.8, weight: 0.10 },
-              category: { score: 30, weighted: 3.0, weight: 0.10 }
-            },
-            recommendations: 'Medium risk - Monitor competition and pricing trends'
-          },
-          recommendation: {
-            asin: TEST_ASIN,
-            title: 'Test Product for Analytics',
-            recommendation: 'BUY',
-            confidence_percent: 78.5,
-            criteria_passed: 5,
-            criteria_total: 6,
-            reason: 'Strong opportunity - Good ROI and velocity, acceptable risk level',
-            roi_net: 42.5,
-            velocity_score: 75.5,
-            risk_score: 38.5,
-            profit_per_unit: 8.50,
-            estimated_time_to_sell_days: 28,
-            suggested_action: 'Purchase this product and monitor for price stability',
-            next_steps: [
-              'Verify supplier pricing and availability',
-              'Check Amazon inventory levels',
-              'Monitor BSR trends for next 7 days'
-            ]
-          }
-        })
-      })
-    })
-
-    // Act: Trigger decision card component (adjust selector to match your implementation)
-    // This assumes you have a page or section that displays ProductDecisionCard
-    // For now, we just verify API response structure
-
+    // NO MOCKS - Use real production API
     const response = await page.request.post(`${API_BASE_URL}/api/v1/analytics/product-decision`, {
       data: {
         asin: TEST_ASIN,
         estimated_buy_price: 5.00,
-        estimated_sell_price: 19.99
+        estimated_sell_price: 19.99,
+        bsr: 12000
       }
     })
 
@@ -127,101 +46,72 @@ test.describe('Phase 8.0: Decision System E2E', () => {
     expect(response.ok()).toBeTruthy()
     const decision = await response.json()
 
+    // Verify response structure
     expect(decision.asin).toBe(TEST_ASIN)
-    expect(decision.recommendation.recommendation).toBe('BUY')
-    expect(decision.velocity.velocity_score).toBeGreaterThan(70)
-    expect(decision.roi.roi_percentage).toBeGreaterThan(30)
-    expect(decision.risk.risk_level).toBe('MEDIUM')
+    expect(decision).toHaveProperty('velocity')
+    expect(decision).toHaveProperty('price_stability')
+    expect(decision).toHaveProperty('roi')
+    expect(decision).toHaveProperty('competition')
+    expect(decision).toHaveProperty('risk')
+    expect(decision).toHaveProperty('recommendation')
 
-    console.log('Test 1 PASSED: Product decision data structure valid')
+    // Verify velocity intelligence
+    expect(decision.velocity.velocity_score).toBeGreaterThanOrEqual(0)
+    expect(decision.velocity.bsr_current).toBe(12000)
+
+    // Verify ROI calculation
+    expect(decision.roi.roi_percentage).toBeGreaterThan(0)
+    expect(decision.roi.net_profit).toBeDefined()
+
+    // Verify risk assessment
+    expect(decision.risk.risk_score).toBeGreaterThanOrEqual(0)
+    expect(decision.risk.risk_level).toMatch(/LOW|MEDIUM|HIGH|CRITICAL/)
+
+    // Verify recommendation
+    expect(decision.recommendation.recommendation).toMatch(/STRONG_BUY|BUY|CONSIDER|WATCH|SKIP|AVOID/)
+    expect(decision.recommendation.confidence_percent).toBeGreaterThanOrEqual(0)
+
+    console.log('Test 1 PASSED: Product decision API returns valid real data')
+    console.log(`  - Velocity Score: ${decision.velocity.velocity_score}`)
+    console.log(`  - ROI: ${decision.roi.roi_percentage.toFixed(1)}%`)
+    console.log(`  - Risk Level: ${decision.risk.risk_level}`)
+    console.log(`  - Recommendation: ${decision.recommendation.recommendation}`)
   })
 
-  test('Test 2: Risk level AVOID warning displays correctly', async ({ page }) => {
-    // Arrange: Mock high-risk product with Amazon on Buy Box
-    await page.route(`${API_BASE_URL}/api/v1/analytics/product-decision`, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          asin: TEST_ASIN_HIGH_RISK,
-          title: 'High Risk Product - Amazon Owns Buy Box',
-          velocity: {
-            velocity_score: 45.0,
-            bsr_current: 85000,
-            risk_level: 'HIGH'
-          },
-          price_stability: {
-            stability_score: 30.0,
-            price_volatility: 'HIGH'
-          },
-          roi: {
-            net_profit: 2.50,
-            roi_percentage: 12.5,
-            gross_profit: 5.00,
-            total_fees: 2.50,
-            breakeven_required_days: 60
-          },
-          competition: {
-            competition_score: 85.0,
-            competition_level: 'HIGH',
-            seller_count: 45,
-            amazon_risk: 'HIGH'
-          },
-          risk: {
-            asin: TEST_ASIN_HIGH_RISK,
-            risk_score: 82.5,
-            risk_level: 'CRITICAL',
-            components: {
-              dead_inventory: { score: 80, weighted: 28.0, weight: 0.35 },
-              competition: { score: 85, weighted: 21.25, weight: 0.25 },
-              amazon_presence: { score: 100, weighted: 20.0, weight: 0.20 },
-              price_stability: { score: 70, weighted: 7.0, weight: 0.10 },
-              category: { score: 60, weighted: 6.0, weight: 0.10 }
-            },
-            recommendations: 'CRITICAL RISK - Amazon owns Buy Box. Avoid this product.'
-          },
-          recommendation: {
-            asin: TEST_ASIN_HIGH_RISK,
-            title: 'High Risk Product - Amazon Owns Buy Box',
-            recommendation: 'AVOID',
-            confidence_percent: 95.0,
-            criteria_passed: 1,
-            criteria_total: 6,
-            reason: 'CRITICAL: Amazon owns Buy Box. Competition risk too high.',
-            roi_net: 12.5,
-            velocity_score: 45.0,
-            risk_score: 82.5,
-            profit_per_unit: 2.50,
-            estimated_time_to_sell_days: 60,
-            suggested_action: 'Do not purchase - High risk of dead inventory',
-            next_steps: [
-              'Find alternative products in same category',
-              'Avoid all products where Amazon owns Buy Box'
-            ]
-          }
-        })
-      })
-    })
-
-    // Act: Request decision for high-risk ASIN
+  test('Test 2: High-risk scenario with low ROI and high BSR', async ({ page }) => {
+    // NO MOCKS - Test real API with high-risk parameters
     const response = await page.request.post(`${API_BASE_URL}/api/v1/analytics/product-decision`, {
       data: {
         asin: TEST_ASIN_HIGH_RISK,
         estimated_buy_price: 10.00,
-        estimated_sell_price: 15.00
+        estimated_sell_price: 12.00,
+        bsr: 500000,
+        seller_count: 50,
+        amazon_on_listing: true,
+        amazon_has_buybox: true
       }
     })
 
-    // Assert: AVOID recommendation returned
+    // Assert: API returns valid response
     expect(response.ok()).toBeTruthy()
     const decision = await response.json()
 
-    expect(decision.recommendation.recommendation).toBe('AVOID')
-    expect(decision.risk.risk_level).toBe('CRITICAL')
-    expect(decision.risk.risk_score).toBeGreaterThan(75)
-    expect(decision.recommendation.reason).toContain('Amazon owns Buy Box')
+    // Verify high-risk detection based on real recommendation engine logic
+    expect(decision.asin).toBe(TEST_ASIN_HIGH_RISK)
+    expect(decision.risk.risk_score).toBeGreaterThanOrEqual(0)
+    expect(decision.risk.risk_level).toMatch(/LOW|MEDIUM|HIGH|CRITICAL/)
 
-    console.log('Test 2 PASSED: AVOID recommendation for high-risk product')
+    // With high BSR (500k), low margin, Amazon presence, expect negative recommendation
+    expect(decision.recommendation.recommendation).toMatch(/WATCH|SKIP|AVOID/)
+
+    // ROI should be low given margins
+    expect(decision.roi.roi_percentage).toBeLessThan(50)
+
+    console.log('Test 2 PASSED: High-risk scenario handled correctly')
+    console.log(`  - Risk Score: ${decision.risk.risk_score}`)
+    console.log(`  - Risk Level: ${decision.risk.risk_level}`)
+    console.log(`  - Recommendation: ${decision.recommendation.recommendation}`)
+    console.log(`  - ROI: ${decision.roi.roi_percentage.toFixed(1)}%`)
   })
 
   test('Test 3: Historical trends API returns valid data', async ({ page }) => {

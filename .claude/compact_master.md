@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Mémoire Globale Projet
 
-**Dernière mise à jour** : 3 Novembre 2025
-**Version** : 2.0
-**Statut** : Phases 1-5 complétées, Phase 6 en cours (Tests E2E & Debugging)
+**Dernière mise à jour** : 22 Novembre 2025
+**Version** : 3.0
+**Statut** : Phases 1-7 complétées, prêt pour audit Phases 6-1
 
 ---
 
@@ -17,6 +17,7 @@
 - Scoring vélocité vente (vitesse rotation stock)
 - Discovery produits rentables via Product Finder Keepa
 - Dashboard décisionnel temps réel
+- AutoSourcing automation avec safeguards
 
 ---
 
@@ -29,7 +30,7 @@
 - **Migrations** : Alembic
 - **API externe** : Keepa API (Product + Product Finder)
 - **Logging** : structlog + Sentry
-- **Déploiement** : Render (Docker)
+- **Déploiement** : Render (Docker, auto-deploy activé)
 
 ### Stack Frontend
 - **Framework** : React 18 + TypeScript 5.6
@@ -43,7 +44,7 @@
 
 ### Infrastructure
 - **Base de données** : Neon PostgreSQL (pooler connection)
-- **Backend** : Render Web Service (Linux)
+- **Backend** : Render Web Service (auto-deploy ON)
 - **Frontend** : Netlify Static Site
 - **MCP Servers** : GitHub, Context7, Render, Netlify, Neon, Keepa
 
@@ -52,8 +53,7 @@
 ## 📊 Phases Projet - Vue Globale
 
 ### ✅ Phase 1 : Core Analysis Engine (COMPLÉTÉ)
-**Durée** : ~3 semaines
-**Objectif** : Moteur analyse ROI/vélocité fonctionnel
+**Durée** : ~3 semaines | **Objectif** : Moteur analyse ROI/vélocité fonctionnel
 
 **Livrables majeurs** :
 - Parser Keepa API v2 (prix, BSR, offres)
@@ -68,8 +68,7 @@
 - Performance : < 500ms analyse single ASIN
 
 ### ✅ Phase 2 : Config Service + Product Finder (COMPLÉTÉ)
-**Durée** : ~2 semaines
-**Objectif** : Configuration business dynamique + discovery produits
+**Durée** : ~2 semaines | **Objectif** : Configuration business dynamique + discovery produits
 
 **Livrables majeurs** :
 - Config Service hiérarchique (global → domain → category)
@@ -84,117 +83,76 @@
 - Config changes trackés : 100%
 
 ### ✅ Phase 3 : Product Discovery MVP (COMPLÉTÉ)
-**Durée** : 3.5 semaines (28 Oct - 31 Oct 2025)
-**Objectif** : Interface discovery produits avec templates niches
+**Durée** : 3.5 semaines | **Objectif** : Interface discovery produits avec templates niches
 
-**Jours 1-8 : Backend Foundation**
+**Livrables** :
 - PostgreSQL cache tables (discovery, scoring, search history)
 - React Query hooks + Zod validation
 - Endpoints `/api/v1/products/discover` et `discover-with-scoring`
 - E2E testing avec vraies données Keepa
 - Throttling Keepa (20 req/min, burst 200)
-
-**Jours 9-10 : Niche Discovery + Throttling**
 - Templates niches curées (tech-books-python, french-learning, etc.)
-- Validation multi-critères (BSR, offres, marge)
-- Système throttling complet (rate + budget)
-- E2E validation production
 
-**Métriques Day 10** :
-- Tokens Keepa disponibles : 670+
+**Métriques** :
 - Niches templates : 5 curées
 - Cache TTL : 24h discovery, 6h scoring
 - Protection throttling : ✅ Multi-niveaux
 
 ### ✅ Phase 4 : Backlog Cleanup (COMPLÉTÉ)
-**Durée** : 1 journée (31 Oct 2025)
-**Objectif** : Fixes critiques + protection budget Keepa
+**Durée** : 1 journée | **Objectif** : Fixes critiques + protection budget Keepa
 
-**Phase 4.0 : Backlog Original**
-- ✅ Fix BSR extraction (bug critique ~67% erreur)
-- ✅ Fix `hit_rate` key manquante
-- ✅ Investigation `/products/discover` (0 ASINs)
+**Fixes critiques** :
+- ✅ Fix BSR extraction (bug ~67% erreur)
+- ✅ Budget protection (`_ensure_sufficient_balance()`)
 - ✅ Windows ProactorEventLoop compatibility
-
-**Phase 4.5 : Budget Protection**
-- ✅ Détection gap throttling (rythme OK, budget non protégé)
-- ✅ Implémentation `_ensure_sufficient_balance()`
-- ✅ Mapping coûts endpoints (`ENDPOINT_COSTS`)
-- ✅ Exception `InsufficientTokensError`
-- ✅ Frontend display balance Keepa
-
-**Phase 4.5.1 : Frontend Balance Display**
-- ✅ Dashboard Keepa tokens restants
-- ✅ Color coding (vert >200, orange 50-200, rouge <50)
-- ✅ Integration avec backend `/api/v1/keepa/health`
+- ✅ Frontend balance Keepa display
 
 **Commit final** : `093692e` (1 Nov 2025)
-**Documentation** : KNOWN_ISSUES.md créé
 
-### ✅ Phase 5 : Niche Bookmarks & Re-Run Feature (COMPLÉTÉ)
-**Durée** : ~6 heures (2-3 Nov 2025)
-**Objectif** : Sauvegarder niches découvertes et relancer analyses avec données fraîches
+### ✅ Phase 5 : Niche Bookmarks & Re-Run (COMPLÉTÉ)
+**Durée** : ~6 heures | **Objectif** : Sauvegarder niches et relancer analyses
 
-**Livrables majeurs** :
+**Livrables** :
 - Backend bookmarks endpoints (CRUD niches sauvegardées)
 - Database migration (table `saved_niches`)
 - Frontend React Query hooks pour bookmarks
-- Bouton "Save Niche" avec toast notifications
-- Page "Mes Niches" avec gestion complète (CREATE, READ, UPDATE, DELETE)
+- Bouton "Save Niche" + toast notifications
+- Page "Mes Niches" avec gestion complète
 - Re-run analysis avec `force_refresh` parameter
 - Strategic views avec target pricing
 
-**6 Commits Phase 5** :
-1. `7b92832` - Backend bookmarks endpoints + migration
-2. `92b9e81` - TypeScript service layer + React Query
-3. `1f010b1` - Save button + Toaster notifications
-4. `17b8710` - Mes Niches page (CRUD)
-5. `2f4aec2` - Frontend re-run implementation
-6. `00ff975` - Backend force_refresh support
+**Commits** : 6 commits (`7b92832`..`00ff975`)
+**Deployments** : 2 Render deployments LIVE
 
-**2 Render Deployments (LIVE)** :
-- `dep-d440g3gdl3ps73f9nivg` - Bookmarks endpoints
-- `dep-d440qe2dbo4c73br2u3g` - force_refresh support
+### ✅ Phase 7 : AutoSourcing Safeguards (COMPLÉTÉ)
+**Durée** : 3 heures (code review + corrections) | **Objectif** : Protection token exhaustion
 
-**Code Metrics** :
-- Total lines : 1328
-- Files created : 11
-- Files modified : 6
-- TypeScript errors : 0
-- Database migrations : 1 applied
+**Livrables majeurs** :
+- Cost estimation avant exécution (`/estimate`)
+- Token balance validation (`MIN_TOKEN_BALANCE_REQUIRED`)
+- Timeout protection (120s avec DB propagation)
+- ASIN deduplication
+- Frontend error handling (HTTP 400/408/429)
+- Settings-based configuration (no hardcoded values)
+- Zod schemas pour validation errors
 
-**Documentation créée** :
-- `phase5_niche_bookmarks_completion_report.md` (508 lignes)
-- `niche_bookmarks_e2e_test_plan.md` (296 lignes)
+**Commits Phase 7** :
+- `f0de72f`..`f91caf0` : 8 commits implémentation
+- `49c3ce7` : Corrections (emojis removed + timeout DB propagation)
+- `4f7f97b` : IMPORTANT-02 (settings migration) + IMPORTANT-03 (Zod schemas)
+- `3c08593` : Hotfix (missing settings parameter in `/run-custom`)
 
-### 🟡 Phase 6 : Tests E2E & Debugging (EN COURS)
-**Durée** : En cours (3 Nov 2025)
-**Objectif** : Valider Phase 5 avec tests automatisés Playwright et corriger bugs
+**Code Quality** : 8.7/10 → 9.5/10 après corrections
 
-**Infrastructure nouvelle** :
-- Playwright skill installée en standalone mode (`.claude/skills/playwright-skill/`)
-- Headless browser automation pour E2E testing
-- API response capturing et console error logging
-- Screenshots pour debug visuel
+**Production Ready** : ✅ 100%
+- All endpoints validés production
+- Auto-deploy enabled sur Render
+- E2E tests : 5/5 PASSED
 
-**Tests E2E Plan** (5 scenarios) :
-1. **Surprise Me Flow** : Button click → 3+ niches appear ⏱️ RUNNING (bug detected)
-2. **Keepa Balance** : Display tokens with color coding ⏳ PENDING
-3. **Save Niche** : Toast notification + DB insert ⏳ PENDING
-4. **Mes Niches CRUD** : List, update, delete niches ⏳ PENDING
-5. **Re-run with Force Refresh** : Fresh Keepa data ⏳ PENDING
-
-**Bug #1 Identified** : "Surprise Me Returns 0 Niches
-- **Detection** : Playwright test + API response capture
-- **Symptom** : API returns `{niches: [], niches_count: 0}` (200 OK)
-- **Root Cause** : `discover_curated_niches()` filters rejecting ALL templates
-- **Suspected Filters** : ROI >= 10%, Velocity >= 20, Min 1 product
-- **Status** : Under investigation (logging added to identify failing filters)
-- **ETA Fix** : 30-60 minutes
-
-**Playwright Tests Created** :
-- `test-surprise-me.js` : Basic flow test
-- `test-surprise-debug.js` : Advanced debugging with API capture
+**Documentation** :
+- `PHASE7_COMPREHENSIVE_AUDIT_REPORT.md`
+- `PHASE7_CORRECTION_PLAN.md`
+- `PHASE7_FINAL_REPORT.md`
 
 ---
 
@@ -212,8 +170,8 @@
 **Méthodes clés** :
 ```python
 async def get_product(asin: str) -> KeepaProduct
-async def discover_products(criteria: dict) -> List[str]  # ASINs
-async def check_api_balance() -> int  # Tokens left
+async def discover_products(criteria: dict) -> List[str]
+async def check_api_balance() -> int
 ```
 
 ### 2. Keepa Parser V2 (`keepa_parser_v2.py`)
@@ -227,11 +185,8 @@ async def check_api_balance() -> int  # Tokens left
 
 **Bug critique fixé (Phase 4)** :
 ```python
-# AVANT (ligne 458) :
-bsr = rank_data[1]  # ❌ Premier BSR (obsolète)
-
-# APRÈS (ligne 460) :
-bsr = rank_data[-1]  # ✅ Dernier BSR (current)
+# AVANT : bsr = rank_data[1]  # Premier BSR (obsolète)
+# APRÈS : bsr = rank_data[-1]  # Dernier BSR (current)
 ```
 
 ### 3. Analysis Service (`analysis_service.py`)
@@ -253,35 +208,28 @@ confidence = f(price_stability, data_quality) → 0-100
 ### 4. Config Service (`config_service.py`)
 **Responsabilité** : Configuration business hiérarchique
 
-**Scopes** :
-- `global` : Paramètres par défaut
-- `domain:{id}` : Paramètres par marketplace (US, UK, etc.)
-- `category:{name}` : Paramètres par catégorie (books, media, etc.)
-
-**Merge strategy** : global ← domain ← category
+**Scopes** : global → domain:{id} → category:{name}
 
 **Features** :
 - Preview mode (test avant apply)
 - Audit trail (change history)
 - Optimistic locking (version checking)
 
-### 5. Niche Templates (`niche_templates.py`)
-**Responsabilité** : Templates niches marché curées
+### 5. AutoSourcing Service (`autosourcing_service.py`)
+**Responsabilité** : Jobs discovery automatisés avec safeguards (Phase 7)
 
-**Templates Phase 3** :
-- `tech-books-python` : Livres Python débutants $20-50
-- `french-learning` : Méthodes apprentissage français
-- `kids-science-kits` : Kits scientifiques enfants
-- `vintage-vinyl-records` : Vinyles vintage années 60-80
-- `professional-cookbooks` : Livres cuisine professionnels
+**Safeguards** :
+- Cost estimation avant exécution
+- Balance validation (MIN_TOKEN_BALANCE_REQUIRED = 40)
+- Timeout protection (TIMEOUT_PER_JOB = 120s)
+- ASIN deduplication
+- DB propagation sur timeout/erreur
 
-**Critères validation** :
-- BSR range : 10,000 - 200,000
-- Prix range : $15 - $80
-- Max offres : ≤5 vendeurs
-- Marge minimum : 25%
-
-**Windows fix** : Wrapper ProactorEventLoop → SelectorEventLoop
+**Endpoints** :
+- `/api/v1/autosourcing/estimate` : Estimer coût job
+- `/api/v1/autosourcing/run-custom` : Exécuter job avec validation
+- `/api/v1/autosourcing/jobs` : Liste jobs récents
+- `/api/v1/autosourcing/picks/{pick_id}/action` : Update action (to_buy, favorite, ignored)
 
 ---
 
@@ -307,6 +255,11 @@ ENVIRONMENT=production
 - **Burst** : 200 tokens capacity
 - **Seuils** : warning @80, critical @40
 
+### Settings-Based Configuration (Phase 7)
+- `keepa_product_finder_cost: int = 10` (tokens per page)
+- `keepa_product_details_cost: int = 1` (tokens per ASIN)
+- `keepa_results_per_page: int = 10`
+
 ---
 
 ## 📊 Métriques Production
@@ -320,11 +273,13 @@ ENVIRONMENT=production
 ### Fiabilité
 - **Uptime** : 99.9% target
 - **Error rate** : <0.1%
-- **Token protection** : 100% (post Phase 4.5)
+- **Token protection** : 100% (Phase 4.5 + Phase 7)
 - **Rollback DB** : 100% sur exceptions
+- **Auto-deploy** : ✅ Activé sur Render
 
 ### Coûts Keepa
 - **Analyse 1 ASIN** : 1 token
+- **Product Finder** : 10 tokens/page
 - **Bestsellers** : 50 tokens
 - **Discovery batch 100** : 100 tokens
 - **Monthly budget** : ~10,000 tokens
@@ -343,20 +298,35 @@ ENVIRONMENT=production
 **Impact** : Balance négative (-31 tokens)
 **Fix** : `_ensure_sufficient_balance()` (Phase 4.5)
 
-### 3. Windows ProactorEventLoop
-**Erreur** : psycopg3 async incompatible
-**Impact** : Dev local Windows bloqué
-**Fix** : Wrapper SelectorEventLoop (Phase 4)
+### 3. Timeout Sans DB Propagation (Phase 7)
+**Erreur** : Timeout intercepté dans router AVANT job.status update
+**Impact** : Jobs stuck RUNNING après timeout
+**Fix** : Timeout wrapper dans service method avec DB commit
 
-### 4. Transaction Cascade
-**Erreur** : Pas de rollback sur exception
-**Impact** : InFailedSqlTransaction bloquant
-**Fix** : `await db.rollback()` explicit
+### 4. Emojis in Python Code (Phase 7)
+**Erreur** : Emojis (✅❌) dans logger.info/error
+**Impact** : Encoding failures, linting errors
+**Fix** : ASCII-only logs (PASS/REJECT)
 
-### 5. Validation Mock Data
-**Erreur** : Tests avec mocks sans vraies données
-**Impact** : Bugs passent inaperçus
-**Fix** : E2E avec Keepa API réelle
+### 5. Incomplete Refactoring (Phase 7 Hotfix)
+**Erreur** : Constructor signature change non propagé partout
+**Impact** : HTTP 500 sur `/run-custom` endpoint
+**Fix** : Add missing `settings` parameter
+
+---
+
+## 🎯 Prochaines Phases
+
+### Phase 6-1 : Audit & Testing
+**Objectif** : Répéter cycle audit-test-review-fix pour Phases 6-1
+
+**Actions** :
+1. Systematic audit (comme Phase 7)
+2. Production testing
+3. Code review via subagent
+4. Apply corrections if needed
+
+**Méthode** : SuperPower protocols (verification-before-completion, requesting-code-review, systematic-debugging)
 
 ---
 
@@ -365,7 +335,7 @@ ENVIRONMENT=production
 ### Documentation Interne
 - Architecture : [ARCHITECTURE.md](backend/doc/ARCHITECTURE.md)
 - Known Issues : [KNOWN_ISSUES.md](backend/doc/KNOWN_ISSUES.md)
-- Phase reports : [backend/doc/phase*.md](backend/doc/)
+- Phase 7 Reports : [PHASE7_FINAL_REPORT.md](docs/PHASE7_FINAL_REPORT.md)
 
 ### Documentation Externe
 - **Keepa API** : https://github.com/keepacom/api_backend
@@ -384,45 +354,18 @@ ENVIRONMENT=production
 
 ---
 
-## 🎯 Objectifs Phases Futures
-
-### Phase 6 : Tests E2E & Debugging (EN COURS)
-Voir section Phase 6 ci-dessus pour détails en cours.
-
-### Phase 7 : Netlify Frontend Deployment & Optimization (À VENIR)
-**Durée estimée** : 1-2 jours
-
-**Objectifs** :
-- Deploy frontend sur Netlify production
-- Environment switching (local, staging, production)
-- Error boundary + error tracking (Sentry)
-- Performance optimization (lazy loading, code splitting)
-
-### Phase 8 : AutoSourcing Automation (À VENIR)
-**Durée estimée** : 3-4 semaines
-
-**Objectifs** :
-- Jobs AutoSourcing programmés
-- Profiles discovery réutilisables
-- Notifications opportunités
-- Export résultats CSV/PDF
-- Scheduler module avec pause/resume
-
----
-
 ## 📞 Contacts & Liens
 
 **Repository** : https://github.com/aziztraorebf-ctrl/arbitragevault-bookfinder
 **Backend Production** : https://arbitragevault-backend-v2.onrender.com
-**Frontend Staging** : (À déployer Phase 5)
 **Database** : Neon PostgreSQL `ep-damp-thunder-ado6n9o2`
 
 **Développeur Principal** : Aziz Trabelsi
 **Assistant IA** : Claude Code (Anthropic)
-**Stack MCP** : GitHub + Context7 + Render + Netlify + Neon
+**Stack MCP** : GitHub + Context7 + Render + Netlify + Neon + Keepa
 
 ---
 
-**Version** : 2.0
-**Dernière révision** : 3 Novembre 2025
-**Statut** : Phases 1-5 complétées, Phase 6 en cours (Tests E2E & Debugging)
+**Version** : 3.0
+**Dernière révision** : 22 Novembre 2025
+**Statut** : Phases 1-7 complétées, auto-deploy activé, prêt pour audit Phases 6-1

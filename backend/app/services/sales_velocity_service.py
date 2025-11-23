@@ -128,31 +128,31 @@ class SalesVelocityService:
                 'label': 'Cashflow Machine',
                 'description': '100+ sales/month - Aggressive buying recommended',
                 'strategy': 'Buy 10-20 units if profitable',
-                'icon': '🚀'
+                'icon': '[PREMIUM]'
             },
             'HIGH': {
                 'label': 'Strong Velocity',
                 'description': '50-99 sales/month - Excellent turnover',
                 'strategy': 'Buy 5-10 units safely',
-                'icon': '⚡'
+                'icon': '[HIGH]'
             },
             'MEDIUM': {
                 'label': 'Decent Turnover',
                 'description': '20-49 sales/month - Reliable movement',
                 'strategy': 'Buy 2-5 units standard',
-                'icon': '📈'
+                'icon': '[MEDIUM]'
             },
             'LOW': {
                 'label': 'Slow Mover',
                 'description': '5-19 sales/month - Limited demand',
                 'strategy': 'Buy 1-2 units maximum',
-                'icon': '⏳'
+                'icon': '[LOW]'
             },
             'DEAD': {
                 'label': 'Avoid',
                 'description': '0-4 sales/month - Money trap',
                 'strategy': 'Skip this opportunity',
-                'icon': '❌'
+                'icon': '[AVOID]'
             }
         }
         

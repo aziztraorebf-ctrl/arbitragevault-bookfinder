@@ -86,6 +86,7 @@ class DiscoverWithScoringResponse(BaseModel):
 
 
 @router.post("/discover", response_model=DiscoverResponse)
+@require_tokens("manual_search")
 async def discover_products(
     request: DiscoverRequest,
     db: AsyncSession = Depends(get_db_session)

@@ -69,14 +69,14 @@ class KeepaThrottle:
             # Log warning if tokens are low (only log once per 10 tokens drop)
             if self.tokens < self.warning_threshold and int(self.tokens) % 10 == 0:
                 logger.warning(
-                    f"⚠️ Keepa tokens low: {self.tokens:.0f} remaining "
+                    f"[WARNING] Keepa tokens low: {self.tokens:.0f} remaining "
                     f"(threshold: {self.warning_threshold})"
                 )
 
             # Critical level - force longer wait
             if self.tokens < self.critical_threshold:
                 logger.error(
-                    f"🔴 Keepa tokens CRITICAL: {self.tokens:.0f} remaining. "
+                    f"[CRITICAL] Keepa tokens CRITICAL: {self.tokens:.0f} remaining. "
                     f"Forcing 30s cooldown."
                 )
                 await asyncio.sleep(30)  # Force cooldown
@@ -91,7 +91,7 @@ class KeepaThrottle:
             if self.tokens < cost:
                 wait_time = (cost - self.tokens) / self.rate
                 logger.info(
-                    f"📊 Throttling: waiting {wait_time:.1f}s for {cost} tokens "
+                    f"[THROTTLE] Throttling: waiting {wait_time:.1f}s for {cost} tokens "
                     f"(current: {self.tokens:.1f})"
                 )
                 self.total_wait_time += wait_time
@@ -113,7 +113,7 @@ class KeepaThrottle:
             # Log every 10 requests
             if self.total_requests % 10 == 0:
                 logger.debug(
-                    f"📈 Throttle stats: {self.total_requests} requests, "
+                    f"[STATS] Throttle stats: {self.total_requests} requests, "
                     f"{self.total_wait_time:.1f}s total wait, "
                     f"{self.tokens:.0f} tokens available"
                 )
@@ -134,7 +134,7 @@ class KeepaThrottle:
         """Reset statistics counters."""
         self.total_requests = 0
         self.total_wait_time = 0.0
-        logger.info("📊 Throttle statistics reset")
+        logger.info("[STATS] Throttle statistics reset")
 
     def set_tokens(self, value: int):
         """

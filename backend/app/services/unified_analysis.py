@@ -686,7 +686,7 @@ async def build_unified_product_v2(
                 "stability": {"score": 0, "raw": 0.0, "level": "error", "notes": f"Analysis failed: {str(e)}"},
                 "confidence": {"score": 0, "raw": 0.0, "level": "error", "notes": f"Analysis failed: {str(e)}"}
             },
-            "readable_summary": f"❌ Analysis failed: {str(e)}",
+            "readable_summary": f"[ERROR] Analysis failed: {str(e)}",
             "recommendation": "ERROR",
             "risk_factors": ["Analysis failed"],
             "strategy_profile": None,

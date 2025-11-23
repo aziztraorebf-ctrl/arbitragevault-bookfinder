@@ -69,8 +69,8 @@ class KeepaRawParser:
         Extract current values from product['stats']['current'] array (OFFICIAL Keepa pattern).
 
         CRITICAL FIX (Oct 15, 2025): Changed from product['data'] to product['stats']['current']
-        - product['data']['NEW'] = HISTORICAL array (for charts) ❌ WRONG for current prices
-        - product['stats']['current'][1] = CURRENT snapshot value ✅ CORRECT
+        - product['data']['NEW'] = HISTORICAL array (for charts) [ERROR] WRONG for current prices
+        - product['stats']['current'][1] = CURRENT snapshot value [OK] CORRECT
 
         Keepa stats.current[] indices (official Keepa API structure):
           0: AMAZON - Amazon price
@@ -147,7 +147,7 @@ class KeepaRawParser:
             if used_count is not None:
                 current_values['used_count'] = used_count
 
-        logger.info(f"✅ ASIN {asin}: Extracted {len(current_values)} current values from stats.current array")
+        logger.info(f"[OK] ASIN {asin}: Extracted {len(current_values)} current values from stats.current array")
 
         return current_values
 
@@ -187,7 +187,7 @@ class KeepaRawParser:
             values = data.get(value_key)
             times = data.get(time_key)
 
-            # ✅ Handle numpy arrays - check existence with 'is None', not 'not'
+            # [OK] Handle numpy arrays - check existence with 'is None', not 'not'
             if values is None or times is None:
                 return []
 
@@ -258,7 +258,7 @@ class KeepaRawParser:
         if offers_history:
             history_data['offers_history'] = offers_history
 
-        logger.info(f"✅ ASIN {asin}: Extracted {len(history_data)} history series from keepa lib format")
+        logger.info(f"[OK] ASIN {asin}: Extracted {len(history_data)} history series from keepa lib format")
 
         return history_data
 
@@ -628,9 +628,9 @@ def parse_keepa_product(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         product_data["bsr_confidence"] = bsr_validation["confidence"]
 
         if current_bsr:
-            logger.info(f"✅ ASIN {asin}: BSR={current_bsr}, confidence={bsr_validation['confidence']:.2f}")
+            logger.info(f"[OK] ASIN {asin}: BSR={current_bsr}, confidence={bsr_validation['confidence']:.2f}")
         else:
-            logger.warning(f"⚠️ ASIN {asin}: No BSR available - {bsr_validation['reason']}")
+            logger.warning(f"[WARNING] ASIN {asin}: No BSR available - {bsr_validation['reason']}")
 
         # Determine best current price
         product_data["current_price"] = _determine_best_current_price(product_data)
@@ -653,11 +653,11 @@ def parse_keepa_product(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         else:
             product_data["last_updated_at"] = None
 
-        logger.info(f"✅ Successfully parsed {asin}: price=${product_data.get('current_price')}, BSR={current_bsr}")
+        logger.info(f"[OK] Successfully parsed {asin}: price=${product_data.get('current_price')}, BSR={current_bsr}")
         return product_data
 
     except Exception as e:
-        logger.error(f"❌ Failed to parse Keepa product {asin}: {e}", exc_info=True)
+        logger.error(f"[ERROR] Failed to parse Keepa product {asin}: {e}", exc_info=True)
         return {
             "asin": asin,
             "error": f"Parsing failed: {str(e)}",
@@ -694,9 +694,9 @@ def _determine_target_sell_price(data: Dict[str, Any]) -> Optional[Decimal]:
         Decimal price if valid, None otherwise
     """
     price_priority = [
-        "current_buybox_price",  # ✅ Target for BuyBox competition (USED)
-        "current_fba_price",     # ✅ FBA average if BuyBox missing
-        "current_new_price",     # ⚠️ Fallback only
+        "current_buybox_price",  # [OK] Target for BuyBox competition (USED)
+        "current_fba_price",     # [OK] FBA average if BuyBox missing
+        "current_new_price",     # [WARNING] Fallback only
     ]
 
     for price_field in price_priority:
@@ -724,8 +724,8 @@ def _determine_buy_cost_used(data: Dict[str, Any]) -> Optional[Decimal]:
         Decimal cost if valid, None otherwise
     """
     price_priority = [
-        "current_fba_price",    # ✅ FBA USED sellers (primary source)
-        "lowest_offer_new",     # ⚠️ Fallback if USED unavailable
+        "current_fba_price",    # [OK] FBA USED sellers (primary source)
+        "lowest_offer_new",     # [WARNING] Fallback if USED unavailable
     ]
 
     for price_field in price_priority:
@@ -934,7 +934,7 @@ def parse_keepa_product_unified(raw_keepa: Dict[str, Any]) -> Dict[str, Any]:
     parsed['rating'] = _extract_rating(current_array) if current_array and len(current_array) > 15 else None
     parsed['review_count'] = _extract_integer(current_array, 16) if current_array and len(current_array) > 16 else None
 
-    logger.info(f"✅ ASIN {asin}: Unified parse complete - offers_by_condition: {list(parsed['offers_by_condition'].keys())}")
+    logger.info(f"[OK] ASIN {asin}: Unified parse complete - offers_by_condition: {list(parsed['offers_by_condition'].keys())}")
 
     return parsed
 

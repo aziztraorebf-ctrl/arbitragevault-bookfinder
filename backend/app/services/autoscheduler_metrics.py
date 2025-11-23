@@ -74,7 +74,7 @@ class AutoSchedulerMetrics:
     
     def record_run_start(self, hour: int, expected_products: int):
         """Enregistre le début d'un run AutoScheduler"""
-        logger.info(f"📊 AutoScheduler run démarré à {hour}h - {expected_products} produits attendus")
+        logger.info(f"[START] AutoScheduler run démarré à {hour}h - {expected_products} produits attendus")
     
     def record_run_completion(self, products: List[Dict], tokens_used: int, hour: int):
         """
@@ -106,7 +106,7 @@ class AutoSchedulerMetrics:
         # Sauvegarde
         self._save_metrics()
         
-        logger.info(f"✅ Run {hour}h terminé: {len(products)} produits, {tokens_used} tokens")
+        logger.info(f"[OK] Run {hour}h terminé: {len(products)} produits, {tokens_used} tokens")
     
     def _analyze_products(self, products: List[Dict]):
         """Analyse la distribution des tiers et profits"""
@@ -154,7 +154,7 @@ class AutoSchedulerMetrics:
         self.daily_metrics.errors_count += 1
         self._save_metrics()
         
-        logger.error(f"❌ AutoScheduler error: {error_type} - {error_message}")
+        logger.error(f"[ERROR] AutoScheduler error: {error_type} - {error_message}")
     
     def check_token_budget(self, budget_limit: int) -> bool:
         """
@@ -169,10 +169,10 @@ class AutoSchedulerMetrics:
         remaining = budget_limit - self.daily_metrics.tokens_consumed
         
         if remaining <= 0:
-            logger.warning(f"🚫 Budget tokens épuisé: {self.daily_metrics.tokens_consumed}/{budget_limit}")
+            logger.warning(f"[BUDGET] Budget tokens épuisé: {self.daily_metrics.tokens_consumed}/{budget_limit}")
             return False
-        
-        logger.info(f"💰 Budget tokens: {remaining}/{budget_limit} restants")
+
+        logger.info(f"[BUDGET] Budget tokens: {remaining}/{budget_limit} restants")
         return True
     
     def get_daily_summary(self) -> Dict[str, Any]:
@@ -197,7 +197,7 @@ class AutoSchedulerMetrics:
         """Log le résumé quotidien pour monitoring"""
         summary = self.get_daily_summary()
         
-        logger.info("📊 RÉSUMÉ QUOTIDIEN AutoScheduler", extra={
+        logger.info("[SUMMARY] RÉSUMÉ QUOTIDIEN AutoScheduler", extra={
             "summary": summary
         })
         

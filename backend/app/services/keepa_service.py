@@ -210,8 +210,8 @@ class KeepaService:
             self.logger.error("[ERROR] Cannot verify Keepa balance (missing 'tokens-left' header)")
             raise InsufficientTokensError(
                 current_balance=0,
-                required=1,
-                message="Cannot verify Keepa API balance - missing response header"
+                required_tokens=1,
+                endpoint="balance_check"
             )
 
         except InsufficientTokensError:
@@ -222,8 +222,8 @@ class KeepaService:
             self.logger.error(f"[ERROR] Failed to check API balance: {e}")
             raise InsufficientTokensError(
                 current_balance=0,
-                required=1,
-                message=f"Cannot verify Keepa API balance: {str(e)}"
+                required_tokens=1,
+                endpoint="balance_check"
             )
 
     async def can_perform_action(self, action: str) -> dict[str, any]:
@@ -289,14 +289,14 @@ class KeepaService:
         # Warn if balance is low but still above minimum
         if current_balance < SAFETY_BUFFER:
             self.logger.warning(
-                f"⚠️ Keepa token balance low: {current_balance} tokens "
+                f"[WARNING] Keepa token balance low: {current_balance} tokens "
                 f"(safety buffer: {SAFETY_BUFFER})"
             )
 
         # Block request if balance is critically low
         if current_balance < MIN_BALANCE_THRESHOLD:
             self.logger.error(
-                f"❌ Keepa token balance critically low: {current_balance} < {MIN_BALANCE_THRESHOLD}"
+                f"[ERROR] Keepa token balance critically low: {current_balance} < {MIN_BALANCE_THRESHOLD}"
             )
             raise InsufficientTokensError(
                 current_balance=current_balance,
@@ -307,7 +307,7 @@ class KeepaService:
         # Block request if estimated cost exceeds available balance
         if estimated_cost > current_balance:
             self.logger.error(
-                f"❌ Insufficient tokens for {endpoint_name}: "
+                f"[ERROR] Insufficient tokens for {endpoint_name}: "
                 f"{estimated_cost} required, {current_balance} available"
             )
             raise InsufficientTokensError(
@@ -317,7 +317,7 @@ class KeepaService:
             )
 
         self.logger.info(
-            f"✅ Balance check OK: {current_balance} tokens available "
+            f"[OK] Balance check OK: {current_balance} tokens available "
             f"(estimated cost: {estimated_cost}, endpoint: {endpoint_name})"
         )
 
@@ -367,7 +367,7 @@ class KeepaService:
         endpoint_name = endpoint.strip('/').split('?')[0]
         estimated_cost = ENDPOINT_COSTS.get(endpoint_name, 1)  # Default to 1 token if unknown
 
-        # ✅ PHASE 4.5: Check API budget BEFORE making request
+        # [OK] PHASE 4.5: Check API budget BEFORE making request
         await self._ensure_sufficient_balance(estimated_cost, endpoint_name)
 
         # Apply rate throttling BEFORE making request
@@ -562,11 +562,11 @@ class KeepaService:
 
                 return api.query(
                     identifier,
-                    domain=domain_str,  # ✅ Use string, not integer
+                    domain=domain_str,  # [OK] Use string, not integer
                     stats=180,          # Get 180-day statistics
                     history=True,       # Include price history
                     offers=20,          # Include offer data
-                    update=update_param # ✅ update=0 forces live Amazon scraping (2-3 tokens), None uses cache
+                    update=update_param # [OK] update=0 forces live Amazon scraping (2-3 tokens), None uses cache
                 )
 
             products = await loop.run_in_executor(None, _sync_query)
@@ -587,7 +587,7 @@ class KeepaService:
                 if timestamp:
                     age_days = (datetime.now() - timestamp).days
                     self.logger.info(
-                        f"[KEEPA DATA] ✅ Received data for {identifier}, "
+                        f"[KEEPA DATA] [OK] Received data for {identifier}, "
                         f"lastPriceChange: {timestamp.isoformat()} ({age_days} days old)"
                     )
                 else:

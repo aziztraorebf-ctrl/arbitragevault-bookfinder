@@ -552,24 +552,24 @@ class AutoSourcingService:
         confidence = product_data.get('confidence_score', 0)
         rating = product_data.get('overall_rating', 'PASS')
         
-        # 🔥 HOT DEALS - Critères stricts pour action immédiate
-        if (roi >= 50 and profit >= 15 and velocity >= 80 and 
+        # [HOT] HOT DEALS - Critères stricts pour action immédiate
+        if (roi >= 50 and profit >= 15 and velocity >= 80 and
             confidence >= 85 and rating in ["EXCELLENT"]):
-            return "HOT", f"🔥 {roi:.0f}% ROI, ${profit:.0f} profit, {velocity:.0f} velocity - Action immédiate!"
-        
-        # ⭐ TOP PICKS - Équilibrés et solides
-        elif (roi >= 35 and profit >= 10 and velocity >= 70 and 
+            return "HOT", f"[HOT] {roi:.0f}% ROI, ${profit:.0f} profit, {velocity:.0f} velocity - Action immédiate!"
+
+        # [TOP] TOP PICKS - Équilibrés et solides
+        elif (roi >= 35 and profit >= 10 and velocity >= 70 and
               confidence >= 75 and rating in ["EXCELLENT", "GOOD"]):
-            return "TOP", f"⭐ {roi:.0f}% ROI, ${profit:.0f} profit - Opportunité solide"
-        
-        # 📈 WATCH LIST - Potentiel à surveiller
-        elif (roi >= 25 and profit >= 5 and velocity >= 60 and 
+            return "TOP", f"[TOP] {roi:.0f}% ROI, ${profit:.0f} profit - Opportunité solide"
+
+        # [WATCH] WATCH LIST - Potentiel à surveiller
+        elif (roi >= 25 and profit >= 5 and velocity >= 60 and
               confidence >= 65 and rating in ["EXCELLENT", "GOOD", "FAIR"]):
-            return "WATCH", f"📈 {roi:.0f}% ROI, potentiel à surveiller"
-        
-        # 📊 OTHER - Analyse approfondie nécessaire
+            return "WATCH", f"[WATCH] {roi:.0f}% ROI, potentiel à surveiller"
+
+        # [INFO] OTHER - Analyse approfondie nécessaire
         else:
-            return "OTHER", f"📊 {roi:.0f}% ROI - Analyse détaillée recommandée"
+            return "OTHER", f"[INFO] {roi:.0f}% ROI - Analyse détaillée recommandée"
 
     def get_diversified_search_criteria(self, hour: int) -> Dict[str, Any]:
         """

@@ -89,7 +89,8 @@ class DiscoverWithScoringResponse(BaseModel):
 @require_tokens("manual_search")
 async def discover_products(
     request: DiscoverRequest,
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
+    keepa: KeepaService = Depends(get_keepa_service)
 ):
     """
     Discover products matching criteria.

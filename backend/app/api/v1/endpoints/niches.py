@@ -79,13 +79,12 @@ async def discover_niches_auto(
         if not settings.KEEPA_API_KEY:
             raise HTTPException(status_code=503, detail="Keepa API key not configured")
 
-        # Initialize services
-        keepa_service = KeepaService(api_key=settings.KEEPA_API_KEY)
+        # Initialize services - Use injected keepa instance from @require_tokens decorator
         config_service = ConfigService(db)
-        finder_service = KeepaProductFinderService(keepa_service, config_service, db)
+        finder_service = KeepaProductFinderService(keepa, config_service, db)
 
         # Log token balance BEFORE operation
-        balance_before = await keepa_service.check_api_balance()
+        balance_before = await keepa.check_api_balance()
         logger.info(f"Niche discovery started - Token balance: {balance_before}")
 
         # Discover curated niches with timeout protection
@@ -100,18 +99,18 @@ async def discover_niches_auto(
                 timeout=ENDPOINT_TIMEOUT
             )
         except asyncio.TimeoutError:
-            await keepa_service.close()
+            await keepa.close()
             raise HTTPException(
                 status_code=408,
                 detail=f"Niche discovery timed out after {ENDPOINT_TIMEOUT}s. Try reducing count parameter."
             )
 
         # Log token balance AFTER operation
-        balance_after = await keepa_service.check_api_balance()
+        balance_after = await keepa.check_api_balance()
         tokens_consumed = balance_before - balance_after
         logger.info(f"Niche discovery completed - Tokens consumed: {tokens_consumed} (balance: {balance_after})")
 
-        await keepa_service.close()
+        await keepa.close()
 
         return DiscoverWithScoringResponse(
             products=[],  # Empty for auto mode

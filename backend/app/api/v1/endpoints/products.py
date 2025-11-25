@@ -111,10 +111,9 @@ async def discover_products(
         if not settings.KEEPA_API_KEY:
             raise HTTPException(status_code=503, detail="Keepa API key not configured")
 
-        # Initialize services
-        keepa_service = KeepaService(api_key=settings.KEEPA_API_KEY)
+        # Initialize services - Use injected keepa instance from @require_tokens decorator
         config_service = ConfigService(db)
-        finder_service = KeepaProductFinderService(keepa_service, config_service, db)
+        finder_service = KeepaProductFinderService(keepa, config_service, db)
 
         # Discover products
         asins = await finder_service.discover_products(
@@ -128,7 +127,7 @@ async def discover_products(
         )
 
         # Close Keepa client
-        await keepa_service.close()
+        await keepa.close()
 
         return DiscoverResponse(
             asins=asins,
@@ -167,10 +166,9 @@ async def discover_with_scoring(
         if not settings.KEEPA_API_KEY:
             raise HTTPException(status_code=503, detail="Keepa API key not configured")
 
-        # Initialize services
-        keepa_service = KeepaService(api_key=settings.KEEPA_API_KEY)
+        # Initialize services - Use injected keepa instance from @require_tokens decorator
         config_service = ConfigService(db)
-        finder_service = KeepaProductFinderService(keepa_service, config_service, db)
+        finder_service = KeepaProductFinderService(keepa, config_service, db)
 
         # Discover with scoring
         products = await finder_service.discover_with_scoring(
@@ -187,7 +185,7 @@ async def discover_with_scoring(
         )
 
         # Close Keepa client
-        await keepa_service.close()
+        await keepa.close()
 
         # Convert to response models
         product_scores = [

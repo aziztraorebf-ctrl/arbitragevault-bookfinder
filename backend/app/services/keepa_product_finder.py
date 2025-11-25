@@ -18,6 +18,7 @@ from decimal import Decimal
 from datetime import datetime
 import logging
 import json
+import asyncio
 
 import httpx
 from sqlalchemy.orm import Session
@@ -246,17 +247,22 @@ class KeepaProductFinderService:
         price_max: Optional[float]
     ) -> List[str]:
         """
-        Filtrer ASINs par critères BSR/prix.
+        Filtrer ASINs par criteres BSR/prix.
 
-        Récupère les détails produits et filtre.
+        Recupere les details produits et filtre.
+        Includes rate limit protection with delays between batches.
         """
         if not asins:
             return []
 
         filtered_asins = []
+        batch_delay_seconds = 1.5  # Delay between batches to avoid rate limiting
+        rate_limit_retries = 0
+        max_rate_limit_retries = 2
 
         # Batch retrieve (max 100 per request)
-        for i in range(0, len(asins), 100):
+        batch_count = (len(asins) + 99) // 100  # Total batches
+        for batch_idx, i in enumerate(range(0, len(asins), 100)):
             batch = asins[i:i+100]
 
             try:
@@ -308,13 +314,38 @@ class KeepaProductFinderService:
                     if asin:
                         filtered_asins.append(asin)
 
-            except Exception as e:
-                logger.error(f"Error filtering batch: {e}")
-                if "429" in str(e) or "Rate limit" in str(e):
-                    logger.warning("Rate limit hit - stopping batch processing to prevent token depletion")
-                    break
-                continue
+                # Reset rate limit retry counter on success
+                rate_limit_retries = 0
 
+                # Add delay between batches to prevent rate limiting (except last batch)
+                if batch_idx < batch_count - 1:
+                    logger.debug(f"Batch {batch_idx + 1}/{batch_count} complete. Waiting {batch_delay_seconds}s before next batch.")
+                    await asyncio.sleep(batch_delay_seconds)
+
+            except Exception as e:
+                error_str = str(e).lower()
+                if "429" in error_str or "rate limit" in error_str:
+                    rate_limit_retries += 1
+                    if rate_limit_retries <= max_rate_limit_retries:
+                        wait_time = 5 * rate_limit_retries  # 5s, 10s for retries
+                        logger.warning(
+                            f"Rate limit hit on batch {batch_idx + 1}/{batch_count}. "
+                            f"Waiting {wait_time}s before retry ({rate_limit_retries}/{max_rate_limit_retries})"
+                        )
+                        await asyncio.sleep(wait_time)
+                        # Note: _make_request already has retry, this is extra safety
+                        continue
+                    else:
+                        logger.warning(
+                            f"Rate limit persists after {max_rate_limit_retries} retries. "
+                            f"Returning {len(filtered_asins)} ASINs collected so far."
+                        )
+                        break
+                else:
+                    logger.error(f"Error filtering batch {batch_idx + 1}: {e}")
+                    continue
+
+        logger.info(f"Filtering complete: {len(filtered_asins)} ASINs passed criteria")
         return filtered_asins
 
     async def discover_with_scoring(

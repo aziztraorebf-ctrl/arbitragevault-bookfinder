@@ -75,3 +75,24 @@ class InsufficientTokensError(AppException):
                 "deficit": required_tokens - current_balance
             }
         )
+
+
+class KeepaRateLimitError(AppException):
+    """
+    Raised when Keepa API returns HTTP 429 (rate limit exceeded).
+
+    This exception is designed to be caught by tenacity @retry decorator
+    for automatic exponential backoff retry.
+    """
+    def __init__(self, tokens_left: str = "unknown", endpoint: str = None, retry_after: int = None):
+        super().__init__(
+            message=f"Keepa API rate limit exceeded (HTTP 429). Tokens left: {tokens_left}",
+            details={
+                "tokens_left": tokens_left,
+                "endpoint": endpoint,
+                "retry_after": retry_after,
+                "error_type": "rate_limit"
+            }
+        )
+        self.tokens_left = tokens_left
+        self.retry_after = retry_after

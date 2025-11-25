@@ -16,7 +16,7 @@ from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_excep
 
 # Import our throttling system
 from .keepa_throttle import KeepaThrottle
-from ..core.exceptions import InsufficientTokensError
+from ..core.exceptions import InsufficientTokensError, KeepaRateLimitError
 
 # Keepa API endpoint costs (in tokens)
 ENDPOINT_COSTS = {
@@ -356,9 +356,9 @@ class KeepaService:
         self.logger.debug(f"Cache SET for {cache_key} (TTL: {ttl})")
     
     @retry(
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        stop=stop_after_attempt(3),
-        retry=retry_if_exception_type((httpx.TimeoutException, httpx.ConnectError))
+        wait=wait_exponential(multiplier=2, min=2, max=30),
+        stop=stop_after_attempt(4),
+        retry=retry_if_exception_type((httpx.TimeoutException, httpx.ConnectError, KeepaRateLimitError))
     )
     async def _make_request(self, endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Make HTTP request with retry logic and throttling."""
@@ -402,12 +402,21 @@ class KeepaService:
                 }
             )
             
-            # Handle rate limiting (HTTP 429)
+            # Handle rate limiting (HTTP 429) - raise KeepaRateLimitError for retry
             if response.status_code == 429:
                 self._circuit_breaker.record_failure()
                 tokens_left = response.headers.get('tokens-left', 'unknown')
-                self.logger.warning(f"Rate limited by Keepa API (tokens left: {tokens_left})")
-                raise Exception(f"HTTP 429: Rate limit exceeded - {tokens_left} tokens remaining")
+                retry_after = response.headers.get('retry-after')
+                retry_seconds = int(retry_after) if retry_after and retry_after.isdigit() else None
+                self.logger.warning(
+                    f"Rate limited by Keepa API (tokens left: {tokens_left}, retry-after: {retry_after}). "
+                    f"Will retry with exponential backoff."
+                )
+                raise KeepaRateLimitError(
+                    tokens_left=tokens_left,
+                    endpoint=endpoint,
+                    retry_after=retry_seconds
+                )
             
             # Handle server errors (HTTP 500)
             if response.status_code == 500:

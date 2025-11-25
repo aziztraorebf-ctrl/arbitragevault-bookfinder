@@ -179,6 +179,10 @@ class KeepaService:
 
         Returns:
             Current token balance from Keepa API
+
+        Note:
+            Keepa API returns tokensLeft in the JSON response body, NOT in HTTP headers.
+            This was a bug that caused all balance checks to fail.
         """
         now = time.time()
 
@@ -198,16 +202,19 @@ class KeepaService:
                 }
             )
 
-            # Extract tokens from response header
-            tokens_left = response.headers.get('tokens-left')
-            if tokens_left:
-                self.api_balance_cache = int(tokens_left)
-                self.last_api_balance_check = now
-                self.logger.info(f"[OK] Keepa API balance: {self.api_balance_cache} tokens")
-                return self.api_balance_cache
+            # Keepa returns tokensLeft in JSON body (NOT in HTTP headers)
+            if response.status_code == 200:
+                data = response.json()
+                tokens_left = data.get('tokensLeft')
 
-            # No fallback - if header missing, raise error
-            self.logger.error("[ERROR] Cannot verify Keepa balance (missing 'tokens-left' header)")
+                if tokens_left is not None:
+                    self.api_balance_cache = int(tokens_left)
+                    self.last_api_balance_check = now
+                    self.logger.info(f"[OK] Keepa API balance: {self.api_balance_cache} tokens")
+                    return self.api_balance_cache
+
+            # If tokensLeft not in response, log and raise error
+            self.logger.error("[ERROR] Cannot verify Keepa balance (tokensLeft not in response)")
             raise InsufficientTokensError(
                 current_balance=0,
                 required_tokens=1,

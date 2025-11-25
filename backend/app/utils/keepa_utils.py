@@ -325,7 +325,88 @@ def datetime_to_keepa(dt: 'datetime') -> int:
         If dt is not UTC, results may be incorrect.
         Always pass UTC datetime objects.
     """
+    from datetime import timezone
     from app.utils.keepa_constants import KEEPA_TIME_OFFSET_MINUTES
 
-    unix_seconds = int(dt.timestamp())
+    # Ensure UTC timestamp (avoid local timezone conversion)
+    if dt.tzinfo is None:
+        # Assume naive datetime is UTC
+        dt_utc = dt.replace(tzinfo=timezone.utc)
+    else:
+        # Convert to UTC if timezone-aware
+        dt_utc = dt.astimezone(timezone.utc)
+
+    unix_seconds = int(dt_utc.timestamp())
     return (unix_seconds // 60) - KEEPA_TIME_OFFSET_MINUTES
+
+
+# ===============================================================================
+# NUMPY SERIALIZATION FIX - CRITICAL FOR JSON/PYDANTIC RESPONSES
+# ===============================================================================
+
+def sanitize_keepa_response(data: Any) -> Any:
+    """
+    Recursively convert all numpy arrays in a Keepa response to Python-native types.
+
+    This is CRITICAL for JSON serialization with FastAPI/Pydantic.
+    The Python keepa library returns numpy.ndarray objects that cannot be
+    serialized by Pydantic, causing HTTP 500 errors.
+
+    Handles:
+    - numpy.ndarray -> list (via .tolist())
+    - numpy scalar types -> Python native (int, float)
+    - dict -> recursively sanitize values
+    - list -> recursively sanitize elements
+    - Other types -> pass through
+
+    Args:
+        data: Any data structure (dict, list, numpy array, scalar)
+
+    Returns:
+        Sanitized data with all numpy types converted to Python natives
+
+    Example:
+        >>> import numpy as np
+        >>> data = {'prices': np.array([100, 200]), 'name': 'Test'}
+        >>> sanitize_keepa_response(data)
+        {'prices': [100, 200], 'name': 'Test'}
+
+        >>> data = {'nested': {'arr': np.array([1, 2, 3])}}
+        >>> sanitize_keepa_response(data)
+        {'nested': {'arr': [1, 2, 3]}}
+
+    Note:
+        This function MUST be called on keepa library responses before
+        returning them from FastAPI endpoints or storing in Pydantic models.
+    """
+    # Handle None
+    if data is None:
+        return None
+
+    # Handle numpy arrays (most common case)
+    if hasattr(data, 'tolist'):
+        try:
+            return data.tolist()
+        except Exception as e:
+            logger.warning(f"Failed to convert numpy array: {e}")
+            return list(data) if hasattr(data, '__iter__') else data
+
+    # Handle numpy scalar types (np.int64, np.float64, etc.)
+    # These have 'item()' method to convert to Python native
+    if hasattr(data, 'item'):
+        try:
+            return data.item()
+        except Exception:
+            pass
+
+    # Handle dictionaries - recurse into values
+    if isinstance(data, dict):
+        return {key: sanitize_keepa_response(value) for key, value in data.items()}
+
+    # Handle lists/tuples - recurse into elements
+    if isinstance(data, (list, tuple)):
+        sanitized = [sanitize_keepa_response(item) for item in data]
+        return sanitized if isinstance(data, list) else tuple(sanitized)
+
+    # Pass through native Python types (str, int, float, bool)
+    return data

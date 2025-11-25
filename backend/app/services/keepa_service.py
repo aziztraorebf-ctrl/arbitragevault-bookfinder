@@ -453,8 +453,8 @@ class KeepaService:
                 self.logger.debug(f"💨 Quick cache HIT for {identifier}")
                 return cached_data
 
-        # Get from normal flow
-        result = await self.get_product(identifier)
+        # Get from normal flow (get_product_data already sanitizes numpy arrays)
+        result = await self.get_product_data(identifier)
 
         if result:
             # Store in quick cache
@@ -578,8 +578,14 @@ class KeepaService:
 
             product = products[0]
 
+            # CRITICAL: Sanitize numpy arrays before caching/returning
+            # The keepa Python library returns numpy.ndarray which Pydantic cannot serialize
+            from app.utils.keepa_utils import keepa_to_datetime, sanitize_keepa_response
+
+            product = sanitize_keepa_response(product)
+            self.logger.info(f"[NUMPY FIX] Sanitized numpy arrays for {identifier}")
+
             # Log data freshness using official conversion
-            from app.utils.keepa_utils import keepa_to_datetime
 
             last_price_change = product.get("lastPriceChange", -1)
             if last_price_change != -1:
@@ -650,11 +656,15 @@ class KeepaService:
                 )
             
             asins = await loop.run_in_executor(None, _sync_product_finder)
-            
+
+            # CRITICAL: Sanitize numpy arrays - keepa library returns numpy.ndarray
+            from app.utils.keepa_utils import sanitize_keepa_response
+            asins = sanitize_keepa_response(asins)
+
             # Limiter aux max_results
             limited_asins = asins[:max_results] if asins else []
-            
-            self.logger.info(f"Keepa Product Finder: {len(limited_asins)} ASINs trouvés")
+
+            self.logger.info(f"Keepa Product Finder: {len(limited_asins)} ASINs trouvés (sanitized)")
             return limited_asins
             
         except Exception as e:

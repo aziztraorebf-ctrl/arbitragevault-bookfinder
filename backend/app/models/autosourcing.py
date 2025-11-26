@@ -81,8 +81,8 @@ class AutoSourcingJob(Base):
             # Try to access id only - should work even if detached
             job_id = self.id
             return f"<AutoSourcingJob(id={job_id})>"
-        except:
-            # Complete fallback if even id fails
+        except (AttributeError, TypeError):
+            # Complete fallback if even id fails (detached SQLAlchemy instance)
             return "<AutoSourcingJob(detached)>"
 
 

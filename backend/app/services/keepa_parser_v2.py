@@ -235,7 +235,7 @@ class KeepaRawParser:
                 if not isinstance(time, datetime):
                     try:
                         time = datetime.fromisoformat(str(time))
-                    except:
+                    except (ValueError, TypeError):
                         continue
 
                 series.append((time, value))

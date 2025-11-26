@@ -464,8 +464,8 @@ def _calculate_combined_score(roi_metrics: Dict, velocity_metrics: Dict, config:
             "roi_contribution": round(roi_score * roi_weight, 2),
             "velocity_contribution": round(velocity_score * velocity_weight, 2)
         }
-    except:
-        return {"combined_score": 0, "error": "Score calculation failed"}
+    except (ValueError, TypeError, KeyError) as e:
+        return {"combined_score": 0, "error": f"Score calculation failed: {e}"}
 
 
 def _generate_recommendation(roi_metrics: Dict, velocity_metrics: Dict, config: Optional[Dict[str, Any]] = None) -> str:
@@ -503,8 +503,8 @@ def _generate_recommendation(roi_metrics: Dict, velocity_metrics: Dict, config: 
             else:
                 return "PASS - Low profit/slow moving"
             
-    except:
-        return "UNKNOWN - Analysis incomplete"
+    except (ValueError, TypeError, KeyError) as e:
+        return f"UNKNOWN - Analysis incomplete: {e}"
 
 
 # ============================================================================

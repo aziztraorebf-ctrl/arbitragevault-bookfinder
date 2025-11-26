@@ -24,9 +24,9 @@ export default function ProgressBar({
 
   const getStatusIcon = () => {
     switch (status) {
-      case 'success': return '✅';
-      case 'error': return '❌';
-      case 'loading': return '⏳';
+      case 'success': return '[OK]';
+      case 'error': return '[X]';
+      case 'loading': return '[...]';
       default: return '';
     }
   };
@@ -70,13 +70,13 @@ export default function ProgressBar({
 
       {status === 'error' && (
         <div className="text-sm text-red-600">
-          ⚠️ Une erreur est survenue. Veuillez réessayer.
+          Une erreur est survenue. Veuillez reessayer.
         </div>
       )}
 
       {status === 'success' && (
         <div className="text-sm text-green-600">
-          ✨ Analyse terminée avec succès !
+          Analyse terminee avec succes !
         </div>
       )}
     </div>

@@ -1,14 +1,16 @@
 // Manual Search Flow E2E Tests - Phase 5
 // Valide le workflow complet de recherche manuelle avec vraies donnees Keepa
 const { test, expect } = require('@playwright/test');
+const { getRandomASIN } = require('../test-utils/random-data');
 
 const BACKEND_URL = 'https://arbitragevault-backend-v2.onrender.com';
 const FRONTEND_URL = 'https://arbitragevault.netlify.app';
 
-// Test ASINs with known good data
+// Use seed-based randomization for reproducibility
+const TEST_SEED = process.env.TEST_SEED || 'manual-search-flow';
 const TEST_ASINS = {
-  learning_python: '0593655036', // Learning Python book
-  kindle_oasis: 'B00FLIJJSA'     // Kindle device
+  learning_python: getRandomASIN(`${TEST_SEED}-book`, 'books_low_bsr'),
+  kindle_oasis: getRandomASIN(`${TEST_SEED}-electronics`, 'electronics')
 };
 
 test.describe('Manual Search Flow', () => {

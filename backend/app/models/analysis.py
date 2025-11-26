@@ -4,14 +4,15 @@ from decimal import Decimal
 from typing import Optional
 
 from sqlalchemy import (
-    CheckConstraint, 
-    ForeignKey, 
-    Index, 
-    Integer, 
+    CheckConstraint,
+    ForeignKey,
+    Index,
+    Integer,
     JSON,
-    Numeric, 
-    String, 
-    UniqueConstraint
+    Numeric,
+    String,
+    UniqueConstraint,
+    UUID
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -29,8 +30,8 @@ class Analysis(Base):
 
     # Foreign key to batch
     batch_id: Mapped[str] = mapped_column(
-        String(36), 
-        ForeignKey("batches.id", ondelete="CASCADE"), 
+        UUID(as_uuid=False),
+        ForeignKey("batches.id", ondelete="CASCADE"),
         nullable=False
     )
 

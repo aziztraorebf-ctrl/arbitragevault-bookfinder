@@ -114,7 +114,7 @@ class KeepaRawParser:
 
             # Convert price from cents to Decimal
             if is_price:
-                return float(value / KEEPA_PRICE_DIVISOR)
+                return Decimal(value) / Decimal(KEEPA_PRICE_DIVISOR)
 
             return value
 
@@ -135,12 +135,22 @@ class KeepaRawParser:
                 current_values[output_key] = value
                 logger.debug(f"ASIN {asin}: {output_key} = {value}")
 
-        # Extract offer counts from separate fields (not in current array)
+        # Extract offer counts - try data section first, then stats.current fallback
         data = raw_data.get('data', {})
         if data:
             # Get latest offer counts from data arrays (these are not in stats.current)
             new_count = extract_latest_value(data, 'COUNT_NEW', is_price=False, null_value=KEEPA_NULL_VALUE)
             used_count = extract_latest_value(data, 'COUNT_USED', is_price=False, null_value=KEEPA_NULL_VALUE)
+
+            if new_count is not None:
+                current_values['new_count'] = new_count
+            if used_count is not None:
+                current_values['used_count'] = used_count
+        else:
+            # Fallback: Extract from stats.current array (indices 11, 12)
+            logger.debug(f"ASIN {asin}: 'data' section not available, using stats.current fallback for offer counts")
+            new_count = get_current(11, is_price=False)  # Index 11: New count
+            used_count = get_current(12, is_price=False)  # Index 12: Used count
 
             if new_count is not None:
                 current_values['new_count'] = new_count
@@ -176,8 +186,9 @@ class KeepaRawParser:
         data = raw_data.get('data', {})
 
         if not data:
-            logger.warning(f"ASIN {asin}: 'data' section not available")
-            return history_data
+            logger.warning(f"ASIN {asin}: 'data' section not available, trying csv fallback")
+            # Fallback: Extract from raw csv arrays
+            return KeepaRawParser._extract_history_from_csv(raw_data, days_back)
 
         # Calculate cutoff date
         cutoff_date = datetime.now() - timedelta(days=days_back)
@@ -287,6 +298,54 @@ class KeepaRawParser:
                         continue
 
         return result
+
+    @staticmethod
+    def _extract_history_from_csv(raw_data: Dict[str, Any], days_back: int = 90) -> Dict[str, List[Tuple]]:
+        """
+        Extract history from raw csv arrays (fallback when keepa SDK 'data' section not available).
+
+        CSV array structure:
+        - csv[0]: Amazon prices
+        - csv[1]: New prices
+        - csv[2]: Used prices
+        - csv[3]: BSR (Sales Rank)
+
+        Args:
+            raw_data: Raw Keepa response with csv arrays
+            days_back: Number of days of history to extract
+
+        Returns:
+            Dictionary with history arrays
+        """
+        history_data = {}
+        asin = raw_data.get('asin', 'unknown')
+        csv = raw_data.get('csv', [])
+
+        if not csv or len(csv) < 4:
+            logger.warning(f"ASIN {asin}: csv arrays not available or incomplete")
+            return history_data
+
+        # Calculate cutoff timestamp
+        cutoff_date = datetime.now() - timedelta(days=days_back)
+        cutoff_keepa = KeepaRawParser._datetime_to_keepa(cutoff_date)
+
+        # Extract price history (csv[0] = Amazon, csv[1] = NEW)
+        if len(csv[0]) > 0:
+            price_history = KeepaRawParser._parse_time_series(csv[0], cutoff_keepa, convert_price=True)
+            if price_history:
+                history_data['price_history'] = price_history
+                logger.debug(f"ASIN {asin}: Extracted {len(price_history)} price data points from csv[0]")
+
+        # Extract BSR history (csv[3] = SALES)
+        if len(csv) > 3 and len(csv[3]) > 0:
+            bsr_history = KeepaRawParser._parse_time_series(csv[3], cutoff_keepa, convert_price=False)
+            if bsr_history:
+                history_data['bsr_history'] = bsr_history
+                logger.debug(f"ASIN {asin}: Extracted {len(bsr_history)} BSR data points from csv[3]")
+
+        logger.info(f"[OK] ASIN {asin}: Extracted {len(history_data)} history series from csv arrays")
+
+        return history_data
 
     @staticmethod
     def _convert_price(keepa_price: int) -> Decimal:
@@ -428,23 +487,26 @@ class KeepaBSRExtractor:
     """
 
     @staticmethod
-    def extract_current_bsr(raw_data: Dict[str, Any]) -> Optional[int]:
+    def extract_current_bsr(raw_data: Dict[str, Any]) -> Tuple[Optional[int], str]:
         """
         Extract current BSR with multiple fallback strategies.
 
         Priority order (UPDATED based on real Keepa API structure):
-        1. salesRanks[categoryId][1] (current BSR value)
-        2. stats.current[3] (legacy format support)
-        3. Last point from csv[3] history (if recent)
-        4. stats.avg30[3] (30-day average as fallback)
+        1. salesRanks[categoryId][1] (current BSR value) - source: 'salesRanks'
+        2. stats.current[3] (legacy format support) - source: 'current'
+        3. Last point from csv[3] history (if recent) - source: 'csv_recent'
+        4. stats.avg30[3] (30-day average as fallback) - source: 'avg30'
 
         Args:
             raw_data: Raw Keepa API response
 
         Returns:
-            Current BSR value or None if not available
+            Tuple of (BSR value or None, data source identifier)
         """
         asin = raw_data.get("asin", "unknown")
+
+        # Extract stats early for use in fallback strategies
+        stats = raw_data.get("stats", {})
 
         # Strategy 1: NEW - salesRanks format (current Keepa API structure)
         # Format: {"categoryId": [timestamp, bsr_value]}
@@ -460,7 +522,7 @@ class KeepaBSRExtractor:
                 bsr = rank_data[-1]  # FIX: Read LAST element (current BSR), not second
                 if bsr and bsr != -1:
                     logger.info(f"ASIN {asin}: BSR {bsr} from salesRanks[{sales_rank_reference}]")
-                    return int(bsr)
+                    return int(bsr), "salesRanks"
 
         # Fallback to any available category
         if sales_ranks:
@@ -469,20 +531,19 @@ class KeepaBSRExtractor:
                     bsr = rank_data[-1]  # FIX: Read LAST element (current BSR)
                     if bsr and bsr != -1:
                         logger.info(f"ASIN {asin}: BSR {bsr} from salesRanks[{category_id}]")
-                        return int(bsr)
+                        return int(bsr), "salesRanks"
 
         # Strategy 2: Legacy - current[3] (older Keepa API format)
         # Keep for backward compatibility
         current = raw_data.get("current")
         if not current:  # Fallback ancien format
-            stats = raw_data.get("stats", {})
             current = stats.get("current", [])
 
         if current and len(current) > KeepaCSVType.SALES:
             bsr = current[KeepaCSVType.SALES]
             if bsr and bsr != -1:
                 logger.info(f"ASIN {asin}: BSR {bsr} from current[3] (legacy)")
-                return int(bsr)
+                return int(bsr), "current"
 
         # Strategy 3: Fallback to last historical point if recent
         csv_data = raw_data.get("csv", [])
@@ -497,37 +558,38 @@ class KeepaBSRExtractor:
                     last_date = KeepaRawParser._keepa_to_datetime(last_timestamp)
                     age_hours = (datetime.now() - last_date).total_seconds() / 3600
 
+                    # Only accept recent data (within last 24h)
                     if age_hours <= 24:
                         logger.info(f"ASIN {asin}: BSR {last_value} from csv[3] history ({age_hours:.1f}h old)")
-                        return int(last_value)
+                        return int(last_value), "csv_recent"
                     else:
                         logger.debug(f"ASIN {asin}: Historical BSR too old ({age_hours:.1f}h)")
 
         # Strategy 4: Use 30-day average if available (legacy support)
-        if 'stats' in locals():  # Only if stats was defined above
-            avg30 = stats.get("avg30", [])
-            if avg30 and len(avg30) > KeepaCSVType.SALES:
-                avg_bsr = avg30[KeepaCSVType.SALES]
-                if avg_bsr and avg_bsr != -1:
-                    logger.warning(f"ASIN {asin}: Using 30-day avg BSR {avg_bsr} as fallback")
-                    return int(avg_bsr)
+        avg30 = stats.get("avg30", [])
+        if avg30 and len(avg30) > KeepaCSVType.SALES:
+            avg_bsr = avg30[KeepaCSVType.SALES]
+            if avg_bsr and avg_bsr != -1:
+                logger.warning(f"ASIN {asin}: Using 30-day avg BSR {avg_bsr} as fallback")
+                return int(avg_bsr), "avg30"
 
         logger.warning(f"ASIN {asin}: No BSR data available from any source")
-        return None
+        return None, "none"
 
     @staticmethod
-    def validate_bsr_quality(bsr: Optional[int], category: str = "unknown") -> Dict[str, Any]:
+    def validate_bsr_quality(bsr: Optional[int], category: str = "unknown", source: str = "current") -> Dict[str, Any]:
         """
         Validate BSR value and assess data quality.
 
         Args:
             bsr: BSR value to validate
             category: Product category for context
+            source: Data source identifier (salesRanks, current, csv_recent, avg30, none)
 
         Returns:
-            Quality assessment with confidence score
+            Quality assessment with confidence score (adjusted by source quality)
         """
-        if bsr is None:
+        if bsr is None or source == "none":
             return {
                 "valid": False,
                 "confidence": 0.0,
@@ -551,20 +613,31 @@ class KeepaBSRExtractor:
                 "reason": f"BSR {bsr} outside expected range for {category}"
             }
 
-        # Calculate confidence based on BSR value
+        # Calculate base confidence based on BSR value
         if bsr < 10_000:
-            confidence = 1.0  # Top sellers have reliable BSR
+            base_confidence = 1.0  # Top sellers have reliable BSR
         elif bsr < 100_000:
-            confidence = 0.9
+            base_confidence = 0.9
         elif bsr < 1_000_000:
-            confidence = 0.7
+            base_confidence = 0.7
         else:
-            confidence = 0.5  # Lower confidence for high BSR
+            base_confidence = 0.5  # Lower confidence for high BSR
+
+        # Apply penalty for fallback data sources
+        source_multipliers = {
+            "salesRanks": 1.0,  # Primary source, no penalty
+            "current": 1.0,     # Also current data, no penalty
+            "csv_recent": 0.9,  # Recent historical data, slight penalty
+            "avg30": 0.8,       # 30-day average, significant penalty
+        }
+
+        source_multiplier = source_multipliers.get(source, 0.7)  # Default penalty for unknown sources
+        final_confidence = base_confidence * source_multiplier
 
         return {
             "valid": True,
-            "confidence": confidence,
-            "reason": "BSR within expected range"
+            "confidence": final_confidence,
+            "reason": f"BSR within expected range (source: {source})"
         }
 
 
@@ -618,13 +691,13 @@ def parse_keepa_product(raw_data: Dict[str, Any]) -> Dict[str, Any]:
             "offers_count": current_values.get("new_count"),
         })
 
-        # Extract BSR with enhanced logic
+        # Extract BSR with enhanced logic (returns tuple: (bsr, source))
         extractor = KeepaBSRExtractor()
-        current_bsr = extractor.extract_current_bsr(raw_data)
+        current_bsr, bsr_source = extractor.extract_current_bsr(raw_data)
         product_data["current_bsr"] = current_bsr
 
-        # Validate BSR quality
-        bsr_validation = extractor.validate_bsr_quality(current_bsr, product_data["category"])
+        # Validate BSR quality (adjusted by data source)
+        bsr_validation = extractor.validate_bsr_quality(current_bsr, product_data["category"], bsr_source)
         product_data["bsr_confidence"] = bsr_validation["confidence"]
 
         if current_bsr:

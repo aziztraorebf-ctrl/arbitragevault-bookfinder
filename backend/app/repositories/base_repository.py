@@ -235,15 +235,20 @@ class BaseRepository(Generic[ModelType]):
     async def update(self, id: str, **kwargs) -> Optional[ModelType]:
         """Update record by ID."""
         try:
+            from datetime import datetime, timezone
+
             # Remove None values and forbidden fields
             update_data = {
                 k: v
                 for k, v in kwargs.items()
-                if v is not None and k not in ("id", "created_at")
+                if v is not None and k not in ("id", "created_at", "updated_at")
             }
 
-            if not update_data:
-                # Nothing to update
+            # Automatically set updated_at (timezone-aware)
+            update_data["updated_at"] = datetime.now(timezone.utc)
+
+            if not update_data or (len(update_data) == 1 and "updated_at" in update_data):
+                # Nothing to update besides updated_at
                 return await self.get_by_id(id)
 
             stmt = (

@@ -15,14 +15,23 @@
  */
 
 const { test, expect } = require('@playwright/test')
+const { getRandomASIN } = require('../test-utils/random-data')
 
 const API_BASE_URL = process.env.VITE_API_URL || 'https://arbitragevault-backend-v2.onrender.com'
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://arbitragevault.netlify.app'
 
-// Test ASIN with known characteristics
-const TEST_ASIN = '0316769487' // Popular book for testing
-const TEST_ASIN_LOW_BSR = '0307887898' // Expected good BSR
-const TEST_ASIN_HIGH_RISK = 'B00TEST123' // Mock ASIN for risk testing
+// Use seed-based randomization for reproducibility
+const TEST_SEED = process.env.TEST_SEED || 'phase-8-decision-system'
+const TEST_ASINS = {
+  popular_book: getRandomASIN(`${TEST_SEED}-popular`, 'books_low_bsr'),
+  low_bsr: getRandomASIN(`${TEST_SEED}-low-bsr`, 'books_low_bsr'),
+  high_risk: getRandomASIN(`${TEST_SEED}-high-risk`, 'books_medium_bsr')
+}
+
+// For backward compatibility with existing test code
+const TEST_ASIN = TEST_ASINS.popular_book
+const TEST_ASIN_LOW_BSR = TEST_ASINS.low_bsr
+const TEST_ASIN_HIGH_RISK = TEST_ASINS.high_risk
 
 test.describe('Phase 8.0: Decision System E2E', () => {
 

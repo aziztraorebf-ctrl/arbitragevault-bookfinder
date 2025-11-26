@@ -5,7 +5,7 @@ Tests various scenarios for BSR extraction from Keepa API responses.
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import sys
 import os
@@ -55,6 +55,11 @@ class TestBSRExtraction:
 
     def test_bsr_missing_stats_current(self):
         """Test fallback when stats.current is missing."""
+        # Use timestamps from 2020 (very old, should be rejected)
+        # Formula: keepa_time = (unix_seconds / 60) - KEEPA_TIME_OFFSET_MINUTES
+        old_timestamp_1 = int(datetime(2020, 1, 1).replace(tzinfo=timezone.utc).timestamp() / 60) - 21564000
+        old_timestamp_2 = int(datetime(2020, 1, 2).replace(tzinfo=timezone.utc).timestamp() / 60) - 21564000
+
         raw_data = {
             "asin": "0134685997",
             "title": "Effective Java",
@@ -67,7 +72,7 @@ class TestBSRExtraction:
                 [],  # Amazon prices
                 [],  # New prices
                 [],  # Used prices
-                [21564000, 4321, 21565000, 5432]  # BSR history (old data)
+                [old_timestamp_1, 4321, old_timestamp_2, 5432]  # BSR history (old data from 2020)
             ]
         }
 
@@ -80,7 +85,8 @@ class TestBSRExtraction:
     def test_bsr_from_recent_csv_history(self):
         """Test BSR extraction from recent CSV history as fallback."""
         # Current timestamp in Keepa format (recent)
-        now_keepa = int((datetime.now().timestamp() * 1000) / 60000) - 21564000
+        # Formula: keepa_time = (unix_seconds / 60) - KEEPA_TIME_OFFSET_MINUTES
+        now_keepa = int(datetime.now().timestamp() / 60) - 21564000
         hour_ago_keepa = now_keepa - 60  # 1 hour ago
 
         raw_data = {
@@ -99,9 +105,10 @@ class TestBSRExtraction:
         }
 
         extractor = KeepaBSRExtractor()
-        bsr = extractor.extract_current_bsr(raw_data)
+        bsr, source = extractor.extract_current_bsr(raw_data)
 
         assert bsr == 9999  # Should get most recent value
+        assert source == "csv_recent"  # From recent csv history
 
     def test_bsr_value_negative_one(self):
         """Test handling of -1 (no data) BSR values."""
@@ -148,7 +155,7 @@ class TestBSRExtraction:
         }
 
         extractor = KeepaBSRExtractor()
-        validation = extractor.validate_bsr_quality(3500000, "electronics")
+        validation = extractor.validate_bsr_quality(3500000, "electronics", "current")
         assert validation["valid"] is False
         assert validation["confidence"] == 0.3
 
@@ -231,8 +238,8 @@ class TestKeepaRawParser:
         """Test Keepa timestamp conversions."""
         parser = KeepaRawParser()
 
-        # Test round-trip conversion
-        now = datetime.now().replace(microsecond=0)
+        # Test round-trip conversion (UTC required for Keepa timestamps)
+        now = datetime.utcnow().replace(microsecond=0)
         keepa_time = parser._datetime_to_keepa(now)
         converted_back = parser._keepa_to_datetime(keepa_time)
 
@@ -278,10 +285,13 @@ class TestKeepaBSRExtractor:
             "csv": [[],[],[],[21564000, 3000]]  # Historical
         }
 
-        assert extractor.extract_current_bsr(raw_data) == 1000
+        bsr, source = extractor.extract_current_bsr(raw_data)
+        assert bsr == 1000
+        assert source == "current"
 
         # Scenario 2: No stats.current - should use recent csv
-        now_keepa = int((datetime.now().timestamp() * 1000) / 60000) - 21564000
+        # Formula: keepa_time = (unix_seconds / 60) - KEEPA_TIME_OFFSET_MINUTES
+        now_keepa = int(datetime.now().timestamp() / 60) - 21564000
         raw_data = {
             "asin": "TEST002",
             "stats": {
@@ -291,7 +301,9 @@ class TestKeepaBSRExtractor:
             "csv": [[],[],[],[now_keepa - 10, 1500]]  # Recent history
         }
 
-        assert extractor.extract_current_bsr(raw_data) == 1500
+        bsr, source = extractor.extract_current_bsr(raw_data)
+        assert bsr == 1500
+        assert source == "csv_recent"
 
         # Scenario 3: Only avg30 available
         raw_data = {
@@ -303,23 +315,25 @@ class TestKeepaBSRExtractor:
             "csv": []
         }
 
-        assert extractor.extract_current_bsr(raw_data) == 3000
+        bsr, source = extractor.extract_current_bsr(raw_data)
+        assert bsr == 3000
+        assert source == "avg30"
 
     def test_bsr_quality_validation(self):
         """Test BSR quality assessment logic."""
         extractor = KeepaBSRExtractor()
 
-        # Test various BSR values and categories
+        # Test various BSR values and categories (with "current" source = no penalty)
         test_cases = [
-            (100, "books", True, 1.0),        # Top seller books
-            (50000, "electronics", True, 0.9), # Good electronics BSR
-            (5000000, "books", True, 0.5),    # High but valid books BSR
-            (5000000, "electronics", False, 0.3), # Invalid electronics BSR
-            (None, "any", False, 0.0),        # No BSR data
+            (100, "books", "current", True, 1.0),        # Top seller books
+            (50000, "electronics", "current", True, 0.9), # Good electronics BSR
+            (5000000, "books", "current", True, 0.5),    # High but valid books BSR
+            (5000000, "electronics", "current", False, 0.3), # Invalid electronics BSR
+            (None, "any", "none", False, 0.0),        # No BSR data
         ]
 
-        for bsr, category, expected_valid, expected_confidence in test_cases:
-            result = extractor.validate_bsr_quality(bsr, category)
+        for bsr, category, source, expected_valid, expected_confidence in test_cases:
+            result = extractor.validate_bsr_quality(bsr, category, source)
             assert result["valid"] == expected_valid
             assert abs(result["confidence"] - expected_confidence) < 0.1
 

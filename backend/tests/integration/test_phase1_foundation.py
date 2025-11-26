@@ -172,7 +172,7 @@ class TestUserCRUD:
             "last_name": "Name",
         }
 
-        updated_user = await repo.update(test_user.id, updates)
+        updated_user = await repo.update(test_user.id, **updates)
 
         assert updated_user.first_name == "Updated"
         assert updated_user.last_name == "Name"
@@ -241,7 +241,7 @@ class TestBatchCRUD:
             "items_processed": 0,
         }
 
-        batch = await repo.create(batch_data)
+        batch = await repo.create(**batch_data)
 
         assert batch.id is not None
         assert batch.user_id == test_user.id
@@ -257,12 +257,12 @@ class TestBatchCRUD:
 
         # Valid transition: PENDING -> PROCESSING
         assert test_batch.can_transition_to(BatchStatus.PROCESSING) is True
-        updated = await repo.update(test_batch.id, {"status": BatchStatus.PROCESSING})
+        updated = await repo.update(test_batch.id, **{"status": BatchStatus.PROCESSING})
         assert updated.status == BatchStatus.PROCESSING
 
         # Valid transition: PROCESSING -> COMPLETED
         assert updated.can_transition_to(BatchStatus.COMPLETED) is True
-        completed = await repo.update(updated.id, {"status": BatchStatus.COMPLETED})
+        completed = await repo.update(updated.id, **{"status": BatchStatus.COMPLETED})
         assert completed.status == BatchStatus.COMPLETED
 
         # Invalid transition: COMPLETED -> PENDING
@@ -276,11 +276,11 @@ class TestBatchCRUD:
         assert test_batch.progress_percentage == 0.0
 
         # Update progress
-        updated = await repo.update(test_batch.id, {"items_processed": 5})
+        updated = await repo.update(test_batch.id, **{"items_processed": 5})
         assert updated.progress_percentage == 50.0  # 5/10 * 100
 
         # Full completion
-        completed = await repo.update(updated.id, {"items_processed": 10})
+        completed = await repo.update(updated.id, **{"items_processed": 10})
         assert completed.progress_percentage == 100.0
 
     async def test_batch_cascade_delete(self, db_session, test_user):
@@ -289,7 +289,7 @@ class TestBatchCRUD:
         user_repo = UserRepository(db_session)
 
         # Create batch linked to user
-        batch = await batch_repo.create({
+        batch = await batch_repo.create(**{
             "user_id": test_user.id,
             "name": "Cascade Test",
             "items_total": 1,
@@ -326,7 +326,7 @@ class TestAnalysisCRUD:
             "velocity_score": Decimal("85.50"),
         }
 
-        analysis = await repo.create(analysis_data)
+        analysis = await repo.create(**analysis_data)
 
         assert analysis.id is not None
         assert analysis.batch_id == test_batch.id
@@ -353,11 +353,11 @@ class TestAnalysisCRUD:
         }
 
         # Create first analysis
-        await repo.create(data)
+        await repo.create(**data)
 
         # Attempt duplicate
         with pytest.raises(IntegrityError):
-            await repo.create(data)
+            await repo.create(**data)
 
     async def test_analysis_velocity_score_constraints(self, db_session, test_batch):
         """RED: Test velocity_score check constraints (0-100 range)."""
@@ -375,20 +375,20 @@ class TestAnalysisCRUD:
 
         # Test negative velocity (should fail)
         with pytest.raises(IntegrityError):
-            await repo.create({**base_data, "velocity_score": Decimal("-1.0")})
+            await repo.create(**{**base_data, "velocity_score": Decimal("-1.0")})
 
         await db_session.rollback()
 
         # Test velocity > 100 (should fail)
         with pytest.raises(IntegrityError):
-            await repo.create({**base_data, "velocity_score": Decimal("101.0")})
+            await repo.create(**{**base_data, "velocity_score": Decimal("101.0")})
 
     async def test_analysis_profit_validation(self, db_session, test_batch):
         """RED: Test profit calculation validation method."""
         repo = AnalysisRepository(db_session)
 
         # Create analysis with correct profit calculation
-        analysis = await repo.create({
+        analysis = await repo.create(**{
             "batch_id": test_batch.id,
             "isbn_or_asin": "B00PROFIT1",
             "buy_price": Decimal("10.00"),
@@ -403,7 +403,7 @@ class TestAnalysisCRUD:
         assert analysis.validate_profit_calculation() is True
 
         # Create analysis with incorrect profit
-        incorrect = await repo.create({
+        incorrect = await repo.create(**{
             "batch_id": test_batch.id,
             "isbn_or_asin": "B00PROFIT2",
             "buy_price": Decimal("10.00"),
@@ -422,7 +422,7 @@ class TestAnalysisCRUD:
         batch_repo = BatchRepository(db_session)
 
         # Create analysis linked to batch
-        analysis = await analysis_repo.create({
+        analysis = await analysis_repo.create(**{
             "batch_id": test_batch.id,
             "isbn_or_asin": "B00CASCADE",
             "buy_price": Decimal("10.00"),
@@ -465,26 +465,33 @@ class TestDatabaseManager:
     async def test_session_context_manager_rollback(self, db_session):
         """RED: Test session rollback on exception."""
         user_repo = UserRepository(db_session)
+        user_id = None
 
         try:
-            # Create user
-            user = await user_repo.create({
-                "email": f"rollback_test_{uuid.uuid4().hex[:8]}@example.com",
-                "password_hash": "hash",
-                "first_name": "Rollback",
-                "last_name": "Test",
-            })
+            # Create user WITHOUT committing (add to session only)
+            user = User(
+                id=str(uuid.uuid4()),
+                email=f"rollback_test_{uuid.uuid4().hex[:8]}@example.com",
+                password_hash="hash",
+                first_name="Rollback",
+                last_name="Test",
+                role=UserRole.SOURCER.value,
+                is_active=True,
+            )
+            db_session.add(user)
+            await db_session.flush()  # Get ID without committing
             user_id = user.id
 
-            # Force exception
+            # Force exception BEFORE commit
             raise ValueError("Simulated error")
 
         except ValueError:
             await db_session.rollback()
 
-        # Verify user was not persisted
-        fetched = await user_repo.get_by_id(user_id)
-        assert fetched is None
+        # Verify user was NOT persisted (rollback worked)
+        if user_id:
+            fetched = await user_repo.get_by_id(user_id)
+            assert fetched is None
 
 
 # ============================================================================

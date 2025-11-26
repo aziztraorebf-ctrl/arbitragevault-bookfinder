@@ -17,12 +17,6 @@
 import { useState, useMemo } from 'react';
 import type { ProductScore, ViewScoreMetadata } from '../types/views';
 import { ViewResultsRow } from './ViewResultsRow';
-// Anciens imports tooltips commentés (Phase 2.5A migration accordéon)
-// import { AmazonBadges } from './AmazonBadges';
-// import { Tooltip, InfoIcon } from './Tooltip';
-// import { ROITooltip } from './tooltips/ROITooltip';
-// import { VelocityTooltip } from './tooltips/VelocityTooltip';
-// import { MaxBuyTooltip } from './tooltips/MaxBuyTooltip';
 
 interface ViewResultsTableProps {
   products: ProductScore[];
@@ -130,7 +124,7 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
   if (products.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-md p-8 text-center">
-        <div className="text-4xl mb-4">📊</div>
+        <div className="text-4xl mb-4 text-gray-400">[No Data]</div>
         <h3 className="text-lg font-semibold text-gray-700 mb-2">
           Aucun produit à afficher
         </h3>
@@ -146,7 +140,7 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
     return (
       <div className="bg-white rounded-2xl shadow-md p-8">
         <div className="text-center">
-          <div className="text-4xl mb-4">🔍</div>
+          <div className="text-4xl mb-4 text-gray-400">[Search]</div>
           <h3 className="text-lg font-semibold text-gray-700 mb-2">
             Aucun résultat ne correspond aux filtres
           </h3>
@@ -186,7 +180,6 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
             onClick={handleExportCSV}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
           >
-            <span>📥</span>
             <span>Export CSV</span>
           </button>
         </div>
@@ -292,7 +285,7 @@ export function ViewResultsTable({ products, metadata, onExport }: ViewResultsTa
                 BSR
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                💚 Prix USED
+                Prix USED
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ROI USED

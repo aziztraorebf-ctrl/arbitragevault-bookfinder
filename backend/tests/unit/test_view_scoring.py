@@ -392,7 +392,7 @@ def test_components_sum_equals_score():
     """Test that component contributions sum to total score (approximately)."""
     parsed = {
         "roi": {"roi_percentage": 60.0},
-        "velocity_score": 70.0},
+        "velocity_score": 70.0,
         "stability_score": 50.0
     }
 

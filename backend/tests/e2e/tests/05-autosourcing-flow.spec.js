@@ -1,12 +1,17 @@
 // AutoSourcing Flow E2E Tests - Phase 5
 // Valide le workflow complet AutoSourcing avec vraies donnees Keepa
 const { test, expect } = require('@playwright/test');
+const { getRandomJobConfig } = require('../test-utils/random-data');
 
 const BACKEND_URL = 'https://arbitragevault-backend-v2.onrender.com';
 const FRONTEND_URL = 'https://arbitragevault.netlify.app';
 
 // Minimum token balance required for expensive tests
 const MIN_TOKENS_FOR_DISCOVERY = 100;
+
+// Use seed-based randomization for reproducibility
+const TEST_SEED = process.env.TEST_SEED || 'autosourcing-flow';
+const TEST_JOB_CONFIG = getRandomJobConfig(TEST_SEED);
 
 // Helper to check token balance
 async function getTokenBalance(request) {
@@ -134,25 +139,10 @@ test.describe('AutoSourcing Flow', () => {
     console.log(`Proceeding with AutoSourcing job (balance: ${tokenBalance} >= ${MIN_TOKENS_FOR_DISCOVERY})`);
 
     // Try to submit job via API endpoint
-    // TEMPORARY: Relaxed criteria to guarantee finding picks for Test 2.5 validation
+    // Using randomized job configuration for robustness testing
     // Cost: ~100-150 tokens (discovery 20 products + scoring)
     const response = await request.post(`${BACKEND_URL}/api/v1/autosourcing/run-custom`, {
-      data: {
-        profile_name: 'E2E Test Job Phase 5',
-        discovery_config: {
-          categories: ['Books'],
-          price_range: [10, 50],
-          bsr_range: [10000, 100000],
-          max_results: 20
-        },
-        scoring_config: {
-          roi_min: 5,
-          velocity_min: 30,
-          confidence_min: 50,
-          rating_required: 'GOOD',
-          max_results: 10
-        }
-      },
+      data: TEST_JOB_CONFIG,
       timeout: 60000 // 60 second timeout for Product Finder
     });
 

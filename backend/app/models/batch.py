@@ -4,7 +4,7 @@ import enum
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, CheckConstraint, JSON, Enum as SAEnum
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, CheckConstraint, JSON, Enum as SAEnum, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -30,8 +30,8 @@ class Batch(Base):
 
     # Foreign key to user
     user_id: Mapped[str] = mapped_column(
-        String(36), 
-        ForeignKey("users.id", ondelete="CASCADE"), 
+        UUID(as_uuid=False),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
 

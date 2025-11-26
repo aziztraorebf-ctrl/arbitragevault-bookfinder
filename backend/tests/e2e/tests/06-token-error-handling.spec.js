@@ -3,8 +3,17 @@
 // Note: TokenErrorAlert dedie avec badges balance/deficit n'est PAS encore implemente
 // Ces tests validant le comportement actuel (message erreur generique)
 const { test, expect } = require('@playwright/test');
+const { getRandomASIN } = require('../test-utils/random-data');
 
 const FRONTEND_URL = 'https://arbitragevault.netlify.app';
+
+// Use seed-based randomization for reproducibility
+const TEST_SEED = process.env.TEST_SEED || 'token-error-handling';
+const TEST_ASINS = {
+  test1: getRandomASIN(`${TEST_SEED}-1`, 'books_low_bsr'),
+  test2: getRandomASIN(`${TEST_SEED}-2`, 'books_low_bsr'),
+  test3: getRandomASIN(`${TEST_SEED}-3`, 'books_low_bsr')
+};
 
 test.describe('Token Error Handling UI', () => {
   test('Should display error message on mocked HTTP 429', async ({ page }) => {
@@ -34,7 +43,7 @@ test.describe('Token Error Handling UI', () => {
 
     // Fill and validate ASIN
     const searchInput = page.locator('textarea[placeholder*="ASIN"], textarea').first();
-    await searchInput.fill('B00FLIJJSA');
+    await searchInput.fill(TEST_ASINS.test1);
 
     const validateButton = page.locator('button:has-text("Valider ASINs")').first();
     await validateButton.click();
@@ -89,7 +98,7 @@ test.describe('Token Error Handling UI', () => {
 
     // Trigger API call
     const searchInput = page.locator('textarea[placeholder*="ASIN"], textarea').first();
-    await searchInput.fill('0593655036');
+    await searchInput.fill(TEST_ASINS.test2);
 
     const validateButton = page.locator('button:has-text("Valider ASINs")').first();
     await validateButton.click();
@@ -135,7 +144,7 @@ test.describe('Token Error Handling UI', () => {
 
     // Trigger API call
     const searchInput = page.locator('textarea[placeholder*="ASIN"], textarea').first();
-    await searchInput.fill('B00FLIJJSA');
+    await searchInput.fill(TEST_ASINS.test3);
 
     const validateButton = page.locator('button:has-text("Valider ASINs")').first();
     await validateButton.click();

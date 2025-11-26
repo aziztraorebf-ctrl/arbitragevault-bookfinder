@@ -3,6 +3,10 @@ const { test, expect } = require('@playwright/test');
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://arbitragevault.netlify.app';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://arbitragevault-backend-v2.onrender.com';
 
+// Use seed-based randomization for reproducibility
+const TEST_SEED = process.env.TEST_SEED || 'autosourcing-safeguards';
+const getRandomJobName = (suffix) => `E2E Test ${TEST_SEED.slice(0, 8)} ${suffix} ${Date.now()}`;
+
 test.describe('AutoSourcing Safeguards', () => {
   test('Should display cost estimate before job submission', async ({ page }) => {
     // Mock the estimate API to return quickly
@@ -38,7 +42,7 @@ test.describe('AutoSourcing Safeguards', () => {
     await page.waitForSelector('h2:has-text("Nouvelle Recherche Personnalisée")', { timeout: 10000 });
 
     // Fill job configuration - using exact placeholder from production UI
-    await page.fill('input[placeholder*="Livres Techniques"]', 'Test Safeguards');
+    await page.fill('input[placeholder*="Livres Techniques"]', getRandomJobName('Safeguards'));
 
     // Set max results to a high value
     const maxResultsInput = page.locator('input[name="max_results"], input[placeholder*="max"], input[type="number"]').first();
@@ -101,7 +105,7 @@ test.describe('AutoSourcing Safeguards', () => {
     await page.waitForSelector('h2:has-text("Nouvelle Recherche Personnalisée")', { timeout: 10000 });
 
     // Fill minimal form - using exact placeholder from production UI
-    await page.fill('input[placeholder*="Livres Techniques"]', 'Expensive Job');
+    await page.fill('input[placeholder*="Livres Techniques"]', getRandomJobName('Expensive'));
 
     // Submit form - using exact text from UI
     const submitButton = page.locator('button:has-text("Lancer Recherche")').first();
@@ -146,7 +150,7 @@ test.describe('AutoSourcing Safeguards', () => {
     await page.waitForSelector('h2:has-text("Nouvelle Recherche Personnalisée")', { timeout: 10000 });
 
     // Fill minimal form - using exact placeholder from production UI
-    await page.fill('input[placeholder*="Livres Techniques"]', 'Timeout Test');
+    await page.fill('input[placeholder*="Livres Techniques"]', getRandomJobName('Timeout'));
 
     // Submit form - using exact text from UI
     const submitButton = page.locator('button:has-text("Lancer Recherche")').first();

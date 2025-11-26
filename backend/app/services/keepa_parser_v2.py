@@ -1184,11 +1184,36 @@ def _find_minimum_price_offer(offers: List[Dict]) -> Optional[Dict]:
     return min(offers, key=get_price)
 
 
+# =============================================================================
+# VELOCITY DATA HELPERS (migrated from keepa_parser.py)
+# =============================================================================
+
+def create_velocity_data_from_keepa(parsed_product: Dict[str, Any]) -> VelocityData:
+    """
+    Create VelocityData object from parsed Keepa product data.
+
+    Args:
+        parsed_product: Product data from parse_keepa_product()
+
+    Returns:
+        VelocityData object for velocity calculations
+    """
+    return VelocityData(
+        current_bsr=parsed_product.get("current_bsr"),
+        bsr_history=parsed_product.get("bsr_history", []),
+        price_history=parsed_product.get("price_history", []),
+        buybox_history=[],
+        offers_history=[],
+        category=parsed_product.get("category", "books")
+    )
+
+
 # Backward compatibility exports
 __all__ = [
     'parse_keepa_product',
     'parse_keepa_product_unified',
     'KeepaRawParser',
     'KeepaBSRExtractor',
-    'KeepaCSVType'
+    'KeepaCSVType',
+    'create_velocity_data_from_keepa'
 ]

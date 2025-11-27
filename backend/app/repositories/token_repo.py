@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.token import RefreshToken
 
-from .base_repo import BaseRepository
+from .base_repository import BaseRepository
 
 logger = structlog.get_logger()
 

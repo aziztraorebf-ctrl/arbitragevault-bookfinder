@@ -1,112 +1,42 @@
 """
 Keepa API Service - Core client with throttling, caching, and resilience.
+
+This module now acts as a facade, importing from specialized sub-modules
+for better SRP compliance and maintainability.
+
+Sub-modules:
+- keepa_models: Data classes, enums, and constants
+- keepa_cache: Multi-tier caching system
+- keepa_throttle: Rate limiting and token management
 """
 
 import asyncio
 import time
-import json
 import logging
-from typing import Dict, Any, Optional, List, Tuple
-from datetime import datetime, timedelta
-from enum import Enum
-from dataclasses import dataclass, field
+from typing import Dict, Any, Optional, List
 
 import httpx
 from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
-# Import our throttling system
+# Import from specialized modules
+from .keepa_models import (
+    ENDPOINT_COSTS,
+    MIN_BALANCE_THRESHOLD,
+    SAFETY_BUFFER,
+    CircuitState,
+    CacheEntry,
+    TokenMetrics,
+    CircuitBreaker,
+)
+from .keepa_cache import KeepaCache
 from .keepa_throttle import KeepaThrottle
 from ..core.exceptions import InsufficientTokensError, KeepaRateLimitError
-
-# Keepa API endpoint costs (in tokens)
-ENDPOINT_COSTS = {
-    "product": 1,        # 1 token per ASIN (batch up to 100)
-    "bestsellers": 50,   # 50 tokens flat (returns up to 500k ASINs)
-    "deals": 5,          # 5 tokens per 150 deals
-    "search": 10,        # 10 tokens per result page
-    "category": 1,       # 1 token per category
-    "seller": 1,         # 1 token per seller
-}
-
-# Safety thresholds
-MIN_BALANCE_THRESHOLD = 10  # Refuse requests if balance < 10 tokens
-SAFETY_BUFFER = 20          # Warn if balance < 20 tokens
-
-# Circuit breaker states
-class CircuitState(Enum):
-    CLOSED = "closed"
-    OPEN = "open"
-    HALF_OPEN = "half_open"
-
-@dataclass
-class CacheEntry:
-    """Cache entry with TTL."""
-    data: Any
-    expires_at: datetime
-    cache_type: str  # 'meta', 'pricing', 'bsr'
-    
-    def is_expired(self) -> bool:
-        return datetime.now() > self.expires_at
-
-@dataclass
-class TokenMetrics:
-    """Token usage tracking."""
-    tokens_used: int = 0
-    tokens_remaining: Optional[int] = None
-    requests_count: int = 0
-    last_reset: datetime = field(default_factory=datetime.now)
-    
-    def add_usage(self, tokens: int, remaining: Optional[int] = None):
-        self.tokens_used += tokens
-        self.tokens_remaining = remaining
-        self.requests_count += 1
-
-@dataclass
-class CircuitBreaker:
-    """Circuit breaker for API resilience."""
-    failure_threshold: int = 5
-    timeout_duration: int = 60  # seconds
-    half_open_max_calls: int = 3
-    
-    failure_count: int = 0
-    state: CircuitState = CircuitState.CLOSED
-    last_failure_time: Optional[datetime] = None
-    half_open_calls: int = 0
-    
-    def can_proceed(self) -> bool:
-        if self.state == CircuitState.CLOSED:
-            return True
-        elif self.state == CircuitState.OPEN:
-            if self.last_failure_time and \
-               datetime.now() - self.last_failure_time > timedelta(seconds=self.timeout_duration):
-                self.state = CircuitState.HALF_OPEN
-                self.half_open_calls = 0
-                return True
-            return False
-        elif self.state == CircuitState.HALF_OPEN:
-            return self.half_open_calls < self.half_open_max_calls
-        return False
-    
-    def record_success(self):
-        self.failure_count = 0
-        if self.state == CircuitState.HALF_OPEN:
-            self.state = CircuitState.CLOSED
-        self.half_open_calls = 0
-    
-    def record_failure(self):
-        self.failure_count += 1
-        self.last_failure_time = datetime.now()
-        
-        if self.state == CircuitState.HALF_OPEN:
-            self.state = CircuitState.OPEN
-        elif self.failure_count >= self.failure_threshold:
-            self.state = CircuitState.OPEN
 
 
 class KeepaService:
     """
     Keepa API client with resilience, caching, and monitoring.
-    
+
     Features:
     - Async HTTP client with timeouts
     - Token-aware throttling and budgeting
@@ -114,9 +44,9 @@ class KeepaService:
     - Multi-tier caching (meta, pricing, BSR)
     - Comprehensive metrics and logging
     """
-    
+
     BASE_URL = "https://api.keepa.com"
-    
+
     def __init__(self, api_key: str, concurrency: int = 3):
         self.api_key = api_key
         self.concurrency = concurrency
@@ -127,17 +57,12 @@ class KeepaService:
             limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
         )
 
-        # Caching with different TTL by data type
-        self._cache: Dict[str, CacheEntry] = {}
-        self._cache_ttl = {
-            'meta': timedelta(hours=24),      # Product metadata (stable)
-            'pricing': timedelta(minutes=30), # Prices (volatile)
-            'bsr': timedelta(minutes=60)      # BSR data (semi-volatile)
-        }
+        # Use KeepaCache for caching
+        self._cache_manager = KeepaCache()
 
-        # Quick cache for repeated test calls (10 min TTL)
-        self._quick_cache: Dict[str, Tuple[Any, datetime]] = {}
-        self._quick_cache_ttl = timedelta(minutes=10)
+        # For backward compatibility - expose internal cache dict
+        self._cache = self._cache_manager.cache
+        self._cache_ttl = self._cache_manager._cache_ttl
 
         # Rate limiting and circuit breaker
         self._semaphore = asyncio.Semaphore(concurrency)
@@ -146,7 +71,7 @@ class KeepaService:
         # Initialize throttle with production-optimized settings
         self.throttle = KeepaThrottle(
             tokens_per_minute=20,
-            burst_capacity=200,  # Increased for smooth AutoSourcing (5 niches × 40 products)
+            burst_capacity=200,  # Increased for smooth AutoSourcing (5 niches x 40 products)
             warning_threshold=80,  # 40% of burst capacity
             critical_threshold=40   # 20% of burst capacity
         )
@@ -161,16 +86,20 @@ class KeepaService:
         # Logging
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
-    
+
     async def __aenter__(self):
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
-    
+
     async def close(self):
         """Close HTTP client."""
         await self.client.aclose()
+
+    # =========================================================================
+    # BALANCE & THROTTLING
+    # =========================================================================
 
     async def check_api_balance(self) -> int:
         """
@@ -182,7 +111,6 @@ class KeepaService:
 
         Note:
             Keepa API returns tokensLeft in the JSON response body, NOT in HTTP headers.
-            This was a bug that caused all balance checks to fail.
         """
         now = time.time()
 
@@ -191,7 +119,6 @@ class KeepaService:
             return self.api_balance_cache
 
         # Make lightweight request to get current balance
-        # Use /product with minimal params to minimize cost (1 token)
         try:
             response = await self.client.get(
                 f"{self.BASE_URL}/product",
@@ -213,7 +140,6 @@ class KeepaService:
                     self.logger.info(f"[OK] Keepa API balance: {self.api_balance_cache} tokens")
                     return self.api_balance_cache
 
-            # If tokensLeft not in response, log and raise error
             self.logger.error("[ERROR] Cannot verify Keepa balance (tokensLeft not in response)")
             raise InsufficientTokensError(
                 current_balance=0,
@@ -222,10 +148,8 @@ class KeepaService:
             )
 
         except InsufficientTokensError:
-            # Re-raise balance check errors
             raise
         except Exception as e:
-            # No fallback - if check fails, raise error
             self.logger.error(f"[ERROR] Failed to check API balance: {e}")
             raise InsufficientTokensError(
                 current_balance=0,
@@ -241,11 +165,7 @@ class KeepaService:
             action: Business action name from TOKEN_COSTS registry
 
         Returns:
-            dict with:
-                - can_proceed (bool): Whether action can proceed
-                - current_balance (int): Current Keepa token balance
-                - required_tokens (int): Tokens required for action
-                - action (str): Action name (echoed back)
+            dict with can_proceed, current_balance, required_tokens, action
 
         Raises:
             ValueError: If action not found in TOKEN_COSTS
@@ -257,11 +177,9 @@ class KeepaService:
 
         required = TOKEN_COSTS[action]["cost"]
 
-        # Get current balance from Keepa API
         balance_info = await self.check_api_balance()
         current = balance_info if isinstance(balance_info, int) else balance_info.get("tokensLeft", 0)
 
-        # Sync throttle with actual balance
         self.throttle.set_tokens(current)
 
         can_proceed = current >= required
@@ -279,18 +197,18 @@ class KeepaService:
 
     async def _ensure_sufficient_balance(self, estimated_cost: int, endpoint_name: str = None):
         """
-        Vérifie que le budget API Keepa est suffisant AVANT de faire la requête.
+        Verify API budget is sufficient BEFORE making request.
 
         Args:
-            estimated_cost: Nombre de tokens estimé pour la requête
-            endpoint_name: Nom de l'endpoint pour logging/debugging
+            estimated_cost: Estimated token cost for the request
+            endpoint_name: Endpoint name for logging/debugging
 
         Raises:
-            InsufficientTokensError: Si balance < MIN_BALANCE_THRESHOLD
+            InsufficientTokensError: If balance < MIN_BALANCE_THRESHOLD
         """
         current_balance = await self.check_api_balance()
 
-        # BUG FIX #3: Synchronize local throttle with actual Keepa balance
+        # Synchronize local throttle with actual Keepa balance
         self.throttle.set_tokens(current_balance)
 
         # Warn if balance is low but still above minimum
@@ -328,40 +246,30 @@ class KeepaService:
             f"(estimated cost: {estimated_cost}, endpoint: {endpoint_name})"
         )
 
+    # =========================================================================
+    # CACHE METHODS (delegating to KeepaCache)
+    # =========================================================================
+
     def _get_cache_key(self, endpoint: str, params: Dict) -> str:
         """Generate cache key from endpoint and params."""
-        # Sort params for consistent keys
-        sorted_params = sorted(params.items())
-        param_str = "&".join(f"{k}={v}" for k, v in sorted_params)
-        return f"{endpoint}?{param_str}"
-    
+        return self._cache_manager.get_cache_key(endpoint, params)
+
     def _get_from_cache(self, cache_key: str) -> Optional[Any]:
         """Get data from cache if not expired."""
-        entry = self._cache.get(cache_key)
-        if entry and not entry.is_expired():
-            self.logger.debug(f"Cache HIT for {cache_key}")
-            return entry.data
-        
-        # Remove expired entry
-        if entry and entry.is_expired():
-            del self._cache[cache_key]
-        
-        self.logger.debug(f"Cache MISS for {cache_key}")
-        return None
-    
+        return self._cache_manager.get(cache_key)
+
     def _set_cache(self, cache_key: str, data: Any, cache_type: str = 'pricing'):
         """Store data in cache with appropriate TTL."""
-        ttl = self._cache_ttl.get(cache_type, self._cache_ttl['pricing'])
-        expires_at = datetime.now() + ttl
-        
-        self._cache[cache_key] = CacheEntry(
-            data=data,
-            expires_at=expires_at,
-            cache_type=cache_type
-        )
-        
-        self.logger.debug(f"Cache SET for {cache_key} (TTL: {ttl})")
-    
+        self._cache_manager.set(cache_key, data, cache_type)
+
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """Get cache statistics."""
+        return self._cache_manager.get_stats()
+
+    # =========================================================================
+    # HTTP REQUEST
+    # =========================================================================
+
     @retry(
         wait=wait_exponential(multiplier=2, min=2, max=30),
         stop=stop_after_attempt(4),
@@ -370,11 +278,10 @@ class KeepaService:
     async def _make_request(self, endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Make HTTP request with retry logic and throttling."""
 
-        # Extract endpoint name for cost estimation
         endpoint_name = endpoint.strip('/').split('?')[0]
-        estimated_cost = ENDPOINT_COSTS.get(endpoint_name, 1)  # Default to 1 token if unknown
+        estimated_cost = ENDPOINT_COSTS.get(endpoint_name, 1)
 
-        # [OK] PHASE 4.5: Check API budget BEFORE making request
+        # Check API budget BEFORE making request
         await self._ensure_sufficient_balance(estimated_cost, endpoint_name)
 
         # Apply rate throttling BEFORE making request
@@ -384,9 +291,7 @@ class KeepaService:
         if not self._circuit_breaker.can_proceed():
             raise Exception(f"Circuit breaker OPEN - service unavailable")
 
-        # Add API key to params
         params_with_key = {**params, 'key': self.api_key}
-
         url = f"{self.BASE_URL}{endpoint}"
 
         try:
@@ -394,10 +299,9 @@ class KeepaService:
 
             async with self._semaphore:  # Concurrency limiting
                 response = await self.client.get(url, params=params_with_key)
-            
+
             latency_ms = int((time.time() - start_time) * 1000)
-            
-            # Log request (mask API key)
+
             safe_params = {k: v for k, v in params.items() if k != 'key'}
             self.logger.info(
                 f"Keepa API request",
@@ -408,110 +312,70 @@ class KeepaService:
                     "latency_ms": latency_ms
                 }
             )
-            
-            # Handle rate limiting (HTTP 429) - raise KeepaRateLimitError for retry
+
+            # Handle rate limiting (HTTP 429)
             if response.status_code == 429:
                 self._circuit_breaker.record_failure()
                 tokens_left = response.headers.get('tokens-left', 'unknown')
                 retry_after = response.headers.get('retry-after')
                 retry_seconds = int(retry_after) if retry_after and retry_after.isdigit() else None
                 self.logger.warning(
-                    f"Rate limited by Keepa API (tokens left: {tokens_left}, retry-after: {retry_after}). "
-                    f"Will retry with exponential backoff."
+                    f"Rate limited by Keepa API (tokens left: {tokens_left}, retry-after: {retry_after})"
                 )
                 raise KeepaRateLimitError(
                     tokens_left=tokens_left,
                     endpoint=endpoint,
                     retry_after=retry_seconds
                 )
-            
+
             # Handle server errors (HTTP 500)
             if response.status_code == 500:
                 self._circuit_breaker.record_failure()
                 self.logger.error(f"Keepa API server error (HTTP 500)")
                 raise Exception("HTTP 500: Keepa API internal server error")
-            
-            # Check for other HTTP errors
+
             response.raise_for_status()
-            
-            # Parse response
             data = response.json()
-            
+
             # Extract token info from response if available
             tokens_left = response.headers.get('tokens-left')
             if tokens_left:
                 try:
-                    self.metrics.add_usage(1, int(tokens_left))  # Assume 1 token per request
+                    self.metrics.add_usage(1, int(tokens_left))
                 except ValueError:
-                    pass  # Invalid token header
-            
-            # Record success
+                    pass
+
             self._circuit_breaker.record_success()
-            
             return data
-            
+
         except (httpx.HTTPStatusError, httpx.RequestError) as e:
             self._circuit_breaker.record_failure()
             self.logger.error(f"Keepa API error: {e}")
             raise
+
+    # =========================================================================
+    # PRODUCT DATA METHODS
+    # =========================================================================
 
     async def get_product_with_quick_cache(self, identifier: str) -> Optional[Dict[str, Any]]:
         """
         Get product with ultra-short cache for repeated test calls.
         10 minute TTL for development testing.
         """
-        cache_key = f"quick:product:{identifier}"
-
         # Check quick cache
-        if cache_key in self._quick_cache:
-            cached_data, timestamp = self._quick_cache[cache_key]
-            if datetime.now() - timestamp < self._quick_cache_ttl:
-                self.logger.debug(f"💨 Quick cache HIT for {identifier}")
-                return cached_data
+        cached = self._cache_manager.get_quick(identifier)
+        if cached:
+            self.logger.debug(f"Quick cache HIT for {identifier}")
+            return cached
 
-        # Get from normal flow (get_product_data already sanitizes numpy arrays)
+        # Get from normal flow
         result = await self.get_product_data(identifier)
 
         if result:
-            # Store in quick cache
-            self._quick_cache[cache_key] = (result, datetime.now())
-
-            # Simple GC - clean if too many entries
-            if len(self._quick_cache) > 100:
-                cutoff = datetime.now() - self._quick_cache_ttl
-                self._quick_cache = {
-                    k: v for k, v in self._quick_cache.items()
-                    if v[1] > cutoff
-                }
+            self._cache_manager.set_quick(identifier, result)
 
         return result
 
-    async def health_check(self) -> Dict[str, Any]:
-        """Check API health and get token status."""
-        try:
-            # Check real API balance
-            balance = await self.check_api_balance()
-
-            # Use local throttle status too
-            local_tokens = self.throttle.available_tokens
-
-            return {
-                "status": "healthy" if balance and balance > 0 else "degraded",
-                "api_tokens_left": balance,
-                "local_tokens_available": local_tokens,
-                "throttle_healthy": self.throttle.is_healthy,
-                "circuit_breaker_state": self._circuit_breaker.state.value,
-                "requests_made": self.metrics.requests_count,
-                "cache_entries": len(self._cache)
-            }
-            
-        except Exception as e:
-            return {
-                "status": "unhealthy",
-                "error": str(e),
-                "circuit_breaker_state": self._circuit_breaker.state.value
-            }
-    
     async def get_product_data(self, identifier: str, domain: int = 1, force_refresh: bool = False) -> Optional[Dict[str, Any]]:
         """
         Get product data from Keepa using official Python library.
@@ -524,6 +388,7 @@ class KeepaService:
         Returns:
             Product data dict or None if not found
         """
+        from datetime import datetime
 
         # Check cache first (unless force_refresh)
         cache_key = self._get_cache_key('/product', {
@@ -536,73 +401,53 @@ class KeepaService:
             self.logger.info(f"[CACHE HIT] Serving cached data for {identifier}")
             return cached_data
 
-        # Log cache bypass or miss
         if force_refresh:
             self.logger.info(f"[FORCE REFRESH] Bypassing cache for {identifier}, requesting LIVE data with update=0")
         else:
             self.logger.info(f"[CACHE MISS] No valid cache for {identifier}, requesting data from Keepa")
 
         try:
-            # Import official keepa library
             import keepa
 
-            # Create Keepa API instance
             api = keepa.Keepa(self.api_key)
 
-            # Query product with stats and history
-            # Run in executor to avoid blocking (keepa lib is synchronous)
             loop = asyncio.get_event_loop()
 
             def _sync_query():
-                # Map domain integer to keepa library string format
                 domain_map = {
-                    1: 'US',
-                    2: 'GB',
-                    3: 'DE',
-                    4: 'FR',
-                    5: 'JP',
-                    6: 'CA',
-                    7: 'CN',
-                    8: 'IT',
-                    9: 'ES',
-                    10: 'IN',
-                    11: 'MX',
-                    12: 'BR'
+                    1: 'US', 2: 'GB', 3: 'DE', 4: 'FR', 5: 'JP',
+                    6: 'CA', 7: 'CN', 8: 'IT', 9: 'ES', 10: 'IN',
+                    11: 'MX', 12: 'BR'
                 }
-                domain_str = domain_map.get(domain, 'US')  # Default to US
-
-                # Use update=0 to force live data when force_refresh=True
+                domain_str = domain_map.get(domain, 'US')
                 update_param = 0 if force_refresh else None
 
                 self.logger.info(f"[KEEPA API] Calling with update={update_param} for {identifier}")
 
                 return api.query(
                     identifier,
-                    domain=domain_str,  # [OK] Use string, not integer
-                    stats=180,          # Get 180-day statistics
-                    history=True,       # Include price history
-                    offers=20,          # Include offer data
-                    update=update_param # [OK] update=0 forces live Amazon scraping (2-3 tokens), None uses cache
+                    domain=domain_str,
+                    stats=180,
+                    history=True,
+                    offers=20,
+                    update=update_param
                 )
 
             products = await loop.run_in_executor(None, _sync_query)
 
-            # Check if product found
             if not products or len(products) == 0:
                 self.logger.info(f"Product not found: {identifier}")
                 return None
 
             product = products[0]
 
-            # CRITICAL: Sanitize numpy arrays before caching/returning
-            # The keepa Python library returns numpy.ndarray which Pydantic cannot serialize
+            # Sanitize numpy arrays before caching/returning
             from app.utils.keepa_utils import keepa_to_datetime, sanitize_keepa_response
 
             product = sanitize_keepa_response(product)
             self.logger.info(f"[NUMPY FIX] Sanitized numpy arrays for {identifier}")
 
-            # Log data freshness using official conversion
-
+            # Log data freshness
             last_price_change = product.get("lastPriceChange", -1)
             if last_price_change != -1:
                 timestamp = keepa_to_datetime(last_price_change)
@@ -617,7 +462,7 @@ class KeepaService:
             else:
                 self.logger.info(f"[KEEPA DATA] Received data for {identifier}, no lastPriceChange available")
 
-            # Cache the result (pricing data = shorter TTL)
+            # Cache the result
             self._set_cache(cache_key, product, cache_type='pricing')
             self.logger.info(f"[CACHE SET] Cached data for {identifier} with TTL={self._cache_ttl['pricing']}")
 
@@ -628,122 +473,118 @@ class KeepaService:
             import traceback
             self.logger.error(f"Traceback: {traceback.format_exc()}")
             return None
-    
+
     async def find_products(self, search_criteria: Dict[str, Any], domain: int = 1, max_results: int = 50) -> List[str]:
         """
-        Find products using Keepa Product Finder (librairie officielle).
-        
+        Find products using Keepa Product Finder.
+
         Args:
             search_criteria: Dictionary with search criteria (categories, price ranges, BSR, etc.)
-            domain: Keepa domain (1=US, 2=UK, etc.)  
+            domain: Keepa domain (1=US, 2=UK, etc.)
             max_results: Maximum number of ASINs to return (default 50)
-        
+
         Returns:
             List of ASINs matching the criteria
         """
         try:
-            # Import de la librairie keepa officielle
             import keepa
-            import asyncio
-            
-            # Création de l'instance API
+
             api = keepa.Keepa(self.api_key)
-            
-            # Construction des paramètres pour l'API Keepa Product Finder
+
             product_params = {
-                'categories_include': search_criteria.get('categories', [1000]),  # Books par défaut
+                'categories_include': search_criteria.get('categories', [1000]),
                 'current_NEW_gte': search_criteria.get('price_min_cents', 500),
                 'current_NEW_lte': search_criteria.get('price_max_cents', 10000),
                 'avg30_SALES_gte': search_criteria.get('bsr_min', 1),
                 'avg30_SALES_lte': search_criteria.get('bsr_max', 100000),
             }
-            
-            self.logger.info(f"Recherche Keepa avec paramètres: {product_params}")
-            
-            # Appel à la méthode product_finder (synchrone, mais dans un thread)
+
+            self.logger.info(f"Keepa search with params: {product_params}")
+
             loop = asyncio.get_event_loop()
-            
-            # Exécution dans un thread pour ne pas bloquer
+
             def _sync_product_finder():
                 return api.product_finder(
                     product_params,
                     domain='US' if domain == 1 else 'DE',
                     wait=True
                 )
-            
+
             asins = await loop.run_in_executor(None, _sync_product_finder)
 
-            # CRITICAL: Sanitize numpy arrays - keepa library returns numpy.ndarray
+            # Sanitize numpy arrays
             from app.utils.keepa_utils import sanitize_keepa_response
             asins = sanitize_keepa_response(asins)
 
-            # Limiter aux max_results
             limited_asins = asins[:max_results] if asins else []
 
-            self.logger.info(f"Keepa Product Finder: {len(limited_asins)} ASINs trouvés (sanitized)")
+            self.logger.info(f"Keepa Product Finder: {len(limited_asins)} ASINs found (sanitized)")
             return limited_asins
-            
+
         except Exception as e:
-            self.logger.error(f"Erreur lors de la recherche de produits: {e}")
-            self.logger.error(f"Fallback vers données simulées")
-            # Fallback vers simulation en cas d'erreur
+            self.logger.error(f"Error in product search: {e}")
+            self.logger.error(f"Fallback to simulated data")
             return [
-                "B08N5WRWNW", "B07FZ8S74R", "B09KMVSP4D", 
+                "B08N5WRWNW", "B07FZ8S74R", "B09KMVSP4D",
                 "B08XYZ1234", "B09ABC5678", "B07DEF9012"
             ][:max_results]
-    
-    def get_cache_stats(self) -> Dict[str, Any]:
-        """Get cache statistics."""
-        total_entries = len(self._cache)
-        expired_entries = sum(1 for entry in self._cache.values() if entry.is_expired())
-        
-        by_type = {}
-        for entry in self._cache.values():
-            cache_type = entry.cache_type
-            by_type[cache_type] = by_type.get(cache_type, 0) + 1
-        
-        return {
-            "total_entries": total_entries,
-            "expired_entries": expired_entries,
-            "active_entries": total_entries - expired_entries,
-            "entries_by_type": by_type,
-            "hit_rate": getattr(self, '_cache_hits', 0) / max(getattr(self, '_cache_requests', 1), 1)
-        }
+
+    # =========================================================================
+    # HEALTH & UTILITY METHODS
+    # =========================================================================
+
+    async def health_check(self) -> Dict[str, Any]:
+        """Check API health and get token status."""
+        try:
+            balance = await self.check_api_balance()
+            local_tokens = self.throttle.available_tokens
+
+            return {
+                "status": "healthy" if balance and balance > 0 else "degraded",
+                "api_tokens_left": balance,
+                "local_tokens_available": local_tokens,
+                "throttle_healthy": self.throttle.is_healthy,
+                "circuit_breaker_state": self._circuit_breaker.state.value,
+                "requests_made": self.metrics.requests_count,
+                "cache_entries": len(self._cache)
+            }
+
+        except Exception as e:
+            return {
+                "status": "unhealthy",
+                "error": str(e),
+                "circuit_breaker_state": self._circuit_breaker.state.value
+            }
 
     async def get_sales_velocity_data(self, asin: str) -> Dict[str, Any]:
         """
-        Get sales velocity data from Keepa API
-        
-        Extracts salesRankDrops and related metrics for velocity estimation
+        Get sales velocity data from Keepa API.
+
+        Extracts salesRankDrops and related metrics for velocity estimation.
         """
         try:
-            # Get product data with sales rank information and stats
             product_data = await self.get_product_data(asin)
-            
+
             if not product_data:
                 self.logger.warning(f"No product data available for velocity analysis: {asin}")
                 return self._create_empty_velocity_data(asin)
-            
-            # Extract velocity data from stats section (where Keepa stores salesRankDrops)
+
             stats = product_data.get('stats', {})
-            
-            # Extract category from categoryTree (more reliable than 'category')
+
+            # Extract category from categoryTree
             category = 'Unknown'
             category_tree = product_data.get('categoryTree', [])
             if category_tree and len(category_tree) > 0:
-                # Get the main category (usually first in tree)
                 category = category_tree[0].get('name', 'Unknown')
-            
-            # Get BSR from stats.current[3] (official Keepa pattern)
-            stats = product_data.get('stats', {})
+
+            # Get BSR from stats.current[3]
             current = stats.get('current', [])
             current_bsr = None
             if current and len(current) > 3:
                 bsr = current[3]
                 if bsr and bsr != -1:
                     current_bsr = int(bsr)
-            
-            # Extract velocity-relevant data from stats
+
             velocity_data = {
                 "asin": asin,
                 "sales_drops_30": stats.get('salesRankDrops30', 0),
@@ -753,20 +594,20 @@ class KeepaService:
                 "domain": product_data.get('domainId', 1),
                 "title": product_data.get('title', 'Unknown Product')
             }
-            
+
             self.logger.info(f"Sales velocity data retrieved for {asin}: {velocity_data['sales_drops_30']} drops/30d, BSR: {current_bsr}")
             return velocity_data
-            
+
         except Exception as e:
             self.logger.error(f"Error fetching sales velocity data for {asin}: {e}")
             return self._create_empty_velocity_data(asin)
-    
+
     def _create_empty_velocity_data(self, asin: str) -> Dict[str, Any]:
-        """Create empty velocity data structure"""
+        """Create empty velocity data structure."""
         return {
             "asin": asin,
             "sales_drops_30": 0,
-            "sales_drops_90": 0, 
+            "sales_drops_90": 0,
             "current_bsr": 0,
             "category": "Unknown",
             "domain": 1,
@@ -774,7 +615,10 @@ class KeepaService:
         }
 
 
-# Dependency injection function for FastAPI
+# =========================================================================
+# DEPENDENCY INJECTION
+# =========================================================================
+
 async def get_keepa_service() -> KeepaService:
     """FastAPI dependency to get Keepa service instance."""
     try:
@@ -787,19 +631,38 @@ async def get_keepa_service() -> KeepaService:
                 logging.getLogger(__name__).info("Successfully retrieved Keepa API key from Memex secrets")
         except Exception as keyring_error:
             logging.getLogger(__name__).debug(f"Keyring access failed: {keyring_error}")
-        
+
         # Fallback to environment variable
         if not api_key:
             import os
             api_key = os.getenv("KEEPA_API_KEY")
             if api_key:
                 logging.getLogger(__name__).info("Using Keepa API key from environment variable")
-        
+
         if not api_key:
             raise ValueError("KEEPA_API_KEY not found in Memex secrets or environment variables")
-        
+
         return KeepaService(api_key=api_key)
-    
+
     except Exception as e:
         logging.getLogger(__name__).error(f"Failed to initialize Keepa service: {e}")
         raise
+
+
+# Backward compatibility exports
+__all__ = [
+    # Main class
+    'KeepaService',
+
+    # Dependency injection
+    'get_keepa_service',
+
+    # Re-exported from keepa_models for backward compatibility
+    'ENDPOINT_COSTS',
+    'MIN_BALANCE_THRESHOLD',
+    'SAFETY_BUFFER',
+    'CircuitState',
+    'CacheEntry',
+    'TokenMetrics',
+    'CircuitBreaker',
+]

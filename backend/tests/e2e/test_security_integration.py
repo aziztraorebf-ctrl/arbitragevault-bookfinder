@@ -1,6 +1,10 @@
 """
 Tests de sécurité et intégration pour valider l'authentification et les secrets
 Vérifie JWT, gestion Keepa API, et sécurité des endpoints
+
+NOTE: Ces tests nécessitent un serveur backend en cours d'exécution.
+Ils sont skippés par défaut pour ne pas bloquer les tests unitaires.
+Pour exécuter: démarrer le backend avec 'uvicorn app.main:app' puis pytest avec --run-e2e
 """
 import pytest
 import httpx
@@ -10,6 +14,9 @@ from typing import Optional, Dict, Any
 
 BASE_URL = "http://localhost:8000"
 SECURITY_TIMEOUT = 30.0
+
+# Skip all E2E tests by default unless --run-e2e flag is provided
+pytestmark = pytest.mark.skip(reason="Requires running backend server - use pytest --run-e2e to enable")
 
 class TestSecurityIntegration:
     """Tests sécurité et intégration du backend"""

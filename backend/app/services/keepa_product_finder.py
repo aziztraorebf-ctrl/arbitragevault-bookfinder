@@ -32,6 +32,44 @@ from app.schemas.config import CategoryConfig
 logger = logging.getLogger(__name__)
 
 
+# Phase 6: Budget Guard - Token Cost Constants
+BESTSELLERS_COST = 50  # tokens per bestsellers call
+FILTERING_COST_PER_ASIN = 1  # tokens per ASIN in filtering
+
+
+def estimate_discovery_cost(
+    count: int,
+    max_asins_per_niche: int = 100,
+    buffer_percent: int = 0
+) -> int:
+    """
+    Estimate MAXIMUM token cost for niche discovery.
+
+    Formula:
+    - bestsellers: 50 tokens x count
+    - filtering: 1 token x max_asins x count
+
+    Args:
+        count: Number of niches to discover
+        max_asins_per_niche: Maximum ASINs to filter per niche (default 100)
+        buffer_percent: Optional safety buffer percentage (default 0)
+
+    Returns:
+        Conservative (high) estimate of token cost
+    """
+    if count <= 0:
+        return 0
+
+    bestsellers_cost = BESTSELLERS_COST * count
+    filtering_cost = max_asins_per_niche * FILTERING_COST_PER_ASIN * count
+    base_cost = bestsellers_cost + filtering_cost
+
+    if buffer_percent > 0:
+        return int(base_cost * (1 + buffer_percent / 100))
+
+    return base_cost
+
+
 class KeepaProductFinderService:
     """
     Service pour découvrir produits via Keepa REST API.
@@ -170,9 +208,11 @@ class KeepaProductFinderService:
             # Si on a des filtres BSR/prix, on doit récupérer les détails
             if bsr_min or bsr_max or price_min or price_max:
                 # Batch retrieve pour filtrer
+                # Phase 6 fix: Reduced from 500 to 100 ASINs to save ~400 tokens per niche
+                # Cost: 1 token per ASIN, so 100 ASINs = 100 tokens vs 500 = 500 tokens
                 filtered_asins = await self._filter_asins_by_criteria(
                     domain=domain,
-                    asins=asins[:500],  # Limite pour éviter trop de tokens
+                    asins=asins[:100],  # Limite 100 ASINs pour economiser tokens
                     bsr_min=bsr_min,
                     bsr_max=bsr_max,
                     price_min=price_min,

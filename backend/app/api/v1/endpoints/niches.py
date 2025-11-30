@@ -14,7 +14,7 @@ from app.core.db import get_db_session
 from app.core.guards import require_tokens
 from app.services.keepa_service import KeepaService, get_keepa_service
 from app.services.config_service import ConfigService
-from app.services.keepa_product_finder import KeepaProductFinderService
+from app.services.keepa_product_finder import KeepaProductFinderService, estimate_discovery_cost
 from app.services.niche_templates import discover_curated_niches
 from app.core.config import settings
 from app.api.v1.endpoints.products import DiscoverWithScoringResponse
@@ -24,6 +24,78 @@ logger = logging.getLogger(__name__)
 
 # Timeout protection for Keepa endpoints
 ENDPOINT_TIMEOUT = 30  # seconds
+
+# Phase 6: Budget Guard Configuration
+MAX_ASINS_PER_NICHE = 100  # Reduced from 500 to save tokens
+
+
+async def check_budget_before_discovery(
+    count: int,
+    keepa: KeepaService,
+    max_asins_per_niche: int = MAX_ASINS_PER_NICHE
+) -> bool:
+    """
+    Phase 6 Budget Guard: Check if sufficient tokens BEFORE consuming any.
+
+    Raises HTTPException 429 if insufficient tokens with actionable details.
+
+    Args:
+        count: Number of niches to discover
+        keepa: KeepaService instance
+        max_asins_per_niche: Max ASINs to filter per niche
+
+    Returns:
+        True if budget sufficient
+
+    Raises:
+        HTTPException 429: If insufficient tokens
+    """
+    # Estimate cost
+    estimated_cost = estimate_discovery_cost(count, max_asins_per_niche)
+
+    # Get current balance
+    current_balance = await keepa.check_api_balance()
+
+    logger.info(
+        f"[BUDGET_GUARD] Checking: count={count}, estimated={estimated_cost}, balance={current_balance}"
+    )
+
+    if current_balance < estimated_cost:
+        deficit = estimated_cost - current_balance
+        cost_per_niche = estimated_cost // count if count > 0 else 0
+
+        # Calculate how many niches user CAN afford
+        affordable_niches = current_balance // cost_per_niche if cost_per_niche > 0 else 0
+
+        suggestion = (
+            f"Try count={affordable_niches} (estimated: {affordable_niches * cost_per_niche} tokens)"
+            if affordable_niches > 0
+            else "Wait for token refresh or reduce count to 1"
+        )
+
+        logger.warning(
+            f"[BUDGET_GUARD] Rejected: insufficient tokens. "
+            f"Need {estimated_cost}, have {current_balance}, deficit {deficit}"
+        )
+
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "message": f"Insufficient tokens for {count} niches",
+                "estimated_cost": estimated_cost,
+                "current_balance": current_balance,
+                "deficit": deficit,
+                "suggestion": suggestion
+            },
+            headers={
+                "X-Token-Balance": str(current_balance),
+                "X-Token-Required": str(estimated_cost),
+                "Retry-After": "3600"
+            }
+        )
+
+    logger.info(f"[BUDGET_GUARD] Approved: {count} niches, estimated {estimated_cost} tokens")
+    return True
 
 
 @router.get("/discover", response_model=DiscoverWithScoringResponse)
@@ -78,6 +150,10 @@ async def discover_niches_auto(
         # Check API key
         if not settings.KEEPA_API_KEY:
             raise HTTPException(status_code=503, detail="Keepa API key not configured")
+
+        # Phase 6: Budget Guard - Check BEFORE consuming ANY tokens
+        # This prevents the fire-and-forget token loss on timeout
+        await check_budget_before_discovery(count=count, keepa=keepa)
 
         # Initialize services - Use injected keepa instance from @require_tokens decorator
         config_service = ConfigService(db)

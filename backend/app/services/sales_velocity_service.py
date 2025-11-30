@@ -160,7 +160,7 @@ class SalesVelocityService:
             'label': 'Unknown',
             'description': 'Insufficient data',
             'strategy': 'Analyze manually',
-            'icon': '❓'
+            'icon': '[UNKNOWN]'
         })
     
     def calculate_opportunity_score(self, roi_percent: float, profit_net: float, monthly_sales: int) -> float:

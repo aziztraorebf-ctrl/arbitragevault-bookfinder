@@ -204,16 +204,16 @@ class TestBaseRepositoryIntegration:
 
     async def test_in_filter(self):
         """Test IN filter for multiple values."""
-        statuses = ["PENDING", "RUNNING"]
-        
+        statuses = ["PENDING", "PROCESSING"]
+
         page = await self.batch_repo.list(
             filters={
                 "status": {"operator": "in", "value": statuses}
             }
         )
-        
+
         for batch in page.items:
-            assert batch.status in statuses
+            assert batch.status.value in statuses
 
     async def test_combined_filters_and_sorting(self):
         """Test combining filters with sorting."""

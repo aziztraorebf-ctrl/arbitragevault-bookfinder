@@ -26,13 +26,13 @@ class TestDataPreparationForPagination:
             {
                 "name": "Alpha Batch",
                 "items_total": 100,
-                "status": BatchStatus.DONE,
+                "status": BatchStatus.COMPLETED,
                 "strategy_snapshot": {"profit_threshold": 20.0}
             },
             {
-                "name": "Beta Batch", 
+                "name": "Beta Batch",
                 "items_total": 50,
-                "status": BatchStatus.RUNNING,
+                "status": BatchStatus.PROCESSING,
                 "strategy_snapshot": {"profit_threshold": 15.0}
             },
             {

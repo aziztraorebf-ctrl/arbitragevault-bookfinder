@@ -137,7 +137,7 @@ async def sample_batches(async_db_session: AsyncSession, sample_users: List[User
             id=str(uuid.uuid4()),
             user_id=sample_users[0].id,
             name="Test Batch 1",
-            status=BatchStatus.DONE,
+            status=BatchStatus.COMPLETED,
             items_total=100,
             items_processed=100
         ),
@@ -145,7 +145,7 @@ async def sample_batches(async_db_session: AsyncSession, sample_users: List[User
             id=str(uuid.uuid4()),
             user_id=sample_users[1].id,
             name="Test Batch 2", 
-            status=BatchStatus.RUNNING,
+            status=BatchStatus.PROCESSING,
             items_total=50,
             items_processed=25
         ),

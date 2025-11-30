@@ -63,16 +63,16 @@ class TestBatchRepository:
         )
         
         # Transition to RUNNING
-        updated = await self.batch_repo.transition_status(batch.id, BatchStatus.RUNNING)
+        updated = await self.batch_repo.transition_status(batch.id, BatchStatus.PROCESSING)
         
         assert updated is not None
-        assert updated.status == BatchStatus.RUNNING
+        assert updated.status == BatchStatus.PROCESSING
         assert updated.started_at is not None
         
         # Transition to DONE
-        completed = await self.batch_repo.transition_status(batch.id, BatchStatus.DONE)
+        completed = await self.batch_repo.transition_status(batch.id, BatchStatus.COMPLETED)
         
-        assert completed.status == BatchStatus.DONE
+        assert completed.status == BatchStatus.COMPLETED
         assert completed.finished_at is not None
 
     async def test_transition_status_invalid(self):
@@ -86,7 +86,7 @@ class TestBatchRepository:
         
         # Transition to DONE (PENDING -> DONE is invalid)
         with pytest.raises(InvalidTransitionError):
-            await self.batch_repo.transition_status(batch.id, BatchStatus.DONE)
+            await self.batch_repo.transition_status(batch.id, BatchStatus.COMPLETED)
 
     async def test_transition_status_force(self):
         """Test forced status transitions bypass validation."""
@@ -99,11 +99,11 @@ class TestBatchRepository:
         # Force invalid transition (should work)
         updated = await self.batch_repo.transition_status(
             batch.id, 
-            BatchStatus.DONE, 
+            BatchStatus.COMPLETED, 
             force=True
         )
         
-        assert updated.status == BatchStatus.DONE
+        assert updated.status == BatchStatus.COMPLETED
 
     async def test_update_progress(self):
         """Test progress updates."""
@@ -114,14 +114,14 @@ class TestBatchRepository:
         )
         
         # Start batch
-        await self.batch_repo.transition_status(batch.id, BatchStatus.RUNNING)
+        await self.batch_repo.transition_status(batch.id, BatchStatus.PROCESSING)
         
         # Update progress
         updated = await self.batch_repo.update_progress(batch.id, 50)
         
         assert updated.items_processed == 50
         assert updated.progress_percentage == 50.0
-        assert updated.status == BatchStatus.RUNNING  # Not completed yet
+        assert updated.status == BatchStatus.PROCESSING  # Not completed yet
 
     async def test_update_progress_auto_complete(self):
         """Test auto-completion when all items processed."""
@@ -132,13 +132,13 @@ class TestBatchRepository:
         )
         
         # Start batch
-        await self.batch_repo.transition_status(batch.id, BatchStatus.RUNNING)
+        await self.batch_repo.transition_status(batch.id, BatchStatus.PROCESSING)
         
         # Complete all items
         completed = await self.batch_repo.update_progress(batch.id, 10)
         
         assert completed.items_processed == 10
-        assert completed.status == BatchStatus.DONE
+        assert completed.status == BatchStatus.COMPLETED
         assert completed.finished_at is not None
 
     async def test_update_progress_clamps_values(self):
@@ -211,12 +211,12 @@ class TestBatchRepository:
             name="Running Batch",
             items_total=20
         )
-        await self.batch_repo.transition_status(running_batch.id, BatchStatus.RUNNING)
+        await self.batch_repo.transition_status(running_batch.id, BatchStatus.PROCESSING)
         
         # Get only running batches
         running_batches = await self.batch_repo.get_user_batches(
             self.test_user.id, 
-            status=BatchStatus.RUNNING
+            status=BatchStatus.PROCESSING
         )
         
         assert len(running_batches) == 1
@@ -230,14 +230,14 @@ class TestBatchRepository:
             name="Active Batch",
             items_total=10
         )
-        await self.batch_repo.transition_status(batch.id, BatchStatus.RUNNING)
+        await self.batch_repo.transition_status(batch.id, BatchStatus.PROCESSING)
         
         # Get active batches
         active_batches = await self.batch_repo.get_active_batches()
         
         assert len(active_batches) == 1
         assert active_batches[0].id == batch.id
-        assert active_batches[0].status == BatchStatus.RUNNING
+        assert active_batches[0].status == BatchStatus.PROCESSING
 
     async def test_get_batch_stats(self):
         """Test batch statistics calculation."""
@@ -253,7 +253,7 @@ class TestBatchRepository:
             name="Running",
             items_total=20
         )
-        await self.batch_repo.transition_status(running.id, BatchStatus.RUNNING)
+        await self.batch_repo.transition_status(running.id, BatchStatus.PROCESSING)
         await self.batch_repo.update_progress(running.id, 15)
         
         done = await self.batch_repo.create_batch(
@@ -261,16 +261,16 @@ class TestBatchRepository:
             name="Done",
             items_total=30
         )
-        await self.batch_repo.transition_status(done.id, BatchStatus.RUNNING)
+        await self.batch_repo.transition_status(done.id, BatchStatus.PROCESSING)
         await self.batch_repo.update_progress(done.id, 30)  # Auto-completes
         
         # Get stats for user
         stats = await self.batch_repo.get_batch_stats(self.test_user.id)
         
         assert stats["total_batches"] == 3
-        assert stats["by_status"]["pending"] == 1
-        assert stats["by_status"]["running"] == 1
-        assert stats["by_status"]["done"] == 1
+        assert stats["by_status"]["PENDING"] == 1
+        assert stats["by_status"]["PROCESSING"] == 1
+        assert stats["by_status"]["COMPLETED"] == 1
         assert stats["total_items_processed"] == 45  # 0 + 15 + 30
 
     async def test_restart_batch(self):
@@ -282,7 +282,7 @@ class TestBatchRepository:
             items_total=10
         )
         
-        await self.batch_repo.transition_status(batch.id, BatchStatus.RUNNING)
+        await self.batch_repo.transition_status(batch.id, BatchStatus.PROCESSING)
         await self.batch_repo.update_progress(batch.id, 10)  # Complete it
         
         # Restart the batch
@@ -327,7 +327,7 @@ class TestBatchRepository:
             name="Failed Batch",
             items_total=10
         )
-        await self.batch_repo.transition_status(failed_batch.id, BatchStatus.RUNNING)
+        await self.batch_repo.transition_status(failed_batch.id, BatchStatus.PROCESSING)
         await self.batch_repo.transition_status(failed_batch.id, BatchStatus.FAILED)
         
         # Get recent batches excluding failed

@@ -39,22 +39,25 @@ def test_extract_prices_from_stats_current(keepa_raw_data):
     parser = KeepaRawParser()
     current_values = parser.extract_current_values(keepa_raw_data)
 
-    # Vérifier que les prix correspondent à stats.current (pas data arrays)
+    # Vérifier que les prix correspondent a stats.current (pas data arrays)
+    # Note: Les valeurs peuvent etre Decimal, donc on convertit en float pour comparaison
     if expected_amazon:
-        assert abs(current_values.get('amazon_price', 0) - expected_amazon) < 0.01, \
+        actual_amazon = float(current_values.get('amazon_price', 0))
+        assert abs(actual_amazon - expected_amazon) < 0.01, \
             f"AMAZON price should be ${expected_amazon:.2f} from stats.current[0]"
 
     if expected_new:
-        actual_new = current_values.get('new_price', 0)
+        actual_new = float(current_values.get('new_price', 0))
         assert abs(actual_new - expected_new) < 0.01, \
             f"NEW price should be ${expected_new:.2f} from stats.current[1], got ${actual_new:.2f}"
 
-        # Vérifier qu'on n'a pas de prix suspect (< $1.00 pour un bestseller)
+        # Verifier qu'on n'a pas de prix suspect (< $1.00 pour un bestseller)
         assert actual_new > 1.0, \
             f"NEW price ${actual_new:.2f} suspiciously low - likely from data[] array instead of stats.current"
 
     if expected_used:
-        assert abs(current_values.get('used_price', 0) - expected_used) < 0.01, \
+        actual_used = float(current_values.get('used_price', 0))
+        assert abs(actual_used - expected_used) < 0.01, \
             f"USED price should be ${expected_used:.2f} from stats.current[2]"
 
 

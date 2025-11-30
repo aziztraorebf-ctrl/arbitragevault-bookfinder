@@ -4,9 +4,26 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict
 
-from sqlalchemy import DateTime, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import DateTime, func, JSON
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.types import TypeDecorator
+
+
+class JSONType(TypeDecorator):
+    """
+    Cross-database JSON type.
+
+    Uses JSONB on PostgreSQL for better performance and indexing.
+    Falls back to JSON on SQLite and other databases for test compatibility.
+    """
+    impl = JSON
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(JSONB())
+        return dialect.type_descriptor(JSON())
 
 
 class Base(DeclarativeBase):

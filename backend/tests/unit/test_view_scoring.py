@@ -446,11 +446,9 @@ def test_all_metrics_max():
 
     result = compute_view_score(parsed, "dashboard", None)
 
-    # Score should be high (sum of all weights * 100)
-    weights = VIEW_WEIGHTS["dashboard"]
-    expected_max = (weights["roi"] + weights["velocity"] + weights["stability"]) * 100
-
-    assert abs(result["score"] - expected_max) < 1.0  # Close to theoretical max
+    # Score should be clamped to max 100 (even if weights sum > 1.0)
+    # The scoring system normalizes final score to [0-100] range
+    assert result["score"] == 100.0  # Clamped to max
 
 
 # ============================================================================

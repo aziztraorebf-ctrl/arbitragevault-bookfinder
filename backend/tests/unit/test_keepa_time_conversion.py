@@ -156,15 +156,19 @@ def test_keepa_time_recent_dates():
 
 def test_keepa_time_zero_and_edge_cases():
     """Test edge cases."""
-    # Zero should give a date way in the past (around 1960)
+    # Zero gives the Keepa epoch start date
+    # Formula: (0 + 21564000) * 60 = 1293840000 seconds = Jan 1, 2011 00:00:00 UTC
     result_zero = keepa_to_datetime(0)
     assert result_zero is not None
-    assert result_zero.year < 2000, "keepa_time=0 should be in the past"
+    assert result_zero.year == 2011, f"keepa_time=0 should give year 2011 (Keepa epoch), got {result_zero.year}"
+    assert result_zero.month == 1, f"keepa_time=0 should give month 1, got {result_zero.month}"
+    assert result_zero.day == 1, f"keepa_time=0 should give day 1, got {result_zero.day}"
 
     # Very large value should give future date
+    # keepa_time=10000000 -> (10000000 + 21564000) * 60 = 1893840000 seconds = ~2030
     result_large = keepa_to_datetime(10000000)
     assert result_large is not None
-    assert result_large.year > 2025, "Large keepa_time should be in future"
+    assert result_large.year > 2025, f"Large keepa_time should be in future, got {result_large.year}"
 
 
 def test_keepa_constants_consistency():

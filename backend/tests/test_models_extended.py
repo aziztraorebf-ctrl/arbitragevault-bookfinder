@@ -113,13 +113,13 @@ class TestBatchTransitions:
         # Initial state should be PENDING
         assert batch.status == BatchStatus.PENDING
         
-        # PENDING → RUNNING
-        batch.status = BatchStatus.RUNNING
-        assert batch.status == BatchStatus.RUNNING
-        
-        # RUNNING → DONE
-        batch.status = BatchStatus.DONE
-        assert batch.status == BatchStatus.DONE
+        # PENDING -> PROCESSING
+        batch.status = BatchStatus.PROCESSING
+        assert batch.status == BatchStatus.PROCESSING
+
+        # PROCESSING -> COMPLETED
+        batch.status = BatchStatus.COMPLETED
+        assert batch.status == BatchStatus.COMPLETED
         
         db_session.commit()
 
@@ -138,9 +138,9 @@ class TestBatchTransitions:
         db_session.add(batch)
         db_session.flush()
         
-        # PENDING → DONE (should be valid, but let's test the enum)
-        batch.status = BatchStatus.DONE
-        assert batch.status == BatchStatus.DONE
+        # PENDING -> COMPLETED (should be valid, but let's test the enum)
+        batch.status = BatchStatus.COMPLETED
+        assert batch.status == BatchStatus.COMPLETED
         
         # Test that status is properly constrained to enum values
         # This will be validated by SQLAlchemy enum constraint

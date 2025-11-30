@@ -127,15 +127,15 @@ def test_batch_status_transitions(db_session, test_user, batch_data):
     db_session.commit()
     
     # Test valid transitions
-    assert batch.can_transition_to(BatchStatus.RUNNING)
-    assert not batch.can_transition_to(BatchStatus.DONE)
+    assert batch.can_transition_to(BatchStatus.PROCESSING)
+    assert not batch.can_transition_to(BatchStatus.COMPLETED)
     assert not batch.can_transition_to(BatchStatus.FAILED)
-    
-    # Transition to running
-    batch.status = BatchStatus.RUNNING
+
+    # Transition to processing
+    batch.status = BatchStatus.PROCESSING
     db_session.commit()
-    
-    assert batch.can_transition_to(BatchStatus.DONE)
+
+    assert batch.can_transition_to(BatchStatus.COMPLETED)
     assert batch.can_transition_to(BatchStatus.FAILED)
     assert not batch.can_transition_to(BatchStatus.PENDING)
 
@@ -160,7 +160,7 @@ def test_batch_progress_tracking(db_session, test_user, batch_data):
     
     # Complete batch
     batch.items_processed = 100
-    batch.status = BatchStatus.DONE
+    batch.status = BatchStatus.COMPLETED
     db_session.commit()
     
     assert batch.progress_percentage == 100.0

@@ -4,10 +4,9 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 from sqlalchemy import String, Text, Integer, ForeignKey
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import Base
+from .base import Base, JSONType
 
 
 class SavedNiche(Base):
@@ -41,7 +40,7 @@ class SavedNiche(Base):
     
     # Analysis parameters stored as JSON
     filters: Mapped[Dict[str, Any]] = mapped_column(
-        JSONB, nullable=False, default=dict,
+        JSONType, nullable=False, default=dict,
         comment="Complete analysis parameters (price ranges, BSR thresholds, etc.)"
     )
     

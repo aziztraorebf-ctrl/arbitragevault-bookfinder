@@ -149,8 +149,11 @@ def compute_view_score(
         final_score = boosted_score
         boost_applied = strategy_profile
         logger.debug(
-            f"Applied '{strategy_profile}' boost: {base_score:.2f} → {final_score:.2f}"
+            f"Applied '{strategy_profile}' boost: {base_score:.2f} -> {final_score:.2f}"
         )
+
+    # 5b. Clamp final score to [0, 100] range
+    final_score = max(0.0, min(100.0, final_score))
 
     # 6. Calculate individual contributions (for transparency)
     roi_contribution = roi_norm * weights["roi"]
@@ -172,9 +175,9 @@ def compute_view_score(
             "stability_contribution": round(stability_contribution, 2)
         },
         "raw_metrics": {
-            "roi_pct": round(roi_pct, 2),
-            "velocity_score": round(velocity_score, 2),
-            "stability_score": round(stability_score, 2)
+            "roi_pct": round(roi_norm, 2),
+            "velocity_score": round(velocity_norm, 2),
+            "stability_score": round(stability_norm, 2)
         }
     }
 

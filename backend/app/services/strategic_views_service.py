@@ -48,19 +48,28 @@ class TargetPriceCalculator:
     ) -> TargetPriceResult:
         """
         Calculate target selling price for given parameters.
-        
+
         Args:
-            buy_price: Cost to acquire the product
-            fba_fee: Amazon FBA fulfillment fee
+            buy_price: Cost to acquire the product (must be > 0)
+            fba_fee: Amazon FBA fulfillment fee (must be >= 0)
             view_name: Strategic view name (profit_hunter, velocity, etc.)
             referral_fee_rate: Amazon referral fee rate (optional, uses default if None)
             storage_fee: Amazon storage fee (optional)
             safety_buffer: Safety margin percentage (default 6%)
             current_market_price: Current market price for comparison
-            
+
         Returns:
             TargetPriceResult with calculated target price and metadata
+
+        Raises:
+            ValueError: If buy_price <= 0 or fba_fee < 0
         """
+        # Input validation - defensive programming
+        if buy_price <= 0:
+            raise ValueError(f"buy_price must be positive, got {buy_price}")
+        if fba_fee < 0:
+            raise ValueError(f"fba_fee cannot be negative, got {fba_fee}")
+
         # Get ROI target for strategic view
         roi_target = cls.ROI_TARGETS.get(view_name, 0.30)  # 30% fallback
         

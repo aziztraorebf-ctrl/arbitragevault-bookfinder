@@ -7,11 +7,10 @@ from typing import Optional, Dict, Any
 from enum import Enum
 
 from sqlalchemy import String, DateTime, Text, ForeignKey, Numeric, Integer
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 
-from .base import Base
+from .base import Base, JSONType
 
 
 class ProductStatus(str, Enum):
@@ -84,9 +83,9 @@ class KeepaSnapshot(Base):
     current_fbm_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=True)
     current_bsr: Mapped[int] = mapped_column(Integer, nullable=True, index=True)
     
-    # JSONB storage for full Keepa data
-    raw_data: Mapped[dict] = mapped_column(JSONB, nullable=True)         # Complete Keepa API response
-    metrics_data: Mapped[dict] = mapped_column(JSONB, nullable=True)     # Processed metrics for UI
+    # JSON storage for full Keepa data (uses JSONB on PostgreSQL, JSON on SQLite)
+    raw_data: Mapped[dict] = mapped_column(JSONType, nullable=True)         # Complete Keepa API response
+    metrics_data: Mapped[dict] = mapped_column(JSONType, nullable=True)     # Processed metrics for UI
     
     # Quick access metrics (denormalized for performance)
     offers_count: Mapped[int] = mapped_column(Integer, nullable=True)
@@ -143,9 +142,9 @@ class CalcMetrics(Base):
     price_volatility: Mapped[float] = mapped_column(Numeric(5, 2), nullable=True)          # Price variation coefficient
     competition_level: Mapped[float] = mapped_column(Numeric(5, 2), nullable=True)         # Number of active sellers
     
-    # Configuration used
-    fee_config_used: Mapped[dict] = mapped_column(JSONB, nullable=True)                   # Fee configuration snapshot
-    calculation_params: Mapped[dict] = mapped_column(JSONB, nullable=True)                # Calculation parameters used
+    # Configuration used (uses JSONB on PostgreSQL, JSON on SQLite)
+    fee_config_used: Mapped[dict] = mapped_column(JSONType, nullable=True)                   # Fee configuration snapshot
+    calculation_params: Mapped[dict] = mapped_column(JSONType, nullable=True)                # Calculation parameters used
     
     # Additional timestamp and version
     calculated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

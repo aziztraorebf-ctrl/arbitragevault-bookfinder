@@ -48,6 +48,10 @@ def safe_array_check(arr: Any) -> bool:
     if arr is None:
         return False
 
+    # Strings are iterable but should not be considered arrays
+    if isinstance(arr, str):
+        return False
+
     try:
         return len(arr) > 0
     except TypeError:
@@ -60,11 +64,11 @@ def safe_array_to_list(arr: Any) -> List:
     Convert numpy arrays to regular Python lists safely.
 
     Handles:
-    - numpy.ndarray → list (via .tolist())
-    - list → list (pass-through)
-    - None → empty list
-    - Scalar values → single-element list
-    - Errors → empty list
+    - numpy.ndarray -> list (via .tolist())
+    - list -> list (pass-through)
+    - None -> empty list
+    - Scalar values (including strings) -> single-element list
+    - Errors -> empty list
 
     Args:
         arr: Array-like object or None
@@ -87,6 +91,10 @@ def safe_array_to_list(arr: Any) -> List:
     """
     if arr is None:
         return []
+
+    # Strings should be treated as scalar values, not iterables
+    if isinstance(arr, str):
+        return [arr]
 
     # Try numpy tolist() first
     if hasattr(arr, "tolist"):
@@ -136,11 +144,12 @@ def safe_value_check(value: Any, null_value: int = -1) -> bool:
         return False
 
     try:
-        return value != null_value
+        # Use bool() to ensure Python boolean, not numpy.bool_
+        return bool(value != null_value)
     except (TypeError, ValueError):
         # Comparison failed (e.g., numpy scalar vs Python int)
         try:
-            return float(value) != float(null_value)
+            return bool(float(value) != float(null_value))
         except Exception:
             return False
 

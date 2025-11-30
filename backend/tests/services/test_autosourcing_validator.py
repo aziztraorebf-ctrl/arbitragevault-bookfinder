@@ -11,6 +11,13 @@ from app.schemas.autosourcing_safeguards import (
 from fastapi import HTTPException
 
 @pytest.fixture
+def mock_settings():
+    """Mock settings object."""
+    settings = MagicMock()
+    settings.KEEPA_API_KEY = "test_api_key"
+    return settings
+
+@pytest.fixture
 def mock_cost_estimator():
     """Mock cost estimator."""
     estimator = MagicMock()
@@ -25,9 +32,10 @@ def mock_keepa_service():
     return service
 
 @pytest.fixture
-def validator(mock_cost_estimator, mock_keepa_service):
+def validator(mock_settings, mock_cost_estimator, mock_keepa_service):
     """Fixture for validator instance with mocked dependencies."""
     return AutoSourcingValidator(
+        settings=mock_settings,
         cost_estimator=mock_cost_estimator,
         keepa_service=mock_keepa_service
     )

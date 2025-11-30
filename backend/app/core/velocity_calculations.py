@@ -207,9 +207,12 @@ def _calculate_offers_volatility(
     # Price volatility
     if len(price_history) >= 2:
         prices = [item[1] for item in price_history if item[1] is not None]
-        if prices:
-            price_volatility = statistics.stdev(prices) / statistics.mean(prices) * 100
-            volatility_score += min(price_volatility, 10)  # Cap at 10
+        if len(prices) > 1:
+            mean_price = statistics.mean(prices)
+            # Guard against division by zero when mean price is 0
+            if mean_price > 0:
+                price_volatility = statistics.stdev(prices) / mean_price * 100
+                volatility_score += min(price_volatility, 10)  # Cap at 10
 
     return volatility_score
 

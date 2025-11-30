@@ -222,37 +222,87 @@ class CacheService:
         roi_percent: float,
         velocity_score: float,
         recommendation: str,
-        keepa_data: Optional[Dict] = None,
-        config_hash: Optional[str] = None,
         ttl_hours: int = 6
-    ) -> int:
+    ) -> str:
         """
         Store scoring results in cache.
 
-        Returns cache entry ID.
+        Returns cache_key (primary key).
+        Schema synchronized with production Neon (Phase 6 fix).
         """
-        # Create new entry (always append, don't update)
-        cache_entry = ProductScoringCache(
-            asin=asin,
-            title=title[:500] if title else None,  # Truncate long titles
-            price=price,
-            bsr=bsr,
-            roi_percent=roi_percent,
-            velocity_score=velocity_score,
-            recommendation=recommendation,
-            keepa_data=keepa_data,
-            config_hash=config_hash,
-            expires_at=datetime.utcnow() + timedelta(hours=ttl_hours)
-        )
-
-        self.db.add(cache_entry)
+        # Generate cache key from ASIN (unique per product)
+        cache_key = hashlib.md5(f"scoring:{asin}".encode()).hexdigest()
 
         if self.is_async:
+            # Check if exists - update or insert
+            stmt = select(ProductScoringCache).filter(
+                ProductScoringCache.cache_key == cache_key
+            )
+            result = await self.db.execute(stmt)
+            existing = result.scalar_one_or_none()
+
+            if existing:
+                # Update existing entry
+                existing.title = title[:500] if title else None
+                existing.price = price
+                existing.bsr = bsr
+                existing.roi_percent = roi_percent
+                existing.velocity_score = velocity_score
+                existing.recommendation = recommendation
+                existing.created_at = datetime.utcnow()
+                existing.expires_at = datetime.utcnow() + timedelta(hours=ttl_hours)
+                existing.hit_count = (existing.hit_count or 0) + 1
+            else:
+                # Create new entry
+                cache_entry = ProductScoringCache(
+                    cache_key=cache_key,
+                    asin=asin,
+                    title=title[:500] if title else None,
+                    price=price,
+                    bsr=bsr,
+                    roi_percent=roi_percent,
+                    velocity_score=velocity_score,
+                    recommendation=recommendation,
+                    expires_at=datetime.utcnow() + timedelta(hours=ttl_hours),
+                    hit_count=0
+                )
+                self.db.add(cache_entry)
+
             await self.db.commit()
         else:
+            # Sync fallback
+            existing = self.db.query(ProductScoringCache).filter(
+                ProductScoringCache.cache_key == cache_key
+            ).first()
+
+            if existing:
+                existing.title = title[:500] if title else None
+                existing.price = price
+                existing.bsr = bsr
+                existing.roi_percent = roi_percent
+                existing.velocity_score = velocity_score
+                existing.recommendation = recommendation
+                existing.created_at = datetime.utcnow()
+                existing.expires_at = datetime.utcnow() + timedelta(hours=ttl_hours)
+                existing.hit_count = (existing.hit_count or 0) + 1
+            else:
+                cache_entry = ProductScoringCache(
+                    cache_key=cache_key,
+                    asin=asin,
+                    title=title[:500] if title else None,
+                    price=price,
+                    bsr=bsr,
+                    roi_percent=roi_percent,
+                    velocity_score=velocity_score,
+                    recommendation=recommendation,
+                    expires_at=datetime.utcnow() + timedelta(hours=ttl_hours),
+                    hit_count=0
+                )
+                self.db.add(cache_entry)
+
             self.db.commit()
 
-        return cache_entry.id
+        return cache_key
 
     # ===== SEARCH HISTORY =====
 

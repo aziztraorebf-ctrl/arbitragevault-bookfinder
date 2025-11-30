@@ -55,41 +55,37 @@ class ProductDiscoveryCache(Base):
 
 class ProductScoringCache(Base):
     """
-    Cache pour résultats Product Scoring.
+    Cache pour resultats Product Scoring.
 
-    Stocke analyses complètes avec ROI/Velocity.
+    Stocke analyses completes avec ROI/Velocity.
+    Schema synchronise avec production Neon (Phase 6 fix).
     """
 
     __tablename__ = "product_scoring_cache"
 
-    # Primary key
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    # Primary key - matches production schema
+    cache_key = Column(String(255), primary_key=True, index=True)
     asin = Column(String(20), nullable=False, index=True)
 
-    # Scoring results
-    title = Column(Text, nullable=True)
-    price = Column(Float, nullable=False)
-    bsr = Column(Integer, nullable=False)
+    # Scoring results - order matches production
     roi_percent = Column(Float, nullable=False)
     velocity_score = Column(Float, nullable=False)
     recommendation = Column(String(50), nullable=False)
-
-    # Raw Keepa data (for reanalysis if config changes)
-    keepa_data = Column(JSON, nullable=True)
-
-    # Config version used
-    config_hash = Column(String(64), nullable=True)
+    title = Column(Text, nullable=True)
+    price = Column(Float, nullable=True)  # Changed to nullable per production
+    bsr = Column(Integer, nullable=True)  # Changed to nullable per production
 
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     expires_at = Column(DateTime, nullable=False)
-    analysis_version = Column(String(20), default="1.0", nullable=False)
+    hit_count = Column(Integer, default=0, nullable=False)
 
-    # Indexes
+    # Indexes - matches production
     __table_args__ = (
-        Index('idx_scoring_cache_asin_expiry', 'asin', 'expires_at'),
-        Index('idx_scoring_cache_recommendation', 'recommendation'),
-        Index('idx_scoring_cache_roi', 'roi_percent'),
+        Index('idx_scoring_expires_at', 'expires_at'),
+        Index('idx_scoring_asin', 'asin'),
+        Index('idx_scoring_roi', 'roi_percent'),
+        Index('idx_scoring_velocity', 'velocity_score'),
     )
 
 

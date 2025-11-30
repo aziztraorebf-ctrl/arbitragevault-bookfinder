@@ -578,7 +578,7 @@ class KeepaProductFinderService:
                         "recommendation": recommendation
                     }
 
-                    # Store in cache
+                    # Store in cache (Phase 6: removed keepa_data param per production schema)
                     if self.cache_service:
                         await self.cache_service.set_scoring_cache(
                             asin=asin,
@@ -587,8 +587,7 @@ class KeepaProductFinderService:
                             bsr=bsr,
                             roi_percent=roi_percent,
                             velocity_score=velocity_score,
-                            recommendation=recommendation,
-                            keepa_data=product
+                            recommendation=recommendation
                         )
                         logger.debug(f"[SCORING] Cached ASIN {asin} (ROI: {roi_percent:.1f}%)")
 

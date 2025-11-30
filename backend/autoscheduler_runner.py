@@ -65,7 +65,7 @@ class AutoSchedulerRunner:
         """Crée le fichier de verrou"""
         try:
             self.lock_file.write_text(str(os.getpid()))
-            logger.info("🔒 Lock file créé")
+            logger.info("[LOCK] Lock file created")
         except Exception as e:
             logger.error(f"Erreur création lock file: {e}")
             raise
@@ -75,7 +75,7 @@ class AutoSchedulerRunner:
         try:
             if self.lock_file.exists():
                 self.lock_file.unlink()
-                logger.info("🔓 Lock file supprimé")
+                logger.info("[UNLOCK] Lock file removed")
         except Exception as e:
             logger.warning(f"Erreur suppression lock file: {e}")
     
@@ -173,7 +173,7 @@ class AutoSchedulerRunner:
         }
         
         profile = hour_profiles.get(hour, hour_profiles[15])  # Default à midi
-        logger.info(f"📊 Profil {hour}h: Prix ${profile['price_range']['min']}-{profile['price_range']['max']}, BSR ≤{profile['bsr_range']['max']}")
+        logger.info(f"[PROFILE] Hour {hour}h: Price ${profile['price_range']['min']}-{profile['price_range']['max']}, BSR <={profile['bsr_range']['max']}")
         
         return profile
     
@@ -188,7 +188,7 @@ class AutoSchedulerRunner:
         
         # Vérification budget tokens
         if not self.metrics.check_token_budget(SCHEDULE_CONFIG["token_budget_daily"]):
-            logger.warning("🚫 Budget tokens quotidien épuisé - skip run")
+            logger.warning("[BUDGET] Daily token budget exhausted - skipping run")
             return None
         
         # Création de la session database
@@ -218,7 +218,7 @@ class AutoSchedulerRunner:
                     scheduler_run_id=f"auto_{datetime.now().strftime('%Y%m%d_%H%M')}"
                 )
                 
-                logger.info(f"🚀 Démarrage AutoScheduler {current_hour}h - {max_results} produits max")
+                logger.info(f"[START] AutoScheduler {current_hour}h - {max_results} products max")
                 self.metrics.record_run_start(current_hour, max_results)
                 
                 # Exécution de la recherche

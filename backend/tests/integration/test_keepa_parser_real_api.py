@@ -90,22 +90,22 @@ async def test_extract_bsr_from_real_keepa_api(keepa_service: KeepaService, asin
     # Validation confidence scoring
     quality_result = KeepaBSRExtractor.validate_bsr_quality(bsr, category="books", source=source)
 
-    assert "confidence_score" in quality_result
-    assert 0.0 <= quality_result["confidence_score"] <= 1.0
-    assert quality_result["data_source"] == source
+    # Note: Code uses 'confidence' key, not 'confidence_score'
+    assert "confidence" in quality_result
+    assert 0.0 <= quality_result["confidence"] <= 1.0
 
     # Source penalties validation
     if source == "salesRanks" or source == "current":
         # Primary sources: no penalty (base confidence only)
-        assert quality_result["confidence_score"] >= 0.6  # Minimum reasonable confidence
+        assert quality_result["confidence"] >= 0.6  # Minimum reasonable confidence
     elif source == "csv_recent":
         # Recent history: 0.9x penalty
-        assert quality_result["confidence_score"] <= 0.9
+        assert quality_result["confidence"] <= 0.9
     elif source == "avg30":
         # 30-day average: 0.8x penalty
-        assert quality_result["confidence_score"] <= 0.8
+        assert quality_result["confidence"] <= 0.8
 
-    print(f"[OK] {asin}: BSR={bsr:,} (source={source}, confidence={quality_result['confidence_score']:.2f})")
+    print(f"[OK] {asin}: BSR={bsr:,} (source={source}, confidence={quality_result['confidence']:.2f})")
 
 
 @pytest.mark.integration

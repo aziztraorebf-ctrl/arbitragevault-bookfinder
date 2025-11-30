@@ -4,16 +4,22 @@ from functools import lru_cache
 from typing import List, Optional
 
 import keyring
-from pydantic import Field, validator
+from pydantic import Field, field_validator, ConfigDict
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     """Application settings with environment variable support.
-    
+
     PYDANTIC V2 STRUCTURE: Flat structure, no nested config.
     Access via: settings.app_name (NOT settings.app.app_name)
     """
+
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
 
     # Application
     app_env: str = Field(default="development", alias="APP_ENV")
@@ -96,7 +102,8 @@ class Settings(BaseSettings):
     sentry_dsn: Optional[str] = Field(default=None, alias="SENTRY_DSN")
     environment: str = Field(default="development", alias="ENVIRONMENT")
 
-    @validator("database_url", pre=True)
+    @field_validator("database_url", mode="before")
+    @classmethod
     def transform_database_url_for_asyncpg(cls, v):
         """Transform DATABASE_URL to asyncpg format for SQLAlchemy async.
         
@@ -128,7 +135,8 @@ class Settings(BaseSettings):
                         v = parts[0]
         return v
 
-    @validator("cors_allowed_origins", pre=True)
+    @field_validator("cors_allowed_origins", mode="before")
+    @classmethod
     def parse_cors_origins(cls, v):
         """Parse CORS origins from string or list."""
         try:
@@ -139,7 +147,8 @@ class Settings(BaseSettings):
             # Fallback to default for development
             return ["*"]
 
-    @validator("trusted_hosts", pre=True)
+    @field_validator("trusted_hosts", mode="before")
+    @classmethod
     def parse_trusted_hosts(cls, v):
         """Parse trusted hosts from string or list."""
         if isinstance(v, str):
@@ -185,11 +194,6 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.app_env.lower() in ("production", "prod")
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
 
 
 @lru_cache()

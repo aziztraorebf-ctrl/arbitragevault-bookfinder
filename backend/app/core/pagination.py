@@ -27,7 +27,7 @@ class PaginationParams:
         page: int = Query(1, ge=1, description="Page number"),
         per_page: int = Query(20, ge=1, le=100, description="Items per page"),
         sort_by: str = Query("id", description="Sort by field"),
-        sort_order: str = Query("desc", regex="^(asc|desc)$", description="Sort order")
+        sort_order: str = Query("desc", pattern="^(asc|desc)$", description="Sort order")
     ):
         self.page = page
         self.per_page = per_page

@@ -1,14 +1,5 @@
 """Database configuration and session management."""
 
-# === Windows Event Loop Configuration (CRITICAL FOR PSYCOPG3) ===
-# Must be set BEFORE any async operations or database connections
-# ProactorEventLoop (Windows default) is incompatible with psycopg3
-import sys
-if sys.platform == "win32":
-    import asyncio
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-# ===================================================================
-
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 

@@ -565,7 +565,17 @@ class KeepaProductFinderService:
                     stats = product.get("stats", {})
                     current = stats.get("current", [None, None, None, None])
 
-                    price_cents = current[0] if len(current) > 0 else None
+                    # Use NEW price (index 1), fallback to AMAZON price (index 0)
+                    # Keepa current[] array indices:
+                    #   [0] = AMAZON price (often -1 if unavailable)
+                    #   [1] = NEW price (3rd party sellers - preferred!)
+                    #   [3] = Sales Rank (BSR)
+                    price_cents = None
+                    if len(current) > 1 and current[1] is not None and current[1] > 0:
+                        price_cents = current[1]  # NEW price (preferred)
+                    elif len(current) > 0 and current[0] is not None and current[0] > 0:
+                        price_cents = current[0]  # AMAZON price (fallback)
+
                     bsr = current[3] if len(current) > 3 else None
 
                     if not price_cents or not bsr:

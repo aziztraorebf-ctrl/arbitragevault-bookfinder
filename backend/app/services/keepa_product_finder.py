@@ -327,11 +327,22 @@ class KeepaProductFinderService:
 
                 # Filter by criteria
                 for product in products:
-                    # Extract BSR and price
+                    # Extract BSR and price from stats.current[]
+                    # Keepa current[] array indices:
+                    #   [0] = AMAZON price (often -1 if unavailable)
+                    #   [1] = NEW price (3rd party sellers - this is what we want!)
+                    #   [2] = USED price
+                    #   [3] = Sales Rank (BSR)
                     stats = product.get("stats", {})
                     current = stats.get("current", [None, None, None, None])
 
-                    price_cents = current[0] if len(current) > 0 else None
+                    # Use NEW price (index 1), fallback to AMAZON price (index 0) if unavailable
+                    price_cents = None
+                    if len(current) > 1 and current[1] is not None and current[1] > 0:
+                        price_cents = current[1]  # NEW price (preferred)
+                    elif len(current) > 0 and current[0] is not None and current[0] > 0:
+                        price_cents = current[0]  # AMAZON price (fallback)
+
                     bsr = current[3] if len(current) > 3 else None
 
                     # Apply BSR filter

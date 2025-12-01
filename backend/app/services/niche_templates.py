@@ -19,13 +19,15 @@ logger = get_logger(__name__)
 
 
 # Curated Niche Templates
+# NOTE: BSR ranges adjusted to capture bestsellers (typically BSR 1-5000)
+# Discovery via bestsellers API returns TOP sellers with low BSR values
 CURATED_NICHES = [
     {
         "id": "tech-books-python",
         "name": "[TECH] Python Books Beginners $20-50",
         "description": "Python learning books for beginners/intermediate - evergreen segment with stable ROI",
         "categories": [3508, 3839, 5],  # Python > Programming > Computers & Technology
-        "bsr_range": (10000, 80000),
+        "bsr_range": (100, 80000),  # Lowered min from 10000 to capture bestsellers
         "price_range": (20.0, 50.0),
         "min_roi": 30,
         "min_velocity": 60,
@@ -36,7 +38,7 @@ CURATED_NICHES = [
         "name": "[WELLNESS] Wellness Journals",
         "description": "Meditation, gratitude, mindfulness journals - strong post-2020 trend",
         "categories": [283155, 4736],  # Self-Help > Personal Transformation
-        "bsr_range": (5000, 50000),
+        "bsr_range": (100, 50000),  # Lowered min from 5000 to capture bestsellers
         "price_range": (12.0, 30.0),
         "min_roi": 35,
         "min_velocity": 70,
@@ -47,7 +49,7 @@ CURATED_NICHES = [
         "name": "[FOOD] Healthy Cooking Books",
         "description": "Healthy recipes, keto, vegan - constantly growing market",
         "categories": [6, 1000],  # Cookbooks, Food & Wine > Special Diet
-        "bsr_range": (15000, 100000),
+        "bsr_range": (100, 100000),  # Lowered min from 15000
         "price_range": (18.0, 45.0),
         "min_roi": 28,
         "min_velocity": 55,
@@ -58,7 +60,7 @@ CURATED_NICHES = [
         "name": "[KIDS] Preschool Education Books",
         "description": "Activity books, alphabet learning, numbers - stable niche with parents",
         "categories": [4, 17],  # Children's Books > Education & Reference
-        "bsr_range": (8000, 60000),
+        "bsr_range": (100, 60000),  # Lowered min from 8000
         "price_range": (10.0, 25.0),
         "min_roi": 32,
         "min_velocity": 65,
@@ -69,7 +71,7 @@ CURATED_NICHES = [
         "name": "[PRODUCTIVITY] Personal Development",
         "description": "Time management, habits, focus - premium segment with strong demand",
         "categories": [4736, 11748],  # Self-Help > Success
-        "bsr_range": (12000, 70000),
+        "bsr_range": (100, 70000),  # Lowered min from 12000
         "price_range": (15.0, 35.0),
         "min_roi": 30,
         "min_velocity": 60,
@@ -80,7 +82,7 @@ CURATED_NICHES = [
         "name": "[BUSINESS] Business & Entrepreneurship",
         "description": "Company creation, startups, side hustles - solvent audience",
         "categories": [2, 2766],  # Business & Money > Entrepreneurship
-        "bsr_range": (20000, 90000),
+        "bsr_range": (100, 90000),  # Lowered min from 20000
         "price_range": (22.0, 55.0),
         "min_roi": 27,
         "min_velocity": 52,
@@ -91,7 +93,7 @@ CURATED_NICHES = [
         "name": "[FICTION] Thrillers & Mysteries",
         "description": "Suspense novels, detective stories - fast rotation, high velocity",
         "categories": [18, 10677],  # Mystery, Thriller & Suspense
-        "bsr_range": (5000, 40000),
+        "bsr_range": (100, 40000),  # Lowered min from 5000
         "price_range": (12.0, 28.0),
         "min_roi": 33,
         "min_velocity": 75,
@@ -102,7 +104,7 @@ CURATED_NICHES = [
         "name": "[DIY] Crafts & DIY Hobbies",
         "description": "DIY projects, scrapbooking, knitting - loyal niche with recurring purchases",
         "categories": [4736, 12595],  # Crafts, Hobbies & Home
-        "bsr_range": (10000, 65000),
+        "bsr_range": (100, 65000),  # Lowered min from 10000
         "price_range": (14.0, 32.0),
         "min_roi": 31,
         "min_velocity": 58,
@@ -113,7 +115,7 @@ CURATED_NICHES = [
         "name": "[GARDEN] Gardening & Homesteading",
         "description": "Vegetable growing, permaculture, self-sufficiency - growing trend",
         "categories": [6, 10333],  # Gardening & Landscape Design
-        "bsr_range": (15000, 85000),
+        "bsr_range": (100, 85000),  # Lowered min from 15000
         "price_range": (16.0, 38.0),
         "min_roi": 29,
         "min_velocity": 54,
@@ -124,7 +126,7 @@ CURATED_NICHES = [
         "name": "[PARENTING] Toddler Parenting",
         "description": "Gentle parenting, sleep, discipline - evergreen niche",
         "categories": [4, 10516],  # Parenting & Relationships
-        "bsr_range": (8000, 55000),
+        "bsr_range": (100, 55000),  # Lowered min from 8000
         "price_range": (13.0, 30.0),
         "min_roi": 34,
         "min_velocity": 68,
@@ -135,7 +137,7 @@ CURATED_NICHES = [
         "name": "[SCIFI] Space Science-Fiction",
         "description": "SF space opera, interstellar travel - passionate audience",
         "categories": [25, 6512],  # Science Fiction & Fantasy > Space Opera
-        "bsr_range": (12000, 75000),
+        "bsr_range": (100, 75000),  # Lowered min from 12000
         "price_range": (14.0, 32.0),
         "min_roi": 30,
         "min_velocity": 62,
@@ -146,7 +148,7 @@ CURATED_NICHES = [
         "name": "[ROMANCE] Contemporary Romance",
         "description": "Modern romance, feel-good - high volume, ultra-fast rotation",
         "categories": [23, 10188],  # Romance > Contemporary
-        "bsr_range": (3000, 35000),
+        "bsr_range": (100, 35000),  # Lowered min from 3000
         "price_range": (10.0, 22.0),
         "min_roi": 35,
         "min_velocity": 80,
@@ -157,7 +159,7 @@ CURATED_NICHES = [
         "name": "[FITNESS] Home Fitness & Yoga",
         "description": "Home workout programs, yoga, stretching - post-COVID boom",
         "categories": [4736, 5267],  # Health, Fitness & Dieting > Exercise & Fitness
-        "bsr_range": (10000, 60000),
+        "bsr_range": (100, 60000),  # Lowered min from 10000
         "price_range": (15.0, 35.0),
         "min_roi": 31,
         "min_velocity": 64,
@@ -168,7 +170,7 @@ CURATED_NICHES = [
         "name": "[FINANCE] Personal Finance & Investing",
         "description": "Savings, stock market, real estate - solvent audience seeking ROI",
         "categories": [2, 2665],  # Business & Money > Personal Finance
-        "bsr_range": (15000, 80000),
+        "bsr_range": (100, 80000),  # Lowered min from 15000
         "price_range": (20.0, 48.0),
         "min_roi": 28,
         "min_velocity": 56,
@@ -179,7 +181,7 @@ CURATED_NICHES = [
         "name": "[HISTORY] World War II History",
         "description": "WWII historical accounts - stable niche with collectors",
         "categories": [9, 4888],  # History > Military History > World War II
-        "bsr_range": (18000, 90000),
+        "bsr_range": (100, 90000),  # Lowered min from 18000
         "price_range": (18.0, 42.0),
         "min_roi": 27,
         "min_velocity": 50,

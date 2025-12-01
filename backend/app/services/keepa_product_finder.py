@@ -109,7 +109,8 @@ class KeepaProductFinderService:
         bsr_max: Optional[int] = None,
         price_min: Optional[float] = None,
         price_max: Optional[float] = None,
-        max_results: int = 100
+        max_results: int = 100,
+        max_fba_sellers: Optional[int] = None
     ) -> List[str]:
         """
         Découvre produits selon critères.
@@ -122,6 +123,7 @@ class KeepaProductFinderService:
             price_min: Prix minimum (dollars)
             price_max: Prix maximum (dollars)
             max_results: Nombre max de résultats
+            max_fba_sellers: Maximum FBA sellers (competition filter)
 
         Returns:
             Liste d'ASINs découverts
@@ -129,7 +131,7 @@ class KeepaProductFinderService:
         Strategy:
             1. Si category fournie → bestsellers endpoint
             2. Sinon → deals endpoint
-            3. Filtrer par BSR/prix
+            3. Filtrer par BSR/prix/competition
             4. Retourner top N ASINs
         """
         discovered_asins: List[str] = []
@@ -145,7 +147,8 @@ class KeepaProductFinderService:
                     bsr_max=bsr_max,
                     price_min=price_min,
                     price_max=price_max,
-                    max_results=max_results
+                    max_results=max_results,
+                    max_fba_sellers=max_fba_sellers
                 )
             else:
                 # Strategy 2: Deals actifs
@@ -172,7 +175,8 @@ class KeepaProductFinderService:
         bsr_max: Optional[int],
         price_min: Optional[float],
         price_max: Optional[float],
-        max_results: int
+        max_results: int,
+        max_fba_sellers: Optional[int] = None
     ) -> List[str]:
         """
         Découvrir via bestsellers endpoint.
@@ -205,8 +209,8 @@ class KeepaProductFinderService:
             # Extract ASINs from response
             asins = response.get("bestSellersList", {}).get("asinList", [])
 
-            # Si on a des filtres BSR/prix, on doit récupérer les détails
-            if bsr_min or bsr_max or price_min or price_max:
+            # Si on a des filtres BSR/prix/competition, on doit récupérer les détails
+            if bsr_min or bsr_max or price_min or price_max or max_fba_sellers:
                 # Batch retrieve pour filtrer
                 # Phase 6 fix: Reduced from 500 to 100 ASINs to save ~400 tokens per niche
                 # Cost: 1 token per ASIN, so 100 ASINs = 100 tokens vs 500 = 500 tokens
@@ -216,7 +220,8 @@ class KeepaProductFinderService:
                     bsr_min=bsr_min,
                     bsr_max=bsr_max,
                     price_min=price_min,
-                    price_max=price_max
+                    price_max=price_max,
+                    max_fba_sellers=max_fba_sellers
                 )
                 return filtered_asins[:max_results]
 
@@ -284,7 +289,8 @@ class KeepaProductFinderService:
         bsr_min: Optional[int],
         bsr_max: Optional[int],
         price_min: Optional[float],
-        price_max: Optional[float]
+        price_max: Optional[float],
+        max_fba_sellers: Optional[int] = None
     ) -> List[str]:
         """
         Filtrer ASINs par criteres BSR/prix.
@@ -360,6 +366,18 @@ class KeepaProductFinderService:
                         if price_max and price > price_max:
                             continue
 
+                    # Apply FBA seller count filter (competition filter)
+                    # stats.current[11] = COUNT_NEW (number of new/FBA offers)
+                    if max_fba_sellers is not None:
+                        new_offer_count = current[11] if len(current) > 11 else None
+                        if new_offer_count is not None and new_offer_count > max_fba_sellers:
+                            # Too much competition - skip this product
+                            logger.debug(
+                                f"Skipping ASIN {product.get('asin')}: "
+                                f"{new_offer_count} FBA sellers > max {max_fba_sellers}"
+                            )
+                            continue
+
                     # Product passes filters
                     asin = product.get("asin")
                     if asin:
@@ -410,7 +428,8 @@ class KeepaProductFinderService:
         min_roi: Optional[float] = None,
         min_velocity: Optional[float] = None,
         max_results: int = 50,
-        force_refresh: bool = False
+        force_refresh: bool = False,
+        max_fba_sellers: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
         Découvre produits avec scoring complet.
@@ -419,6 +438,7 @@ class KeepaProductFinderService:
 
         Args:
             force_refresh: If True, bypasses cache for product data
+            max_fba_sellers: Maximum FBA sellers allowed (competition filter)
 
         Returns:
             Liste de produits avec métriques :
@@ -463,7 +483,8 @@ class KeepaProductFinderService:
                 bsr_max=bsr_max,
                 price_min=price_min,
                 price_max=price_max,
-                max_results=max_results * 2  # Get more for filtering
+                max_results=max_results * 2,  # Get more for filtering
+                max_fba_sellers=max_fba_sellers
             )
 
             if self.cache_service and asins:

@@ -149,3 +149,59 @@ class TestBudgetGuardEdgeCases:
         estimated = estimate_discovery_cost(count=0, max_asins_per_niche=100)
 
         assert estimated == 0
+
+
+class TestFBASellerFilter:
+    """Tests for FBA seller count competition filter (Phase 6)."""
+
+    def test_filter_asins_by_criteria_signature_includes_max_fba_sellers(self):
+        """Verify _filter_asins_by_criteria accepts max_fba_sellers parameter."""
+        import inspect
+        from app.services.keepa_product_finder import KeepaProductFinderService
+
+        sig = inspect.signature(KeepaProductFinderService._filter_asins_by_criteria)
+        params = list(sig.parameters.keys())
+
+        assert "max_fba_sellers" in params
+
+    def test_discover_products_signature_includes_max_fba_sellers(self):
+        """Verify discover_products accepts max_fba_sellers parameter."""
+        import inspect
+        from app.services.keepa_product_finder import KeepaProductFinderService
+
+        sig = inspect.signature(KeepaProductFinderService.discover_products)
+        params = list(sig.parameters.keys())
+
+        assert "max_fba_sellers" in params
+
+    def test_discover_with_scoring_signature_includes_max_fba_sellers(self):
+        """Verify discover_with_scoring accepts max_fba_sellers parameter."""
+        import inspect
+        from app.services.keepa_product_finder import KeepaProductFinderService
+
+        sig = inspect.signature(KeepaProductFinderService.discover_with_scoring)
+        params = list(sig.parameters.keys())
+
+        assert "max_fba_sellers" in params
+
+    def test_niche_templates_have_max_fba_sellers(self):
+        """All niche templates should define max_fba_sellers."""
+        from app.services.niche_templates import CURATED_NICHES
+
+        for template in CURATED_NICHES:
+            assert "max_fba_sellers" in template, f"Template {template['id']} missing max_fba_sellers"
+            assert isinstance(template["max_fba_sellers"], int), f"Template {template['id']} max_fba_sellers should be int"
+            assert template["max_fba_sellers"] > 0, f"Template {template['id']} max_fba_sellers should be > 0"
+
+    def test_strategy_configs_have_max_fba_sellers(self):
+        """Strategy configs should define max_fba_sellers thresholds."""
+        from app.services.niche_templates import STRATEGY_CONFIGS
+
+        assert "smart_velocity" in STRATEGY_CONFIGS
+        assert "textbooks" in STRATEGY_CONFIGS
+
+        # Smart Velocity should allow up to 5 FBA sellers
+        assert STRATEGY_CONFIGS["smart_velocity"]["max_fba_sellers"] == 5
+
+        # Textbooks should be more restrictive (3 FBA sellers)
+        assert STRATEGY_CONFIGS["textbooks"]["max_fba_sellers"] == 3

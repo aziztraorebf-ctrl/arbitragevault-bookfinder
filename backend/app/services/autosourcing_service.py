@@ -327,50 +327,215 @@ class AutoSourcingService:
 
         return unique_asins
 
+    async def _fetch_products_batch(
+        self,
+        asins: List[str],
+        domain: int = 1,
+        batch_size: int = 50
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Fetch product data for multiple ASINs using batch REST API.
+
+        This uses the same approach as KeepaProductFinderService for efficiency.
+        Instead of individual api.query() calls, we use /product endpoint with comma-separated ASINs.
+
+        Args:
+            asins: List of ASINs to fetch
+            domain: Keepa domain ID (1=US)
+            batch_size: Max ASINs per batch request (Keepa limit is 100)
+
+        Returns:
+            Dict mapping ASIN to raw Keepa product data
+        """
+        results = {}
+
+        # Process in batches
+        for i in range(0, len(asins), batch_size):
+            batch = asins[i:i + batch_size]
+
+            try:
+                # Pre-check budget for batch product request
+                batch_cost = len(batch)  # 1 token per ASIN
+                await self.keepa_service._ensure_sufficient_balance(
+                    estimated_cost=batch_cost,
+                    endpoint_name=f"autosourcing_product_batch_{len(batch)}"
+                )
+
+                # Use REST API batch request (same as keepa_product_finder.py)
+                endpoint = "/product"
+                params = {
+                    "domain": domain,
+                    "asin": ",".join(batch),  # Comma-separated ASINs for batch
+                    "stats": 1,  # Include stats for BSR, prices
+                    "history": 0  # No history needed for scoring
+                }
+
+                response = await self.keepa_service._make_request(endpoint, params)
+                products = response.get("products", []) if response else []
+
+                # Map results by ASIN
+                for product in products:
+                    asin = product.get("asin")
+                    if asin:
+                        results[asin] = product
+
+                logger.info(f"Batch fetched {len(products)}/{len(batch)} products")
+
+            except InsufficientTokensError as e:
+                logger.error(f"Insufficient tokens for batch: {e}")
+                raise
+            except Exception as e:
+                logger.error(f"Error fetching batch: {e}")
+                continue
+
+        return results
+
     async def _score_and_filter_products(
-        self, 
-        asins: List[str], 
+        self,
+        asins: List[str],
         scoring_config: Dict[str, Any],
         job_id: UUID
     ) -> List[AutoSourcingPick]:
         """
         Score products using advanced scoring system and filter by thresholds.
-        
+
+        Uses batch REST API for efficiency (same approach as NicheDiscovery).
+
         Args:
             asins: List of ASINs to score
             scoring_config: Scoring thresholds
             job_id: Parent job ID
-            
+
         Returns:
             List of AutoSourcingPick objects meeting criteria
         """
         config = await self.business_config.get_effective_config(domain_id=1, category="books")
         picks = []
-        
+
+        # BATCH FETCH: Get all product data in one API call instead of individual queries
+        logger.info(f"Fetching {len(asins)} products via batch REST API...")
+        products_data = await self._fetch_products_batch(asins)
+        logger.info(f"Batch fetch returned data for {len(products_data)} ASINs")
+
         for asin in asins:
             try:
-                # Get product data from Keepa
-                logger.debug(f"Scoring product: {asin}")
-                
-                # For simulation, we'll use the existing analyze_product logic
-                # TODO: Integrate with real Keepa data
-                pick = await self._analyze_single_product(asin, scoring_config, job_id, config)
-                
+                # Get product data from batch results
+                raw_keepa = products_data.get(asin)
+
+                if not raw_keepa:
+                    logger.debug(f"No data for {asin} in batch results, skipping")
+                    continue
+
+                # Score product using batch data
+                pick = await self._analyze_product_from_batch(
+                    asin, raw_keepa, scoring_config, job_id, config
+                )
+
                 if pick and self._meets_criteria(pick, scoring_config):
                     picks.append(pick)
                     logger.debug(f"PASS {asin}: {pick.overall_rating} (ROI: {pick.roi_percentage}%)")
                 else:
                     logger.debug(f"REJECT {asin}: Does not meet criteria")
-                    
+
             except Exception as e:
                 logger.warning(f"Error scoring {asin}: {str(e)}")
                 continue
-        
+
         # Sort by ROI descending and limit results
         picks.sort(key=lambda x: x.roi_percentage, reverse=True)
         max_picks = scoring_config.get("max_results", 20)
-        
+
         return picks[:max_picks]
+
+    async def _analyze_product_from_batch(
+        self,
+        asin: str,
+        raw_keepa: Dict[str, Any],
+        scoring_config: Dict[str, Any],
+        job_id: UUID,
+        business_config: Dict[str, Any]
+    ) -> Optional[AutoSourcingPick]:
+        """
+        Analyze a product using pre-fetched batch data.
+
+        This is similar to _analyze_single_product but uses data already fetched
+        via batch REST API instead of making individual Keepa queries.
+        """
+        try:
+            # Extract REAL data from Keepa response
+            product_data = self._extract_product_data_from_keepa(raw_keepa)
+
+            if not product_data.get("current_price"):
+                logger.debug(f"No valid price for {asin}, skipping")
+                return None
+
+            title = product_data.get("title", f"Product {asin}")
+            current_price = product_data["current_price"]
+            bsr = product_data.get("bsr", 0)
+            category = product_data.get("category", "Unknown")
+
+            # Calculate estimated buy cost using unified source_price_factor
+            # Default 0.50 = buy at 50% of sell price (FBM->FBA arbitrage, aligned with guide)
+            source_price_factor = business_config.get("source_price_factor", 0.50)
+            estimated_cost = current_price * source_price_factor
+
+            # Calculate ROI metrics
+            fba_fee_percentage = business_config.get("fba_fee_percentage", 0.15)
+            amazon_fees = current_price * fba_fee_percentage
+            profit_net = current_price - estimated_cost - amazon_fees
+            roi_percentage = (profit_net / estimated_cost) * 100 if estimated_cost > 0 else 0
+
+            # Calculate advanced scores from REAL Keepa data
+            velocity_score = self._calculate_velocity_from_keepa(raw_keepa, bsr)
+            stability_score = self._calculate_stability_from_keepa(raw_keepa)
+            confidence_score = self._calculate_confidence_from_keepa(raw_keepa)
+
+            # Overall rating based on scoring config
+            overall_rating = self._compute_rating(
+                roi_percentage, velocity_score, stability_score,
+                confidence_score, scoring_config
+            )
+
+            # Create readable summary
+            readable_summary = f"{overall_rating}: {roi_percentage:.1f}% ROI, BSR {bsr:,}, {velocity_score:.0f} velocity"
+
+            # Classify product tier (v1.7.0 AutoScheduler)
+            tier, tier_reason = self._classify_product_tier({
+                'roi_percentage': roi_percentage,
+                'profit_net': profit_net,
+                'velocity_score': velocity_score,
+                'confidence_score': confidence_score,
+                'overall_rating': overall_rating
+            })
+
+            # Create AutoSourcingPick with REAL data
+            pick = AutoSourcingPick(
+                job_id=job_id,
+                asin=asin,
+                title=title,
+                current_price=current_price,
+                estimated_buy_cost=estimated_cost,
+                profit_net=profit_net,
+                roi_percentage=roi_percentage,
+                velocity_score=int(velocity_score),
+                stability_score=int(stability_score),
+                confidence_score=int(confidence_score),
+                overall_rating=overall_rating,
+                bsr=bsr,
+                category=category,
+                readable_summary=readable_summary,
+                # AutoScheduler tier classification
+                priority_tier=tier,
+                tier_reason=tier_reason,
+                is_featured=(tier == "HOT")
+            )
+
+            logger.info(f"Analyzed {asin}: {overall_rating}, ROI={roi_percentage:.1f}%, BSR={bsr}")
+            return pick
+
+        except Exception as e:
+            logger.error(f"Error analyzing {asin} from batch: {str(e)}")
+            return None
 
     async def _analyze_single_product(
         self,

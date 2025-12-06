@@ -411,10 +411,10 @@ class AutoSourcingService:
             bsr = product_data.get("bsr", 0)
             category = product_data.get("category", "Unknown")
 
-            # Calculate estimated buy cost (source price estimation)
-            # Using business config or default markup
-            buy_markup = business_config.get("buy_markup", 0.70)
-            estimated_cost = current_price * buy_markup
+            # Calculate estimated buy cost using unified source_price_factor
+            # Default 0.50 = buy at 50% of sell price (FBM->FBA arbitrage, aligned with guide)
+            source_price_factor = business_config.get("source_price_factor", 0.50)
+            estimated_cost = current_price * source_price_factor
 
             # Calculate ROI metrics
             fba_fee_percentage = business_config.get("fba_fee_percentage", 0.15)

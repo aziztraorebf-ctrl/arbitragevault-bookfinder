@@ -81,8 +81,9 @@ class ROIConfig(BaseModel):
         le=300
     )
     source_price_factor: Decimal = Field(
-        default=Decimal("0.60"),
-        description="Factor to estimate source price from Buy Box (0.60 = 60% of Buy Box)",
+        default=Decimal("0.50"),
+        description="Factor to estimate source price from Buy Box (0.50 = 50% of Buy Box). "
+                    "Amazon FBM->FBA arbitrage: buy FBM at ~50% of FBA price, aligned with guide.",
         ge=0.1,
         le=0.9
     )

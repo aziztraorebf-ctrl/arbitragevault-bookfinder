@@ -626,13 +626,13 @@ class AutoSourcingService:
     def _meets_criteria(self, pick: AutoSourcingPick, scoring_config: Dict[str, Any]) -> bool:
         """Check if pick meets minimum criteria."""
         
-        rating_required = scoring_config.get("rating_required", "GOOD")
+        rating_required = scoring_config.get("rating_required", "FAIR")  # Changed from GOOD to FAIR
         roi_min = scoring_config.get("roi_min", 20)
         
         rating_hierarchy = {"PASS": 0, "FAIR": 1, "GOOD": 2, "EXCELLENT": 3}
         
         pick_rating_level = rating_hierarchy.get(pick.overall_rating, 0)
-        required_rating_level = rating_hierarchy.get(rating_required, 2)
+        required_rating_level = rating_hierarchy.get(rating_required, 1)  # FAIR=1
         
         return (pick_rating_level >= required_rating_level and 
                 pick.roi_percentage >= roi_min)

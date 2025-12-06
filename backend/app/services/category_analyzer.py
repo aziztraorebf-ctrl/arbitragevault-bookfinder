@@ -350,23 +350,36 @@ class CategoryAnalyzer:
         except (ZeroDivisionError, ValueError):
             return None
     
-    def _estimate_profit_margin(self, product: Dict, criteria: NicheAnalysisCriteria) -> Optional[float]:
-        """Estime la marge profit potentielle avec des calculs plus réalistes."""
+    def _estimate_profit_margin(
+        self,
+        product: Dict,
+        criteria: NicheAnalysisCriteria,
+        source_price_factor: float = 0.50
+    ) -> Optional[float]:
+        """
+        Estime la marge profit potentielle avec des calculs realistes.
+
+        Args:
+            product: Product data from Keepa
+            criteria: Niche analysis criteria
+            source_price_factor: Factor for buy cost estimation (default 0.50 = 50% of sell price)
+                                 Aligned with ROIConfig.source_price_factor in config.py
+        """
         current_price = self._extract_current_price(product)
         if not current_price or current_price <= 0:
             return None
 
-        # Estimation KISS des coûts basée sur le prix de vente
-        # En Phase 2+, utiliser un calculateur de frais FBA plus précis
-        
-        # Frais Amazon estimés : ~15% du prix de vente + frais fixes FBA
+        # Estimation KISS des couts basee sur le prix de vente
+        # En Phase 2+, utiliser un calculateur de frais FBA plus precis
+
+        # Frais Amazon estimes : ~15% du prix de vente + frais fixes FBA
         referral_fee = current_price * 0.15
         fba_fees = 3.50  # Estimation moyenne pour un livre standard
         total_fees = referral_fee + fba_fees
-        
-        # Coût d'achat estimé : 40-60% du prix de vente pour être rentable
-        # Utilisons 50% comme estimation de base
-        estimated_cost = current_price * 0.50
+
+        # Cout d'achat estime : source_price_factor du prix de vente
+        # Default 0.50 = 50% aligned with FBM->FBA arbitrage model (see ROIConfig)
+        estimated_cost = current_price * source_price_factor
         
         # Profit net estimé
         net_profit = current_price - total_fees - estimated_cost

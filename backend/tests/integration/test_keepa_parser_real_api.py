@@ -125,11 +125,11 @@ async def test_extract_price_from_real_keepa_api(keepa_service: KeepaService, as
     # Appel API REEL
     product_data = await keepa_service.get_product_data(asin, domain=1)
 
-    # Extraction complete product
-    result = KeepaRawParser.extract_product_data(product_data, days_back=30)
+    # Extraction current values (correct method name)
+    result = KeepaRawParser.extract_current_values(product_data)
 
-    # Validation prix actuel
-    current_price = result.get("current_price")
+    # Validation prix actuel - key is 'price_new' from extract_current_values
+    current_price = result.get("price_new")
 
     if current_price is not None:
         assert isinstance(current_price, Decimal), f"Price must be Decimal, got {type(current_price)}"
@@ -160,11 +160,11 @@ async def test_extract_history_from_real_keepa_api(keepa_service: KeepaService):
     # Appel API REEL avec history
     product_data = await keepa_service.get_product_data(asin, domain=1)
 
-    # Extraction complete avec history
-    result = KeepaRawParser.extract_product_data(product_data, days_back=90)
+    # Extraction history arrays (correct method name)
+    result = KeepaRawParser.extract_history_arrays(product_data, days_back=90)
 
-    # Validation BSR history
-    bsr_history = result.get("bsr_history", [])
+    # Validation BSR history - key is 'bsr' from extract_history_arrays
+    bsr_history = result.get("bsr", [])
 
     if len(bsr_history) > 0:
         print(f"[OK] BSR history: {len(bsr_history)} data points")
@@ -187,8 +187,8 @@ async def test_extract_history_from_real_keepa_api(keepa_service: KeepaService):
     else:
         print(f"[INFO] No BSR history available (may need history=True flag)")
 
-    # Validation price history
-    price_history = result.get("price_history", [])
+    # Validation price history - key is 'price_new' from extract_history_arrays
+    price_history = result.get("price_new", [])
 
     if len(price_history) > 0:
         print(f"[OK] Price history: {len(price_history)} data points")
@@ -219,11 +219,11 @@ async def test_extract_offers_from_real_keepa_api(keepa_service: KeepaService, a
     # Appel API REEL
     product_data = await keepa_service.get_product_data(asin, domain=1)
 
-    # Extraction complete product
-    result = KeepaRawParser.extract_product_data(product_data, days_back=30)
+    # Extraction current values (correct method name)
+    result = KeepaRawParser.extract_current_values(product_data)
 
-    # Validation offers count
-    offers_count = result.get("offers_count")
+    # Validation offers count - key is 'count_offers_new' from extract_current_values
+    offers_count = result.get("count_offers_new")
 
     if offers_count is not None:
         assert isinstance(offers_count, int), f"Offers count must be integer, got {type(offers_count)}"
@@ -266,12 +266,15 @@ async def test_validate_fallback_chain_with_real_data(keepa_service: KeepaServic
         # Verifier que source multiplie confidence correctement
         quality = KeepaBSRExtractor.validate_bsr_quality(bsr, source=source)
 
+        # Key is 'confidence' not 'confidence_score'
+        confidence = quality.get('confidence', quality.get('confidence_score', 0))
+
         if source in ["salesRanks", "current"]:
-            print(f"     Primary source used, confidence={quality['confidence_score']:.2f}")
+            print(f"     Primary source used, confidence={confidence:.2f}")
         elif source == "csv_recent":
-            print(f"     Recent history fallback, confidence={quality['confidence_score']:.2f} (0.9x penalty)")
+            print(f"     Recent history fallback, confidence={confidence:.2f} (0.9x penalty)")
         elif source == "avg30":
-            print(f"     30-day average fallback, confidence={quality['confidence_score']:.2f} (0.8x penalty)")
+            print(f"     30-day average fallback, confidence={confidence:.2f} (0.8x penalty)")
 
 
 @pytest.mark.integration

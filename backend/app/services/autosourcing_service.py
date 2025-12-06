@@ -201,34 +201,30 @@ class AutoSourcingService:
     async def _discover_products(self, discovery_config: Dict[str, Any]) -> List[str]:
         """
         Discover products using Keepa Product Finder API.
-        
+
         Args:
             discovery_config: Search criteria for Keepa
-            
+
         Returns:
             List of ASINs discovered
+
+        Raises:
+            Exception: If Keepa Product Finder API fails (no silent fallback)
         """
-        try:
-            # Convert discovery config to Keepa Product Finder parameters
-            keepa_params = await self._build_keepa_search_params(discovery_config)
-            max_results = discovery_config.get("max_results", 50)
-            
-            # Call Keepa Product Finder API
-            logger.info("Calling Keepa Product Finder API...")
-            discovered_asins = await self.keepa_service.find_products(
-                search_criteria=keepa_params,
-                domain=1,  # US domain
-                max_results=max_results
-            )
-            
-            logger.info(f"Keepa Product Finder returned {len(discovered_asins)} ASINs")
-            return discovered_asins
-            
-        except Exception as e:
-            logger.error(f"Keepa Product Finder failed: {e}")
-            # Fallback to simulation data for testing
-            logger.warning("Falling back to simulation data")
-            return await self._simulate_discovery_fallback(discovery_config)
+        # Convert discovery config to Keepa Product Finder parameters
+        keepa_params = await self._build_keepa_search_params(discovery_config)
+        max_results = discovery_config.get("max_results", 50)
+
+        # Call Keepa Product Finder API - NO fallback, fail explicitly
+        logger.info("Calling Keepa Product Finder API...")
+        discovered_asins = await self.keepa_service.find_products(
+            search_criteria=keepa_params,
+            domain=1,  # US domain
+            max_results=max_results
+        )
+
+        logger.info(f"Keepa Product Finder returned {len(discovered_asins)} ASINs")
+        return discovered_asins
 
     async def _build_keepa_search_params(self, discovery_config: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -283,46 +279,6 @@ class AutoSourcingService:
         
         logger.info(f"Built Keepa search params: {keepa_params}")
         return keepa_params
-
-    async def _simulate_discovery_fallback(self, discovery_config: Dict[str, Any]) -> List[str]:
-        """
-        Fallback simulation when Keepa API fails.
-        
-        Args:
-            discovery_config: Original search criteria
-            
-        Returns:
-            List of simulated ASINs
-        """
-        # Simulated ASINs for different categories  
-        simulation_asins = {
-            "Books": [
-                "0134093410", "0134414233", "0321976468", "0134159382", "0134376051",
-                "1492041130", "1098106474", "180056938X", "1492055026", "1718502184"
-            ],
-            "Electronics": [
-                "B08N5WRWNW", "B07FNW9FGJ", "B08KH1M13W", "B09B1N5955", "B08P3V8Y8F"
-            ],
-            "Textbooks": [
-                "0134093410", "0134414233", "0321976468", "0134159382", "0134376051"
-            ]
-        }
-        
-        # Extract categories from config
-        categories = discovery_config.get("categories", ["Books"])
-        max_results = discovery_config.get("max_results", 20)
-        
-        # Collect ASINs based on categories
-        discovered = []
-        for category in categories:
-            if category in simulation_asins:
-                discovered.extend(simulation_asins[category])
-        
-        # Remove duplicates and limit results
-        unique_asins = list(set(discovered))[:max_results]
-        
-        logger.info(f"Fallback simulation: {len(unique_asins)} ASINs from categories: {categories}")
-        return unique_asins
 
     async def process_asins_with_deduplication(
         self,
@@ -417,88 +373,233 @@ class AutoSourcingService:
         return picks[:max_picks]
 
     async def _analyze_single_product(
-        self, 
-        asin: str, 
-        scoring_config: Dict[str, Any], 
+        self,
+        asin: str,
+        scoring_config: Dict[str, Any],
         job_id: UUID,
         business_config: Dict[str, Any]
     ) -> Optional[AutoSourcingPick]:
-        """Analyze a single product with advanced scoring."""
-        
+        """
+        Analyze a single product with advanced scoring using REAL Keepa data.
+
+        Args:
+            asin: Product ASIN to analyze
+            scoring_config: Scoring thresholds and weights
+            job_id: Parent job UUID
+            business_config: Business parameters (fees, costs)
+
+        Returns:
+            AutoSourcingPick with real Keepa data, or None if unavailable
+        """
         try:
-            # For simulation, create realistic but fake data
-            # TODO: Replace with real Keepa API integration
-            
-            import random
-            
-            # Simulate product data
-            simulated_data = {
-                "title": f"Product {asin}",
-                "current_price": random.uniform(20, 300),
-                "bsr": random.randint(1000, 200000),
-                "category": random.choice(["Books", "Electronics", "Textbooks"])
-            }
-            
-            current_price = simulated_data["current_price"]
-            estimated_cost = current_price * random.uniform(0.6, 0.8)
-            
-            # Calculate ROI
-            roi_data = {
-                "roi_percentage": ((current_price - estimated_cost) / estimated_cost) * 100,
-                "profit_net": current_price - estimated_cost,
-                "amazon_fees": current_price * 0.15
-            }
-            
-            # Advanced scoring (simulated)
-            velocity_score = max(10, min(100, 120 - (simulated_data["bsr"] / 2000)))
-            stability_score = random.uniform(50, 95)
-            confidence_score = random.uniform(60, 95)
-            
+            # REAL KEEPA INTEGRATION - Get actual product data
+            raw_keepa = await self.keepa_service.get_product_data(asin)
+
+            if not raw_keepa:
+                logger.warning(f"No Keepa data available for {asin}")
+                return None
+
+            # Extract REAL data from Keepa response
+            product_data = self._extract_product_data_from_keepa(raw_keepa)
+
+            if not product_data.get("current_price"):
+                logger.warning(f"No valid price for {asin}, skipping")
+                return None
+
+            title = product_data.get("title", f"Product {asin}")
+            current_price = product_data["current_price"]
+            bsr = product_data.get("bsr", 0)
+            category = product_data.get("category", "Unknown")
+
+            # Calculate estimated buy cost (source price estimation)
+            # Using business config or default markup
+            buy_markup = business_config.get("buy_markup", 0.70)
+            estimated_cost = current_price * buy_markup
+
+            # Calculate ROI metrics
+            fba_fee_percentage = business_config.get("fba_fee_percentage", 0.15)
+            amazon_fees = current_price * fba_fee_percentage
+            profit_net = current_price - estimated_cost - amazon_fees
+            roi_percentage = (profit_net / estimated_cost) * 100 if estimated_cost > 0 else 0
+
+            # Calculate advanced scores from REAL Keepa data
+            velocity_score = self._calculate_velocity_from_keepa(raw_keepa, bsr)
+            stability_score = self._calculate_stability_from_keepa(raw_keepa)
+            confidence_score = self._calculate_confidence_from_keepa(raw_keepa)
+
             # Overall rating based on scoring config
             overall_rating = self._compute_rating(
-                roi_data["roi_percentage"], velocity_score, stability_score, 
+                roi_percentage, velocity_score, stability_score,
                 confidence_score, scoring_config
             )
-            
+
             # Create readable summary
-            readable_summary = f"{overall_rating}: {roi_data['roi_percentage']:.1f}% ROI, BSR {simulated_data['bsr']}, {velocity_score:.0f} velocity"
-            
+            readable_summary = f"{overall_rating}: {roi_percentage:.1f}% ROI, BSR {bsr:,}, {velocity_score:.0f} velocity"
+
             # Classify product tier (v1.7.0 AutoScheduler)
             tier, tier_reason = self._classify_product_tier({
-                'roi_percentage': roi_data['roi_percentage'],
-                'profit_net': roi_data['profit_net'],
+                'roi_percentage': roi_percentage,
+                'profit_net': profit_net,
                 'velocity_score': velocity_score,
                 'confidence_score': confidence_score,
                 'overall_rating': overall_rating
             })
-            
-            # Create AutoSourcingPick
+
+            # Create AutoSourcingPick with REAL data
             pick = AutoSourcingPick(
                 job_id=job_id,
                 asin=asin,
-                title=simulated_data["title"],
+                title=title,
                 current_price=current_price,
                 estimated_buy_cost=estimated_cost,
-                profit_net=roi_data["profit_net"],
-                roi_percentage=roi_data["roi_percentage"],
+                profit_net=profit_net,
+                roi_percentage=roi_percentage,
                 velocity_score=int(velocity_score),
                 stability_score=int(stability_score),
                 confidence_score=int(confidence_score),
                 overall_rating=overall_rating,
-                bsr=simulated_data["bsr"],
-                category=simulated_data["category"],
+                bsr=bsr,
+                category=category,
                 readable_summary=readable_summary,
                 # AutoScheduler tier classification
                 priority_tier=tier,
                 tier_reason=tier_reason,
                 is_featured=(tier == "HOT")
             )
-            
+
+            logger.info(f"Analyzed {asin}: {overall_rating}, ROI={roi_percentage:.1f}%, BSR={bsr}")
             return pick
-            
+
         except Exception as e:
             logger.error(f"Error analyzing {asin}: {str(e)}")
             return None
+
+    def _extract_product_data_from_keepa(self, raw_keepa: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Extract structured product data from raw Keepa response.
+
+        Uses the same extraction logic as unified_analysis.py for consistency.
+        """
+        result = {}
+
+        # Title
+        result["title"] = raw_keepa.get("title", "")
+
+        # Extract current price from stats.current[1] (NEW price in cents)
+        stats = raw_keepa.get("stats", {})
+        current_stats = stats.get("current", [])
+
+        if current_stats and len(current_stats) > 1 and current_stats[1] is not None:
+            # Keepa stores prices in cents, convert to dollars
+            result["current_price"] = current_stats[1] / 100.0
+        else:
+            # Fallback: try csv data
+            csv_data = raw_keepa.get("csv", [])
+            if csv_data and len(csv_data) > 1:
+                new_price_history = csv_data[1] if len(csv_data) > 1 else None
+                if new_price_history and len(new_price_history) >= 2:
+                    # Get last valid price
+                    for i in range(len(new_price_history) - 1, -1, -2):
+                        if new_price_history[i] is not None and new_price_history[i] > 0:
+                            result["current_price"] = new_price_history[i] / 100.0
+                            break
+
+        # Extract BSR from salesRanks or stats
+        sales_ranks = raw_keepa.get("salesRanks", {})
+        root_category = raw_keepa.get("rootCategory")
+
+        if sales_ranks and root_category:
+            rank_history = sales_ranks.get(str(root_category), sales_ranks.get(root_category, []))
+            if rank_history and len(rank_history) >= 2:
+                # Get last BSR value (odd indices are values, even are timestamps)
+                for i in range(len(rank_history) - 1, 0, -2):
+                    if rank_history[i] is not None and rank_history[i] > 0:
+                        result["bsr"] = rank_history[i]
+                        break
+
+        # Fallback: stats.current[18] for BSR
+        if not result.get("bsr") and current_stats and len(current_stats) > 18:
+            if current_stats[18] is not None and current_stats[18] > 0:
+                result["bsr"] = current_stats[18]
+
+        # Category name
+        category_tree = raw_keepa.get("categoryTree", [])
+        if category_tree and len(category_tree) > 0:
+            result["category"] = category_tree[0].get("name", "Unknown")
+        else:
+            result["category"] = "Unknown"
+
+        return result
+
+    def _calculate_velocity_from_keepa(self, raw_keepa: Dict[str, Any], bsr: int) -> float:
+        """Calculate velocity score from real Keepa data."""
+        # Base velocity from BSR (lower BSR = higher velocity)
+        if bsr <= 0:
+            return 50.0
+
+        # Logarithmic scale: BSR 1K = 100, BSR 100K = 50, BSR 1M = 10
+        import math
+        velocity = max(10, min(100, 130 - (math.log10(bsr) * 20)))
+
+        # Boost from sales drops (stats.current[18] or salesRanks history)
+        stats = raw_keepa.get("stats", {})
+        current_stats = stats.get("current", [])
+
+        # Check for recent sales activity
+        if current_stats and len(current_stats) > 18 and current_stats[18]:
+            # Sales drops indicate recent sales
+            velocity = min(100, velocity + 10)
+
+        return velocity
+
+    def _calculate_stability_from_keepa(self, raw_keepa: Dict[str, Any]) -> float:
+        """Calculate price stability score from real Keepa data."""
+        stats = raw_keepa.get("stats", {})
+
+        # Compare current vs avg30 prices
+        current_stats = stats.get("current", [])
+        avg30_stats = stats.get("avg30", [])
+
+        if not current_stats or not avg30_stats:
+            return 70.0  # Default
+
+        # Check price stability (index 1 = NEW price)
+        if len(current_stats) > 1 and len(avg30_stats) > 1:
+            current_price = current_stats[1]
+            avg30_price = avg30_stats[1]
+
+            if current_price and avg30_price and avg30_price > 0:
+                # Calculate price variance ratio
+                variance = abs(current_price - avg30_price) / avg30_price
+                # Lower variance = higher stability (0% variance = 100, 50% variance = 50)
+                stability = max(30, min(100, 100 - (variance * 100)))
+                return stability
+
+        return 70.0
+
+    def _calculate_confidence_from_keepa(self, raw_keepa: Dict[str, Any]) -> float:
+        """Calculate confidence score from real Keepa data completeness."""
+        confidence = 50.0  # Base confidence
+
+        # Check data completeness
+        if raw_keepa.get("title"):
+            confidence += 10
+
+        stats = raw_keepa.get("stats", {})
+        if stats.get("current"):
+            confidence += 15
+        if stats.get("avg30"):
+            confidence += 10
+
+        if raw_keepa.get("salesRanks"):
+            confidence += 10
+
+        # Last update freshness
+        last_update = raw_keepa.get("lastUpdate", 0)
+        if last_update > 0:
+            confidence += 5
+
+        return min(100, confidence)
 
     def _compute_rating(
         self, roi: float, velocity: float, stability: float, 

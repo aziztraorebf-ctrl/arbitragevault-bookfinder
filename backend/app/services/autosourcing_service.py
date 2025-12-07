@@ -227,27 +227,30 @@ class AutoSourcingService:
         max_results = discovery_config.get("max_results", 50)
 
         # Map category name to Keepa category ID
-        # All categories must have valid IDs - deals endpoint returns 404
-        # Using verified IDs from category_analyzer.py that work with bestsellers
+        # IMPORTANT: IDs verified 2025-12-07 via direct Keepa /bestsellers API testing
+        # See backend/tests/debug_keepa_categories.py for verification script
+        # Invalid IDs (4277, 3546, 4142) return 0 ASINs - they are Amazon browse node IDs, not Keepa IDs
         categories = discovery_config.get("categories", [])
         category_mapping = {
-            # Generic "Books" -> use Medical (3738) as default - high value, verified working
-            "Books": 3738,
-            # Specific book sub-categories with valid Keepa IDs
-            "Medical": 3738,
-            "Programming": 3546,
-            "Engineering": 4142,
-            "Textbooks": 4277,
-            "Accounting": 2578,
-            # Non-book categories
+            # Generic "Books" -> use Books root for maximum coverage
+            "Books": 283155,  # Books (root) - 500K ASINs
+            # Specific book sub-categories - VERIFIED WORKING IDs
+            "Medical": 3738,  # Medical Books - 115 ASINs (specialized niche)
+            "Programming": 173508,  # Programming - 10K ASINs (was 3546, invalid)
+            "Engineering": 468220,  # Engineering - 10K ASINs (was 4142, invalid)
+            "Textbooks": 465600,  # Textbooks (root) - 10K ASINs (was 4277, invalid)
+            "Accounting": 2578,  # Accounting - 1.5K ASINs (verified working)
+            "Computer & Technology": 173507,  # Computer & Technology - 10K ASINs
+            "Science & Mathematics": 468216,  # Science & Math - 10K ASINs
+            # Non-book categories (not yet verified)
             "Electronics": 172282,
             "Home & Kitchen": 1055398,
             "Sports & Outdoors": 3375251
         }
-        category_id = 3738  # Default to Medical Books (verified working)
+        category_id = 283155  # Default to Books root (500K ASINs)
         if categories:
             first_cat = categories[0] if isinstance(categories, list) else categories
-            category_id = category_mapping.get(first_cat, 3738)  # Default to Medical if unknown
+            category_id = category_mapping.get(first_cat, 283155)  # Default to Books root if unknown
 
         # Extract BSR range
         bsr_range = discovery_config.get("bsr_range", {})

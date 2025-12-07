@@ -465,8 +465,11 @@ class AutoSourcingService:
             # Extract REAL data from Keepa response
             product_data = self._extract_product_data_from_keepa(raw_keepa)
 
+            # Debug: Log extraction results
+            logger.info(f"Extracted {asin}: price={product_data.get('current_price')}, bsr={product_data.get('bsr')}")
+
             if not product_data.get("current_price"):
-                logger.debug(f"No valid price for {asin}, skipping")
+                logger.warning(f"No valid price for {asin}, skipping (raw stats: {raw_keepa.get('stats', {}).get('current', [])[:5]})")
                 return None
 
             title = product_data.get("title", f"Product {asin}")

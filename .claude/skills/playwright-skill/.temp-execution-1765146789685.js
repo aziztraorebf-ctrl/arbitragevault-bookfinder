@@ -4,7 +4,7 @@ const helpers = require('./lib/helpers');
 
 (async () => {
   try {
-    C:/Users/azizt/AppData/Local/Temp/playwright-test-surprise-me.js
+    C:/Users/azizt/AppData/Local/Temp/playwright-test-autosourcing-validation.js
   } catch (error) {
     console.error('❌ Automation error:', error.message);
     if (error.stack) {

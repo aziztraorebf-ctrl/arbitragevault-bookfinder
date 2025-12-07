@@ -1,0 +1,259 @@
+{
+  "timestamp": "2025-12-07T22:34:10.299Z",
+  "strategy_tested": "smart_velocity",
+  "picks_received": [
+    {
+      "id": "6ec16cd2-d6c5-4e53-87e4-4327b9a28e85",
+      "asin": "B0CSY7BL6Q",
+      "title": "Python Programming for Beginners: The Complete Python Coding Crash Course - Boost Your Growth with an Innovative Ultra-Fast Learning Framework and Exclusive Hands-On Interactive Exercises & Projects",
+      "current_price": 25.95,
+      "roi_percentage": 70,
+      "velocity_score": 54,
+      "stability_score": 87,
+      "confidence_score": 100,
+      "overall_rating": "EXCELLENT",
+      "readable_summary": "EXCELLENT: 70.0% ROI, BSR 19,475, 54 velocity",
+      "bsr": 19475,
+      "category": "Books",
+      "action_status": "pending",
+      "action_taken_at": null,
+      "is_purchased": false,
+      "is_favorite": false,
+      "is_ignored": false,
+      "created_at": "2025-12-07T22:34:22.750215"
+    },
+    {
+      "id": "1267f657-2980-4ba5-bed7-f48faaa8c43d",
+      "asin": "B0DJD31ZZX",
+      "title": "Step-by-Step Electrical Engineering: Learn and Apply Core Concepts Quickly. Build Your Knowledge with Practical Examples - No Background Required! Perfect for Aspiring Engineers and Enthusiasts!",
+      "current_price": 21.98,
+      "roi_percentage": 70,
+      "velocity_score": 53,
+      "stability_score": 98,
+      "confidence_score": 100,
+      "overall_rating": "EXCELLENT",
+      "readable_summary": "EXCELLENT: 70.0% ROI, BSR 22,170, 53 velocity",
+      "bsr": 22170,
+      "category": "Books",
+      "action_status": "pending",
+      "action_taken_at": null,
+      "is_purchased": false,
+      "is_favorite": false,
+      "is_ignored": false,
+      "created_at": "2025-12-07T22:34:22.750223"
+    },
+    {
+      "id": "444febf1-d83b-41e8-bd15-8841175fb6ec",
+      "asin": "1801716994",
+      "title": "MacBook Seniors Guide: A Step-by-Step Manual for the Non-Tech-Savvy to Master Your Mac in No Time",
+      "current_price": 21.97,
+      "roi_percentage": 70,
+      "velocity_score": 52,
+      "stability_score": 93,
+      "confidence_score": 100,
+      "overall_rating": "EXCELLENT",
+      "readable_summary": "EXCELLENT: 70.0% ROI, BSR 24,386, 52 velocity",
+      "bsr": 24386,
+      "category": "Books",
+      "action_status": "pending",
+      "action_taken_at": null,
+      "is_purchased": false,
+      "is_favorite": false,
+      "is_ignored": false,
+      "created_at": "2025-12-07T22:34:22.750228"
+    },
+    {
+      "id": "4afbc906-c700-457b-ad24-fc072c8baa65",
+      "asin": "163610035X",
+      "title": "Python QuickStart Guide: The Simplified Beginner's Guide to Python Programming Using Hands-On Projects and Real-World Applications (Coding & Programming - QuickStart Guides)",
+      "current_price": 20.9,
+      "roi_percentage": 70,
+      "velocity_score": 49,
+      "stability_score": 93,
+      "confidence_score": 100,
+      "overall_rating": "GOOD",
+      "readable_summary": "GOOD: 70.0% ROI, BSR 31,931, 50 velocity",
+      "bsr": 31931,
+      "category": "Books",
+      "action_status": "pending",
+      "action_taken_at": null,
+      "is_purchased": false,
+      "is_favorite": false,
+      "is_ignored": false,
+      "created_at": "2025-12-07T22:34:22.750232"
+    },
+    {
+      "id": "74f3e3b0-813a-4ca0-819b-c1afa42b2a5c",
+      "asin": "B0BTRRLCYZ",
+      "title": "Python Programming for Beginners: The Complete Guide to Mastering Python in 7 Days with Hands-On Exercises – Top Secret Coding Tips to Get an Unfair Advantage and Land Your Dream Job!",
+      "current_price": 24.99,
+      "roi_percentage": 70,
+      "velocity_score": 49,
+      "stability_score": 100,
+      "confidence_score": 100,
+      "overall_rating": "GOOD",
+      "readable_summary": "GOOD: 70.0% ROI, BSR 31,988, 50 velocity",
+      "bsr": 31988,
+      "category": "Books",
+      "action_status": "pending",
+      "action_taken_at": null,
+      "is_purchased": false,
+      "is_favorite": false,
+      "is_ignored": false,
+      "created_at": "2025-12-07T22:34:22.750237"
+    }
+  ],
+  "assertions": {
+    "total": 23,
+    "passed": 20,
+    "failed": 3,
+    "details": [
+      {
+        "status": "PASS",
+        "message": "Backend est healthy",
+        "actual": "ready",
+        "expected": "ready"
+      },
+      {
+        "status": "PASS",
+        "message": "Keepa service est accessible",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "status": "PASS",
+        "message": "Titre reel (pas placeholder) pour B0CSY7BL6Q",
+        "actual": "Python Programming for Beginne",
+        "expected": "Titre reel du produit"
+      },
+      {
+        "status": "PASS",
+        "message": "ROI >= 30% pour B0CSY7BL6Q",
+        "actual": 70,
+        "expected": ">= 30"
+      },
+      {
+        "status": "PASS",
+        "message": "Velocity >= 50 pour B0CSY7BL6Q",
+        "actual": 54,
+        "expected": ">= 50"
+      },
+      {
+        "status": "PASS",
+        "message": "Confidence >= 60 pour B0CSY7BL6Q",
+        "actual": 100,
+        "expected": ">= 60"
+      },
+      {
+        "status": "PASS",
+        "message": "Titre reel (pas placeholder) pour B0DJD31ZZX",
+        "actual": "Step-by-Step Electrical Engine",
+        "expected": "Titre reel du produit"
+      },
+      {
+        "status": "PASS",
+        "message": "ROI >= 30% pour B0DJD31ZZX",
+        "actual": 70,
+        "expected": ">= 30"
+      },
+      {
+        "status": "PASS",
+        "message": "Velocity >= 50 pour B0DJD31ZZX",
+        "actual": 53,
+        "expected": ">= 50"
+      },
+      {
+        "status": "PASS",
+        "message": "Confidence >= 60 pour B0DJD31ZZX",
+        "actual": 100,
+        "expected": ">= 60"
+      },
+      {
+        "status": "PASS",
+        "message": "Titre reel (pas placeholder) pour 1801716994",
+        "actual": "MacBook Seniors Guide: A Step-",
+        "expected": "Titre reel du produit"
+      },
+      {
+        "status": "PASS",
+        "message": "ROI >= 30% pour 1801716994",
+        "actual": 70,
+        "expected": ">= 30"
+      },
+      {
+        "status": "PASS",
+        "message": "Velocity >= 50 pour 1801716994",
+        "actual": 52,
+        "expected": ">= 50"
+      },
+      {
+        "status": "PASS",
+        "message": "Confidence >= 60 pour 1801716994",
+        "actual": 100,
+        "expected": ">= 60"
+      },
+      {
+        "status": "PASS",
+        "message": "Titre reel (pas placeholder) pour 163610035X",
+        "actual": "Python QuickStart Guide: The S",
+        "expected": "Titre reel du produit"
+      },
+      {
+        "status": "PASS",
+        "message": "ROI >= 30% pour 163610035X",
+        "actual": 70,
+        "expected": ">= 30"
+      },
+      {
+        "status": "FAIL",
+        "message": "Velocity >= 50 pour 163610035X",
+        "actual": 49,
+        "expected": ">= 50"
+      },
+      {
+        "status": "PASS",
+        "message": "Confidence >= 60 pour 163610035X",
+        "actual": 100,
+        "expected": ">= 60"
+      },
+      {
+        "status": "PASS",
+        "message": "Titre reel (pas placeholder) pour B0BTRRLCYZ",
+        "actual": "Python Programming for Beginne",
+        "expected": "Titre reel du produit"
+      },
+      {
+        "status": "PASS",
+        "message": "ROI >= 30% pour B0BTRRLCYZ",
+        "actual": 70,
+        "expected": ">= 30"
+      },
+      {
+        "status": "FAIL",
+        "message": "Velocity >= 50 pour B0BTRRLCYZ",
+        "actual": 49,
+        "expected": ">= 50"
+      },
+      {
+        "status": "PASS",
+        "message": "Confidence >= 60 pour B0BTRRLCYZ",
+        "actual": 100,
+        "expected": ">= 60"
+      },
+      {
+        "status": "FAIL",
+        "message": "Divergence ROI < 5% entre AutoSourcing et Metrics API",
+        "actual": "NaN%",
+        "expected": "< 5%"
+      }
+    ]
+  },
+  "cross_validation": {
+    "performed": true,
+    "mcp_vs_backend_match": false,
+    "divergence_percent": null
+  },
+  "screenshots": [
+    "C:\\Users\\azizt\\Workspace\\arbitragevault_bookfinder\\.claude\\skills\\playwright-skill\\screenshots\\e2e-frontend-smart_velocity-1765146877983.png"
+  ]
+}

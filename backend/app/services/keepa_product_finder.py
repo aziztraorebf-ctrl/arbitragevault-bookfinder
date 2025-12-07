@@ -290,13 +290,19 @@ class KeepaProductFinderService:
         bsr_max: Optional[int],
         price_min: Optional[float],
         price_max: Optional[float],
-        max_fba_sellers: Optional[int] = None
+        max_fba_sellers: Optional[int] = None,
+        exclude_amazon_seller: bool = True
     ) -> List[str]:
         """
         Filtrer ASINs par criteres BSR/prix.
 
         Recupere les details produits et filtre.
         Includes rate limit protection with delays between batches.
+
+        Args:
+            exclude_amazon_seller: If True, exclude products where Amazon is a seller.
+                                   Amazon always wins Buy Box and crushes FBA margins.
+                                   Default: True (recommended for arbitrage beginners).
         """
         if not asins:
             return []
@@ -366,6 +372,18 @@ class KeepaProductFinderService:
                         if price_max and price > price_max:
                             continue
 
+                    # Apply "Exclude Amazon as seller" filter (Phase 6.1)
+                    # stats.current[0] = AMAZON price - if > 0, Amazon is selling this product
+                    # Amazon always wins Buy Box, making FBA arbitrage unprofitable
+                    if exclude_amazon_seller:
+                        amazon_price = current[0] if len(current) > 0 else None
+                        if amazon_price is not None and amazon_price > 0:
+                            logger.debug(
+                                f"Skipping ASIN {product.get('asin')}: "
+                                f"Amazon is a seller (price: ${amazon_price/100:.2f})"
+                            )
+                            continue
+
                     # Apply FBA seller count filter (competition filter)
                     # stats.current[11] = COUNT_NEW (number of new/FBA offers)
                     if max_fba_sellers is not None:
@@ -429,7 +447,8 @@ class KeepaProductFinderService:
         min_velocity: Optional[float] = None,
         max_results: int = 50,
         force_refresh: bool = False,
-        max_fba_sellers: Optional[int] = None
+        max_fba_sellers: Optional[int] = None,
+        exclude_amazon_seller: bool = True
     ) -> List[Dict[str, Any]]:
         """
         Découvre produits avec scoring complet.
@@ -439,6 +458,8 @@ class KeepaProductFinderService:
         Args:
             force_refresh: If True, bypasses cache for product data
             max_fba_sellers: Maximum FBA sellers allowed (competition filter)
+            exclude_amazon_seller: If True, exclude products where Amazon is a seller.
+                                   Default: True (recommended for arbitrage).
 
         Returns:
             Liste de produits avec métriques :
@@ -580,6 +601,17 @@ class KeepaProductFinderService:
 
                     if not price_cents or not bsr:
                         continue
+
+                    # Apply "Exclude Amazon as seller" filter (Phase 6.1)
+                    # stats.current[0] = AMAZON price - if > 0, Amazon is selling
+                    if exclude_amazon_seller:
+                        amazon_price = current[0] if len(current) > 0 else None
+                        if amazon_price is not None and amazon_price > 0:
+                            logger.debug(
+                                f"[SCORING] Skipping ASIN {asin}: "
+                                f"Amazon is a seller (price: ${amazon_price/100:.2f})"
+                            )
+                            continue
 
                     price = Decimal(str(price_cents / 100))
 

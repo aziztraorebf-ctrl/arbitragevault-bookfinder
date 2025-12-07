@@ -1,0 +1,168 @@
+[
+  {
+    "category_id": 3738,
+    "name": "Medical Books (current default)",
+    "success": true,
+    "has_bestSellersList": true,
+    "asin_count": 115,
+    "tokens_left": 454,
+    "sample_asins": [
+      "036721010X",
+      "0071451420",
+      "0071371923"
+    ]
+  },
+  {
+    "category_id": 4277,
+    "name": "Textbooks",
+    "success": false,
+    "has_bestSellersList": false,
+    "asin_count": 0,
+    "tokens_left": 474,
+    "sample_asins": []
+  },
+  {
+    "category_id": 3546,
+    "name": "Programming",
+    "success": false,
+    "has_bestSellersList": false,
+    "asin_count": 0,
+    "tokens_left": 474,
+    "sample_asins": []
+  },
+  {
+    "category_id": 4142,
+    "name": "Engineering",
+    "success": false,
+    "has_bestSellersList": false,
+    "asin_count": 0,
+    "tokens_left": 474,
+    "sample_asins": []
+  },
+  {
+    "category_id": 2578,
+    "name": "Accounting",
+    "success": true,
+    "has_bestSellersList": true,
+    "asin_count": 1488,
+    "tokens_left": 424,
+    "sample_asins": [
+      "1984861204",
+      "1637746474",
+      "B08CMF2CQF"
+    ]
+  },
+  {
+    "category_id": 283155,
+    "name": "Books (root)",
+    "success": true,
+    "has_bestSellersList": true,
+    "asin_count": 500000,
+    "tokens_left": 374,
+    "sample_asins": [
+      "B0CNQ5X4Y1",
+      "1450845800",
+      "1401971369"
+    ]
+  },
+  {
+    "category_id": 465600,
+    "name": "Textbooks (root)",
+    "success": true,
+    "has_bestSellersList": true,
+    "asin_count": 10000,
+    "tokens_left": 324,
+    "sample_asins": [
+      "B0DBHTZQF1",
+      "1732557101",
+      "173548153X"
+    ]
+  },
+  {
+    "category_id": 468216,
+    "name": "Science & Mathematics",
+    "success": true,
+    "has_bestSellersList": true,
+    "asin_count": 10000,
+    "tokens_left": 274,
+    "sample_asins": [
+      "B08CMF2CQF",
+      "1324036184",
+      "0415922224"
+    ]
+  },
+  {
+    "category_id": 468220,
+    "name": "Engineering",
+    "success": true,
+    "has_bestSellersList": true,
+    "asin_count": 10000,
+    "tokens_left": 224,
+    "sample_asins": [
+      "1646113195",
+      "1394359829",
+      "1394362684"
+    ]
+  },
+  {
+    "category_id": 468206,
+    "name": "Business & Finance",
+    "success": true,
+    "has_bestSellersList": true,
+    "asin_count": 8,
+    "tokens_left": 174,
+    "sample_asins": [
+      "0521755840",
+      "1942611358",
+      "1517106834"
+    ]
+  },
+  {
+    "category_id": 468226,
+    "name": "Computer Science",
+    "success": false,
+    "has_bestSellersList": true,
+    "asin_count": 0,
+    "tokens_left": 124,
+    "sample_asins": []
+  },
+  {
+    "category_id": 173507,
+    "name": "Computer & Technology",
+    "success": true,
+    "has_bestSellersList": true,
+    "asin_count": 10000,
+    "tokens_left": 74,
+    "sample_asins": [
+      "0760397139",
+      "1394323468",
+      "1640301925"
+    ]
+  },
+  {
+    "category_id": 173508,
+    "name": "Programming",
+    "success": true,
+    "has_bestSellersList": true,
+    "asin_count": 10000,
+    "tokens_left": 24,
+    "sample_asins": [
+      "B0D5HVSW5T",
+      "B0DBYV1DMD",
+      "B0C2SVRS9H"
+    ]
+  },
+  {
+    "category_id": 3,
+    "name": "Arts & Photography",
+    "success": true,
+    "has_bestSellersList": true,
+    "asin_count": 10000,
+    "tokens_left": -26,
+    "sample_asins": [
+      "0593296966",
+      "B0CKVLW15K",
+      "0735211299"
+    ]
+  }
+]

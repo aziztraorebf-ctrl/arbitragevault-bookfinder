@@ -24,12 +24,18 @@ from app.services.config_service import ConfigService
 from app.core.calculations import (
     calculate_roi_metrics,
     compute_advanced_velocity_score,
-    compute_advanced_stability_score, 
+    compute_advanced_stability_score,
     compute_advanced_confidence_score,
     compute_overall_rating
 )
 from app.core.exceptions import AppException, InsufficientTokensError
 from app.schemas.autosourcing_safeguards import TIMEOUT_PER_JOB
+from app.config.keepa_categories import (
+    get_category_id,
+    get_category_config,
+    KEEPA_CATEGORIES,
+    LEGACY_CATEGORY_MAPPING
+)
 
 logger = logging.getLogger(__name__)
 
@@ -226,31 +232,24 @@ class AutoSourcingService:
         # Extract parameters from discovery_config
         max_results = discovery_config.get("max_results", 50)
 
-        # Map category name to Keepa category ID
-        # IMPORTANT: IDs verified 2025-12-07 via direct Keepa /bestsellers API testing
-        # See backend/tests/debug_keepa_categories.py for verification script
-        # Invalid IDs (4277, 3546, 4142) return 0 ASINs - they are Amazon browse node IDs, not Keepa IDs
+        # Map category name to Keepa category ID using CENTRALIZED CONFIG
+        # All IDs validated via Keepa /category API on 2025-12-07
+        # Source of truth: app/config/keepa_categories.py
         categories = discovery_config.get("categories", [])
-        category_mapping = {
-            # Generic "Books" -> use Books root for maximum coverage
-            "Books": 283155,  # Books (root) - 500K ASINs
-            # Specific book sub-categories - VERIFIED WORKING IDs
-            "Medical": 3738,  # Medical Books - 115 ASINs (specialized niche)
-            "Programming": 173508,  # Programming - 10K ASINs (was 3546, invalid)
-            "Engineering": 468220,  # Engineering - 10K ASINs (was 4142, invalid)
-            "Textbooks": 465600,  # Textbooks (root) - 10K ASINs (was 4277, invalid)
-            "Accounting": 2578,  # Accounting - 1.5K ASINs (verified working)
-            "Computer & Technology": 173507,  # Computer & Technology - 10K ASINs
-            "Science & Mathematics": 468216,  # Science & Math - 10K ASINs
-            # Non-book categories (not yet verified)
-            "Electronics": 172282,
-            "Home & Kitchen": 1055398,
-            "Sports & Outdoors": 3375251
-        }
-        category_id = 283155  # Default to Books root (500K ASINs)
+
+        # Default to Books root (validated ID from centralized config)
+        default_category_id = KEEPA_CATEGORIES["books"]["id"]  # 283155
+        category_id = default_category_id
+
         if categories:
             first_cat = categories[0] if isinstance(categories, list) else categories
-            category_id = category_mapping.get(first_cat, 283155)  # Default to Books root if unknown
+            try:
+                # Use centralized config with validation
+                category_id = get_category_id(first_cat)
+                logger.info(f"Category '{first_cat}' resolved to ID {category_id} from centralized config")
+            except KeyError as e:
+                logger.warning(f"Unknown category '{first_cat}', using default Books: {e}")
+                category_id = default_category_id
 
         # Extract BSR range
         bsr_range = discovery_config.get("bsr_range", {})
@@ -299,23 +298,17 @@ class AutoSourcingService:
         """
         keepa_params = {}
         
-        # Handle categories
+        # Handle categories using CENTRALIZED CONFIG
         categories = discovery_config.get("categories", [])
         if categories:
-            # Map common category names to Keepa category IDs
-            category_mapping = {
-                "Books": 1000,
-                "Electronics": 172282,  
-                "Textbooks": 465600,
-                "Home & Kitchen": 1055398,
-                "Sports & Outdoors": 3375251
-            }
-            
             category_ids = []
             for cat in categories:
-                if cat in category_mapping:
-                    category_ids.append(category_mapping[cat])
-            
+                try:
+                    cat_id = get_category_id(cat)
+                    category_ids.append(cat_id)
+                except KeyError:
+                    logger.warning(f"Unknown category '{cat}' in search params, skipping")
+
             if category_ids:
                 keepa_params["categories_include"] = category_ids[0]  # Use first category
         

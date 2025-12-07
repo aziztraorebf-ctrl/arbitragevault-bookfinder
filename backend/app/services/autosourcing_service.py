@@ -227,12 +227,12 @@ class AutoSourcingService:
         max_results = discovery_config.get("max_results", 50)
 
         # Map category name to Keepa category ID
-        # Note: "Books" uses None to trigger deals endpoint (no valid parent Books ID)
-        # Specific sub-categories use their actual Keepa IDs from category_analyzer.py
+        # All categories must have valid IDs - deals endpoint returns 404
+        # Using verified IDs from category_analyzer.py that work with bestsellers
         categories = discovery_config.get("categories", [])
         category_mapping = {
-            # Generic "Books" -> None (use deals endpoint, not bestsellers)
-            "Books": None,
+            # Generic "Books" -> use Medical (3738) as default - high value, verified working
+            "Books": 3738,
             # Specific book sub-categories with valid Keepa IDs
             "Medical": 3738,
             "Programming": 3546,
@@ -244,10 +244,10 @@ class AutoSourcingService:
             "Home & Kitchen": 1055398,
             "Sports & Outdoors": 3375251
         }
-        category_id = None
+        category_id = 3738  # Default to Medical Books (verified working)
         if categories:
             first_cat = categories[0] if isinstance(categories, list) else categories
-            category_id = category_mapping.get(first_cat)  # None if not found (uses deals)
+            category_id = category_mapping.get(first_cat, 3738)  # Default to Medical if unknown
 
         # Extract BSR range
         bsr_range = discovery_config.get("bsr_range", {})

@@ -643,49 +643,31 @@ class AutoSourcingService:
         """
         Extract structured product data from raw Keepa response.
 
-        Uses the same extraction logic as unified_analysis.py for consistency.
+        Aligned with keepa_product_finder.py for REST API batch responses.
+        stats.current[] indices:
+          [0] = AMAZON price
+          [1] = NEW price (3rd party - preferred)
+          [2] = USED price
+          [3] = Sales Rank (BSR)
         """
         result = {}
 
         # Title
         result["title"] = raw_keepa.get("title", "")
 
-        # Extract current price from stats.current[1] (NEW price in cents)
+        # Extract from stats.current[] (REST API batch format)
         stats = raw_keepa.get("stats", {})
-        current_stats = stats.get("current", [])
+        current = stats.get("current", [])
 
-        if current_stats and len(current_stats) > 1 and current_stats[1] is not None:
-            # Keepa stores prices in cents, convert to dollars
-            result["current_price"] = current_stats[1] / 100.0
-        else:
-            # Fallback: try csv data
-            csv_data = raw_keepa.get("csv", [])
-            if csv_data and len(csv_data) > 1:
-                new_price_history = csv_data[1] if len(csv_data) > 1 else None
-                if new_price_history and len(new_price_history) >= 2:
-                    # Get last valid price
-                    for i in range(len(new_price_history) - 1, -1, -2):
-                        if new_price_history[i] is not None and new_price_history[i] > 0:
-                            result["current_price"] = new_price_history[i] / 100.0
-                            break
+        # Price: NEW price (index 1), fallback to AMAZON price (index 0)
+        if len(current) > 1 and current[1] is not None and current[1] > 0:
+            result["current_price"] = current[1] / 100.0  # NEW price in cents
+        elif len(current) > 0 and current[0] is not None and current[0] > 0:
+            result["current_price"] = current[0] / 100.0  # AMAZON price fallback
 
-        # Extract BSR from salesRanks or stats
-        sales_ranks = raw_keepa.get("salesRanks", {})
-        root_category = raw_keepa.get("rootCategory")
-
-        if sales_ranks and root_category:
-            rank_history = sales_ranks.get(str(root_category), sales_ranks.get(root_category, []))
-            if rank_history and len(rank_history) >= 2:
-                # Get last BSR value (odd indices are values, even are timestamps)
-                for i in range(len(rank_history) - 1, 0, -2):
-                    if rank_history[i] is not None and rank_history[i] > 0:
-                        result["bsr"] = rank_history[i]
-                        break
-
-        # Fallback: stats.current[18] for BSR
-        if not result.get("bsr") and current_stats and len(current_stats) > 18:
-            if current_stats[18] is not None and current_stats[18] > 0:
-                result["bsr"] = current_stats[18]
+        # BSR: stats.current[3] (REST API format)
+        if len(current) > 3 and current[3] is not None and current[3] > 0:
+            result["bsr"] = current[3]
 
         # Category name
         category_tree = raw_keepa.get("categoryTree", [])

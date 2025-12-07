@@ -19,6 +19,8 @@ from app.models.autosourcing import (
 )
 from app.services.keepa_service import KeepaService
 from app.services.business_config_service import BusinessConfigService
+from app.services.keepa_product_finder import KeepaProductFinderService
+from app.services.config_service import ConfigService
 from app.core.calculations import (
     calculate_roi_metrics,
     compute_advanced_velocity_score,
@@ -42,6 +44,13 @@ class AutoSourcingService:
         self.db = db_session
         self.keepa_service = keepa_service
         self.business_config = BusinessConfigService()
+        # Phase 7: Use KeepaProductFinderService (REST API) instead of keepa lib
+        config_service = ConfigService(db_session)
+        self.product_finder = KeepaProductFinderService(
+            keepa_service=keepa_service,
+            config_service=config_service,
+            db=db_session
+        )
 
     async def run_custom_search(
         self,
@@ -200,7 +209,10 @@ class AutoSourcingService:
 
     async def _discover_products(self, discovery_config: Dict[str, Any]) -> List[str]:
         """
-        Discover products using Keepa Product Finder API.
+        Discover products using KeepaProductFinderService (REST API).
+
+        Phase 7 Fix: Uses REST API directly instead of keepa Python library.
+        This is MUCH faster and more reliable.
 
         Args:
             discovery_config: Search criteria for Keepa
@@ -211,19 +223,56 @@ class AutoSourcingService:
         Raises:
             Exception: If Keepa Product Finder API fails (no silent fallback)
         """
-        # Convert discovery config to Keepa Product Finder parameters
-        keepa_params = await self._build_keepa_search_params(discovery_config)
+        # Extract parameters from discovery_config
         max_results = discovery_config.get("max_results", 50)
 
-        # Call Keepa Product Finder API - NO fallback, fail explicitly
-        logger.info("Calling Keepa Product Finder API...")
-        discovered_asins = await self.keepa_service.find_products(
-            search_criteria=keepa_params,
-            domain=1,  # US domain
+        # Map category name to Keepa category ID
+        categories = discovery_config.get("categories", [])
+        category_mapping = {
+            "Books": 283155,  # Keepa Books category ID
+            "Textbooks": 465600,
+            "Electronics": 172282,
+            "Home & Kitchen": 1055398,
+            "Sports & Outdoors": 3375251
+        }
+        category_id = None
+        if categories:
+            first_cat = categories[0] if isinstance(categories, list) else categories
+            category_id = category_mapping.get(first_cat, 283155)  # Default to Books
+
+        # Extract BSR range
+        bsr_range = discovery_config.get("bsr_range", {})
+        bsr_min = bsr_range.get("min") if isinstance(bsr_range, dict) else None
+        bsr_max = bsr_range.get("max") if isinstance(bsr_range, dict) else None
+        # Handle list format [min, max]
+        if isinstance(bsr_range, list) and len(bsr_range) >= 2:
+            bsr_min, bsr_max = bsr_range[0], bsr_range[1]
+
+        # Extract price range
+        price_range = discovery_config.get("price_range", {})
+        price_min = price_range.get("min") if isinstance(price_range, dict) else None
+        price_max = price_range.get("max") if isinstance(price_range, dict) else None
+        # Handle list format [min, max]
+        if isinstance(price_range, list) and len(price_range) >= 2:
+            price_min, price_max = price_range[0], price_range[1]
+
+        logger.info(
+            f"Calling KeepaProductFinderService (REST API): "
+            f"category={category_id}, bsr=[{bsr_min}-{bsr_max}], price=[{price_min}-{price_max}]"
+        )
+
+        # Call ProductFinder REST API - FAST and reliable
+        discovered_asins = await self.product_finder.discover_products(
+            domain=1,  # US
+            category=category_id,
+            bsr_min=bsr_min,
+            bsr_max=bsr_max,
+            price_min=price_min,
+            price_max=price_max,
             max_results=max_results
         )
 
-        logger.info(f"Keepa Product Finder returned {len(discovered_asins)} ASINs")
+        logger.info(f"ProductFinder REST API returned {len(discovered_asins)} ASINs")
         return discovered_asins
 
     async def _build_keepa_search_params(self, discovery_config: Dict[str, Any]) -> Dict[str, Any]:

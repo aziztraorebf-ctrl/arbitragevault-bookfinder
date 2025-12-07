@@ -308,7 +308,10 @@ def parse_keepa_product_unified(raw_keepa: Dict[str, Any]) -> Dict[str, Any]:
 
     # Step 1: Extract BSR using our enhanced extractor
     # IMPORTANT: Use KeepaBSRExtractor.extract_current_bsr() which handles salesRanks format
-    parsed['current_bsr'] = KeepaBSRExtractor.extract_current_bsr(raw_keepa)
+    # FIX: extract_current_bsr returns Tuple[Optional[int], str], unpack to get BSR value only
+    bsr_value, bsr_source = KeepaBSRExtractor.extract_current_bsr(raw_keepa)
+    parsed['current_bsr'] = bsr_value
+    parsed['bsr_source'] = bsr_source
 
     # Step 1b: Extract current prices
     # Try modern format first (directly in product object)

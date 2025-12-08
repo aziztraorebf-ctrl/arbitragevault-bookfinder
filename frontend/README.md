@@ -1,69 +1,91 @@
-# React + TypeScript + Vite
+# ArbitrageVault Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 18 frontend for the ArbitrageVault BookFinder platform.
 
-Currently, two official plugins are available:
+## Production
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**URL**: https://arbitragevault.netlify.app
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **React 18** with TypeScript
+- **Vite** for build tooling
+- **Tailwind CSS** for styling
+- **React Router** for navigation
+- **Playwright** for E2E testing
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Quick Start
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+```bash
+# Install dependencies
+npm install
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Run E2E tests
+npx playwright test
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Project Structure
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+frontend/
+├── src/
+│   ├── components/       # Reusable UI components
+│   ├── pages/            # Route pages
+│   ├── services/         # API client
+│   ├── hooks/            # Custom React hooks
+│   └── types/            # TypeScript types
+├── e2e/                   # Playwright E2E tests
+├── public/                # Static assets
+└── vite.config.ts         # Vite configuration
+```
+
+## Environment Variables
+
+Create `.env.local` for local development:
+```
+VITE_API_URL=http://localhost:8000
+```
+
+Production uses:
+```
+VITE_API_URL=https://arbitragevault-backend-v2.onrender.com
+```
+
+## Features
+
+- **Dashboard**: Overview of arbitrage opportunities
+- **AutoSourcing**: Automated product discovery
+- **Niche Discovery**: Category-based opportunity finding
+- **Product Analysis**: Detailed product metrics
+
+## Testing
+
+```bash
+# Run all E2E tests
+npx playwright test
+
+# Run with UI
+npx playwright test --ui
+
+# Run specific test file
+npx playwright test e2e/autosourcing.spec.ts
+```
+
+## Deployment
+
+Deployed automatically via Netlify on push to main branch.
+
+Build settings:
+- Build command: `npm run build`
+- Publish directory: `dist`
+
+---
+
+**Backend API**: https://arbitragevault-backend-v2.onrender.com
+**API Docs**: https://arbitragevault-backend-v2.onrender.com/docs

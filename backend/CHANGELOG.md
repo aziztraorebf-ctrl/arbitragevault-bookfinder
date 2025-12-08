@@ -2,100 +2,158 @@
 
 All notable changes to the ArbitrageVault Backend project are documented in this file.
 
-## [2.0.0] - 2025-09-29 - 🏆 PRODUCTION READY
+## [1.6.3] - 2025-12-07 - Documentation Cleanup
 
-### 🚀 **MAJOR ARCHITECTURE TRANSFORMATION**
-
-#### **Added**
-- **Hybrid Architecture**: Backend Render + Database Neon PostgreSQL
-- **MCP Tools Integration**: Automated database operations with Neon MCP
-- **Context7 Documentation-First**: All patterns validated against official documentation
-- **Schema Synchronization**: 100% SQLAlchemy-Database alignment achieved
-- **Enum Consistency**: PostgreSQL enums perfectly match Python enums
-- **Pagination System**: Complete pagination with all required fields
-- **Advanced Monitoring**: MCP-based performance tracking and optimization
-
-#### **Changed**
-- **Database Migration**: Render PostgreSQL → Neon PostgreSQL
-- **Connection Pool**: 20 → 300-500 concurrent connections (15x improvement)
-- **BatchStatus Enum**: Synchronized with database values
-  - `RUNNING` → `PROCESSING` 
-  - `DONE` → `COMPLETED`
-  - Added `CANCELLED` status
-- **Pydantic Integration**: Manual mapping → `model_validate()` with `from_attributes`
-- **API Response Format**: Standardized pagination with complete metadata
-- **Deployment Strategy**: Auto-deploy enabled with real-time monitoring
-
-#### **Fixed**
-- **Connection Pool Exhaustion**: Eliminated \"connection was closed\" errors
-- **Schema Mismatches**: All SQLAlchemy models aligned with database schema
-- **Enum Value Errors**: Fixed validation errors for batch status values  
-- **Missing Columns**: Added `started_at`, `finished_at`, `strategy_snapshot` to batches
-- **ROI Column Mapping**: `roi_percentage` → `roi_percent` consistency
-- **Pagination Calculation**: Fixed missing `pages` field in responses
-- **Import Errors**: Removed invalid module imports causing startup failures
-
-#### **Performance Improvements**
-- **99.9% Uptime**: Achieved through hybrid architecture
-- **<200ms Response Time**: Average API endpoint response time
-- **Zero Connection Timeouts**: Since Neon PostgreSQL migration
-- **Scalable to 100+ Users**: Concurrent user support verified
+### Changed
+- Removed 110+ obsolete documentation files
+- Consolidated essential docs (README, CHANGELOG, API_DOCUMENTATION, ARCHITECTURE, DEPLOYMENT)
+- Cleaned up worktrees and branches
 
 ---
 
-## [Migration Process] - 2025-09-29
+## [1.6.2] - 2025-12-07 - AutoSourcing Production Ready
 
-### **Context7 + MCP Tools Methodology**
+### Fixed
+- BSR tuple unpacking in keepa_parser_v2 to prevent TypeError
+- Keepa category IDs updated to valid /bestsellers IDs
+- Centralized category configuration with MCP validation
 
-#### **Phase 1: Documentation Research**
-- Consulted Context7 for SQLAlchemy, FastAPI, and PostgreSQL patterns
-- Identified Neon PostgreSQL as optimal database solution
-- Validated migration patterns with official documentation
-
-#### **Phase 2: Database Migration**
-- Used MCP Neon tools for automated database setup
-- Created production-ready schema with proper enum types
-- Migrated data with zero downtime using MCP tools
-
-#### **Phase 3: Schema Synchronization**
-- Applied Context7 patterns for SQLAlchemy-PostgreSQL integration
-- Fixed all enum mismatches using official PostgreSQL documentation
-- Implemented proper foreign key relationships and constraints
-
-#### **Phase 4: API Modernization**
-- Replaced manual Pydantic mapping with `from_attributes` pattern
-- Implemented Context7-validated pagination patterns
-- Added comprehensive error handling and validation
-
-#### **Phase 5: Testing & Validation**
-- BUILD-TEST-VALIDATE cycle for each component
-- Real-data testing against production API endpoints
-- Performance validation with concurrent user simulation
+### Changed
+- AutoSourcing now uses KeepaProductFinderService REST API
+- Data extraction aligned with REST API format
 
 ---
 
-## [Performance Metrics Comparison]
+## [1.6.0] - 2025-11 - Phase 7: AutoSourcing Module
 
-### **Before Migration (v1.6.3)**
-```
-Database Connections: ~20 concurrent
-Connection Errors: Daily occurrence
-API Response Time: Variable (300-1000ms)
-Uptime: ~85% (frequent crashes)
-Error Rate: ~5-10% on business logic endpoints
-Scalability: Limited to 5-10 concurrent users
-```
+### Added
+- **AutoSourcing endpoints**: /api/v1/autosourcing/*
+  - POST /run - Run discovery job
+  - POST /run-custom - Custom parameters
+  - GET /latest - Latest job results
+  - GET /opportunity-of-day - Daily top pick
+  - GET /jobs - List all jobs
+  - GET /jobs/{job_id} - Job details
+  - GET /jobs/{job_id}/tiers - Tier breakdown
+  - GET /profiles - Saved search profiles
+  - POST /profiles - Create profile
+  - PUT /picks/{pick_id}/action - Mark picks (buy/favorite/skip)
+  - GET /to-buy - Buy list
+  - GET /favorites - Favorites list
+  - GET /stats - AutoSourcing statistics
 
-### **After Migration (v2.0.0)**
-```
-Database Connections: 300-500 concurrent  
-Connection Errors: Zero since migration
-API Response Time: <200ms average
-Uptime: 99.9% measured
-Error Rate: <0.1% on all endpoints
-Scalability: Supports 100+ concurrent users
-```
+### Changed
+- Real Keepa API integration replacing simulation data
+- Batch REST API for efficient queries
 
 ---
 
-*This changelog reflects the transformation from a fragile, error-prone system to a production-ready, scalable architecture suitable for real business applications.*
+## [1.5.0] - 2025-11 - Phase 6: Frontend E2E Tests
+
+### Added
+- 56 E2E tests with Playwright
+- FBA seller competition filter
+- Smart Velocity and Textbooks strategies
+- Budget Guard for token waste prevention
+
+### Fixed
+- Niche discovery price extraction
+- BSR ranges for bestsellers
+- ProductScoringCache model sync with production schema
+
+---
+
+## [1.4.0] - 2025-10 - Phase 5: Token Control
+
+### Added
+- **AutoScheduler**: Automated job scheduling
+- **Token safeguards**: Prevent API waste
+- @require_tokens decorator for endpoint protection
+
+### Fixed
+- Keepa tokensLeft read from JSON body (not HTTP headers)
+- HTTP 429 rate limit handling with retry
+- Numpy array sanitization for Pydantic
+
+---
+
+## [1.3.0] - 2025-10 - Phase 4: Architecture Improvements
+
+### Added
+- Keepa Parser v2 with improved data extraction
+- SRP-compliant module splitting
+- Comprehensive integration tests
+
+### Changed
+- Split keepa_extractors.py into focused modules
+- Error handling improvements
+
+### Fixed
+- ROI calculation: source_price_factor unified to 0.50
+- Sales velocity ZeroDivisionError guard
+
+---
+
+## [1.2.0] - 2025-10 - Phase 3: Keepa Integration
+
+### Added
+- Real Keepa API integration
+- BSR history tracking
+- Price volatility analysis
+- Velocity scoring system
+
+### Fixed
+- Pydantic V2 validators migration
+- ~40 pre-existing failing tests
+
+---
+
+## [1.1.0] - 2025-10 - Phase 2: Business Logic
+
+### Added
+- **Analytics endpoints**: /api/v1/analytics/*
+  - POST /calculate-analytics
+  - POST /calculate-risk-score
+  - POST /generate-recommendation
+  - POST /product-decision
+- **Niche Discovery**: /api/v1/niches/discover
+- **Views system**: /api/v1/views/*
+
+---
+
+## [2.0.0] - 2025-09-29 - Database Migration
+
+### Added
+- Hybrid Architecture: Backend Render + Database Neon PostgreSQL
+- MCP Tools Integration for automated database operations
+- Schema Synchronization: 100% SQLAlchemy-Database alignment
+- Pagination System with complete metadata
+
+### Changed
+- Database Migration: Render PostgreSQL to Neon PostgreSQL
+- Connection Pool: 20 to 300-500 concurrent connections (15x improvement)
+- BatchStatus Enum: RUNNING to PROCESSING, DONE to COMPLETED
+- Pydantic Integration: model_validate() with from_attributes
+
+### Fixed
+- Connection Pool Exhaustion eliminated
+- Schema Mismatches: all models aligned
+- Enum Value Errors fixed
+- Missing columns added (started_at, finished_at, strategy_snapshot)
+
+### Performance
+- 99.9% Uptime achieved
+- <200ms average response time
+- Zero connection timeouts since migration
+- Scalable to 100+ concurrent users
+
+---
+
+## [1.0.0] - 2025-09 - Initial Release
+
+### Added
+- FastAPI backend with SQLAlchemy ORM
+- Batch management system
+- Analysis results storage
+- Health monitoring endpoints
+- Render deployment configuration

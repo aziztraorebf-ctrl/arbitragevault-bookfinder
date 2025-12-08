@@ -1,149 +1,100 @@
-# ArbitrageVault Backend - Production Ready v2.0
+# ArbitrageVault Backend
 
-🏆 **High-Performance FastAPI Backend with Hybrid Architecture**
+FastAPI backend for the ArbitrageVault BookFinder platform.
 
-Production-ready backend featuring **Backend Render + Database Neon PostgreSQL** architecture, delivering 15x improved scalability and 99.9% uptime for book arbitrage analysis.
+## Production
 
----
+**URL**: https://arbitragevault-backend-v2.onrender.com
+**Docs**: https://arbitragevault-backend-v2.onrender.com/docs
 
-## 🚀 **Quick Start**
+## Tech Stack
 
-### **1. Production API Access**
+- **FastAPI** 0.104+ with async/await
+- **SQLAlchemy 2.0** with async support
+- **Neon PostgreSQL** (300-500 concurrent connections)
+- **Pydantic v2** for validation
+- **Keepa API** for product data
+
+## Quick Start
+
+### Production API
 ```bash
-# Live Production API
-BASE_URL="https://arbitragevault-backend-v2.onrender.com"
+# Health check
+curl "https://arbitragevault-backend-v2.onrender.com/health"
+# Response: {"status":"ready","service":"ArbitrageVault API","version":"1.6.3"}
 
-# Health Check
-curl "$BASE_URL/health"
-# Expected: {"status": "ok"}
-
-# List Analysis Batches  
-curl "$BASE_URL/api/v1/batches"
-# Expected: Paginated response with items, total, page, per_page, pages
-
-# List Analysis Results
-curl "$BASE_URL/api/v1/analyses" 
-# Expected: Paginated analysis results
+# API Documentation
+open "https://arbitragevault-backend-v2.onrender.com/docs"
 ```
 
-### **2. Local Development Setup**
+### Local Development
 ```bash
-# 1. Environment Setup
 cd backend
-uv venv
-.venv\Scripts\activate.bat  # Windows
-source .venv/bin/activate   # macOS/Linux
-
-# 2. Install Dependencies
+uv venv && .venv\Scripts\activate.bat
 uv pip install -r requirements.txt
-uv pip install ipykernel matplotlib  # For development
-
-# 3. Environment Configuration
 cp .env.example .env
-# Edit .env with your configuration
-
-# 4. Start Development Server
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn app.main:app --reload
 ```
 
----
+## Project Structure
 
-## 🏗️ **Architecture Overview**
-
-### **Hybrid Production Architecture**
 ```
-┌─────────────────┐    ┌──────────────────────┐    ┌─────────────────────┐
-│   Frontend      │────│  Backend Render      │────│  Database Neon      │
-│   (Future)      │    │  FastAPI + SQLAlchemy│    │  PostgreSQL         │
-│                 │    │                      │    │  300-500 connections│
-└─────────────────┘    └──────────────────────┘    └─────────────────────┘
-                              │
-                    ┌──────────────────────┐
-                    │   External APIs      │
-                    │   Keepa, OpenAI      │
-                    └──────────────────────┘
+backend/
+├── app/
+│   ├── api/v1/           # API endpoints
+│   │   ├── routers/      # Route handlers
+│   │   └── endpoints/    # Business endpoints
+│   ├── services/         # Business logic
+│   ├── models/           # SQLAlchemy models
+│   └── schemas/          # Pydantic schemas
+├── tests/                 # Test suite (483 tests)
+├── alembic/               # Database migrations
+└── requirements.txt       # Dependencies
 ```
 
-### **Key Benefits**
-- **Scalability**: 300-500 concurrent database connections (vs 20 with single-service)
-- **Reliability**: 99.9% uptime with connection pool optimization  
-- **Performance**: 15x improvement in connection handling
-- **Maintainability**: Separation of compute and data layers
+## API Modules
 
-### **Technology Stack**
-- **Backend**: FastAPI 0.104+ with async/await
-- **Database**: Neon PostgreSQL (production-optimized)
-- **ORM**: SQLAlchemy 2.0 with async support
-- **Validation**: Pydantic v2 with from_attributes
-- **Deployment**: Render Web Service with auto-deploy
-- **Management**: MCP Tools for database operations
+| Module | Prefix | Description |
+|--------|--------|-------------|
+| Health | /health | System status |
+| Batches | /api/v1/batches | Batch management |
+| Analyses | /api/v1/analyses | Analysis results |
+| Keepa | /api/v1/keepa | Keepa integration |
+| AutoSourcing | /api/v1/autosourcing | Product discovery |
+| Niches | /api/v1/niches | Niche discovery |
+| Analytics | /api/v1/analytics | Business analytics |
+| Config | /api/v1/config | Configuration |
+| Views | /api/v1/views | View scoring |
 
----
+## Testing
 
-## 📊 **API Endpoints**
-
-### **🔥 Production Endpoints - 100% Operational**
-
-#### **Health & Monitoring**
 ```bash
-GET /health                    # System health check
-GET /docs                      # Interactive API documentation  
-GET /openapi.json             # OpenAPI schema for client generation
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=app
+
+# Run specific module
+pytest tests/test_keepa_parsing.py -v
 ```
 
-#### **Batch Management**
-```bash
-GET    /api/v1/batches                    # List analysis batches (paginated)
-POST   /api/v1/batches                    # Create new analysis batch
-GET    /api/v1/batches/{batch_id}         # Get specific batch details
-PATCH  /api/v1/batches/{batch_id}/status  # Update batch status
+## Environment Variables
+
+Required in `.env`:
+```
+DATABASE_URL=postgresql://...
+KEEPA_API_KEY=your_key
 ```
 
-#### **Analysis Results**
-```bash
-GET    /api/v1/analyses                   # List analysis results (paginated)
-GET    /api/v1/analyses/{analysis_id}     # Get specific analysis
-POST   /api/v1/analyses                   # Create analysis result
-```
+## Documentation
+
+- [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) - REST API reference
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Technical architecture
+- [CHANGELOG.md](./CHANGELOG.md) - Version history
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment guide
 
 ---
 
-## 🏆 **Architecture Achievements**
-
-### **Migration Success (Sept 2025)**
-- ✅ **Zero-downtime migration** from Render PostgreSQL to Neon
-- ✅ **15x connection pool improvement** (20 → 300-500 connections)
-- ✅ **100% endpoint recovery** - all business logic operational  
-- ✅ **Schema synchronization** - SQLAlchemy models perfectly aligned
-- ✅ **Enum consistency** - PostgreSQL enums match Python enums
-- ✅ **MCP integration** - Database operations fully automated
-
-### **Technical Excellence** 
-- ✅ **Context7 Documentation-First** development methodology
-- ✅ **Pydantic from_attributes** pattern for seamless ORM integration
-- ✅ **Build-Test-Validate** continuous validation cycle
-- ✅ **Hybrid architecture** for optimal performance and maintainability
-
----
-
-## 📚 **Additional Documentation**
-
-- [`ARCHITECTURE.md`](./ARCHITECTURE.md) - Technical architecture details
-- [`API_DOCUMENTATION.md`](./API_DOCUMENTATION.md) - Complete API reference
-- [`CHANGELOG.md`](./CHANGELOG.md) - Version history and migration details
-- [`DEPLOYMENT.md`](./DEPLOYMENT.md) - Production deployment guide
-- [`IMPLEMENTATION_STATUS.md`](./IMPLEMENTATION_STATUS.md) - Feature implementation status  
-- [`.memex/rules.md`](../.memex/rules.md) - Project-specific development rules
-
----
-
-## 📞 **Support & Contact**
-
-**Production Status**: ✅ **READY FOR FRONTEND DEVELOPMENT**  
-**API Stability**: 100% endpoints operational  
-**Documentation**: Up-to-date as of September 29, 2025  
-**Next Phase**: Frontend integration with production-ready backend
-
----
-
-*Built with Context7 documentation patterns and MCP tools integration for reliable, scalable book arbitrage analysis.*
+**Version**: 1.6.3
+**Frontend**: https://arbitragevault.netlify.app

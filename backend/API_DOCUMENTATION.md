@@ -1,127 +1,232 @@
 # ArbitrageVault API Documentation
 
-## 🔗 **Base URL**
+## Base URL
 ```
 Production: https://arbitragevault-backend-v2.onrender.com
 Local Dev:  http://localhost:8000
 ```
 
-## 📖 **Interactive Documentation**
+## Interactive Documentation
 - **Swagger UI**: `{BASE_URL}/docs`
-- **ReDoc**: `{BASE_URL}/redoc`  
+- **ReDoc**: `{BASE_URL}/redoc`
 - **OpenAPI Schema**: `{BASE_URL}/openapi.json`
 
 ---
 
-## 🏥 **Health & System**
+## Health & System
 
-### **GET /health**
-Basic system health check
+### GET /health
+System health check with version info.
 ```bash
 curl "https://arbitragevault-backend-v2.onrender.com/health"
 ```
 **Response:**
 ```json
-{"status": "ok"}
+{"status": "ready", "service": "ArbitrageVault API", "version": "1.6.3"}
 ```
 
 ---
 
-## 📦 **Batch Management**
+## Batch Management
 
-### **GET /api/v1/batches**
-List analysis batches with pagination
+### GET /api/v1/batches
+List analysis batches with pagination.
 ```bash
 curl "https://arbitragevault-backend-v2.onrender.com/api/v1/batches?page=1&per_page=20"
 ```
 
-**Response:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid-string",
-      "name": "Analysis Batch Name",
-      "description": "Optional description", 
-      "status": "COMPLETED",
-      "items_total": 100,
-      "items_processed": 100,
-      "started_at": "2025-09-29T10:00:00Z",
-      "finished_at": "2025-09-29T12:30:00Z",
-      "strategy_snapshot": {"config_name": "profit_hunter"},
-      "created_at": "2025-09-29T09:30:00Z",
-      "updated_at": "2025-09-29T12:30:00Z"
-    }
-  ],
-  "total": 1,
-  "page": 1,
-  "per_page": 20, 
-  "pages": 1
-}
-```
+### POST /api/v1/batches
+Create new analysis batch.
 
-### **POST /api/v1/batches**
-Create new analysis batch
-```bash
-curl -X POST "https://arbitragevault-backend-v2.onrender.com/api/v1/batches" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Q4 Analysis",
-    "description": "Fourth quarter book analysis",
-    "asin_list": ["B08N5WRWNW", "B07XYZ123"],
-    "config_name": "profit_hunter"
-  }'
-```
+### GET /api/v1/batches/{batch_id}
+Get specific batch details.
+
+### PATCH /api/v1/batches/{batch_id}/status
+Update batch status.
 
 ---
 
-## 📊 **Analysis Results**
+## Analysis Results
 
-### **GET /api/v1/analyses**
-List analysis results with pagination
-```bash
-curl "https://arbitragevault-backend-v2.onrender.com/api/v1/analyses?page=1&per_page=20"
-```
+### GET /api/v1/analyses
+List analysis results with pagination.
 
-**Response:**
-```json
-{
-  "items": [
-    {
-      "id": "uuid-string",
-      "batch_id": "batch-uuid",
-      "isbn_or_asin": "B08N5WRWNW", 
-      "buy_price": 15.50,
-      "fees": 3.25,
-      "expected_sale_price": 25.99,
-      "profit": 7.24,
-      "roi_percent": 46.71,
-      "velocity_score": 78.5,
-      "rank_snapshot": 12543,
-      "offers_count": 8,
-      "raw_keepa": {"domain": 1, "asin": "B08N5WRWNW"},
-      "target_price_data": {"min_price": 20.00, "max_price": 30.00},
-      "created_at": "2025-09-29T10:15:00Z",
-      "updated_at": "2025-09-29T10:15:00Z"
-    }
-  ],
-  "total": 1,
-  "page": 1,
-  "per_page": 20,
-  "pages": 1
-}
-```
+### GET /api/v1/analyses/{analysis_id}
+Get specific analysis.
+
+### POST /api/v1/analyses
+Create analysis result.
 
 ---
 
-## 📋 **Common Patterns**
+## Keepa Integration
 
-### **Pagination Parameters**
-All list endpoints support pagination:
+### POST /api/v1/keepa/ingest
+Ingest product data from Keepa API.
+
+### GET /api/v1/keepa/{asin}/metrics
+Get product metrics for an ASIN.
+```bash
+curl "https://arbitragevault-backend-v2.onrender.com/api/v1/keepa/B08N5WRWNW/metrics"
+```
+
+### GET /api/v1/keepa/{asin}/raw
+Get raw Keepa data for an ASIN.
+
+### GET /api/v1/keepa/health
+Keepa service health check.
+
+### POST /api/v1/keepa/debug-analyze
+Debug analysis endpoint.
+
+---
+
+## AutoSourcing (Phase 7)
+
+### POST /api/v1/autosourcing/run
+Run discovery job with default parameters.
+
+### POST /api/v1/autosourcing/run-custom
+Run discovery with custom parameters.
+```json
+{
+  "category_id": 283155,
+  "max_products": 50,
+  "min_roi": 30,
+  "max_bsr": 500000
+}
+```
+
+### GET /api/v1/autosourcing/latest
+Get latest job results.
+
+### GET /api/v1/autosourcing/opportunity-of-day
+Get daily top pick.
+
+### GET /api/v1/autosourcing/jobs
+List all jobs.
+
+### GET /api/v1/autosourcing/jobs/{job_id}
+Get specific job details.
+
+### GET /api/v1/autosourcing/jobs/{job_id}/tiers
+Get tier breakdown for a job.
+
+### GET /api/v1/autosourcing/profiles
+List saved search profiles.
+
+### POST /api/v1/autosourcing/profiles
+Create new profile.
+
+### PUT /api/v1/autosourcing/picks/{pick_id}/action
+Mark pick action (buy/favorite/skip).
+
+### GET /api/v1/autosourcing/to-buy
+Get buy list.
+
+### GET /api/v1/autosourcing/favorites
+Get favorites list.
+
+### GET /api/v1/autosourcing/my-actions/{action}
+Get picks by action type.
+
+### GET /api/v1/autosourcing/stats
+Get AutoSourcing statistics.
+
+### GET /api/v1/autosourcing/health
+AutoSourcing service health.
+
+---
+
+## Analytics
+
+### POST /api/v1/analytics/calculate-analytics
+Calculate analytics for a product.
+
+### POST /api/v1/analytics/calculate-risk-score
+Calculate risk score.
+
+### POST /api/v1/analytics/generate-recommendation
+Generate buy/skip recommendation.
+
+### POST /api/v1/analytics/product-decision
+Full product decision analysis.
+
+---
+
+## Niche Discovery
+
+### GET /api/v1/niches/discover
+Discover niches with scoring.
+```bash
+curl "https://arbitragevault-backend-v2.onrender.com/api/v1/niches/discover?category_id=283155&limit=20"
+```
+
+### GET /api/v1/niches/health
+Niche service health.
+
+---
+
+## Views
+
+### POST /api/v1/views/{view_type}
+Calculate view scores.
+
+### GET /api/v1/views
+List available views.
+
+---
+
+## Configuration
+
+### GET /api/v1/config/
+Get current business configuration.
+
+### PUT /api/v1/config/
+Update configuration.
+
+### POST /api/v1/config/preview
+Preview configuration changes.
+
+### GET /api/v1/config/changes
+Get configuration change history.
+
+### GET /api/v1/config/stats
+Get configuration statistics.
+
+---
+
+## ASIN History
+
+### GET /api/v1/asin-history/trends/{asin}
+Get price/BSR trends for an ASIN.
+
+### GET /api/v1/asin-history/records/{asin}
+Get historical records.
+
+### GET /api/v1/asin-history/latest/{asin}
+Get latest record.
+
+---
+
+## Products
+
+### GET /api/v1/products/categories
+List available categories.
+
+### GET /api/v1/products/health
+Products service health.
+
+---
+
+## Common Patterns
+
+### Pagination Parameters
+All list endpoints support:
 - `page`: Page number (default: 1)
 - `per_page`: Items per page (default: 20, max: 100)
 
-### **Batch Status Values**
+### Batch Status Values
 ```
 PENDING    - Newly created, not started
 PROCESSING - Currently being analyzed
@@ -130,21 +235,20 @@ FAILED     - Terminated with errors
 CANCELLED  - Manually stopped
 ```
 
-### **Error Responses**
-Standard error format:
+### Error Responses
 ```json
-{
-  "detail": "Human-readable error message"
-}
+{"detail": "Human-readable error message"}
 ```
 
-Common HTTP status codes:
+HTTP Status Codes:
 - `200` - Success
-- `201` - Created successfully
-- `400` - Bad request (validation error)
-- `404` - Resource not found
-- `500` - Internal server error
+- `201` - Created
+- `400` - Bad request
+- `404` - Not found
+- `429` - Rate limited (Keepa tokens)
+- `500` - Internal error
 
 ---
 
-*This API documentation provides complete reference for integrating with the ArbitrageVault backend. All endpoints are production-ready and fully tested.*
+**API Version**: 1.6.3
+**Last Updated**: December 2025

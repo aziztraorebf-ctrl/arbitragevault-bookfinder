@@ -547,11 +547,33 @@ class KeepaProductFinderService:
             effective_config = await self.config_service.get_effective_config(category_id=category)
         except Exception as e:
             logger.warning(f"Config service failed, using defaults: {e}")
-            # Configuration par défaut simple
-            effective_config = {
-                "roi": {"target_pct_default": 30},
-                "fees": {"buffer_pct_default": 5}
-            }
+            # Configuration par defaut avec structure attendue par le code
+            # Doit matcher l'interface EffectiveConfig avec effective_roi, effective_fees, effective_velocity
+            from types import SimpleNamespace
+            effective_config = SimpleNamespace(
+                effective_roi=SimpleNamespace(
+                    source_price_factor=Decimal("0.4"),
+                    excellent_threshold=Decimal("50"),
+                    target=Decimal("30"),
+                    min_acceptable=Decimal("15")
+                ),
+                effective_fees=SimpleNamespace(
+                    referral_fee_percent=Decimal("15"),
+                    fba_base_fee=Decimal("2.50"),
+                    fba_per_pound=Decimal("0.40"),
+                    closing_fee=Decimal("1.80"),
+                    prep_fee=Decimal("0.20"),
+                    shipping_cost=Decimal("0.40")
+                ),
+                effective_velocity=SimpleNamespace(
+                    tiers=[
+                        SimpleNamespace(bsr_threshold=10000, min_score=80, max_score=100),
+                        SimpleNamespace(bsr_threshold=50000, min_score=60, max_score=80),
+                        SimpleNamespace(bsr_threshold=100000, min_score=40, max_score=60),
+                        SimpleNamespace(bsr_threshold=500000, min_score=20, max_score=40),
+                    ]
+                )
+            )
 
         for product in products:
             try:
@@ -704,16 +726,29 @@ class KeepaProductFinderService:
 
     def _calculate_velocity_score(self, bsr: int, tiers: list) -> float:
         """
-        Calculer velocity score basé sur BSR et tiers.
+        Calculer velocity score base sur BSR et tiers.
 
         Returns score 0-100.
+
+        Args:
+            bsr: Best Seller Rank (must be > 0 for valid products)
+            tiers: List of velocity tiers with bsr_threshold, min_score, max_score
+
+        Note:
+            BSR = 0 is invalid (no sales data) and returns 0 score.
+            BSR = 1 is the #1 bestseller in category.
         """
+        # BSR 0 ou negatif est invalide - pas de donnees de vente
+        if bsr is None or bsr <= 0:
+            logger.debug(f"Invalid BSR value: {bsr} - returning 0 velocity score")
+            return 0
+
         for tier in tiers:
             if bsr <= tier.bsr_threshold:
                 # Return midpoint of tier range
                 return (tier.min_score + tier.max_score) / 2
 
-        # BSR trop élevé
+        # BSR trop eleve (hors de tous les tiers)
         return 0
 
     def _get_recommendation(

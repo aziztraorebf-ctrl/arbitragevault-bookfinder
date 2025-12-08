@@ -106,10 +106,22 @@ frontend/src/
 
 | Bug | Fix | Commit |
 |-----|-----|--------|
+| BSR tuple unpacking | Unpack `Tuple[int,str]` correctly | ac002ee |
+| velocity_min filtering | Direct check in `_meets_criteria()` | 507d0a6 |
 | AutoSourcing simulation | Real Keepa API | d76ac25 |
 | ZeroDivisionError velocity | Guard mean > 0 | 79b8bbd |
 | Price extraction | current[1] not [0] | 7c2f28c |
 
 ---
 
-**Derniere MAJ** : 2025-12-06
+## API Cache Bypass
+
+Pour tests E2E avec vraies donnees Keepa :
+```
+GET /api/v1/keepa/{asin}/metrics?force_refresh=true
+```
+Consomme tokens Keepa (bypass PostgreSQL cache).
+
+---
+
+**Derniere MAJ** : 2025-12-08

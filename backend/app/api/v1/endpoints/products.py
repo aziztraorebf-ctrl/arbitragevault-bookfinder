@@ -106,11 +106,11 @@ async def discover_products(
     - Discover deals in price range
     - Get bestsellers for category
     """
-    try:
-        # Check API key
-        if not settings.KEEPA_API_KEY:
-            raise HTTPException(status_code=503, detail="Keepa API key not configured")
+    # Check API key
+    if not settings.KEEPA_API_KEY:
+        raise HTTPException(status_code=503, detail="Keepa API key not configured")
 
+    try:
         # Initialize services - Use injected keepa instance from @require_tokens decorator
         config_service = ConfigService(db)
         finder_service = KeepaProductFinderService(keepa, config_service, db)
@@ -126,9 +126,6 @@ async def discover_products(
             max_results=request.max_results
         )
 
-        # Close Keepa client
-        await keepa.close()
-
         return DiscoverResponse(
             asins=asins,
             count=len(asins),
@@ -137,6 +134,9 @@ async def discover_products(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Always close Keepa client to prevent connection leaks
+        await keepa.close()
 
 
 @router.post("/discover-with-scoring", response_model=DiscoverWithScoringResponse)
@@ -161,11 +161,11 @@ async def discover_with_scoring(
     - Velocity score from BSR tiers
     - Recommendation: STRONG_BUY, BUY, CONSIDER, SKIP
     """
-    try:
-        # Check API key
-        if not settings.KEEPA_API_KEY:
-            raise HTTPException(status_code=503, detail="Keepa API key not configured")
+    # Check API key
+    if not settings.KEEPA_API_KEY:
+        raise HTTPException(status_code=503, detail="Keepa API key not configured")
 
+    try:
         # Initialize services - Use injected keepa instance from @require_tokens decorator
         config_service = ConfigService(db)
         finder_service = KeepaProductFinderService(keepa, config_service, db)
@@ -184,17 +184,21 @@ async def discover_with_scoring(
             force_refresh=request.force_refresh
         )
 
-        # Close Keepa client
-        await keepa.close()
-
         # Convert to response models
         product_scores = [
             ProductScore(**product)
             for product in products
         ]
 
-        # Determine cache status (any cache hit counts as cache-assisted)
-        cache_hit = hasattr(finder_service, 'cache_service') and finder_service.cache_service is not None
+        # Determine cache status from actual cache usage in discover_with_scoring
+        # If cache_service exists and products were returned, we can check metadata
+        # Note: For accurate cache_hit, the service would need to return this info
+        # For now, we assume cache was used if cache_service exists and is enabled
+        cache_hit = (
+            hasattr(finder_service, 'cache_service') and
+            finder_service.cache_service is not None and
+            not request.force_refresh  # force_refresh bypasses cache
+        )
 
         return DiscoverWithScoringResponse(
             products=product_scores,
@@ -209,6 +213,9 @@ async def discover_with_scoring(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Always close Keepa client to prevent connection leaks
+        await keepa.close()
 
 
 @router.get("/categories")

@@ -1,131 +1,122 @@
-# ArbitrageVault BookFinder - Production Ready v2.0
+# ArbitrageVault BookFinder - Production v1.6
 
-🏆 **Professional Book Arbitrage Analysis Platform**
+Professional Book Arbitrage Analysis Platform - Full-Stack Application
 
-Complete full-stack application for identifying profitable book arbitrage opportunities with **production-ready backend** and upcoming modern frontend.
-
----
-
-## 🚀 **Project Status - September 29, 2025**
-
-### ✅ **BACKEND COMPLETE - 100% OPERATIONAL**
-**Backend API**: Production-ready with hybrid architecture  
-**Database**: Neon PostgreSQL with 15x improved scalability  
-**Endpoints**: All business logic APIs functional (100% success rate)  
-**Architecture**: Hybrid Render + Neon delivering 99.9% uptime  
-
-### 🚧 **FRONTEND - READY TO BUILD**
-**Status**: Ready for development with stable backend API  
-**Stack**: React + TypeScript + Tailwind (recommended)  
-**Integration**: OpenAPI types auto-generation available  
-**Timeline**: Development can start immediately  
+Complete application for identifying profitable book arbitrage opportunities with **production backend** and **deployed frontend**.
 
 ---
 
-## 🏗️ **Architecture Overview**
+## Project Status - December 2025
 
-### **Production Architecture (v2.0)**
+### FULL-STACK COMPLETE - PRODUCTION
+
+| Component | Status | URL |
+|-----------|--------|-----|
+| Backend API | Production | https://arbitragevault-backend-v2.onrender.com |
+| Frontend | Deployed | https://arbitragevault.netlify.app |
+| Database | Neon PostgreSQL | 300-500 concurrent connections |
+
+### Test Coverage
+- **483 tests passing** (349+ unit tests + 56 E2E tests)
+- Phases 1-7 validated with real Keepa API data
+
+---
+
+## Architecture Overview
+
 ```
-┌─────────────────┐    ┌──────────────────────┐    ┌─────────────────────┐
-│   Frontend      │────│  Backend Render      │────│  Database Neon      │
-│   React + TS    │    │  FastAPI + SQLAlchemy│    │  PostgreSQL         │
-│   (Phase 2)     │    │  100% Operational    │    │  300-500 connections│
-└─────────────────┘    └──────────────────────┘    └─────────────────────┘
+Frontend (Netlify)          Backend (Render)           Database (Neon)
+React 18 + TypeScript  -->  FastAPI + SQLAlchemy  -->  PostgreSQL
+Tailwind CSS + Vite         Real Keepa API             Production-grade
 ```
 
-### **Key Achievements**
-- **🎯 15x Performance**: Database connection pool scaling (20→500 connections)
-- **⚡ 99.9% Uptime**: Production-grade reliability and monitoring
-- **🔧 Zero Technical Debt**: Context7 patterns with MCP tools automation
-- **📊 Complete API**: All business logic endpoints operational with real data
+### Key Features
+- **AutoSourcing**: Automated product discovery from Keepa bestsellers
+- **Token Control**: Safeguards preventing API waste (Phase 5)
+- **Real-Time Metrics**: BSR, price history, velocity scoring
+- **Niche Discovery**: Category-based opportunity finding
 
 ---
 
-## 📂 **Project Structure**
+## Project Structure
 
 ```
 arbitragevault-bookfinder/
-├── backend/                   # ✅ PRODUCTION READY
-│   ├── app/                   # FastAPI application
-│   ├── tests/                 # Comprehensive test suite
-│   ├── README.md              # Backend documentation
-│   ├── ARCHITECTURE.md        # Technical architecture
-│   ├── API_DOCUMENTATION.md   # Complete API reference
-│   └── DEPLOYMENT.md          # Production deployment guide
-├── frontend/                  # 🚧 READY FOR DEVELOPMENT
-│   └── [To be created]        # React + TypeScript + Tailwind
-├── .memex/
-│   └── rules.md               # ✅ Project development rules
-└── README.md                  # ✅ Project overview (this file)
+├── backend/                   # FastAPI application
+│   ├── app/                   # Core application code
+│   │   ├── api/v1/           # API endpoints (20+ routes)
+│   │   ├── services/         # Business logic
+│   │   └── models/           # SQLAlchemy models
+│   └── tests/                 # Test suite (483 tests)
+├── frontend/                  # React 18 application
+│   ├── src/                   # Source code
+│   │   ├── components/       # UI components
+│   │   ├── pages/            # Route pages
+│   │   └── services/         # API client
+│   └── e2e/                   # Playwright E2E tests
+└── docs/                      # Architecture documentation
 ```
 
 ---
 
-## 🚀 **Quick Start**
+## Quick Start
 
-### **1. Backend API (Production)**
+### Production API
 ```bash
-# Live Production API
+# Health check
 curl "https://arbitragevault-backend-v2.onrender.com/health"
-# Expected: {"status": "ok"}
+# Response: {"status":"ready","service":"ArbitrageVault API","version":"1.6.3"}
 
-# Interactive API Documentation
+# API Documentation
 open "https://arbitragevault-backend-v2.onrender.com/docs"
 
-# List Analysis Batches
-curl "https://arbitragevault-backend-v2.onrender.com/api/v1/batches"
-
-# List Analysis Results  
-curl "https://arbitragevault-backend-v2.onrender.com/api/v1/analyses"
+# Frontend
+open "https://arbitragevault.netlify.app"
 ```
 
-### **2. Local Development Setup**
+### Local Development
+
+**Backend:**
 ```bash
-# Backend Development
 cd backend
 uv venv && .venv\Scripts\activate.bat
 uv pip install -r requirements.txt
 cp .env.example .env
 uv run uvicorn app.main:app --reload
+```
 
-# Frontend Development (Future)
+**Frontend:**
+```bash
 cd frontend
-npm install  
+npm install
 npm run dev
 ```
 
 ---
 
-## 🏆 **Technical Achievements**
+## Completed Phases
 
-### **Backend Transformation Success**
-- **Migration Excellence**: Zero-downtime migration to scalable architecture
-- **Performance Optimization**: 15x improvement in database performance
-- **Code Quality**: Context7 documentation-first development methodology
-- **Production Readiness**: 99.9% uptime with comprehensive monitoring
-
----
-
-## 📚 **Documentation**
-
-### **Backend Documentation**
-- **[Backend README](./backend/README.md)**: Complete backend documentation
-- **[API Documentation](./backend/API_DOCUMENTATION.md)**: REST API reference
-- **[Architecture Guide](./backend/ARCHITECTURE.md)**: Technical architecture details
-- **[Deployment Guide](./backend/DEPLOYMENT.md)**: Production deployment procedures
-
-### **Development Tools & MCP**
-- **[MCP Keepa Quick Start](./MCP_KEEPA_QUICK_START.md)**: 2-minute introduction (⭐ START HERE)
-- **[MCP Keepa Usage Guide](./docs/MCP_KEEPA_USAGE.md)**: Complete usage documentation with 5 real use cases
-- **[MCP Keepa Test Commands](./MCP_KEEPA_TEST_COMMANDS.md)**: 7 practical tests with expected results
-- **[MCP Keepa Implementation](./MCP_KEEPA_IMPLEMENTATION_SUMMARY.md)**: Overview and benefits
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Foundation Infrastructure | Complete |
+| Phase 2 | Database Migration (Neon) | Complete |
+| Phase 3 | Keepa API Integration | Complete |
+| Phase 4 | Business Logic & Scoring | Complete |
+| Phase 5 | Token Control Safeguards | Complete |
+| Phase 6 | Frontend E2E Tests | Complete |
+| Phase 7 | AutoSourcing Production | Complete |
 
 ---
 
-**Current Version**: v2.0.0 (Backend Production Ready)  
-**Production Backend**: https://arbitragevault-backend-v2.onrender.com  
-**Next Milestone**: Frontend development with stable backend API
+## Documentation
+
+- [Backend README](./backend/README.md) - Backend setup and API
+- [API Documentation](./backend/API_DOCUMENTATION.md) - REST API reference
+- [Architecture Guide](./docs/ARCHITECTURE.md) - Technical architecture
+- [Deployment Guide](./backend/DEPLOYMENT.md) - Production deployment
 
 ---
 
-*ArbitrageVault represents a successful transformation from prototype to production-ready application, demonstrating enterprise-grade architecture and development practices.*
+**Current Version**: v1.6.3
+**Backend**: https://arbitragevault-backend-v2.onrender.com
+**Frontend**: https://arbitragevault.netlify.app

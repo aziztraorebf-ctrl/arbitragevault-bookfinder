@@ -828,17 +828,22 @@ class AutoSourcingService:
             return "PASS"
 
     def _meets_criteria(self, pick: AutoSourcingPick, scoring_config: Dict[str, Any]) -> bool:
-        """Check if pick meets minimum criteria."""
-        
-        rating_required = scoring_config.get("rating_required", "FAIR")  # Changed from GOOD to FAIR
+        """Check if pick meets minimum criteria including velocity threshold."""
+
+        rating_required = scoring_config.get("rating_required", "FAIR")
         roi_min = scoring_config.get("roi_min", 20)
-        
+        velocity_min = scoring_config.get("velocity_min", 0)
+
         rating_hierarchy = {"PASS": 0, "FAIR": 1, "GOOD": 2, "EXCELLENT": 3}
-        
+
         pick_rating_level = rating_hierarchy.get(pick.overall_rating, 0)
-        required_rating_level = rating_hierarchy.get(rating_required, 1)  # FAIR=1
-        
-        return (pick_rating_level >= required_rating_level and 
+        required_rating_level = rating_hierarchy.get(rating_required, 1)
+
+        # Direct velocity check - picks below threshold are filtered out
+        if velocity_min > 0 and pick.velocity_score < velocity_min:
+            return False
+
+        return (pick_rating_level >= required_rating_level and
                 pick.roi_percentage >= roi_min)
 
     def _classify_product_tier(self, product_data: Dict[str, Any]) -> tuple[str, str]:

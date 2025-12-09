@@ -1,10 +1,14 @@
 #!/bin/bash
 # PreToolUse Hook - Bloque git commit sans checkpoint
 # Declenche AVANT execution de Bash tool
-# Version: 1.1 - Fixed: output to stderr for exit code 2
+# Version: 1.2 - Added debug logging
+
+# Debug: log to temp file to verify hook is triggered
+echo "[$(date)] Hook triggered" >> /tmp/claude-hook-debug.log
 
 # Lire le JSON input depuis stdin
 INPUT=$(cat)
+echo "[$(date)] INPUT: $INPUT" >> /tmp/claude-hook-debug.log
 
 # Extraire la commande du tool_input
 COMMAND=$(echo "$INPUT" | grep -oP '"command"\s*:\s*"\K[^"]+' 2>/dev/null || echo "$INPUT")

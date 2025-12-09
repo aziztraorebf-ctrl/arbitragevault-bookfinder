@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/pre-commit-block.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-block.sh\"",
             "timeout": 30
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/stop-checkpoint.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-checkpoint.sh\""
           }
         ]
       }

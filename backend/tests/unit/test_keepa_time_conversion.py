@@ -177,24 +177,20 @@ def test_keepa_constants_consistency():
     """
     from app.utils.keepa_constants import (
         KEEPA_TIME_OFFSET_MINUTES,
-        KEEPA_EPOCH_LEGACY,
         KEEPA_NULL_VALUE
     )
 
     # Official offset
     assert KEEPA_TIME_OFFSET_MINUTES == 21564000, (
-        f"❌ CRITICAL: Wrong offset value!\n"
+        f"CRITICAL: Wrong offset value!\n"
         f"  Expected: 21564000 (official Keepa spec)\n"
         f"  Got:      {KEEPA_TIME_OFFSET_MINUTES}"
     )
 
-    # Legacy epoch (should exist but not be used)
-    assert KEEPA_EPOCH_LEGACY == 971222400, "Legacy epoch constant wrong"
-
     # Null value
     assert KEEPA_NULL_VALUE == -1, "Null value constant wrong"
 
-    print("✅ All constants correctly defined")
+    print("All constants correctly defined")
 
 
 if __name__ == "__main__":

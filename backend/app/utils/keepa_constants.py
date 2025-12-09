@@ -28,14 +28,3 @@ KEEPA_NULL_VALUE = -1
 KEEPA_PRICE_DIVISOR = 100
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# DEPRECATED - DO NOT USE
-# ═══════════════════════════════════════════════════════════════════════════
-
-# ❌ LEGACY EPOCH (INCORRECT)
-# This was used in previous versions but gave wrong results (dates in 2015)
-# Kept here for reference only - DO NOT USE
-KEEPA_EPOCH_LEGACY = 971222400  # Oct 21, 2000 00:00:00 GMT - DEPRECATED ❌
-
-# Note: If you see dates in 2015 instead of 2025, you're using the legacy epoch!
-# Switch to KEEPA_TIME_OFFSET_MINUTES immediately.

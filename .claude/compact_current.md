@@ -14,7 +14,8 @@
 | **Phases 1-2 Audit** | Complete (37/37 tests) |
 | **Phase 3 Audit** | COMPLETE - 4 bugs fixes, 514 tests |
 | **Phases 4-6** | En attente audit |
-| **CLAUDE.md** | v3.1 - Zero-Tolerance + Pragmatic Testing |
+| **CLAUDE.md** | v3.2 - Zero-Tolerance + Mandatory Checkpoints |
+| **Hooks System** | VALIDE - Stop + PreToolUse (Python, Windows OK) |
 | **Production** | Backend Render + Frontend Netlify LIVE |
 | **Tests Total** | 514 passants, 26 skipped |
 | **Bloqueurs** | Aucun |
@@ -23,6 +24,34 @@
 ---
 
 ## CHANGELOG - 8 Decembre 2025
+
+### Systeme de Hooks - TESTE ET FONCTIONNEL
+
+- **23:15** | Hooks Claude Code VALIDES
+  - **Stop Hook** : Rappel Checkpoint a chaque fin de tour - FONCTIONNE (log debug confirme)
+  - **PreToolUse Hook** : Bloque `git commit/push` sans Checkpoint - FONCTIONNE (exit 2)
+  - **Slash Command** : `/checkpoint` pour template complet
+  - **Root cause fix** : Scripts bash incompatibles Windows -> Python
+  - **Fichiers finaux** :
+    - `.claude/hooks/pre_tool_validator.py` (PreToolUse - Python)
+    - `.claude/hooks/stop_checkpoint.py` (Stop - Python)
+    - `.claude/hooks/hook-debug.log` (PreToolUse debug)
+    - `.claude/hooks/stop-debug.log` (Stop debug)
+    - `.claude/commands/checkpoint.md`
+    - `.claude/settings.local.json` (config hooks)
+  - **Validation** : systematic-debugging + verification-before-completion + Context7
+
+### CLAUDE.md v3.2 - Mandatory Checkpoints
+
+- **03:30** | CLAUDE.md mis a jour vers v3.2
+  - **CHECKPOINT OBLIGATOIRE** : Section bloquante avant "c'est fait"
+    - 6 questions avec preuve requise
+    - Format de completion structure
+    - Consequence : NE PAS valider sans reponses
+  - **Playwright Skills Evaluation** : Workflow obligatoire
+    - Criteres d'evaluation (quand Playwright necessaire)
+    - Permission utilisateur requise avant execution
+    - Exemples concrets
 
 ### Audit Phase 3 - Product Discovery MVP (COMPLETE)
 
@@ -226,5 +255,5 @@ cf9c6b6 feat(autosourcing): centralized Keepa category config
 ---
 
 **Derniere mise a jour** : 8 Decembre 2025
-**Prochaine session** : Audit Phase 4 - Backlog Cleanup
-**Methodologie** : CLAUDE.md v3.1 - Zero-Tolerance Engineering
+**Prochaine session** : Audit Phase 4 - Backlog Cleanup + Test Hooks
+**Methodologie** : CLAUDE.md v3.2 - Zero-Tolerance + Hooks Bloquants

@@ -2,11 +2,15 @@
 Business Configuration API endpoints.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, Header, Depends
 from pydantic import ValidationError
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.db import get_db_session
+from app.models.business_config import BusinessConfig
 from app.schemas.business_config_schemas import (
     BusinessConfigResponse,
     ConfigUpdateRequest, 
@@ -249,28 +253,51 @@ async def get_config_changes(
 
 @router.get("/stats", response_model=ConfigStatsResponse)
 async def get_config_stats(
-    config_service: BusinessConfigService = Depends(get_config_service)
+    config_service: BusinessConfigService = Depends(get_config_service),
+    db: AsyncSession = Depends(get_db_session)
 ):
     """
     Get configuration service statistics and health info.
-    
+
     Useful for monitoring cache performance and service health.
+    Returns real database counts instead of placeholders.
     """
     try:
         # Get cache statistics
         cache_stats = config_service.get_cache_stats()
-        
-        # TODO: Add more comprehensive stats from database
-        # For now, provide basic service stats
-        
+
+        # Real database queries for accurate statistics
+        # Count total configs
+        total_result = await db.execute(
+            select(func.count()).select_from(BusinessConfig)
+        )
+        total_configs = total_result.scalar() or 0
+
+        # Count active configs
+        active_result = await db.execute(
+            select(func.count()).select_from(BusinessConfig).where(
+                BusinessConfig.is_active == True
+            )
+        )
+        active_configs = active_result.scalar() or 0
+
+        # Count recent changes (last 24 hours)
+        yesterday = datetime.now(timezone.utc) - timedelta(hours=24)
+        recent_result = await db.execute(
+            select(func.count()).select_from(BusinessConfig).where(
+                BusinessConfig.updated_at > yesterday
+            )
+        )
+        recent_changes = recent_result.scalar() or 0
+
         return ConfigStatsResponse(
             cache_stats=cache_stats,
-            total_configs=1,  # Placeholder - would query database
-            active_configs=1,  # Placeholder
-            recent_changes=0,  # Placeholder
+            total_configs=total_configs,
+            active_configs=active_configs,
+            recent_changes=recent_changes,
             service_health="healthy"
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to get config stats: {e}")
         raise HTTPException(

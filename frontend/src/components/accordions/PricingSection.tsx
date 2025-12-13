@@ -4,6 +4,7 @@
  * et NEW comme alternative dans la section expandable
  */
 
+import { useState } from 'react'
 import type { AnalysisResult } from '../../types/keepa'
 
 interface PricingSectionProps {
@@ -11,7 +12,8 @@ interface PricingSectionProps {
   isExpanded?: boolean
 }
 
-export function PricingSection({ analysis, isExpanded = false }: PricingSectionProps) {
+export function PricingSection({ analysis, isExpanded: initialExpanded = false }: PricingSectionProps) {
+  const [showNewPricing, setShowNewPricing] = useState(initialExpanded)
   const pricingUsed = analysis.pricing?.used
   const pricingNew = analysis.pricing?.new
 
@@ -129,7 +131,7 @@ export function PricingSection({ analysis, isExpanded = false }: PricingSectionP
       )}
 
       {/* Section NEW - Visible seulement si expanded (alternative) */}
-      {pricingNew && isExpanded && (
+      {pricingNew && showNewPricing && (
         <div className="border border-gray-200 bg-gray-50 rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-semibold text-sm text-gray-700">📦 Pricing NEW (Alternative)</h4>
@@ -192,12 +194,22 @@ export function PricingSection({ analysis, isExpanded = false }: PricingSectionP
       )}
 
       {/* Bouton pour toggle expanded (si NEW existe) */}
-      {pricingNew && !isExpanded && (
+      {pricingNew && !showNewPricing && (
         <button
           className="w-full text-sm text-gray-600 hover:text-gray-900 py-2 border border-gray-200 rounded hover:bg-gray-50 transition-colors"
-          onClick={() => {/* TODO: handle toggle */}}
+          onClick={() => setShowNewPricing(true)}
         >
-          📦 Voir aussi pricing NEW (alternative)
+          Voir aussi pricing NEW (alternative)
+        </button>
+      )}
+
+      {/* Bouton pour collapse (si NEW est visible) */}
+      {pricingNew && showNewPricing && (
+        <button
+          className="w-full text-sm text-gray-500 hover:text-gray-700 py-2 border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+          onClick={() => setShowNewPricing(false)}
+        >
+          Masquer pricing NEW
         </button>
       )}
     </div>

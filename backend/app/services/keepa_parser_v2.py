@@ -244,11 +244,12 @@ def _auto_select_strategy(parsed: Dict[str, Any]) -> str:
 
 def _determine_best_current_price(data: Dict[str, Any]) -> Optional[Decimal]:
     """
-    DEPRECATED: Use _determine_target_sell_price() instead.
-    Kept for backward compatibility during transition.
+    Determine the best current display price from available options.
 
-    Determine the best current price from available options.
-    Priority: Amazon > FBA > New > Buy Box > Used
+    NOTE: This is for DISPLAY purposes (showing current market price).
+    For sell price calculations in arbitrage, use _determine_target_sell_price().
+
+    Priority: Amazon > FBA > FBM > Buy Box > Used
     """
     price_priority = [
         "current_amazon_price",

@@ -17,6 +17,155 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+# =============================================================================
+# Strategic Metric Calculation Functions
+# =============================================================================
+
+def calculate_velocity_score(sales_rank: int, sales_drops: int = 0) -> float:
+    """
+    Calculate velocity score based on BSR and sales drops.
+
+    Args:
+        sales_rank: Current Best Seller Rank (lower = faster selling)
+        sales_drops: Number of sales drops in last 30 days (optional)
+
+    Returns:
+        Score between 0.0 and 1.0 (higher = faster velocity)
+    """
+    if sales_rank <= 0:
+        return 0.0
+
+    # Normalize BSR (lower BSR = better, cap at 1M for books)
+    # BSR 1 = 1.0, BSR 100K = 0.9, BSR 500K = 0.5, BSR 1M+ = 0.0
+    bsr_score = max(0.0, 1.0 - (sales_rank / 1_000_000))
+
+    # If sales drops available, factor them in (more = better)
+    if sales_drops > 0:
+        # Normalize sales drops (cap at 100 drops/month for excellent)
+        drops_score = min(1.0, sales_drops / 100)
+        # Weighted combination
+        return round(0.6 * bsr_score + 0.4 * drops_score, 2)
+
+    return round(bsr_score, 2)
+
+
+def calculate_competition_level(num_sellers: int = 0, buy_box_amazon: bool = False) -> str:
+    """
+    Determine competition level based on seller count and Amazon presence.
+
+    Args:
+        num_sellers: Number of third-party sellers
+        buy_box_amazon: Whether Amazon holds the Buy Box
+
+    Returns:
+        Competition level: "HIGH", "MEDIUM", or "LOW"
+    """
+    if buy_box_amazon:
+        return "HIGH"
+    if num_sellers > 10:
+        return "HIGH"
+    if num_sellers > 5:
+        return "MEDIUM"
+    return "LOW"
+
+
+def calculate_price_volatility(current_price: float, avg_price: float = 0) -> float:
+    """
+    Calculate price volatility as deviation from average.
+
+    Args:
+        current_price: Current selling price
+        avg_price: Average price over time period (optional)
+
+    Returns:
+        Volatility score between 0.0 and 1.0 (higher = more volatile)
+    """
+    if current_price <= 0:
+        return 0.0
+
+    if avg_price <= 0:
+        # No historical data, assume moderate volatility
+        return 0.3
+
+    # Calculate coefficient of variation proxy
+    price_diff = abs(current_price - avg_price)
+    volatility = price_diff / avg_price
+
+    # Normalize to 0-1 range (cap at 50% deviation)
+    return round(min(1.0, volatility * 2), 2)
+
+
+def calculate_demand_consistency(sales_rank: int, category: str = "books") -> float:
+    """
+    Estimate demand consistency based on BSR stability.
+
+    Args:
+        sales_rank: Current BSR
+        category: Product category for benchmark
+
+    Returns:
+        Consistency score between 0.0 and 1.0 (higher = more consistent)
+    """
+    # Category benchmarks for "good" BSR
+    benchmarks = {
+        "books": 100000,
+        "media": 50000,
+        "default": 150000
+    }
+    benchmark = benchmarks.get(category.lower(), benchmarks["default"])
+
+    if sales_rank <= 0:
+        return 0.5  # Unknown, default to medium
+
+    # Products with good BSR tend to have more consistent demand
+    if sales_rank < benchmark * 0.1:  # Top 10% of benchmark
+        return 0.95
+    elif sales_rank < benchmark * 0.5:  # Top 50% of benchmark
+        return 0.80
+    elif sales_rank < benchmark:  # Within benchmark
+        return 0.65
+    elif sales_rank < benchmark * 2:  # 2x benchmark
+        return 0.45
+    else:
+        return 0.25
+
+
+def calculate_data_confidence(
+    has_bsr: bool,
+    has_price: bool,
+    has_title: bool,
+    source: str = "keepa_api"
+) -> float:
+    """
+    Calculate confidence in the data quality.
+
+    Args:
+        has_bsr: Whether BSR data is available
+        has_price: Whether price data is available
+        has_title: Whether title is available
+        source: Data source identifier
+
+    Returns:
+        Confidence score between 0.0 and 1.0
+    """
+    # Base score from source
+    source_scores = {
+        "keepa_api": 0.90,
+        "cached": 0.85,
+        "no_data": 0.20,
+        "estimated": 0.50
+    }
+    base_score = source_scores.get(source, 0.50)
+
+    # Completeness score
+    fields_present = sum([has_bsr, has_price, has_title])
+    completeness = fields_present / 3
+
+    # Combined score
+    return round(0.6 * base_score + 0.4 * completeness, 2)
+
+
 class ViewType(str, Enum):
     """Types de vues stratégiques disponibles"""
     PROFIT_HUNTER = "profit-hunter"      # Vue originale - Focus ROI
@@ -412,6 +561,37 @@ async def get_strategic_view_with_target_prices(
                 
                 view_name = view_name_mapping.get(view_type, "balanced_score")
                 
+                # Extract data for calculations
+                current_bsr = product_analysis.get("current_bsr", 0)
+                current_price = product_analysis.get("sell_price", 0)
+                category = product_analysis.get("category", "books")
+                title = product_analysis.get("title", "")
+                source = product_analysis.get("source", "keepa_api")
+
+                # Calculate strategic metrics using real data
+                velocity = calculate_velocity_score(
+                    sales_rank=current_bsr,
+                    sales_drops=0  # Would need sales drops data from Keepa stats
+                )
+                competition = calculate_competition_level(
+                    num_sellers=0,  # Would need seller count from Keepa
+                    buy_box_amazon=False  # Would need Amazon buy box status
+                )
+                volatility = calculate_price_volatility(
+                    current_price=current_price,
+                    avg_price=current_price  # Would need historical avg
+                )
+                consistency = calculate_demand_consistency(
+                    sales_rank=current_bsr,
+                    category=category
+                )
+                confidence = calculate_data_confidence(
+                    has_bsr=current_bsr > 0,
+                    has_price=current_price > 0,
+                    has_title=bool(title and title != f"Unknown Product {asin}"),
+                    source=source
+                )
+
                 # Prepare product data for target price calculation
                 product_data = {
                     "id": asin,
@@ -419,16 +599,16 @@ async def get_strategic_view_with_target_prices(
                     "buy_price": product_analysis.get("buy_price", 0),
                     "current_price": product_analysis.get("buy_price", 0),
                     "fba_fee": 3.50,  # Standard book FBA fee estimate
-                    "buybox_price": product_analysis.get("sell_price", 0),
+                    "buybox_price": current_price,
                     "referral_fee_rate": 0.15,  # Default books rate
                     "storage_fee": 0.50,  # Monthly storage estimate
                     "roi_percentage": product_analysis.get("roi_percent", 0),
-                    "velocity_score": 0.70,  # Placeholder
+                    "velocity_score": velocity,
                     "profit_estimate": product_analysis.get("profit_net", 0),
-                    "competition_level": "MEDIUM",  # Placeholder
-                    "price_volatility": 0.20,  # Placeholder
-                    "demand_consistency": 0.80,  # Placeholder
-                    "data_confidence": 0.85  # Placeholder
+                    "competition_level": competition,
+                    "price_volatility": volatility,
+                    "demand_consistency": consistency,
+                    "data_confidence": confidence
                 }
                 
                 products_data.append(product_data)

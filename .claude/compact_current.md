@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Active Session
 
-**Derniere mise a jour** : 8 Decembre 2025
-**Phase Actuelle** : Audit Phase 3 COMPLETE - Preparation Audit Phase 4
-**Statut Global** : Phase 3 auditee avec 4 bugs corriges
+**Derniere mise a jour** : 13 Decembre 2025
+**Phase Actuelle** : Phase 4 - Backlog Cleanup EN COURS
+**Statut Global** : Batch 1 complete (I6, I3, I5), Hooks v2 valides, Batch 2 en attente
 
 ---
 
@@ -10,22 +10,67 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Audit Phase 4 (Backlog Cleanup) |
-| **Phases 1-2 Audit** | Complete (37/37 tests) |
-| **Phase 3 Audit** | COMPLETE - 4 bugs fixes, 514 tests |
-| **Phases 4-6** | En attente audit |
+| **Phase Actuelle** | Phase 4 - Backlog Cleanup (Batch 2 en attente) |
+| **Batch 1** | COMPLETE - I6, I3, I5 resolus |
+| **Batch 2** | EN ATTENTE - I4, I7, Validation finale |
 | **CLAUDE.md** | v3.2 - Zero-Tolerance + Mandatory Checkpoints |
-| **Hooks System** | VALIDE - Stop + PreToolUse (Python, Windows OK) |
+| **Hooks System** | v2 VALIDE - 3 points de controle actifs |
+| **Plan Phase 4** | v3 avec checkpoints explicites |
 | **Production** | Backend Render + Frontend Netlify LIVE |
 | **Tests Total** | 514 passants, 26 skipped |
 | **Bloqueurs** | Aucun |
-| **Prochaine Action** | Audit Phase 4 (Backlog Cleanup) |
+| **Prochaine Action** | Batch 2 - Task 4 (Async Job Persistence) |
+
+---
+
+## CHANGELOG - 13 Decembre 2025
+
+### Systeme de Hooks v2 - 3 POINTS DE CONTROLE
+
+- **Hooks implementes et valides** :
+
+| Hook | Trigger | Action |
+|------|---------|--------|
+| **Edit/Write Gate** | Modification `.py`/`.ts`/`.tsx`/`.js` | Bloque si pas de plan OU pas de Context7 |
+| **Git Commit Gate** | `git commit` / `git push` | Bloque avec rappel checkpoints |
+| **Stop Hook** | Fin de reponse | Rappel informatif |
+
+- **Fichiers crees** :
+  - `.claude/hooks/edit_write_gate.py` - Gate Edit/Write
+  - `.claude/current_session.json` - Etat session (plan + context7)
+  - `docs/plans/2025-12-13-phase4-backlog-cleanup-v3.md` - Plan avec checkpoints
+
+- **Workflow enforce** :
+  1. Plan existe (`plan_exists: true`)
+  2. Context7 consulte (`context7_called: true`)
+  3. Code modifiable
+  4. Commit avec checkpoint
+
+### Phase 4 - Batch 1 COMPLETE
+
+- **Task 1 (I6)** : Frontend Toggle - COMPLETE
+  - Fichier: `frontend/src/components/accordions/PricingSection.tsx`
+  - Fix: useState + onClick handler pour toggle NEW pricing
+
+- **Task 2 (I3)** : Config Stats Placeholders - COMPLETE
+  - Fichier: `backend/app/api/v1/routers/config.py:254-306`
+  - Fix: Vraies requetes DB au lieu de placeholders hardcodes
+
+- **Task 3 (I5)** : Strategic Views Placeholders - COMPLETE
+  - Fichier: `backend/app/routers/strategic_views.py:25-166`
+  - Fix: 5 fonctions de calcul (velocity, competition, volatility, consistency, confidence)
+
+### Phase 4 - Batch 2 EN ATTENTE
+
+- **Task 4 (I4)** : Async Job Persistence - A FAIRE
+- **Task 5 (I7)** : Router Architecture Consolidation - A FAIRE
+- **Task 6** : Validation Finale - A FAIRE
 
 ---
 
 ## CHANGELOG - 8 Decembre 2025
 
-### Systeme de Hooks - TESTE ET FONCTIONNEL
+### Systeme de Hooks v1 - TESTE ET FONCTIONNEL
 
 - **23:15** | Hooks Claude Code VALIDES
   - **Stop Hook** : Rappel Checkpoint a chaque fin de tour - FONCTIONNE (log debug confirme)

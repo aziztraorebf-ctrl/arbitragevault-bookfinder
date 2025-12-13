@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Globale Projet
 
-**Derniere mise a jour** : 7 Decembre 2025
-**Version** : 4.0
-**Statut** : Phases 1-7 deployees, Audits 1-2 completes, Audits 3-6 en cours
+**Derniere mise a jour** : 13 Decembre 2025
+**Version** : 5.0
+**Statut** : Phases 1-7 deployees, Phase 4 Batch 1 complete, Hooks v2 actifs
 
 ---
 
@@ -161,6 +161,65 @@
 - Nuance approximatif (exact pour donnees, tolerance pour scoring)
 - Migration DB conventions
 - Section Ressources Existantes
+
+---
+
+## Systeme de Hooks v2 (Infrastructure Critique)
+
+### Vue d'ensemble
+
+Le systeme de hooks enforce automatiquement les regles CLAUDE.md via 3 points de controle bloquants.
+
+### Hooks Actifs
+
+| Hook | Fichier | Trigger | Action |
+|------|---------|---------|--------|
+| **Edit/Write Gate** | `edit_write_gate.py` | Modification `.py`/`.ts`/`.tsx`/`.js` | Bloque si pas de plan OU Context7 |
+| **Git Commit Gate** | `pre_tool_validator.py` | `git commit`/`push` | Bloque avec rappel checkpoints |
+| **Stop Hook** | `stop_checkpoint.py` | Fin de reponse | Rappel informatif |
+
+### Fichiers Systeme
+
+```
+.claude/
+  hooks/
+    edit_write_gate.py      # Gate Edit/Write (bloquant)
+    pre_tool_validator.py   # Gate Git commit (bloquant)
+    stop_checkpoint.py      # Rappel fin de tour
+    hook-debug.log          # Logs debug PreToolUse
+    edit-gate-debug.log     # Logs debug Edit/Write
+    stop-debug.log          # Logs debug Stop
+  current_session.json      # Etat session (plan + context7)
+  settings.local.json       # Configuration hooks
+```
+
+### Workflow Enforce
+
+1. **Avant modification code** :
+   - Verifier `current_session.json` existe
+   - `plan_exists: true` requis
+   - `context7_called: true` requis
+
+2. **Avant commit** :
+   - Checkpoint validation requis
+   - 6 questions avec preuves
+
+3. **Structure current_session.json** :
+```json
+{
+  "plan_exists": true,
+  "context7_called": true,
+  "tasks_started": ["task_name"]
+}
+```
+
+### Plans avec Checkpoints Explicites
+
+Chaque plan doit inclure pour chaque tache :
+- **Pre-Implementation** : Context7-First, TDD (tests avant code)
+- **Post-Implementation** : Tests passent, Hostile Review, verification-before-completion
+
+Exemple : `docs/plans/2025-12-13-phase4-backlog-cleanup-v3.md`
 
 ---
 

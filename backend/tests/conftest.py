@@ -5,6 +5,7 @@ import tempfile
 import os
 import uuid
 from typing import AsyncGenerator, List
+from httpx import AsyncClient, ASGITransport
 from datetime import datetime, timezone
 from decimal import Decimal
 
@@ -19,6 +20,9 @@ from app.models.base import Base
 from app.models.user import User
 from app.models.batch import Batch, BatchStatus
 from app.models.analysis import Analysis
+# AutoSourcing models use a different Base (app.core.db.Base)
+from app.core.db import Base as CoreBase
+from app.models.autosourcing import AutoSourcingJob, AutoSourcingPick, SavedProfile, JobStatus
 
 # Test database URLs
 TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -35,12 +39,14 @@ def test_engine():
         echo=False
     )
 
-    # Create all tables
+    # Create all tables (both Base classes)
     Base.metadata.create_all(bind=engine)
+    CoreBase.metadata.create_all(bind=engine)
     yield engine
-    
+
     # Cleanup
     Base.metadata.drop_all(bind=engine)
+    CoreBase.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture(scope="session")
@@ -73,10 +79,12 @@ async def async_db_session(async_test_engine) -> AsyncGenerator[AsyncSession, No
     """Create async database session for testing."""
     from sqlalchemy.ext.asyncio import AsyncSession as AsyncSessionClass
     
-    # Create tables fresh for each test
+    # Create tables fresh for each test (both Base classes)
     async with async_test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(CoreBase.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(CoreBase.metadata.create_all)
     
     # Create session with expire_on_commit=False to avoid lazy loading issues
     async_session = AsyncSessionClass(bind=async_test_engine, expire_on_commit=False)
@@ -86,6 +94,16 @@ async def async_db_session(async_test_engine) -> AsyncGenerator[AsyncSession, No
     # Cleanup
     await async_session.rollback()
     await async_session.close()
+
+
+@pytest_asyncio.fixture
+async def client() -> AsyncGenerator[AsyncClient, None]:
+    """Create async HTTP client for testing FastAPI app."""
+    from app.main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
 
 
 @pytest_asyncio.fixture

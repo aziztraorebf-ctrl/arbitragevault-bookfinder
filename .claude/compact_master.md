@@ -126,6 +126,44 @@
 - Important: IntegrityError handling, duplicate slug validation
 - Minor: Error messages clarity, type hints
 
+### Phase 6 : Niche Discovery Optimization & E2E Testing (DEPLOYE - AUDIT INCOMPLET)
+**Duree** : ~4 heures | **Status** : Deploye, audit a completer
+
+**Contexte** : Phase 6 a eu plusieurs definitions au fil du temps. Cette section consolide le scope final.
+
+**Livrables deployes** :
+1. **Budget Guard** : Estimation cout tokens AVANT execution niche discovery
+   - Fichier: `backend/app/api/v1/endpoints/niches.py`
+   - Commits: `66ed3d8`, `b2b0702`
+2. **ConditionBreakdown UI** : Affichage prix par condition (new, very_good, good, acceptable)
+   - Fichier: `frontend/src/components/accordions/ConditionBreakdown.tsx`
+   - Commit: `c32169d`
+3. **Timeout Protection** : 30s sur endpoints Keepa avec HTTP 408
+   - Fichier: `backend/app/api/v1/endpoints/niches.py`
+   - Commit: `74a3af8`
+4. **E2E Tests Playwright** : Suite complete frontend
+   - Fichiers: `backend/tests/e2e/tests/*.spec.js`
+   - Resultat: 23/28 -> 27/28 (96%)
+5. **Smart Strategies** : FBA seller competition filter, Smart Velocity, Textbooks
+   - Fichier: `backend/app/services/niche_templates.py`
+   - Commit: `b2b0702`
+
+**Documentation existante** :
+- `docs/plans/2025-11-30-phase-6-niche-discovery-audit.md` - Plan Budget Guard
+- `docs/plans/PHASE6_CORRECTION_PLAN.md` - Plan corrections E2E
+- `.claude/archives/PHASE_5_6_COMPLETE.md` - Rapport ConditionBreakdown
+
+**Ce qui reste a auditer** :
+1. [ ] Tests unitaires pour `estimate_discovery_cost()`
+2. [ ] Validation Budget Guard avec vraies donnees
+3. [ ] Hostile review de `niche_templates.py` (Smart Strategies)
+4. [ ] Tests API pour endpoint `/niches/discover` avec edge cases
+5. [ ] Verification E2E 100% (actuellement 96%)
+
+**Bugs connus (a verifier)** :
+- Token consumption silencieux (~750 tokens sans resultats si timeout)
+- TokenErrorAlert component non implemente (generic errors acceptables pour MVP)
+
 ### Phase 7 : AutoSourcing Safeguards (DEPLOYE - PARTIELLEMENT AUDITE)
 **Duree** : 3 heures | **Status** : E2E tests 5/5, code quality 9.5/10
 
@@ -366,6 +404,7 @@ ENVIRONMENT=production
 | Phase 3 | Product Discovery MVP | COMPLETE | 8 Dec 2025 |
 | Phase 5 | Niche Bookmarks | COMPLETE | 14 Dec 2025 |
 | Phase 4 | Backlog Cleanup | A FAIRE | - |
+| Phase 6 | Niche Discovery Optimization | A COMPLETER | Deploye, audit incomplet |
 
 ### Infrastructure Tests
 

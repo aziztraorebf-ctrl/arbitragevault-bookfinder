@@ -219,8 +219,31 @@
 
 | Phase | Description | Priorite | Risque |
 |-------|-------------|----------|--------|
-| Phase 4 | Backlog Cleanup | MOYENNE | Fixes deja appliques |
-| Phase 6 | (A determiner) | - | - |
+| Phase 4 | Backlog Cleanup | HAUTE | Fixes BSR critiques non testes |
+| Phase 6 | Niche Discovery Optimization | MOYENNE | Budget Guard + E2E a valider |
+
+### Phase 6 - Detail (Scope Consolide)
+
+**Statut** : Deploye en production, audit incomplet
+
+**Ce qui existe deja** :
+1. Budget Guard (estimation cout tokens)
+2. ConditionBreakdown UI (prix par condition)
+3. Timeout Protection (30s + HTTP 408)
+4. E2E Tests (96% - 27/28)
+5. Smart Strategies (FBA filter, Velocity, Textbooks)
+
+**Ce qui reste a auditer** :
+1. [ ] Tests unitaires `estimate_discovery_cost()`
+2. [ ] Validation Budget Guard avec vraies donnees
+3. [ ] Hostile review `niche_templates.py`
+4. [ ] Tests API endpoint `/niches/discover` edge cases
+5. [ ] Fix E2E pour atteindre 100%
+
+**Documentation** :
+- `docs/plans/2025-11-30-phase-6-niche-discovery-audit.md`
+- `docs/plans/PHASE6_CORRECTION_PLAN.md`
+- `.claude/archives/PHASE_5_6_COMPLETE.md`
 
 ### Phase 7 - AutoSourcing
 

@@ -111,21 +111,27 @@ class BookmarkService:
             return None
 
     def list_niches_by_user(
-        self, 
-        user_id: str, 
-        skip: int = 0, 
+        self,
+        user_id: str,
+        skip: int = 0,
         limit: int = 100
     ) -> tuple[List[SavedNiche], int]:
         """Get all saved niches for a user with pagination.
-        
+
         Args:
             user_id: ID of the user
             skip: Number of records to skip
             limit: Maximum number of records to return
-            
+
         Returns:
             Tuple of (list of SavedNiche instances, total count)
         """
+        # Validate inputs at service layer (defense in depth)
+        if skip < 0:
+            raise ValueError("skip must be >= 0")
+        if limit < 1 or limit > 500:
+            raise ValueError("limit must be between 1 and 500")
+
         try:
             # Get total count
             total_count = self.db.query(SavedNiche).filter(
@@ -202,6 +208,13 @@ class BookmarkService:
         except HTTPException:
             self.db.rollback()
             raise
+        except IntegrityError as e:
+            self.db.rollback()
+            logger.error(f"Integrity error updating niche {niche_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A niche with this name already exists"
+            )
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error updating niche {niche_id}: {e}")

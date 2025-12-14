@@ -47,9 +47,12 @@ class NicheCreateSchema(BaseModel):
 
     @field_validator('niche_name')
     def validate_niche_name(cls, v):
-        if not v.strip():
+        if v is None:
+            raise ValueError('Niche name is required')
+        stripped = v.strip()
+        if not stripped:
             raise ValueError('Niche name cannot be empty')
-        return v.strip()
+        return stripped
 
     class Config:
         json_schema_extra = {
@@ -127,9 +130,12 @@ class NicheUpdateSchema(BaseModel):
 
     @field_validator('niche_name')
     def validate_niche_name(cls, v):
-        if v is not None and not v.strip():
-            raise ValueError('Niche name cannot be empty')
-        return v.strip() if v else v
+        if v is not None:
+            stripped = v.strip()
+            if not stripped:
+                raise ValueError('Niche name cannot be empty')
+            return stripped
+        return v
 
     class Config:
         json_schema_extra = {

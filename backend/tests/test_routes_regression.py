@@ -22,28 +22,30 @@ class TestRouterRegistration:
 
     def test_all_expected_routers_imported(self):
         """Verify all expected router modules are importable."""
-        # New location routers
-        from app.api.v1.routers import auth, health, analyses, batches, keepa, config
-        from app.api.v1.routers import autosourcing, autoscheduler, views
+        # All routers now in v1/routers (migration complete)
+        from app.api.v1.routers import (
+            auth, health, analyses, batches, keepa, config,
+            autosourcing, autoscheduler, views,
+            bookmarks, strategic_views, stock_estimate, niche_discovery
+        )
 
-        # Legacy endpoints
+        # Legacy endpoints (still in v1/endpoints)
         from app.api.v1.endpoints import products, niches, analytics, asin_history
-
-        # Old location routers (to be migrated)
-        from app.routers import stock_estimate, strategic_views, niche_discovery, bookmarks
 
         # All imports successful
         assert all([
             auth, health, analyses, batches, keepa, config,
             autosourcing, autoscheduler, views,
-            products, niches, analytics, asin_history,
-            stock_estimate, strategic_views, niche_discovery, bookmarks
+            bookmarks, strategic_views, stock_estimate, niche_discovery,
+            products, niches, analytics, asin_history
         ])
 
     def test_routers_have_router_attribute(self):
         """Verify each router module exposes a 'router' attribute."""
-        from app.api.v1.routers import health, config, views, autosourcing
-        from app.routers import bookmarks, strategic_views
+        from app.api.v1.routers import (
+            health, config, views, autosourcing,
+            bookmarks, strategic_views, stock_estimate, niche_discovery
+        )
 
         assert hasattr(health, 'router'), "health module missing router"
         assert hasattr(config, 'router'), "config module missing router"
@@ -51,6 +53,8 @@ class TestRouterRegistration:
         assert hasattr(autosourcing, 'router'), "autosourcing module missing router"
         assert hasattr(bookmarks, 'router'), "bookmarks module missing router"
         assert hasattr(strategic_views, 'router'), "strategic_views module missing router"
+        assert hasattr(stock_estimate, 'router'), "stock_estimate module missing router"
+        assert hasattr(niche_discovery, 'router'), "niche_discovery module missing router"
 
 
 class TestRouteRegistration:

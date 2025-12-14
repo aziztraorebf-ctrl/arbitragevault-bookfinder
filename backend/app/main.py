@@ -27,9 +27,8 @@ try:
 except ImportError:
     MCP_AVAILABLE = False
 
-from app.api.v1.routers import auth, health, analyses, batches, keepa, config, autosourcing, autoscheduler, views
+from app.api.v1.routers import auth, health, analyses, batches, keepa, config, autosourcing, autoscheduler, views, bookmarks, strategic_views, stock_estimate, niche_discovery
 from app.api.v1.endpoints import products, niches, analytics, asin_history
-from app.routers import stock_estimate, strategic_views, niche_discovery, bookmarks
 from app.core.cors import configure_cors
 from app.core.db import lifespan
 from app.core.logging import configure_logging, get_logger, log_request_middleware

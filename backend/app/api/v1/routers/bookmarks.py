@@ -1,4 +1,8 @@
-"""API routes for managing user bookmarked niches."""
+"""API routes for managing user bookmarked niches.
+
+Migrated from app/routers/bookmarks.py to app/api/v1/routers/bookmarks.py
+for router architecture consolidation (I7).
+"""
 
 import logging
 from typing import List
@@ -6,10 +10,10 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
-from ..core.db import get_db_session as get_db
-from ..core.auth import get_current_user_id
-from ..services.bookmark_service import BookmarkService
-from ..schemas.bookmark import (
+from app.core.db import get_db_session as get_db
+from app.core.auth import get_current_user_id
+from app.services.bookmark_service import BookmarkService
+from app.schemas.bookmark import (
     NicheCreateSchema,
     NicheReadSchema,
     NicheUpdateSchema,

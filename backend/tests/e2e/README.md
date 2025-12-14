@@ -2,9 +2,41 @@
 
 ## Description
 
-Ce répertoire contient les tests end-to-end qui valident le fonctionnement complet du backend ArbitrageVault avec un serveur en cours d'exécution.
+Ce répertoire contient les tests end-to-end qui valident le fonctionnement complet du backend et frontend ArbitrageVault en production.
+
+## Types de tests
+
+### Tests Playwright (Frontend + Backend integration)
+Tests E2E complets simulant des utilisateurs réels interagissant avec l'application déployée.
+
+### Tests Python (Backend API)
+Tests E2E du backend seul nécessitant un serveur local en cours d'exécution.
 
 ## Fichiers de tests
+
+### Tests Playwright (tests/*.spec.js)
+
+- **01-health-monitoring.spec.js** - Tests de santé et monitoring
+- **02-token-control.spec.js** - Contrôle des tokens Keepa
+- **03-niche-discovery.spec.js** - Découverte de niches
+- **04-manual-search-flow.spec.js** - Recherche manuelle
+- **05-autosourcing-flow.spec.js** - AutoSourcing
+- **06-token-error-handling.spec.js** - Gestion erreurs tokens
+- **07-navigation-flow.spec.js** - Navigation entre pages
+- **08-autosourcing-safeguards.spec.js** - Protections AutoSourcing
+- **09-phase-8-decision-system.spec.js** - Système de décision
+- **10-robustness-randomized.spec.js** - Tests de robustesse
+- **11-phase7-autosourcing-audit.spec.js** - Audit AutoSourcing
+- **12-source-price-factor-verification.spec.js** - Vérification facteurs prix
+- **13-bookmarks-flow.spec.js** (Phase 5 - NEW) - Tests bookmarks :
+  - should display empty state when no bookmarks
+  - should navigate to niche discovery from empty state
+  - should save a niche from discovery results
+  - should list saved bookmarks
+  - should delete a bookmark with confirmation
+  - should re-run analysis from saved bookmark
+
+### Tests Python (Backend API)
 
 - **test_backend_corrections.py** (9 tests)
   - Validation des corrections majeures backend
@@ -25,7 +57,53 @@ Ce répertoire contient les tests end-to-end qui valident le fonctionnement comp
   - Tests d'injection et validation
   - Configuration CORS
 
-## Pourquoi sont-ils skippés par défaut ?
+## Comment exécuter ces tests
+
+### Tests Playwright (Production E2E)
+
+Les tests Playwright s'exécutent contre les environnements de production déployés :
+- Frontend : https://arbitragevault.netlify.app
+- Backend : https://arbitragevault-backend-v2.onrender.com
+
+**Installer les dépendances** :
+```bash
+cd backend/tests/e2e
+npm install
+npx playwright install chromium
+```
+
+**Exécuter tous les tests** :
+```bash
+npx playwright test
+```
+
+**Exécuter un test spécifique** :
+```bash
+npx playwright test 13-bookmarks-flow.spec.js
+```
+
+**Exécuter avec interface UI** :
+```bash
+npx playwright test --ui
+```
+
+**Exécuter en mode headed (voir le navigateur)** :
+```bash
+npx playwright test --headed
+```
+
+**Voir le rapport HTML** :
+```bash
+npx playwright show-report
+```
+
+**Notes importantes** :
+- Les tests utilisent les environnements de production
+- Certains tests peuvent échouer si les tokens Keepa sont épuisés (429 errors)
+- Les tests incluent des cleanups automatiques (suppression des données de test)
+- Le seed de randomisation garantit la reproductibilité
+
+### Tests Python (Backend API local)
 
 Ces tests nécessitent :
 1. Un serveur backend FastAPI en cours d'exécution sur `http://localhost:8000`
@@ -34,9 +112,7 @@ Ces tests nécessitent :
 
 Ils sont automatiquement skippés lors des tests unitaires pour ne pas bloquer le CI/CD.
 
-## Comment exécuter ces tests
-
-### Prérequis
+**Prérequis pour tests Python** :
 
 1. Démarrer le backend :
 ```bash
@@ -49,7 +125,7 @@ uvicorn app.main:app --reload
 curl http://localhost:8000/health
 ```
 
-### Exécuter les tests E2E
+**Exécuter les tests Python E2E** :
 
 **Option 1 : Tous les tests E2E**
 ```bash

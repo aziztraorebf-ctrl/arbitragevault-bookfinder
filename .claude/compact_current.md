@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Active Session
 
-**Derniere mise a jour** : 13 Decembre 2025
-**Phase Actuelle** : Phase 4 - Backlog Cleanup EN COURS
-**Statut Global** : Batch 1 complete (I6, I3, I5), Hooks v2 valides, Batch 2 en attente
+**Derniere mise a jour** : 14 Decembre 2025
+**Phase Actuelle** : Phase 5 - Niche Bookmarks AUDITE
+**Statut Global** : Phase 5 audit complete, 36 tests backend + 6 E2E, 7 issues fixes
 
 ---
 
@@ -10,16 +10,54 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Phase 4 - Backlog Cleanup (Batch 2 en attente) |
-| **Batch 1** | COMPLETE - I6, I3, I5 resolus |
-| **Batch 2** | EN ATTENTE - I4, I7, Validation finale |
+| **Phase Actuelle** | Phase 5 - Niche Bookmarks AUDITE |
+| **Phase 5 Tests** | 36 backend (12 unit + 14 API + 10 hostile) + 6 E2E Playwright |
+| **Phase 5 Fixes** | 7 issues (2 critical, 3 important, 2 minor) |
 | **CLAUDE.md** | v3.2 - Zero-Tolerance + Mandatory Checkpoints |
 | **Hooks System** | v2 VALIDE - 3 points de controle actifs |
-| **Plan Phase 4** | v3 avec checkpoints explicites |
 | **Production** | Backend Render + Frontend Netlify LIVE |
-| **Tests Total** | 514 passants, 26 skipped |
+| **Tests Total** | 550 passants (514 + 36), 26 skipped |
 | **Bloqueurs** | Aucun |
-| **Prochaine Action** | Batch 2 - Task 4 (Async Job Persistence) |
+| **Prochaine Action** | Deploiement Phase 5 fixes |
+
+---
+
+## CHANGELOG - 14 Decembre 2025
+
+### Phase 5 Audit - Niche Bookmarks COMPLETE
+
+- **Task 1** : Unit Tests BookmarkService - COMPLETE
+  - 12 tests unit (CRUD operations + edge cases)
+  - Fichier: `backend/tests/unit/test_bookmark_service.py`
+  - Commit: `ab4a587`
+
+- **Task 2** : API Integration Tests - COMPLETE
+  - 14 tests integration (auth, validation, success, errors)
+  - Fichier: `backend/tests/api/test_bookmarks_api.py`
+  - Commit: `e3b08f0`
+
+- **Task 3** : Hostile Code Review - 7 ISSUES FIXES
+  - 2 Critical: Empty string validation, None safety
+  - 3 Important: IntegrityError handling, duplicate slug, validation edge
+  - 2 Minor: Error messages, type hints
+  - Fichiers: `bookmark_service.py`, `bookmarks.py`, `saved_niches.py`
+  - Commit: `9ff163f`
+
+- **Task 4** : Playwright E2E Tests - COMPLETE
+  - 6 tests E2E (create, view, delete bookmarks flow)
+  - Fichier: `frontend/tests/e2e/bookmarks.spec.ts`
+  - Commit: `a025629`
+
+- **Task 5** : Verification Checkpoint - COMPLETE
+  - Backend: 36/36 tests pass
+  - Frontend: Build OK, type-check OK
+  - All hostile review fixes validated
+
+**Statut Final** :
+- Phase 5: DEPLOYE -> AUDITE
+- Tests: 36 backend + 6 E2E = 42 total
+- Issues: 7 fixes appliques et testes
+- Date audit: 14 Decembre 2025
 
 ---
 
@@ -175,13 +213,13 @@
 | Phase 1 - Foundation | 21/21 | Complete | 23 Nov 2025 |
 | Phase 2 - Keepa Integration | 16/16 | Complete | 23 Nov 2025 |
 | Phase 3 - Product Discovery | 32/32 | Complete | 8 Dec 2025 |
+| Phase 5 - Niche Bookmarks | 42/42 | Complete | 14 Dec 2025 |
 
 ### Audits A FAIRE (Option A)
 
 | Phase | Description | Priorite | Risque |
 |-------|-------------|----------|--------|
 | Phase 4 | Backlog Cleanup | MOYENNE | Fixes deja appliques |
-| Phase 5 | Niche Bookmarks | MOYENNE | CRUD operations |
 | Phase 6 | (A determiner) | - | - |
 
 ### Phase 7 - AutoSourcing
@@ -289,16 +327,17 @@ cf9c6b6 feat(autosourcing): centralized Keepa category config
 1. [x] Commencer Audit Phase 3 - COMPLETE
 2. [x] Hostile review sur endpoints discovery - COMPLETE
 3. [x] Fixer bugs identifies (4 bugs) - COMPLETE
-4. [ ] Commit changements Phase 3
+4. [x] Audit Phase 5 (Niche Bookmarks) - COMPLETE
+5. [ ] Deployer Phase 5 fixes en production
 
 ### Court terme
 
-5. [ ] Audit Phase 4 (Backlog Cleanup)
-6. [ ] Audit Phase 5 (Niche Bookmarks)
+6. [ ] Audit Phase 4 (Backlog Cleanup)
 7. [ ] Implementer infrastructure REPLAY/MOCK Keepa
+8. [ ] Audit Phase 6 (a determiner)
 
 ---
 
-**Derniere mise a jour** : 8 Decembre 2025
-**Prochaine session** : Audit Phase 4 - Backlog Cleanup + Test Hooks
+**Derniere mise a jour** : 14 Decembre 2025
+**Prochaine session** : Deploiement Phase 5 + Audit Phase 4
 **Methodologie** : CLAUDE.md v3.2 - Zero-Tolerance + Hooks Bloquants

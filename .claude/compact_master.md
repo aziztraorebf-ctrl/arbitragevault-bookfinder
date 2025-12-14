@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Globale Projet
 
-**Derniere mise a jour** : 13 Decembre 2025
-**Version** : 5.0
-**Statut** : Phases 1-7 deployees, Phase 4 Batch 1 complete, Hooks v2 actifs
+**Derniere mise a jour** : 14 Decembre 2025
+**Version** : 5.1
+**Statut** : Phases 1-7 deployees, Phase 5 auditee, Hooks v2 actifs
 
 ---
 
@@ -82,8 +82,8 @@
 
 **Fixes appliquees** : 19 corrections (signatures, return types, error handling)
 
-### Phase 3 : Product Discovery MVP (DEPLOYE - AUDIT A FAIRE)
-**Duree** : 3.5 semaines | **Status** : En production, non audite
+### Phase 3 : Product Discovery MVP (COMPLETE)
+**Duree** : 3.5 semaines | **Tests** : 32/32 (100%)
 
 **Livrables** :
 - PostgreSQL cache tables (discovery, scoring, search history)
@@ -91,6 +91,8 @@
 - Endpoints `/api/v1/products/discover`
 - Throttling Keepa (20 req/min, burst 200)
 - Templates niches curees (5 templates)
+
+**Audit** : 8 Decembre 2025 - 4 bugs fixes, 514 tests pass
 
 ### Phase 4 : Backlog Cleanup (DEPLOYE - AUDIT A FAIRE)
 **Duree** : 1 journee | **Status** : En production, non audite
@@ -101,8 +103,8 @@
 - Windows ProactorEventLoop compatibility
 - Frontend balance Keepa display
 
-### Phase 5 : Niche Bookmarks (DEPLOYE - AUDIT A FAIRE)
-**Duree** : ~6 heures | **Status** : En production, non audite
+### Phase 5 : Niche Bookmarks (COMPLETE)
+**Duree** : ~6 heures | **Tests** : 42/42 (36 backend + 6 E2E)
 
 **Livrables** :
 - Backend bookmarks endpoints (CRUD niches sauvegardees)
@@ -110,6 +112,19 @@
 - Frontend React Query hooks pour bookmarks
 - Re-run analysis avec `force_refresh` parameter
 - Strategic views avec target pricing
+
+**Audit** : 14 Decembre 2025 - 7 issues fixes (2 critical, 3 important, 2 minor)
+
+**Tests Coverage** :
+- Unit Tests BookmarkService : 12/12
+- API Integration Tests : 14/14
+- Hostile Review Tests : 10/10
+- Playwright E2E Tests : 6/6
+
+**Issues Fixes** :
+- Critical: Empty string validation, None safety in get_bookmark
+- Important: IntegrityError handling, duplicate slug validation
+- Minor: Error messages clarity, type hints
 
 ### Phase 7 : AutoSourcing Safeguards (DEPLOYE - PARTIELLEMENT AUDITE)
 **Duree** : 3 heures | **Status** : E2E tests 5/5, code quality 9.5/10
@@ -346,11 +361,11 @@ ENVIRONMENT=production
 
 ### Audit Systematique (Option A)
 
-| Phase | Description | Priorite |
-|-------|-------------|----------|
-| Phase 3 | Product Discovery MVP | HAUTE |
-| Phase 4 | Backlog Cleanup | MOYENNE |
-| Phase 5 | Niche Bookmarks | MOYENNE |
+| Phase | Description | Status | Date |
+|-------|-------------|--------|------|
+| Phase 3 | Product Discovery MVP | COMPLETE | 8 Dec 2025 |
+| Phase 5 | Niche Bookmarks | COMPLETE | 14 Dec 2025 |
+| Phase 4 | Backlog Cleanup | A FAIRE | - |
 
 ### Infrastructure Tests
 
@@ -394,6 +409,6 @@ ENVIRONMENT=production
 
 ---
 
-**Version** : 4.0
-**Derniere revision** : 7 Decembre 2025
-**Statut** : Phases 1-7 deployees, Audits 3-6 planifies, CLAUDE.md v3.1 actif
+**Version** : 5.1
+**Derniere revision** : 14 Decembre 2025
+**Statut** : Phases 1-3 & 5 auditees, Phase 4 en attente, CLAUDE.md v3.2 actif

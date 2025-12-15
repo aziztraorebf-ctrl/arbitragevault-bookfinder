@@ -52,13 +52,15 @@ class KeepaBSRExtractor:
         sales_rank_reference = raw_data.get("salesRankReference")
 
         # Try main category first (only if valid reference)
-        if sales_rank_reference and sales_rank_reference != -1 and str(sales_rank_reference) in sales_ranks:
+        # FIX: Handle None salesRanks
+        if sales_rank_reference and sales_rank_reference != -1 and sales_ranks and str(sales_rank_reference) in sales_ranks:
             rank_data = sales_ranks[str(sales_rank_reference)]
             if isinstance(rank_data, list) and len(rank_data) >= 2:
                 # salesRanks format: [timestamp1, bsr1, timestamp2, bsr2, ...]
                 # Last element is the most recent BSR
                 bsr = rank_data[-1]  # FIX: Read LAST element (current BSR), not second
-                if bsr and bsr != -1:
+                # FIX: Validate BSR is positive integer (not 0, not -1)
+                if bsr and isinstance(bsr, int) and bsr > 0 and bsr != -1:
                     logger.info(f"ASIN {asin}: BSR {bsr} from salesRanks[{sales_rank_reference}]")
                     return int(bsr), "salesRanks"
 
@@ -67,7 +69,8 @@ class KeepaBSRExtractor:
             for category_id, rank_data in sales_ranks.items():
                 if isinstance(rank_data, list) and len(rank_data) >= 2:
                     bsr = rank_data[-1]  # FIX: Read LAST element (current BSR)
-                    if bsr and bsr != -1:
+                    # FIX: Validate BSR is positive integer
+                    if bsr and isinstance(bsr, int) and bsr > 0 and bsr != -1:
                         logger.info(f"ASIN {asin}: BSR {bsr} from salesRanks[{category_id}]")
                         return int(bsr), "salesRanks"
 
@@ -79,7 +82,10 @@ class KeepaBSRExtractor:
 
         if current and len(current) > KeepaCSVType.SALES:
             bsr = current[KeepaCSVType.SALES]
-            if bsr and bsr != -1:
+            # FIX: Handle tuple format (timestamp, value) in legacy data
+            if isinstance(bsr, (list, tuple)) and len(bsr) >= 2:
+                bsr = bsr[-1]
+            if bsr and bsr != -1 and isinstance(bsr, (int, float)):
                 logger.info(f"ASIN {asin}: BSR {bsr} from current[3] (legacy)")
                 return int(bsr), "current"
 

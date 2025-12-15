@@ -8,6 +8,11 @@ import importlib
 import traceback
 from pathlib import Path
 
+# Add backend directory to Python path
+backend_dir = Path(__file__).resolve().parent.parent
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
+
 ROUTERS = [
     "app.api.v1.routers.auth",
     "app.api.v1.routers.health",

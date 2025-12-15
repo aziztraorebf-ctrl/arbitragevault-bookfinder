@@ -285,7 +285,7 @@ async def get_config_stats(
         yesterday = datetime.now(timezone.utc) - timedelta(hours=24)
         recent_result = await db.execute(
             select(func.count()).select_from(BusinessConfig).where(
-                BusinessConfig.updated_at > yesterday
+                (BusinessConfig.updated_at != None) & (BusinessConfig.updated_at > yesterday)
             )
         )
         recent_changes = recent_result.scalar() or 0

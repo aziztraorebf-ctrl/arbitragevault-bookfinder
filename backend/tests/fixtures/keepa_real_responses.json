@@ -1,0 +1,33 @@
+{
+  "book_with_salesranks": {
+    "asin": "0593655036",
+    "title": "The Midnight Library",
+    "domainId": 1,
+    "salesRankReference": 283155,
+    "salesRanks": {
+      "283155": [6150000, 45230, 6150100, 44890, 6150200, 45100]
+    },
+    "stats": {
+      "current": [1499, 1299, 899, 45100, -1, -1, -1, 0, -1, -1, 1399],
+      "avg30": [1550, 1350, 950, 48000, -1, -1, -1, 0, -1, -1, 1450]
+    }
+  },
+  "book_no_salesranks": {
+    "asin": "B08N5WRWNW",
+    "title": "Echo Dot",
+    "domainId": 1,
+    "stats": {
+      "current": [2499, 2999, 1999, 1234, 3999, -1, -1, 2999, -1, -1, 2899]
+    }
+  },
+  "book_stale_data": {
+    "asin": "0134685997",
+    "title": "Effective Java",
+    "domainId": 1,
+    "salesRankReference": -1,
+    "salesRanks": {},
+    "stats": {
+      "avg30": [0, 0, 0, 5678, 0]
+    }
+  }
+}

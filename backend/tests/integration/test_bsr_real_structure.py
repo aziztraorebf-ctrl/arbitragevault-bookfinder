@@ -27,6 +27,7 @@ class TestBSRIntegrationRealStructure:
 
         # salesRanks format: [ts1, bsr1, ts2, bsr2, ts3, bsr3]
         # Last element (45100) is current BSR
+        # stats.current[3] = 44000, different from salesRanks to verify priority
         assert result["current_bsr"] == 45100
         assert result["bsr_confidence"] >= 0.7
 
@@ -35,6 +36,8 @@ class TestBSRIntegrationRealStructure:
         data = keepa_fixtures["book_no_salesranks"]
         result = parse_keepa_product(data)
 
+        # Limitation: Parser may not expose BSR source metadata
+        # This test verifies the value matches stats.current[3] = 1234
         assert result["current_bsr"] == 1234
 
     def test_book_stale_data_uses_avg30_fallback(self, keepa_fixtures):
@@ -46,10 +49,24 @@ class TestBSRIntegrationRealStructure:
         # Lower confidence for avg30 source
         assert result["bsr_confidence"] <= 0.8
 
+    def test_regression_salesranks_uses_last_index(self, keepa_fixtures):
+        """Regression test: should use index [-1] not [1] for latest BSR."""
+        data = keepa_fixtures["book_multiple_bsr_values"]
+        result = parse_keepa_product(data)
+
+        # salesRanks: [ts1, 10000, ts2, 20000, ts3, 30000, ts4, 40000, ts5, 50000]
+        # Should pick 50000 (index [-1]), not 10000 (index [1])
+        assert result["current_bsr"] == 50000
+        assert result["current_bsr"] != 10000
+
     def test_full_parsing_pipeline_doesnt_crash(self, keepa_fixtures):
         """Full parsing pipeline should handle all fixture variations."""
         for name, data in keepa_fixtures.items():
             result = parse_keepa_product(data)
             assert "asin" in result
             assert "current_bsr" in result
-            # Should not raise any exceptions
+
+            # Known-good fixtures should have valid BSR
+            if name in ["book_with_salesranks", "book_no_salesranks", "book_stale_data", "book_multiple_bsr_values"]:
+                assert result["current_bsr"] is not None
+                assert result["current_bsr"] > 0

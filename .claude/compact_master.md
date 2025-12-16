@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Globale Projet
 
-**Derniere mise a jour** : 14 Decembre 2025
-**Version** : 5.1
-**Statut** : Phases 1-7 deployees, Phase 5 auditee, Hooks v2 actifs
+**Derniere mise a jour** : 15 Decembre 2025
+**Version** : 5.2
+**Statut** : Phases 1-7 deployees, Phases 1-5 auditees, Phase 9 planifiee
 
 ---
 
@@ -173,6 +173,54 @@
 - Timeout protection (120s avec DB propagation)
 - ASIN deduplication
 - Frontend error handling (HTTP 400/408/429)
+
+### Phase 8 : Advanced Analytics (DEPLOYE - NON AUDITE)
+**Status** : Code deploye, documentation absente
+
+**Livrables existants** :
+- Endpoints analytics (`/api/v1/analytics/*`)
+- ASIN history tracking (`/api/v1/asin-history/*`)
+- TokenErrorAlert component
+- useProductDecision hook
+
+**Ameliorations planifiees (15 Dec 2025)** :
+- **Rotation intelligente des niches** :
+  - Tracking niches scannees (eviter repetition)
+  - Cooldown par niche (ex: pas meme niche 2x en 24h)
+  - Historique ASINs (ne pas montrer memes produits)
+  - Rotation saisonniere optionnelle
+
+**Note** : Phase decouverte lors de l'exploration du 15 Dec 2025. Non formellement planifiee.
+
+### Phase 9 : UI Completion (PLAN CREE - EN ATTENTE VALIDATION)
+**Date creation plan** : 15 Decembre 2025
+**Duree estimee** : ~3 heures | **Tasks** : 7
+
+**Contexte** : 4 pages frontend sont des placeholders ("Page en construction..."):
+- `Configuration.tsx` (8 lignes)
+- `AnalyseStrategique.tsx` (8 lignes)
+- `StockEstimates.tsx` (8 lignes)
+- `AutoScheduler.tsx` (8 lignes)
+
+**Backend endpoints existants** :
+- `/api/v1/config/*` - GET/PUT config, stats, preview
+- `/api/v1/strategic-views/*` - velocity, competition, volatility, consistency, confidence
+- `/api/v1/products/{asin}/stock-estimate` - stock availability
+
+**Plan** : `docs/plans/2025-12-15-phase9-ui-completion.md`
+
+**Tasks** :
+| # | Description | Fichiers | Estimation |
+|---|-------------|----------|------------|
+| 1 | Configuration page | config.ts, useConfig.ts, Configuration.tsx | 45 min |
+| 2 | AnalyseStrategique page | strategic.ts, useStrategicViews.ts, AnalyseStrategique.tsx | 45 min |
+| 3 | StockEstimates page | stock.ts, useStockEstimate.ts, StockEstimates.tsx | 30 min |
+| 4 | AutoScheduler page | AutoScheduler.tsx (concept UI future) | 20 min |
+| 5 | Type exports | types/index.ts, services/api.ts | 10 min |
+| 6 | E2E tests | phase9-ui-completion.spec.ts | 20 min |
+| 7 | Verification | Build + tests | 15 min |
+
+**Status** : EN ATTENTE VALIDATION UTILISATEUR
 
 ---
 
@@ -397,14 +445,27 @@ ENVIRONMENT=production
 
 ## Prochaines Etapes
 
-### Audit Systematique (Option A)
+### Ordre recommande
+
+| Priorite | Phase | Description | Status | Effort |
+|----------|-------|-------------|--------|--------|
+| 1 | Phase 9 | UI Completion | PLAN PRET | ~3h |
+| 2 | Phase 6 | Niche Discovery Optimization | A AUDITER | ~4h |
+| 3 | Phase 8 | Advanced Analytics | A AUDITER | ~2h |
+
+### Audit Systematique - Etat
 
 | Phase | Description | Status | Date |
 |-------|-------------|--------|------|
+| Phase 1 | Foundation | COMPLETE | 23 Nov 2025 |
+| Phase 2 | Keepa Integration | COMPLETE | 23 Nov 2025 |
 | Phase 3 | Product Discovery MVP | COMPLETE | 8 Dec 2025 |
+| Phase 4 | Backlog Cleanup | COMPLETE | 14 Dec 2025 |
 | Phase 5 | Niche Bookmarks | COMPLETE | 14 Dec 2025 |
-| Phase 4 | Backlog Cleanup | A FAIRE | - |
-| Phase 6 | Niche Discovery Optimization | A COMPLETER | Deploye, audit incomplet |
+| Phase 6 | Niche Discovery Optimization | A AUDITER | Deploye |
+| Phase 7 | AutoSourcing Safeguards | PARTIEL | Deploye |
+| Phase 8 | Advanced Analytics | NON AUDITE | Deploye |
+| Phase 9 | UI Completion | PLAN PRET | 15 Dec 2025 |
 
 ### Infrastructure Tests
 
@@ -448,6 +509,6 @@ ENVIRONMENT=production
 
 ---
 
-**Version** : 5.1
-**Derniere revision** : 14 Decembre 2025
-**Statut** : Phases 1-3 & 5 auditees, Phase 4 en attente, CLAUDE.md v3.2 actif
+**Version** : 5.2
+**Derniere revision** : 15 Decembre 2025
+**Statut** : Phases 1-5 auditees, Phase 9 planifiee, CLAUDE.md v3.2 actif

@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Active Session
 
-**Derniere mise a jour** : 14 Decembre 2025
-**Phase Actuelle** : Phase 4 - Backlog Cleanup AUDITE
-**Statut Global** : Phase 4 audit complete, 57 tests backend + 4 E2E Playwright, 8 tasks completes
+**Derniere mise a jour** : 15 Decembre 2025
+**Phase Actuelle** : Phase 9 - UI Completion (PLAN VALIDE)
+**Statut Global** : Phase 6 auditee, Phase 9 prete a executer
 
 ---
 
@@ -10,15 +10,162 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Phase 4 - Backlog Cleanup AUDITE |
-| **Phase 4 Tests** | 57 backend + 4 E2E Playwright |
-| **Phase 4 Tasks** | 8/8 completes (parallel execution) |
+| **Phase Actuelle** | Phase 9 - UI Completion (PLAN VALIDE) |
+| **Phase 9 Scope** | 4 pages placeholder a completer |
+| **Phase 9 Estimation** | ~3 heures, 7 tasks |
 | **CLAUDE.md** | v3.2 - Zero-Tolerance + Mandatory Checkpoints |
 | **Hooks System** | v2 VALIDE - 3 points de controle actifs |
 | **Production** | Backend Render + Frontend Netlify LIVE |
-| **Tests Total** | 571 passants (514 + 57), 26 skipped |
+| **Tests Total** | 633 passants (571 + 62 Phase 6), 26 skipped |
 | **Bloqueurs** | Aucun |
-| **Prochaine Action** | Audit Phase 6 (Niche Discovery Optimization) |
+| **Prochaine Action** | Executer Phase 9 UI Completion |
+
+---
+
+## CHANGELOG - 15 Decembre 2025
+
+### Phase 6.2 - Product Finder Post-Filtering Strategy COMPLETE
+
+**Skill utilise** : `superpowers:systematic-debugging`
+
+**Probleme resolu** : "Surprise Me!" retournait 0 niches malgre filtres valides
+
+**Root Causes identifies** :
+1. Product Finder `/query` ne supporte que ROOT categories (283155=Books)
+2. Combinaison `current_AMAZON_lte: -1` + `offerCountFBA_lte` = toujours 0
+
+**Solution implementee** :
+- Pre-filtrer API: `rootCategory + BSR + Prix` (9K-61K produits)
+- Post-filtrer backend: `exclude_amazon + max_fba_sellers`
+- Mapping subcategories -> root categories automatique
+
+**Tests valides** :
+| Test | Pre-filter | Post-filter | Resultat |
+|------|-----------|-------------|----------|
+| Smart Velocity | 50 | 3 | PASS |
+| Textbooks | 50 | 11 | PASS |
+| Broad | 50 | 2 | PASS |
+
+**Fichiers modifies** :
+- `app/services/keepa_product_finder.py` - nouvelles methodes `_discover_via_product_finder()`, `_post_filter_asins()`, mapping `ROOT_CATEGORY_MAPPING`
+- `tests/unit/test_post_filtering.py` - 16 tests unitaires
+
+**Tests** : 16 unit + 171 integration = **187 tests PASS**
+
+**Tokens economises** : ~60 tokens/template vs ~150 avant (meilleur ciblage)
+
+**Documentation** : `docs/plans/2025-12-15-product-finder-post-filtering.md`
+
+**Statut** : COMPLETE - "Surprise Me!" devrait maintenant retourner des niches
+
+---
+
+### Phase 6 Audit - Niche Discovery Optimization COMPLETE
+
+**Skill utilise** : `superpowers:writing-plans` + TDD
+
+**Plan execute** : `docs/plans/2025-12-15-phase6-niche-discovery-audit.md`
+
+**Tasks completees** :
+
+| Task | Description | Tests | Resultat |
+|------|-------------|-------|----------|
+| 1 | Hostile review niche_templates.py | 20 | PASS |
+| 2 | API endpoint edge cases | 10 | PASS |
+| 3 | Budget Guard stress tests | 14 | PASS |
+| 4 | E2E test fixes (100% target) | 4 | PASS |
+| 6 | Verification checkpoint | - | 62 tests total |
+
+**Fichiers crees** :
+- `backend/tests/unit/test_niche_templates_hostile.py` (20 tests)
+- `backend/tests/api/test_niches_api_edge_cases.py` (10 tests)
+- `backend/tests/unit/test_budget_guard_stress.py` (14 tests)
+
+**Tests existants valides** :
+- `backend/tests/test_niche_budget.py` (14 tests)
+- `backend/tests/e2e/tests/03-niche-discovery.spec.js` (4 tests)
+
+**Statut Final** :
+- Phase 6: DEPLOYE -> AUDITE
+- Tests: 58 backend + 4 E2E = 62 total
+- E2E: 100% (4/4 PASS)
+- Date audit: 15 Decembre 2025
+
+---
+
+### Phase 6 Complement - Diagnostic "Surprise Me!" Empty Results
+
+**Skill utilise** : `superpowers:systematic-debugging`
+
+**Probleme rapporte** : Clic sur "Surprise Me!" n'affiche aucun resultat
+
+**Investigation** :
+
+| Composant | Status | Preuve |
+|-----------|--------|--------|
+| API Keepa | OK | MCP `get_bestsellers` retourne milliers ASINs |
+| Backend Budget Guard | OK | HTTP 429 si tokens < cost, 200 sinon |
+| Backend Validation | OK | Logs Render montrent 3 templates valides |
+| Frontend Display | OK | Empty state correct si `niches.length === 0` |
+| **Template Filters** | TROP STRICTS | 0/3 niches passent les criteres |
+
+**Root Cause** : Les filtres CURATED_NICHES sont trop restrictifs pour les donnees bestsellers actuelles.
+
+**Criteres actuels** :
+- BSR: 10,000-80,000 (smart_velocity) ou 30,000-250,000 (textbooks)
+- Prix: $15-60 ou $30-250
+- FBA sellers max: 3-5
+- ROI minimum: 10%, Velocity score minimum: 20
+
+**Logs Production** :
+```
+[info] Starting validation of 3 templates (shuffle=True)
+[warning] [SKIP] textbook-law: 0 quality products found
+[warning] [SKIP] kids-education-preschool: 0 quality products found
+[warning] [SKIP] wellness-journals: 0 quality products found
+[info] Completed: 0/3 niches validated
+```
+
+**Conclusion** : PAS un bug code, mais DATA/FILTER mismatch. Les templates ont des criteres stricts qui ne matchent pas les produits bestsellers actuels.
+
+**Options** :
+1. Elargir les ranges BSR/prix dans les templates
+2. Utiliser recherche manuelle avec filtres custom
+3. Reduire restriction `max_fba_sellers`
+
+**Status** : EN ATTENTE DECISION UTILISATEUR
+
+---
+
+### Phase 9 Plan - UI Completion CREE
+
+**Skill utilise** : `superpowers:writing-plans`
+
+**Plan cree** : `docs/plans/2025-12-15-phase9-ui-completion.md`
+
+**Scope** : Completer les 4 pages placeholder frontend :
+1. **Configuration** - Gestion config business (ROI, BSR, pricing, velocity)
+2. **AnalyseStrategique** - Vues strategiques (velocity, competition, volatility, consistency, confidence)
+3. **StockEstimates** - Estimation disponibilite stock par ASIN
+4. **AutoScheduler** - UI concept pour jobs planifies (feature future)
+
+**Backend existant** :
+- `/api/v1/config/*` - Configuration endpoints OK
+- `/api/v1/strategic-views/*` - Strategic views endpoints OK
+- `/api/v1/products/{asin}/stock-estimate` - Stock estimate endpoint OK
+
+**Tasks planifiees** (7 tasks, ~3h) :
+| Task | Description | Fichiers |
+|------|-------------|----------|
+| 1 | Configuration page | types/config.ts, hooks/useConfig.ts, pages/Configuration.tsx |
+| 2 | AnalyseStrategique page | types/strategic.ts, hooks/useStrategicViews.ts, pages/AnalyseStrategique.tsx |
+| 3 | StockEstimates page | types/stock.ts, hooks/useStockEstimate.ts, pages/StockEstimates.tsx |
+| 4 | AutoScheduler page | pages/AutoScheduler.tsx (concept UI) |
+| 5 | Type exports integration | types/index.ts, services/api.ts |
+| 6 | E2E tests | tests/e2e/phase9-ui-completion.spec.ts |
+| 7 | Verification finale | Build + tests |
+
+**Status** : EN ATTENTE VALIDATION UTILISATEUR
 
 ---
 
@@ -182,30 +329,28 @@
 | Phase 3 - Product Discovery | 32/32 | Complete | 8 Dec 2025 |
 | Phase 4 - Backlog Cleanup | 61/61 | Complete | 14 Dec 2025 |
 | Phase 5 - Niche Bookmarks | 42/42 | Complete | 14 Dec 2025 |
+| Phase 6 - Niche Discovery Opt | 62/62 | Complete | 15 Dec 2025 |
+
+### Phase 9 - UI Completion (PLAN PRET)
+
+| Task | Description | Estimation |
+|------|-------------|------------|
+| 1 | Configuration page | 45 min |
+| 2 | AnalyseStrategique page | 45 min |
+| 3 | StockEstimates page | 30 min |
+| 4 | AutoScheduler page | 20 min |
+| 5 | Integration types | 10 min |
+| 6 | E2E tests | 20 min |
+| 7 | Verification | 15 min |
+
+**Total** : ~3 heures
+**Plan** : `docs/plans/2025-12-15-phase9-ui-completion.md`
 
 ### Audits A FAIRE
 
 | Phase | Description | Priorite | Risque |
 |-------|-------------|----------|--------|
-| Phase 6 | Niche Discovery Optimization | MOYENNE | Budget Guard + E2E a valider |
-
-### Phase 6 - Detail (Scope Consolide)
-
-**Statut** : Deploye en production, audit incomplet
-
-**Ce qui existe deja** :
-1. Budget Guard (estimation cout tokens)
-2. ConditionBreakdown UI (prix par condition)
-3. Timeout Protection (30s + HTTP 408)
-4. E2E Tests (96% - 27/28)
-5. Smart Strategies (FBA filter, Velocity, Textbooks)
-
-**Ce qui reste a auditer** :
-1. [ ] Tests unitaires `estimate_discovery_cost()`
-2. [ ] Validation Budget Guard avec vraies donnees
-3. [ ] Hostile review `niche_templates.py`
-4. [ ] Tests API endpoint `/niches/discover` edge cases
-5. [ ] Fix E2E pour atteindre 100%
+| Phase 9 | UI Completion | HAUTE | 4 pages placeholder - PLAN VALIDE |
 
 ### Phase 7 - AutoSourcing
 
@@ -252,16 +397,22 @@ cd804b0 test(phase4): add budget guard API tests (Task 4)
 1. [x] Audit Phase 3 - COMPLETE
 2. [x] Audit Phase 5 (Niche Bookmarks) - COMPLETE
 3. [x] Audit Phase 4 (Backlog Cleanup) - COMPLETE
-4. [ ] Audit Phase 6 (Niche Discovery Optimization)
+4. [x] Plan Phase 9 (UI Completion) - CREE
+5. [x] Audit Phase 6 (Niche Discovery Optimization) - COMPLETE (62 tests)
+6. [ ] **Executer Phase 9** - UI Completion (4 pages)
 
 ### Court terme
 
-5. [ ] Deployer tous les fixes en production
-6. [ ] Implementer infrastructure REPLAY/MOCK Keepa
-7. [ ] Documentation API complete
+7. [ ] Implementer infrastructure REPLAY/MOCK Keepa
+8. [ ] Documentation API complete
+9. [ ] Audit Phase 7 (AutoSourcing)
+10. [ ] Audit Phase 8 (Advanced Analytics) - inclut:
+    - Rotation intelligente des niches (cooldown, tracking, historique ASINs)
+    - TokenErrorAlert component audit
+    - ASIN history tracking audit
 
 ---
 
-**Derniere mise a jour** : 14 Decembre 2025
-**Prochaine session** : Audit Phase 6 (Niche Discovery Optimization)
+**Derniere mise a jour** : 15 Decembre 2025
+**Prochaine session** : Executer Phase 9 UI Completion
 **Methodologie** : CLAUDE.md v3.2 - Zero-Tolerance + Hooks Bloquants

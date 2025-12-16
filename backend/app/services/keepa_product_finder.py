@@ -34,7 +34,46 @@ logger = logging.getLogger(__name__)
 
 # Phase 6: Budget Guard - Token Cost Constants
 BESTSELLERS_COST = 50  # tokens per bestsellers call
+PRODUCT_FINDER_COST = 10  # tokens per Product Finder /query call
 FILTERING_COST_PER_ASIN = 1  # tokens per ASIN in filtering
+
+# Phase 6.2: Root category mapping (Product Finder only supports root categories)
+# Map subcategories to their root category for Product Finder queries
+ROOT_CATEGORY_MAPPING = {
+    # Books subcategories -> Books root (283155)
+    10777: 283155,   # Law
+    10927: 283155,   # Legal Education
+    3508: 283155,    # Python/Programming
+    3839: 283155,    # Programming Languages
+    3654: 283155,    # CS Textbooks
+    5: 283155,       # Computers & Technology
+    4736: 283155,    # Self-Help
+    11748: 283155,   # Success
+    6: 283155,       # Cookbooks
+    1000: 283155,    # Special Diet
+    4: 283155,       # Children's Books
+    17: 283155,      # Education & Reference
+    18: 283155,      # Mystery
+    10677: 283155,   # Thriller & Suspense
+    23: 283155,      # Romance
+    10188: 283155,   # Contemporary Romance
+    5267: 283155,    # Exercise & Fitness
+    2: 283155,       # Business & Money
+    2766: 283155,    # Business Education
+    2767: 283155,    # Business Textbooks
+    75: 283155,      # Science & Math
+    13912: 283155,   # Science Textbooks
+    13884: 283155,   # Math Textbooks
+    173514: 283155,  # Medical Books
+    227613: 283155,  # Nursing
+    13611: 283155,   # Engineering
+    13887: 283155,   # Engineering Textbooks
+    11232: 283155,   # Social Sciences
+    15371: 283155,   # Psychology
+}
+
+# Books root category ID
+BOOKS_ROOT_CATEGORY = 283155
 
 
 def estimate_discovery_cost(
@@ -110,7 +149,9 @@ class KeepaProductFinderService:
         price_min: Optional[float] = None,
         price_max: Optional[float] = None,
         max_results: int = 100,
-        max_fba_sellers: Optional[int] = None
+        max_fba_sellers: Optional[int] = None,
+        exclude_amazon_seller: bool = True,
+        use_product_finder: bool = True
     ) -> List[str]:
         """
         Découvre produits selon critères.
@@ -124,35 +165,57 @@ class KeepaProductFinderService:
             price_max: Prix maximum (dollars)
             max_results: Nombre max de résultats
             max_fba_sellers: Maximum FBA sellers (competition filter)
+            exclude_amazon_seller: Exclude products where Amazon sells (default True)
+            use_product_finder: Use Product Finder API (default True, Phase 6.2)
 
         Returns:
             Liste d'ASINs découverts
 
-        Strategy:
-            1. Si category fournie → bestsellers endpoint
-            2. Sinon → deals endpoint
-            3. Filtrer par BSR/prix/competition
-            4. Retourner top N ASINs
+        Strategy (Phase 6.2):
+            1. Si category fournie + use_product_finder → Product Finder /query (preferred)
+            2. Fallback → bestsellers endpoint
+            3. Sinon → deals endpoint
+            4. Post-filtrer par Amazon/FBA
+            5. Retourner top N ASINs
         """
         discovered_asins: List[str] = []
 
         try:
             if category:
-                # Strategy 1: Bestsellers par catégorie
-                logger.info(f"Discovering via bestsellers - Category {category}")
-                discovered_asins = await self._discover_via_bestsellers(
-                    domain=domain,
-                    category=category,
-                    bsr_min=bsr_min,
-                    bsr_max=bsr_max,
-                    price_min=price_min,
-                    price_max=price_max,
-                    max_results=max_results,
-                    max_fba_sellers=max_fba_sellers
-                )
+                if use_product_finder and (bsr_min or bsr_max or price_min or price_max):
+                    # Strategy 1 (Phase 6.2): Product Finder with post-filtering
+                    # More efficient: pre-filters BSR/price, post-filters Amazon/FBA
+                    logger.info(
+                        f"[DISCOVERY] Using Product Finder - Category {category} "
+                        f"(BSR: {bsr_min}-{bsr_max}, Price: ${price_min}-${price_max})"
+                    )
+                    discovered_asins = await self._discover_via_product_finder(
+                        domain=domain,
+                        category=category,
+                        bsr_min=bsr_min,
+                        bsr_max=bsr_max,
+                        price_min=price_min,
+                        price_max=price_max,
+                        max_results=max_results,
+                        max_fba_sellers=max_fba_sellers,
+                        exclude_amazon_seller=exclude_amazon_seller
+                    )
+                else:
+                    # Strategy 2: Bestsellers par catégorie (fallback)
+                    logger.info(f"[DISCOVERY] Using Bestsellers - Category {category}")
+                    discovered_asins = await self._discover_via_bestsellers(
+                        domain=domain,
+                        category=category,
+                        bsr_min=bsr_min,
+                        bsr_max=bsr_max,
+                        price_min=price_min,
+                        price_max=price_max,
+                        max_results=max_results,
+                        max_fba_sellers=max_fba_sellers
+                    )
             else:
-                # Strategy 2: Deals actifs
-                logger.info("Discovering via current deals")
+                # Strategy 3: Deals actifs
+                logger.info("[DISCOVERY] Using Deals endpoint")
                 discovered_asins = await self._discover_via_deals(
                     domain=domain,
                     price_min=price_min,
@@ -160,12 +223,212 @@ class KeepaProductFinderService:
                     max_results=max_results
                 )
 
-            logger.info(f"Discovered {len(discovered_asins)} ASINs")
+            logger.info(f"[DISCOVERY] Found {len(discovered_asins)} ASINs")
             return discovered_asins[:max_results]
 
         except Exception as e:
-            logger.error(f"Product discovery error: {e}")
+            logger.error(f"[DISCOVERY] Error: {e}")
             raise
+
+    async def _discover_via_product_finder(
+        self,
+        domain: int,
+        category: int,
+        bsr_min: Optional[int],
+        bsr_max: Optional[int],
+        price_min: Optional[float],
+        price_max: Optional[float],
+        max_results: int,
+        max_fba_sellers: Optional[int] = None,
+        exclude_amazon_seller: bool = True
+    ) -> List[str]:
+        """
+        Discover via Product Finder /query endpoint with post-filtering.
+
+        Phase 6.2: Product Finder Strategy
+        - Pre-filter: rootCategory + BSR + Price (API supports these)
+        - Post-filter: Amazon exclusion + FBA count (API doesn't support combo)
+
+        Keepa API: /query
+        Returns: Array of ASINs matching pre-filters
+        Cost: ~10 tokens per query
+
+        Why post-filtering:
+        - API returns 0 results when combining current_AMAZON_lte:-1 with offerCountFBA_lte
+        - Test results: Without Amazon exclusion -> 100K+ products
+        - We query with BSR/price filters, then filter Amazon/FBA via /product details
+        """
+        try:
+            # Map subcategory to root category (Product Finder requirement)
+            root_category = ROOT_CATEGORY_MAPPING.get(category, category)
+            if root_category != category:
+                logger.info(
+                    f"[PRODUCT_FINDER] Mapped category {category} -> root {root_category}"
+                )
+
+            # Build selection object for Product Finder
+            # Only include filters that work together in the API
+            selection = {
+                "rootCategory": root_category,
+                "perPage": min(50, max_results)
+            }
+
+            # Add BSR range if specified (convert to Keepa format)
+            if bsr_min is not None:
+                selection["current_SALES_gte"] = bsr_min
+            if bsr_max is not None:
+                selection["current_SALES_lte"] = bsr_max
+
+            # Add price range if specified (convert dollars to cents)
+            if price_min is not None:
+                selection["current_NEW_gte"] = int(price_min * 100)
+            if price_max is not None:
+                selection["current_NEW_lte"] = int(price_max * 100)
+
+            # NOTE: We do NOT add current_AMAZON_lte or offerCountFBA_lte here
+            # because API returns 0 when combined. These are applied post-filtering.
+
+            logger.info(
+                f"[PRODUCT_FINDER] Query: rootCategory={root_category}, "
+                f"BSR={bsr_min}-{bsr_max}, Price=${price_min}-${price_max}"
+            )
+
+            # Call Product Finder /query endpoint
+            endpoint = "/query"
+            params = {
+                "domain": domain,
+                "selection": json.dumps(selection)
+            }
+
+            response = await self.keepa_service._make_request(endpoint, params)
+
+            if not response:
+                logger.warning("[PRODUCT_FINDER] No response from /query endpoint")
+                return []
+
+            asins = response.get("asinList", [])
+            total = response.get("totalResults", 0)
+            tokens = response.get("tokensConsumed", 0)
+
+            logger.info(
+                f"[PRODUCT_FINDER] Found {total} total, returned {len(asins)} ASINs "
+                f"(cost: {tokens} tokens)"
+            )
+
+            if not asins:
+                logger.warning("[PRODUCT_FINDER] No ASINs found with current filters")
+                return []
+
+            # Post-filter via /product endpoint if Amazon/FBA filters needed
+            if exclude_amazon_seller or max_fba_sellers is not None:
+                logger.info(
+                    f"[PRODUCT_FINDER] Post-filtering {len(asins)} ASINs "
+                    f"(exclude_amazon={exclude_amazon_seller}, max_fba={max_fba_sellers})"
+                )
+                filtered_asins = await self._post_filter_asins(
+                    domain=domain,
+                    asins=asins[:100],  # Limit to 100 for token efficiency
+                    max_fba_sellers=max_fba_sellers,
+                    exclude_amazon_seller=exclude_amazon_seller
+                )
+                return filtered_asins[:max_results]
+
+            return asins[:max_results]
+
+        except Exception as e:
+            logger.error(f"[PRODUCT_FINDER] Error: {e}")
+            # Fallback to bestsellers if Product Finder fails
+            logger.info("[PRODUCT_FINDER] Falling back to bestsellers endpoint")
+            return await self._discover_via_bestsellers(
+                domain=domain,
+                category=category,
+                bsr_min=bsr_min,
+                bsr_max=bsr_max,
+                price_min=price_min,
+                price_max=price_max,
+                max_results=max_results,
+                max_fba_sellers=max_fba_sellers
+            )
+
+    async def _post_filter_asins(
+        self,
+        domain: int,
+        asins: List[str],
+        max_fba_sellers: Optional[int] = None,
+        exclude_amazon_seller: bool = True
+    ) -> List[str]:
+        """
+        Post-filter ASINs by Amazon/FBA criteria via /product endpoint.
+
+        Phase 6.2: This handles filters that don't work in Product Finder API.
+
+        Args:
+            asins: ASINs to filter
+            max_fba_sellers: Maximum FBA sellers allowed
+            exclude_amazon_seller: Exclude products where Amazon is selling
+
+        Returns:
+            Filtered ASINs meeting all criteria
+        """
+        if not asins:
+            return []
+
+        filtered_asins = []
+
+        try:
+            # Get product details
+            endpoint = "/product"
+            params = {
+                "domain": domain,
+                "asin": ",".join(asins),
+                "stats": 1,
+                "history": 0
+            }
+
+            response = await self.keepa_service._make_request(endpoint, params)
+            products = response.get("products", []) if response else []
+
+            for product in products:
+                asin = product.get("asin")
+                if not asin:
+                    continue
+
+                stats = product.get("stats", {})
+                current = stats.get("current", [])
+
+                # Check Amazon seller exclusion
+                # current[0] = AMAZON price - if > 0, Amazon is selling
+                if exclude_amazon_seller:
+                    amazon_price = current[0] if len(current) > 0 else None
+                    if amazon_price is not None and amazon_price > 0:
+                        logger.debug(
+                            f"[POST_FILTER] Excluding {asin}: Amazon selling at ${amazon_price/100:.2f}"
+                        )
+                        continue
+
+                # Check FBA seller count
+                # current[11] = COUNT_NEW (FBA/new offers count)
+                if max_fba_sellers is not None:
+                    fba_count = current[11] if len(current) > 11 else None
+                    if fba_count is not None and fba_count > max_fba_sellers:
+                        logger.debug(
+                            f"[POST_FILTER] Excluding {asin}: {fba_count} FBA sellers > {max_fba_sellers}"
+                        )
+                        continue
+
+                # Passed all filters
+                filtered_asins.append(asin)
+
+            logger.info(
+                f"[POST_FILTER] {len(filtered_asins)}/{len(asins)} ASINs passed "
+                f"(exclude_amazon={exclude_amazon_seller}, max_fba={max_fba_sellers})"
+            )
+
+            return filtered_asins
+
+        except Exception as e:
+            logger.error(f"[POST_FILTER] Error: {e}")
+            return []
 
     async def _discover_via_bestsellers(
         self,
@@ -179,7 +442,7 @@ class KeepaProductFinderService:
         max_fba_sellers: Optional[int] = None
     ) -> List[str]:
         """
-        Découvrir via bestsellers endpoint.
+        Découvrir via bestsellers endpoint (fallback method).
 
         Keepa API: /bestsellers
         Returns: Array of ASINs (up to 100,000)
@@ -505,7 +768,9 @@ class KeepaProductFinderService:
                 price_min=price_min,
                 price_max=price_max,
                 max_results=max_results * 2,  # Get more for filtering
-                max_fba_sellers=max_fba_sellers
+                max_fba_sellers=max_fba_sellers,
+                exclude_amazon_seller=exclude_amazon_seller,  # Phase 6.2
+                use_product_finder=True  # Phase 6.2: Use Product Finder by default
             )
 
             if self.cache_service and asins:

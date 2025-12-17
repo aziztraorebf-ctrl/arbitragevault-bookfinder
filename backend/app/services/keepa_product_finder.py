@@ -268,9 +268,10 @@ class KeepaProductFinderService:
 
             # Build selection object for Product Finder
             # Only include filters that work together in the API
+            # CRITICAL: Keepa API requires perPage >= 50, otherwise returns 400 error
             selection = {
                 "rootCategory": root_category,
-                "perPage": min(50, max_results)
+                "perPage": max(50, min(100, max_results))  # Minimum 50, maximum 100
             }
 
             # Add BSR range if specified (convert to Keepa format)

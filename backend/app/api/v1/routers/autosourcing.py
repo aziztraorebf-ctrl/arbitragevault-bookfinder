@@ -82,14 +82,18 @@ class AutoSourcingPickResponse(BaseModel):
     readable_summary: Optional[str]
     bsr: Optional[int]
     category: Optional[str]
-    
+
+    # Competition data (Phase 7)
+    fba_seller_count: Optional[int] = None
+    amazon_on_listing: Optional[bool] = None
+
     # Action tracking
     action_status: ActionStatus
     action_taken_at: Optional[datetime]
     is_purchased: bool
     is_favorite: bool
     is_ignored: bool
-    
+
     created_at: datetime
 
     class Config:

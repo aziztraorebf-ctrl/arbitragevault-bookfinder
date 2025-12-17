@@ -267,12 +267,18 @@ class AutoSourcingService:
         if isinstance(price_range, list) and len(price_range) >= 2:
             price_min, price_max = price_range[0], price_range[1]
 
+        # Extract competition filters (Phase 7: Same fix as Phase 6 Niche Discovery)
+        max_fba_sellers = discovery_config.get("max_fba_sellers", 5)  # Default: max 5 FBA sellers
+        exclude_amazon = discovery_config.get("exclude_amazon_seller", True)  # Default: exclude Amazon
+
         logger.info(
             f"Calling KeepaProductFinderService (REST API): "
-            f"category={category_id}, bsr=[{bsr_min}-{bsr_max}], price=[{price_min}-{price_max}]"
+            f"category={category_id}, bsr=[{bsr_min}-{bsr_max}], price=[{price_min}-{price_max}], "
+            f"max_fba={max_fba_sellers}, exclude_amazon={exclude_amazon}"
         )
 
         # Call ProductFinder REST API - FAST and reliable
+        # Phase 7 Fix: Pass competition filters to avoid Phase 6 issue
         discovered_asins = await self.product_finder.discover_products(
             domain=1,  # US
             category=category_id,
@@ -280,7 +286,9 @@ class AutoSourcingService:
             bsr_max=bsr_max,
             price_min=price_min,
             price_max=price_max,
-            max_results=max_results
+            max_results=max_results,
+            max_fba_sellers=max_fba_sellers,
+            exclude_amazon_seller=exclude_amazon
         )
 
         logger.info(f"ProductFinder REST API returned {len(discovered_asins)} ASINs")
@@ -545,6 +553,10 @@ class AutoSourcingService:
             bsr = product_data.get("bsr", 0)
             category = product_data.get("category", "Unknown")
 
+            # Phase 7: Extract competition data
+            fba_seller_count = product_data.get("fba_seller_count")
+            amazon_on_listing = product_data.get("amazon_on_listing", False)
+
             # Calculate estimated buy cost using unified source_price_factor
             # Default 0.50 = buy at 50% of sell price (FBM->FBA arbitrage, aligned with guide)
             source_price_factor = business_config.get("source_price_factor", 0.50)
@@ -598,10 +610,16 @@ class AutoSourcingService:
                 # AutoScheduler tier classification
                 priority_tier=tier,
                 tier_reason=tier_reason,
-                is_featured=(tier == "HOT")
+                is_featured=(tier == "HOT"),
+                # Phase 7: Competition data
+                fba_seller_count=fba_seller_count,
+                amazon_on_listing=amazon_on_listing
             )
 
-            logger.info(f"Analyzed {asin}: {overall_rating}, ROI={roi_percentage:.1f}%, BSR={bsr}")
+            logger.info(
+                f"Analyzed {asin}: {overall_rating}, ROI={roi_percentage:.1f}%, BSR={bsr}, "
+                f"FBA={fba_seller_count}, Amazon={amazon_on_listing}"
+            )
             return pick
 
         except Exception as e:
@@ -647,6 +665,10 @@ class AutoSourcingService:
             bsr = product_data.get("bsr", 0)
             category = product_data.get("category", "Unknown")
 
+            # Phase 7: Extract competition data
+            fba_seller_count = product_data.get("fba_seller_count")
+            amazon_on_listing = product_data.get("amazon_on_listing", False)
+
             # Calculate estimated buy cost using unified source_price_factor
             # Default 0.50 = buy at 50% of sell price (FBM->FBA arbitrage, aligned with guide)
             source_price_factor = business_config.get("source_price_factor", 0.50)
@@ -700,10 +722,16 @@ class AutoSourcingService:
                 # AutoScheduler tier classification
                 priority_tier=tier,
                 tier_reason=tier_reason,
-                is_featured=(tier == "HOT")
+                is_featured=(tier == "HOT"),
+                # Phase 7: Competition data
+                fba_seller_count=fba_seller_count,
+                amazon_on_listing=amazon_on_listing
             )
 
-            logger.info(f"Analyzed {asin}: {overall_rating}, ROI={roi_percentage:.1f}%, BSR={bsr}")
+            logger.info(
+                f"Analyzed {asin}: {overall_rating}, ROI={roi_percentage:.1f}%, BSR={bsr}, "
+                f"FBA={fba_seller_count}, Amazon={amazon_on_listing}"
+            )
             return pick
 
         except Exception as e:
@@ -720,6 +748,7 @@ class AutoSourcingService:
           [1] = NEW price (3rd party - preferred)
           [2] = USED price
           [3] = Sales Rank (BSR)
+          [11] = COUNT_NEW (FBA offers count)
         """
         result = {}
 
@@ -746,6 +775,21 @@ class AutoSourcingService:
             result["category"] = category_tree[0].get("name", "Unknown")
         else:
             result["category"] = "Unknown"
+
+        # Phase 7: Extract competition data
+        # Amazon presence: availabilityAmazon = -1 means NOT selling, >=0 means selling
+        availability_amazon = raw_keepa.get("availabilityAmazon", -1)
+        result["amazon_on_listing"] = availability_amazon >= 0
+
+        # FBA seller count: stats.offerCountFBA or current[11]
+        fba_count = stats.get("offerCountFBA", -2)
+        if fba_count is None or fba_count < 0:
+            # Try current[11] = COUNT_NEW as fallback
+            if len(current) > 11 and current[11] is not None and current[11] >= 0:
+                fba_count = current[11]
+            else:
+                fba_count = None
+        result["fba_seller_count"] = fba_count if fba_count and fba_count >= 0 else None
 
         return result
 

@@ -116,7 +116,11 @@ class AutoSourcingPick(Base):
     # Additional metrics
     bsr = Column(Integer, nullable=True)
     category = Column(String(100), nullable=True)
-    
+
+    # Competition data (Phase 7 fix - same as Phase 6 Niche Discovery)
+    fba_seller_count = Column(Integer, nullable=True)  # Number of FBA sellers
+    amazon_on_listing = Column(Boolean, nullable=True)  # True if Amazon sells this product
+
     # AI-generated summary
     readable_summary = Column(Text, nullable=True)
     

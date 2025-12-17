@@ -343,22 +343,36 @@ class AutoSourcingService:
         Deduplicate ASINs to prevent analyzing the same product multiple times.
 
         Args:
-            asins: List of ASINs (may contain duplicates)
-            max_to_analyze: Optional limit on unique products
+            asins: List of ASINs (may contain duplicates, None, or empty strings)
+            max_to_analyze: Optional limit on unique products (<=0 returns empty)
 
         Returns:
             List of unique ASINs preserving first occurrence order
         """
-        # Track seen ASINs to preserve order of first occurrences
-        seen = set()
-        unique_asins = []
+        # Handle None/empty input
+        if not asins:
+            return []
 
         # Use max_to_analyze from safeguards if not specified
         if max_to_analyze is None:
             from app.schemas.autosourcing_safeguards import MAX_PRODUCTS_PER_SEARCH
             max_to_analyze = MAX_PRODUCTS_PER_SEARCH
 
+        # Handle invalid max_to_analyze (<=0 returns empty)
+        if max_to_analyze <= 0:
+            logger.warning(f"Invalid max_to_analyze={max_to_analyze}, returning empty")
+            return []
+
+        # Track seen ASINs to preserve order of first occurrences
+        seen = set()
+        unique_asins = []
+
         for asin in asins:
+            # Skip None and empty strings (hostile input protection)
+            if not asin or not isinstance(asin, str):
+                logger.debug(f"Skipping invalid ASIN: {asin}")
+                continue
+
             # Skip if already seen (duplicate)
             if asin in seen:
                 logger.debug(f"Skipping duplicate ASIN: {asin}")

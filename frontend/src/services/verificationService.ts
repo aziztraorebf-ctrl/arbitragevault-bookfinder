@@ -19,9 +19,11 @@ export interface BuyOpportunity {
   seller_id: string;
   condition: string;
   condition_code: number;
+  is_new: boolean;
   price: number;
   shipping: number;
   total_cost: number;
+  sell_price: number;
   profit: number;
   roi_percent: number;
   is_fba: boolean;
@@ -49,6 +51,7 @@ export interface VerificationResponse {
   profit_change_percent?: number;
   buy_opportunities: BuyOpportunity[];
   sell_price?: number;
+  used_sell_price?: number;
 }
 
 class VerificationService {

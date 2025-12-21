@@ -88,7 +88,10 @@ class VerificationResponse(BaseModel):
         description="Available buy opportunities from third-party sellers"
     )
     sell_price: Optional[Decimal] = Field(
-        None, description="Current Amazon sell price (for reference)"
+        None, description="Current New sell price on Amazon"
+    )
+    used_sell_price: Optional[Decimal] = Field(
+        None, description="Current Used sell price on Amazon"
     )
 
     model_config = ConfigDict(
@@ -104,9 +107,11 @@ class BuyOpportunity(BaseModel):
     seller_id: str = Field(..., description="Seller ID on Amazon")
     condition: str = Field(..., description="Product condition (New, Used-Good, etc.)")
     condition_code: int = Field(..., description="Keepa condition code (1=New, 2-5=Used)")
+    is_new: bool = Field(..., description="Whether this is a New condition offer")
     price: Decimal = Field(..., ge=0, description="Item price in USD")
     shipping: Decimal = Field(Decimal("0"), ge=0, description="Shipping cost in USD")
     total_cost: Decimal = Field(..., ge=0, description="Total buy cost (price + shipping)")
+    sell_price: Decimal = Field(..., ge=0, description="Expected sell price for this condition")
     profit: Decimal = Field(..., description="Estimated profit after fees")
     roi_percent: float = Field(..., description="Return on investment percentage")
     is_fba: bool = Field(False, description="Whether seller uses FBA")

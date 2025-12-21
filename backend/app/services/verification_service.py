@@ -193,9 +193,12 @@ class VerificationService:
                         )
 
             # Parse buy opportunities from seller offers
+            # Pass both New and Used sell prices for correct profit calculation
+            used_sell_price = current_data.get("used_price")
             buy_opportunities = self._parse_buy_opportunities(
                 product_data,
-                float(sell_price) if sell_price else None
+                float(sell_price) if sell_price else None,
+                float(used_sell_price) if used_sell_price else None
             )
 
             logger.info(
@@ -216,6 +219,7 @@ class VerificationService:
                 profit_change_percent=profit_change,
                 buy_opportunities=buy_opportunities,
                 sell_price=sell_price,
+                used_sell_price=used_sell_price,
                 verified_at=datetime.now(timezone.utc)
             )
 
@@ -235,15 +239,16 @@ class VerificationService:
             product_data: Raw Keepa product response
 
         Returns:
-            Dict with price, bsr, fba_count, amazon_selling
+            Dict with price, used_price, bsr, fba_count, amazon_selling
         """
         stats = product_data.get("stats", {})
         current = stats.get("current", [])
 
         # Keepa current array indices:
-        # 0 = Amazon price, 1 = New price, 3 = Sales Rank, 11 = FBA seller count
+        # 0 = Amazon price, 1 = New price, 2 = Used price, 3 = Sales Rank, 11 = FBA seller count
         amazon_price = current[0] if len(current) > 0 else None
         new_price = current[1] if len(current) > 1 else None
+        used_price = current[2] if len(current) > 2 else None
         bsr = current[3] if len(current) > 3 else None
         fba_count = current[11] if len(current) > 11 else None
 
@@ -256,6 +261,7 @@ class VerificationService:
 
         return {
             "price": Decimal(str(new_price / 100)) if new_price and new_price > 0 else None,
+            "used_price": Decimal(str(used_price / 100)) if used_price and used_price > 0 else None,
             "bsr": bsr if bsr and bsr > 0 else None,
             "fba_count": fba_count if fba_count is not None else 0,
             "amazon_selling": amazon_selling
@@ -388,19 +394,25 @@ class VerificationService:
     def _parse_buy_opportunities(
         self,
         product_data: dict,
-        sell_price: Optional[float]
+        new_sell_price: Optional[float],
+        used_sell_price: Optional[float]
     ) -> List[BuyOpportunity]:
         """Parse buy opportunities from Keepa product offers.
 
+        IMPORTANT: Uses correct sell price based on condition:
+        - New offers (condition=1) -> Compare to new_sell_price
+        - Used offers (condition=2-5) -> Compare to used_sell_price
+
         Args:
             product_data: Raw Keepa product response with offers
-            sell_price: Current sell price for profit calculation
+            new_sell_price: Current New sell price for New offers
+            used_sell_price: Current Used sell price for Used offers
 
         Returns:
             List of BuyOpportunity objects sorted by profit (descending)
         """
-        if not sell_price or sell_price <= 0:
-            logger.warning("[VERIFY] No sell price available, cannot calculate opportunities")
+        if not new_sell_price and not used_sell_price:
+            logger.warning("[VERIFY] No sell prices available, cannot calculate opportunities")
             return []
 
         offers = product_data.get("offers", [])
@@ -414,6 +426,7 @@ class VerificationService:
             f"[VERIFY] Parsing {len(live_offers_order)} live offers "
             f"from {len(offers)} total offers"
         )
+        logger.info(f"[VERIFY] Sell prices - New: ${new_sell_price}, Used: ${used_sell_price}")
 
         buy_opportunities = []
 
@@ -435,26 +448,42 @@ class VerificationService:
             is_fba = offer.get("isFBA", False)
             is_prime = offer.get("isPrime", False)
 
-            # Get current price from offerCSV (format: [time1, price1, time2, price2, ...])
-            offer_csv = offer.get("offerCSV", [])
-            if not offer_csv or len(offer_csv) < 2:
+            # Determine if New or Used offer
+            is_new = condition_code == 1
+
+            # Select appropriate sell price based on condition
+            # New (1) -> use new_sell_price
+            # Used (2-5) -> use used_sell_price
+            if is_new:
+                sell_price = new_sell_price
+            else:
+                sell_price = used_sell_price
+
+            # Skip if no sell price for this condition type
+            if not sell_price or sell_price <= 0:
                 continue
 
-            # Last value in offerCSV is the current price (in cents)
-            current_price_cents = offer_csv[-1]
+            # Get current price from offerCSV (format: [time, price, shipping, time, price, shipping, ...])
+            # Each entry is a triplet: timestamp (Keepa minutes), price (cents), shipping (cents)
+            offer_csv = offer.get("offerCSV", [])
+            if not offer_csv or len(offer_csv) < 3:
+                continue
+
+            # Last triplet: [-3]=time, [-2]=price, [-1]=shipping
+            current_price_cents = offer_csv[-2]
             if not current_price_cents or current_price_cents <= 0:
                 continue
 
             item_price = current_price_cents / 100.0
 
-            # Shipping cost (in cents)
-            shipping_cents = offer.get("shipping", 0)
+            # Shipping cost is the last element of the triplet (in cents)
+            shipping_cents = offer_csv[-1] if len(offer_csv) >= 1 else 0
             shipping = (shipping_cents / 100.0) if shipping_cents and shipping_cents > 0 else 0.0
 
             # Total buy cost
             total_cost = item_price + shipping
 
-            # Calculate profit and ROI
+            # Calculate profit and ROI using CORRECT sell price for condition
             profit = calculate_profit_with_buy_price(sell_price, total_cost)
             roi = calculate_roi(sell_price, total_cost)
 
@@ -466,9 +495,11 @@ class VerificationService:
                 seller_id=seller_id[:20],  # Truncate long seller IDs
                 condition=condition_str,
                 condition_code=condition_code,
+                is_new=is_new,
                 price=Decimal(str(round(item_price, 2))),
                 shipping=Decimal(str(round(shipping, 2))),
                 total_cost=Decimal(str(round(total_cost, 2))),
+                sell_price=Decimal(str(round(sell_price, 2))),
                 profit=Decimal(str(round(profit, 2))),
                 roi_percent=round(roi, 1),
                 is_fba=is_fba,
@@ -483,6 +514,11 @@ class VerificationService:
         # Limit to top 10 opportunities
         buy_opportunities = buy_opportunities[:10]
 
-        logger.info(f"[VERIFY] Found {len(buy_opportunities)} profitable opportunities")
+        new_count = sum(1 for o in buy_opportunities if o.is_new)
+        used_count = len(buy_opportunities) - new_count
+        logger.info(
+            f"[VERIFY] Found {len(buy_opportunities)} profitable opportunities "
+            f"(New: {new_count}, Used: {used_count})"
+        )
 
         return buy_opportunities

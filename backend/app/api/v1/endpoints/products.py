@@ -70,6 +70,7 @@ class ProductScore(BaseModel):
     asin: str
     title: str
     price: float
+    current_price: Optional[float] = None  # Phase 9: Added for frontend display
     bsr: int
     roi_percent: float
     velocity_score: float

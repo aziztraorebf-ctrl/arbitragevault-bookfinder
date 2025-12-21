@@ -435,60 +435,72 @@ function VerificationDetails({ result }: { result: VerificationResponse }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {buyOpportunities.slice(0, 5).map((opp, idx) => (
-                  <tr key={idx} className={idx === 0 ? 'bg-green-50' : ''}>
-                    <td className="px-2 py-1.5">
-                      <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold ${
-                        opp.is_new
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-purple-100 text-purple-700'
+                {buyOpportunities.slice(0, 5).map((opp, idx) => {
+                  // Defensive: determine if New based on condition_code or is_new field
+                  const isNew = opp.is_new ?? (opp.condition_code === 1);
+                  // Defensive: use sell_price if available, otherwise show N/A
+                  const sellPrice = opp.sell_price ?? 0;
+
+                  return (
+                    <tr key={idx} className={idx === 0 ? 'bg-green-50' : ''}>
+                      <td className="px-2 py-1.5">
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold ${
+                          isNew
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-purple-100 text-purple-700'
+                        }`}>
+                          {isNew ? 'NEW' : 'USED'}
+                        </span>
+                        <span className="ml-1 text-gray-500">{opp.condition}</span>
+                      </td>
+                      <td className="px-2 py-1.5 text-right font-mono">
+                        ${(opp.price ?? 0).toFixed(2)}
+                      </td>
+                      <td className="px-2 py-1.5 text-right font-mono text-gray-500">
+                        {(opp.shipping ?? 0) > 0 ? `+$${(opp.shipping ?? 0).toFixed(2)}` : 'Gratuit'}
+                      </td>
+                      <td className="px-2 py-1.5 text-right font-mono font-semibold">
+                        ${(opp.total_cost ?? 0).toFixed(2)}
+                      </td>
+                      <td className="px-2 py-1.5 text-right font-mono font-semibold text-blue-600">
+                        ${sellPrice.toFixed(2)}
+                      </td>
+                      <td className={`px-2 py-1.5 text-right font-mono font-semibold ${
+                        (opp.profit ?? 0) > 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {opp.is_new ? 'NEW' : 'USED'}
-                      </span>
-                      <span className="ml-1 text-gray-500">{opp.condition}</span>
-                    </td>
-                    <td className="px-2 py-1.5 text-right font-mono">
-                      ${opp.price.toFixed(2)}
-                    </td>
-                    <td className="px-2 py-1.5 text-right font-mono text-gray-500">
-                      {opp.shipping > 0 ? `+$${opp.shipping.toFixed(2)}` : 'Gratuit'}
-                    </td>
-                    <td className="px-2 py-1.5 text-right font-mono font-semibold">
-                      ${opp.total_cost.toFixed(2)}
-                    </td>
-                    <td className="px-2 py-1.5 text-right font-mono font-semibold text-blue-600">
-                      ${opp.sell_price.toFixed(2)}
-                    </td>
-                    <td className={`px-2 py-1.5 text-right font-mono font-semibold ${
-                      opp.profit > 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      ${opp.profit.toFixed(2)}
-                    </td>
-                    <td className={`px-2 py-1.5 text-right font-mono ${
-                      opp.roi_percent > 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {opp.roi_percent.toFixed(0)}%
-                    </td>
-                    <td className="px-2 py-1.5 text-center">
-                      {opp.is_fba ? (
-                        <span className="text-orange-600 font-semibold">FBA</span>
-                      ) : (
-                        <span className="text-gray-400">FBM</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                        ${(opp.profit ?? 0).toFixed(2)}
+                      </td>
+                      <td className={`px-2 py-1.5 text-right font-mono ${
+                        (opp.roi_percent ?? 0) > 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {(opp.roi_percent ?? 0).toFixed(0)}%
+                      </td>
+                      <td className="px-2 py-1.5 text-center">
+                        {opp.is_fba ? (
+                          <span className="text-orange-600 font-semibold">FBA</span>
+                        ) : (
+                          <span className="text-gray-400">FBM</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-          {buyOpportunities.length > 0 && (
-            <p className="text-xs text-gray-500 mt-2 italic">
-              Meilleure offre: Acheter a ${buyOpportunities[0].total_cost.toFixed(2)}
-              {' '}({buyOpportunities[0].is_new ? 'NEW' : 'USED'})
-              {' -> Vendre a $'}{buyOpportunities[0].sell_price.toFixed(2)}
-              {' '}= ${buyOpportunities[0].profit.toFixed(2)} profit
-            </p>
-          )}
+          {buyOpportunities.length > 0 && (() => {
+            const best = buyOpportunities[0];
+            const bestIsNew = best.is_new ?? (best.condition_code === 1);
+            const bestSellPrice = best.sell_price ?? 0;
+            return (
+              <p className="text-xs text-gray-500 mt-2 italic">
+                Meilleure offre: Acheter a ${(best.total_cost ?? 0).toFixed(2)}
+                {' '}({bestIsNew ? 'NEW' : 'USED'})
+                {' -> Vendre a $'}{bestSellPrice.toFixed(2)}
+                {' '}= ${(best.profit ?? 0).toFixed(2)} profit
+              </p>
+            );
+          })()}
         </div>
       )}
 

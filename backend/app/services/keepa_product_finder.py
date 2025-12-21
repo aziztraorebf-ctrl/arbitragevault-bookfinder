@@ -1019,17 +1019,6 @@ class KeepaProductFinderService:
         # Override velocity tiers based on strategy for appropriate BSR ranges
         from types import SimpleNamespace
         strategy_velocity_tiers = {
-            # Smart Velocity: BSR 10K-80K - Fast rotation books
-            # These books sell quickly, so velocity expectations are high
-            # BSR 10K = very fast seller, BSR 80K = still good seller
-            "smart_velocity": [
-                SimpleNamespace(bsr_threshold=10000, min_score=85, max_score=95),    # BSR <= 10K: exceptional
-                SimpleNamespace(bsr_threshold=25000, min_score=75, max_score=85),    # BSR 10K-25K: excellent
-                SimpleNamespace(bsr_threshold=40000, min_score=65, max_score=75),    # BSR 25K-40K: very good
-                SimpleNamespace(bsr_threshold=60000, min_score=55, max_score=65),    # BSR 40K-60K: good
-                SimpleNamespace(bsr_threshold=80000, min_score=45, max_score=55),    # BSR 60K-80K: acceptable
-                SimpleNamespace(bsr_threshold=150000, min_score=30, max_score=45),   # BSR > 80K: lower
-            ],
             # Textbook Standard: BSR 100K-250K should map to good velocity scores
             # BSR 100K = top of range = higher velocity
             # BSR 250K = bottom of range = lower velocity

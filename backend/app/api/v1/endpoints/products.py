@@ -59,6 +59,10 @@ class DiscoverWithScoringRequest(BaseModel):
     min_velocity: Optional[float] = Field(None, ge=0, le=100, description="Minimum velocity score")
     max_results: int = Field(20, ge=1, le=100, description="Max products to return")
     force_refresh: bool = Field(False, description="Force refresh Keepa data (bypass cache)")
+    strategy: Optional[str] = Field(
+        None,
+        description="Strategy for velocity/recommendation adjustments: textbooks_standard, textbooks_patience, smart_velocity"
+    )
 
 
 class ProductScore(BaseModel):
@@ -173,6 +177,7 @@ async def discover_with_scoring(
         finder_service = KeepaProductFinderService(keepa, config_service, db)
 
         # Discover with scoring
+        # Phase 8: Pass strategy for velocity/recommendation adjustments
         products = await finder_service.discover_with_scoring(
             domain=request.domain,
             category=request.category,
@@ -183,7 +188,8 @@ async def discover_with_scoring(
             min_roi=request.min_roi,
             min_velocity=request.min_velocity,
             max_results=request.max_results,
-            force_refresh=request.force_refresh
+            force_refresh=request.force_refresh,
+            strategy=request.strategy
         )
 
         # Convert to response models

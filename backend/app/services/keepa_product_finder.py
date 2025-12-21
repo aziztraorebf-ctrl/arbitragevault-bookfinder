@@ -712,21 +712,34 @@ class KeepaProductFinderService:
         max_results: int = 50,
         force_refresh: bool = False,
         max_fba_sellers: Optional[int] = None,
-        exclude_amazon_seller: bool = True
+        exclude_amazon_seller: bool = True,
+        strategy: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
-        Découvre produits avec scoring complet.
+        Discover products with complete scoring.
 
-        Applique Config Service filters et retourne produits scorés.
+        Applies Config Service filters and returns scored products.
 
         Args:
+            domain: Amazon domain ID (1=US, 2=UK, etc.)
+            category: Category ID to search
+            bsr_min: Minimum BSR filter
+            bsr_max: Maximum BSR filter
+            price_min: Minimum price filter
+            price_max: Maximum price filter
+            min_roi: Minimum ROI filter
+            min_velocity: Minimum velocity score filter
+            max_results: Maximum products to return
             force_refresh: If True, bypasses cache for product data
             max_fba_sellers: Maximum FBA sellers allowed (competition filter)
             exclude_amazon_seller: If True, exclude products where Amazon is a seller.
                                    Default: True (recommended for arbitrage).
+            strategy: Strategy type for velocity/recommendation adjustments.
+                      Options: textbooks_standard, textbooks_patience, smart_velocity.
+                      Affects velocity scoring tiers and recommendation thresholds.
 
         Returns:
-            Liste de produits avec métriques :
+            List of products with metrics:
             - asin
             - title
             - price
@@ -841,6 +854,50 @@ class KeepaProductFinderService:
                 )
             )
 
+        # Phase 8: Strategy-specific velocity tiers
+        # Override velocity tiers based on strategy for appropriate BSR ranges
+        from types import SimpleNamespace
+        strategy_velocity_tiers = {
+            # Textbook Standard: BSR 100K-250K should map to good velocity scores
+            # BSR 100K = top of range = higher velocity
+            # BSR 250K = bottom of range = lower velocity
+            "textbooks_standard": [
+                SimpleNamespace(bsr_threshold=100000, min_score=70, max_score=85),   # BSR <= 100K: excellent
+                SimpleNamespace(bsr_threshold=150000, min_score=55, max_score=70),   # BSR 100K-150K: good
+                SimpleNamespace(bsr_threshold=200000, min_score=40, max_score=55),   # BSR 150K-200K: moderate
+                SimpleNamespace(bsr_threshold=250000, min_score=30, max_score=40),   # BSR 200K-250K: acceptable
+                SimpleNamespace(bsr_threshold=500000, min_score=15, max_score=30),   # BSR > 250K: low
+            ],
+            # Textbook Patience: BSR 250K-400K should map to reasonable velocity scores
+            # These books rotate slower, so velocity expectations are lower
+            "textbooks_patience": [
+                SimpleNamespace(bsr_threshold=200000, min_score=60, max_score=75),   # BSR <= 200K: excellent
+                SimpleNamespace(bsr_threshold=250000, min_score=50, max_score=60),   # BSR 200K-250K: very good
+                SimpleNamespace(bsr_threshold=300000, min_score=40, max_score=50),   # BSR 250K-300K: good
+                SimpleNamespace(bsr_threshold=350000, min_score=30, max_score=40),   # BSR 300K-350K: moderate
+                SimpleNamespace(bsr_threshold=400000, min_score=25, max_score=30),   # BSR 350K-400K: acceptable
+                SimpleNamespace(bsr_threshold=500000, min_score=15, max_score=25),   # BSR > 400K: low
+            ],
+            # Legacy textbooks (backward compat)
+            "textbooks": [
+                SimpleNamespace(bsr_threshold=100000, min_score=65, max_score=80),
+                SimpleNamespace(bsr_threshold=200000, min_score=45, max_score=65),
+                SimpleNamespace(bsr_threshold=300000, min_score=30, max_score=45),
+                SimpleNamespace(bsr_threshold=500000, min_score=15, max_score=30),
+            ]
+        }
+
+        # Apply strategy-specific velocity tiers if applicable
+        if strategy and strategy in strategy_velocity_tiers:
+            logger.info(f"[SCORING] Applying {strategy} velocity tiers")
+            effective_config = SimpleNamespace(
+                effective_roi=effective_config.effective_roi,
+                effective_fees=effective_config.effective_fees,
+                effective_velocity=SimpleNamespace(
+                    tiers=strategy_velocity_tiers[strategy]
+                )
+            )
+
         for product in products:
             try:
                 asin = product.get("asin")
@@ -923,11 +980,12 @@ class KeepaProductFinderService:
                     if min_velocity and velocity_score < min_velocity:
                         continue
 
-                    # Get recommendation
+                    # Get recommendation (Phase 8: strategy-aware thresholds)
                     recommendation = self._get_recommendation(
                         roi_percent,
                         velocity_score,
-                        effective_config
+                        effective_config,
+                        strategy=strategy
                     )
 
                     scoring_result = {
@@ -1021,21 +1079,65 @@ class KeepaProductFinderService:
         self,
         roi_percent: float,
         velocity_score: float,
-        config
+        config,
+        strategy: Optional[str] = None
     ) -> str:
         """
-        Déterminer recommandation basée sur ROI et velocity.
+        Determine recommendation based on ROI and velocity.
+
+        Phase 8: Strategy-aware thresholds.
+        - Default (smart_velocity): High velocity requirements (80/60/40)
+        - textbooks_standard: Balanced velocity requirements (50/40/30)
+        - textbooks_patience: Lower velocity requirements (40/30/20)
+
+        Args:
+            roi_percent: ROI percentage
+            velocity_score: Velocity score (0-100)
+            config: Effective config with ROI thresholds
+            strategy: Strategy type for adjusted thresholds
+
+        Returns:
+            Recommendation: STRONG_BUY, BUY, CONSIDER, or SKIP
         """
         roi_config = config.effective_roi
 
-        # Combined score
-        combined = roi_percent * 0.6 + velocity_score * 0.4
+        # Phase 8: Strategy-specific velocity thresholds
+        # Default thresholds (Smart Velocity - BSR 10K-80K, fast rotation)
+        velocity_thresholds = {
+            "strong_buy": 80,
+            "buy": 60,
+            "consider": 40
+        }
 
-        if roi_percent >= float(roi_config.excellent_threshold) and velocity_score >= 80:
+        # Textbook Standard: Balanced thresholds (BSR 100K-250K)
+        # Rotation 7-14 days, moderate velocity expectations
+        if strategy == "textbooks_standard":
+            velocity_thresholds = {
+                "strong_buy": 50,
+                "buy": 40,
+                "consider": 30
+            }
+        # Textbook Patience: Lower thresholds (BSR 250K-400K)
+        # Rotation 4-6 weeks, slower velocity is acceptable
+        elif strategy == "textbooks_patience":
+            velocity_thresholds = {
+                "strong_buy": 40,
+                "buy": 30,
+                "consider": 20
+            }
+        # Legacy textbooks
+        elif strategy == "textbooks":
+            velocity_thresholds = {
+                "strong_buy": 50,
+                "buy": 40,
+                "consider": 30
+            }
+
+        if roi_percent >= float(roi_config.excellent_threshold) and velocity_score >= velocity_thresholds["strong_buy"]:
             return "STRONG_BUY"
-        elif roi_percent >= float(roi_config.target) and velocity_score >= 60:
+        elif roi_percent >= float(roi_config.target) and velocity_score >= velocity_thresholds["buy"]:
             return "BUY"
-        elif roi_percent >= float(roi_config.min_acceptable) and velocity_score >= 40:
+        elif roi_percent >= float(roi_config.min_acceptable) and velocity_score >= velocity_thresholds["consider"]:
             return "CONSIDER"
         else:
             return "SKIP"

@@ -432,6 +432,8 @@ async def _discover_curated_niches_impl(
         try:
             # Call Discovery with template config
             # Phase 6: Now passing max_fba_sellers for competition filtering
+            # Phase 8: Now passing strategy for velocity/recommendation adjustments
+            template_strategy = tmpl.get("type")
             products = await product_finder.discover_with_scoring(
                 domain=1,
                 category=tmpl["categories"][0],  # Primary category
@@ -440,7 +442,8 @@ async def _discover_curated_niches_impl(
                 price_min=tmpl["price_range"][0],
                 price_max=tmpl["price_range"][1],
                 max_results=10,
-                max_fba_sellers=tmpl.get("max_fba_sellers")  # Competition filter
+                max_fba_sellers=tmpl.get("max_fba_sellers"),  # Competition filter
+                strategy=template_strategy  # Phase 8: Strategy-aware scoring
             )
 
             # Filter by quality thresholds - RELAXED FOR TESTING

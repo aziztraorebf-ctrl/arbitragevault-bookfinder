@@ -4,7 +4,7 @@
  * Phase 8: Added Verify button for pre-purchase verification
  */
 
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import {
   verificationService,
   type VerificationResponse,
@@ -149,9 +149,8 @@ export function ProductsTable({ products, title = 'Produits Trouves' }: Products
               const isExpanded = expandedVerification === product.asin
 
               return (
-                <>
+                <Fragment key={product.asin}>
                   <tr
-                    key={product.asin}
                     className="hover:bg-gray-50 transition-colors"
                   >
                     {/* ASIN / Title */}
@@ -296,13 +295,13 @@ export function ProductsTable({ products, title = 'Produits Trouves' }: Products
 
                   {/* Expanded Verification Details Row */}
                   {isExpanded && verifyState?.result && (
-                    <tr key={`${product.asin}-details`} className="bg-gray-50">
+                    <tr className="bg-gray-50">
                       <td colSpan={7} className="px-6 py-4">
                         <VerificationDetails result={verifyState.result} />
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               )
             })}
           </tbody>

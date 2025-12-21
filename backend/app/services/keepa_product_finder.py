@@ -904,13 +904,16 @@ class KeepaProductFinderService:
                 if not asin:
                     continue
 
-                # Try scoring cache first (skip if force_refresh)
+                # Try scoring cache first (skip if force_refresh or strategy-specific)
+                # Phase 8: Bypass cache when strategy is specified because velocity/recommendation
+                # scoring depends on strategy type. Cache stores default scoring only.
                 cached_scoring = None
-                if self.cache_service and not force_refresh:
+                use_cache = self.cache_service and not force_refresh and not strategy
+                if use_cache:
                     cached_scoring = await self.cache_service.get_scoring_cache(asin)
 
-                if cached_scoring and not force_refresh:
-                    # Cache HIT - use cached scoring
+                if cached_scoring and use_cache:
+                    # Cache HIT - use cached scoring (only for default strategy)
                     logger.debug(f"[SCORING] Cache HIT for ASIN {asin}")
                     scoring_cache_hits += 1
 

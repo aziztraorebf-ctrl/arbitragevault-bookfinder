@@ -14,6 +14,8 @@ from app.core.db import get_db_session
 from app.services.keepa_service import KeepaService, get_keepa_service
 from app.services.config_service import ConfigService
 from app.services.keepa_product_finder import KeepaProductFinderService
+from app.services.verification_service import VerificationService
+from app.schemas.verification import VerificationRequest, VerificationResponse
 from app.core.config import settings
 from app.core.guards import require_tokens
 
@@ -253,6 +255,45 @@ async def health_check():
         "endpoints": [
             "/products/discover",
             "/products/discover-with-scoring",
-            "/products/categories"
+            "/products/categories",
+            "/products/{asin}/verify"
         ]
     }
+
+
+@router.post("/{asin}/verify", response_model=VerificationResponse)
+async def verify_product(
+    asin: str,
+    request: VerificationRequest = None,
+    keepa_service: KeepaService = Depends(get_keepa_service)
+):
+    """
+    Verify a product's current status before purchase.
+
+    Phase 8: Pre-purchase verification endpoint.
+    Compares saved analysis data against current Keepa API data to detect:
+    - Price changes (significant increase/decrease)
+    - BSR changes (rank degradation)
+    - Competition changes (more FBA sellers)
+    - Amazon selling status (critical - avoid if Amazon enters)
+
+    Returns:
+        VerificationResponse with status (OK/CHANGED/AVOID), detected changes,
+        and current product data.
+    """
+    from decimal import Decimal
+
+    # Build request from path param and optional body
+    if request is None:
+        request = VerificationRequest(asin=asin)
+    elif request.asin != asin:
+        # Ensure ASIN in path matches body
+        request = VerificationRequest(
+            asin=asin,
+            saved_price=request.saved_price,
+            saved_bsr=request.saved_bsr,
+            saved_fba_count=request.saved_fba_count
+        )
+
+    service = VerificationService(keepa_service=keepa_service)
+    return await service.verify_product(request)

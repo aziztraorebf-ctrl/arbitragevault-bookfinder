@@ -34,13 +34,35 @@ STRATEGY_CONFIGS = {
         "min_velocity": 50
     },
     "textbooks": {
-        "description": "High margin textbooks with slower rotation - BSR 30K-250K",
+        "description": "High margin textbooks with slower rotation - BSR 30K-250K (legacy)",
         "bsr_range": (30000, 250000),
         "min_margin": 20.0,  # $20 minimum for textbooks
         "max_fba_sellers": 3,  # Very low competition
         "price_range": (30.0, 150.0),
         "min_roi": 50,
         "min_velocity": 30
+    },
+    # Phase 8: Dual Template Strategy (PDF Golden Rule alignment)
+    "textbooks_standard": {
+        "description": "PDF Golden Rule textbooks - BSR 100K-250K, balanced rotation/profit",
+        "bsr_range": (100000, 250000),
+        "min_margin": 15.0,  # $15 minimum profit (PDF aligned)
+        "max_fba_sellers": 5,  # Low competition
+        "price_range": (40.0, 150.0),  # $40-$150 (PDF: fees eat profit on cheap books)
+        "min_roi": 40,
+        "min_velocity": 30,
+        "estimated_rotation_days": "7-14"
+    },
+    "textbooks_patience": {
+        "description": "Under-the-radar textbooks - BSR 250K-400K, higher profit, slower rotation",
+        "bsr_range": (250000, 400000),
+        "min_margin": 25.0,  # $25 minimum (higher to justify wait)
+        "max_fba_sellers": 3,  # Very low competition
+        "price_range": (40.0, 150.0),  # Same price range
+        "min_roi": 50,
+        "min_velocity": 20,  # Lower velocity acceptable
+        "estimated_rotation_days": "28-42",
+        "warning": "Rotation lente (4-6 semaines minimum). Capital immobilise plus longtemps."
     }
 }
 
@@ -266,6 +288,38 @@ CURATED_NICHES = [
         "min_roi": 50,
         "min_velocity": 30,
         "icon": "CS"
+    },
+    # ============================================
+    # DUAL TEMPLATE STRATEGY - Phase 8
+    # PDF Golden Rule alignment with Standard + Patience
+    # ============================================
+    {
+        "id": "textbook-standard-general",
+        "name": "[STANDARD] General Textbooks $40-150",
+        "description": "PDF Golden Rule: BSR 100K-250K, balanced rotation/profit, 7-14 day sell-through",
+        "type": "textbooks_standard",
+        "categories": [283155, 75, 2766],  # Books > Science & Math > Business
+        "bsr_range": (100000, 250000),
+        "price_range": (40.0, 150.0),
+        "min_margin": 15.0,
+        "max_fba_sellers": 5,
+        "min_roi": 40,
+        "min_velocity": 30,
+        "icon": "STANDARD"
+    },
+    {
+        "id": "textbook-patience-general",
+        "name": "[PATIENCE] Under-Radar Textbooks $40-150",
+        "description": "Higher profit, slower rotation. BSR 250K-400K, 4-6 week sell-through, capital lock-up.",
+        "type": "textbooks_patience",
+        "categories": [283155, 75, 2766],  # Books > Science & Math > Business
+        "bsr_range": (250000, 400000),
+        "price_range": (40.0, 150.0),
+        "min_margin": 25.0,
+        "max_fba_sellers": 3,
+        "min_roi": 50,
+        "min_velocity": 20,
+        "icon": "PATIENCE"
     }
 ]
 

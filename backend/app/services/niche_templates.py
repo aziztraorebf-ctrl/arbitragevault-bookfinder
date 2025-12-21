@@ -328,7 +328,8 @@ async def discover_curated_niches(
     db: Union[Session, AsyncSession],
     product_finder: KeepaProductFinderService,
     count: int = 3,
-    shuffle: bool = True
+    shuffle: bool = True,
+    strategy: Optional[str] = None
 ) -> List[Dict]:
     """
     Validate curated niche templates with real-time Keepa data.
@@ -340,6 +341,7 @@ async def discover_curated_niches(
         product_finder: KeepaProductFinderService instance (with cache enabled)
         count: Number of niches to return (default 3)
         shuffle: Randomize template selection for variety (default True)
+        strategy: Filter by strategy type (textbooks_standard, textbooks_patience, smart_velocity, textbooks, or None for all)
 
     Returns:
         List of validated niches with aggregate stats and top products
@@ -368,14 +370,14 @@ async def discover_curated_niches(
                 # Run the actual async function in a separate SelectorEventLoop
                 return await _run_in_selector_loop(
                     _discover_curated_niches_impl,
-                    db, product_finder, count, shuffle
+                    db, product_finder, count, shuffle, strategy
                 )
         except RuntimeError:
             # No running loop, continue normally
             pass
 
     # Normal async execution for Linux/Mac or when SelectorEventLoop already in use
-    return await _discover_curated_niches_impl(db, product_finder, count, shuffle)
+    return await _discover_curated_niches_impl(db, product_finder, count, shuffle, strategy)
 
 
 async def _run_in_selector_loop(func, *args):
@@ -404,13 +406,24 @@ async def _discover_curated_niches_impl(
     db: Union[Session, AsyncSession],
     product_finder: KeepaProductFinderService,
     count: int,
-    shuffle: bool
+    shuffle: bool,
+    strategy: Optional[str] = None
 ) -> List[Dict]:
     """Implementation of discover_curated_niches (separated for Windows compatibility)."""
-    logger.info(f"[NICHE_TEMPLATES] Starting validation of {count} templates (shuffle={shuffle})")
+    logger.info(f"[NICHE_TEMPLATES] Starting validation of {count} templates (shuffle={shuffle}, strategy={strategy})")
+
+    # Filter templates by strategy if specified
+    available_templates = CURATED_NICHES
+    if strategy:
+        available_templates = [t for t in CURATED_NICHES if t.get("type") == strategy]
+        logger.info(f"[NICHE_TEMPLATES] Filtered to {len(available_templates)} templates for strategy '{strategy}'")
+
+        if not available_templates:
+            logger.warning(f"[NICHE_TEMPLATES] No templates found for strategy '{strategy}'")
+            return []
 
     # Select templates
-    templates = random.sample(CURATED_NICHES, min(count, len(CURATED_NICHES))) if shuffle else CURATED_NICHES[:count]
+    templates = random.sample(available_templates, min(count, len(available_templates))) if shuffle else available_templates[:count]
 
     validated = []
     for tmpl in templates:

@@ -10,6 +10,7 @@ import {
   type NicheDiscoveryResponse,
   type ManualDiscoveryResponse,
   type ManualDiscoveryFilters,
+  type NicheStrategy,
 } from '../services/nicheDiscoveryService'
 
 /**
@@ -17,7 +18,7 @@ import {
  *
  * Usage:
  * const { mutate: explore, isPending } = useAutoDiscoverNiches()
- * explore({ count: 3, shuffle: true })
+ * explore({ count: 3, shuffle: true, strategy: 'textbooks_standard' })
  */
 export function useAutoDiscoverNiches() {
   const queryClient = useQueryClient()
@@ -25,21 +26,22 @@ export function useAutoDiscoverNiches() {
   return useMutation<
     NicheDiscoveryResponse,
     Error,
-    { count?: number; shuffle?: boolean }
+    { count?: number; shuffle?: boolean; strategy?: NicheStrategy }
   >({
-    mutationFn: async ({ count = 3, shuffle = true }) => {
-      return nicheDiscoveryService.discoverAuto(count, shuffle)
+    mutationFn: async ({ count = 3, shuffle = true, strategy }) => {
+      return nicheDiscoveryService.discoverAuto(count, shuffle, strategy)
     },
     onSuccess: (data) => {
       // Invalidate related queries (if any)
       queryClient.invalidateQueries({ queryKey: ['niches'] })
 
-      console.log('✅ Auto-discovery mutation success:', {
+      console.log('[NicheDiscovery] Auto-discovery mutation success:', {
         nichesCount: data.metadata.niches_count,
+        tokensConsumed: data.metadata.tokens_consumed,
       })
     },
     onError: (error) => {
-      console.error('❌ Auto-discovery mutation failed:', error)
+      console.error('[NicheDiscovery] Auto-discovery mutation failed:', error)
     },
   })
 }

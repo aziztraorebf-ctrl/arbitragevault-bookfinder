@@ -11,7 +11,7 @@ import { AutoDiscoveryHero } from '../components/niche-discovery/AutoDiscoveryHe
 import { NicheCard } from '../components/niche-discovery/NicheCard'
 import { ManualFiltersSection } from '../components/niche-discovery/ManualFiltersSection'
 import { ProductsTable } from '../components/niche-discovery/ProductsTable'
-import type { ValidatedNiche } from '../services/nicheDiscoveryService'
+import type { ValidatedNiche, NicheStrategy } from '../services/nicheDiscoveryService'
 import type { ManualDiscoveryResponse } from '../services/nicheDiscoveryService'
 import type { SavedNiche } from '../types/bookmarks'
 
@@ -34,6 +34,7 @@ export default function NicheDiscovery() {
   const [viewMode, setViewMode] = useState<'niches' | 'products'>('niches')
   const [rerunResults, setRerunResults] = useState<ManualDiscoveryResponse | null>(null)
   const [fromNiche, setFromNiche] = useState<SavedNiche | null>(null)
+  const [loadingStrategy, setLoadingStrategy] = useState<NicheStrategy>()
 
   useEffect(() => {
     const state = location.state as {
@@ -49,15 +50,20 @@ export default function NicheDiscovery() {
     }
   }, [location.state])
 
-  // Auto-discovery handler
-  const handleAutoDiscover = () => {
+  // Strategy-based discovery handler
+  const handleStrategyDiscover = (strategy: NicheStrategy) => {
+    setLoadingStrategy(strategy)
     discoverAuto(
-      { count: 3, shuffle: true },
+      { count: 3, shuffle: true, strategy },
       {
         onSuccess: () => {
           setLastExploration(new Date())
           setViewMode('niches')
           setSelectedNicheId(undefined)
+          setLoadingStrategy(undefined)
+        },
+        onError: () => {
+          setLoadingStrategy(undefined)
         },
       }
     )
@@ -115,10 +121,11 @@ export default function NicheDiscovery() {
       </div>
 
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Auto-Discovery Hero */}
+        {/* Strategy-Based Discovery Hero */}
         <AutoDiscoveryHero
-          onExplore={handleAutoDiscover}
+          onExplore={handleStrategyDiscover}
           isLoading={isDiscoveringAuto}
+          loadingStrategy={loadingStrategy}
           lastExploration={lastExploration}
         />
 
@@ -209,11 +216,11 @@ export default function NicheDiscovery() {
           products.length === 0 && (
             <div className="text-center py-12 bg-white rounded-xl shadow-md border border-gray-200">
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Prêt à découvrir des niches rentables ?
+                Pret a decouvrir des niches rentables ?
               </h3>
               <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                Cliquez sur "Surprise Me!" pour découvrir 3 niches validées avec vraies
-                données Keepa, ou utilisez la recherche personnalisée ci-dessus.
+                Choisissez une strategie Textbook ci-dessus pour decouvrir des niches
+                validees avec vraies donnees Keepa, ou utilisez la recherche personnalisee.
               </p>
             </div>
           )}

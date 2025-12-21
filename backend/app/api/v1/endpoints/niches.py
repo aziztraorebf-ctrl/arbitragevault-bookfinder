@@ -103,6 +103,10 @@ async def check_budget_before_discovery(
 async def discover_niches_auto(
     count: int = Query(3, ge=1, le=5, description="Number of niches to discover"),
     shuffle: bool = Query(True, description="Randomize template selection"),
+    strategy: Optional[str] = Query(
+        None,
+        description="Strategy filter: textbooks_standard, textbooks_patience, smart_velocity, or None for all"
+    ),
     db: AsyncSession = Depends(get_db_session),
     keepa: KeepaService = Depends(get_keepa_service)
 ):
@@ -170,7 +174,8 @@ async def discover_niches_auto(
                     db=db,
                     product_finder=finder_service,
                     count=count,
-                    shuffle=shuffle
+                    shuffle=shuffle,
+                    strategy=strategy
                 ),
                 timeout=ENDPOINT_TIMEOUT
             )

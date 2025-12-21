@@ -30,6 +30,15 @@ export interface ValidatedNiche {
 }
 
 /**
+ * Strategy types for niche discovery
+ */
+export type NicheStrategy =
+  | 'textbooks_standard'
+  | 'textbooks_patience'
+  | 'smart_velocity'
+  | 'textbooks'
+
+/**
  * Niche Discovery Response
  */
 export interface NicheDiscoveryResponse {
@@ -42,6 +51,7 @@ export interface NicheDiscoveryResponse {
     niches_count: number
     timestamp: string
     source: 'curated_templates'
+    tokens_consumed?: number
   }
 }
 
@@ -96,26 +106,38 @@ export const nicheDiscoveryService = {
    *
    * @param count - Number of niches to discover (1-5, default 3)
    * @param shuffle - Randomize template selection (default true)
+   * @param strategy - Filter by strategy type (optional)
    * @returns List of validated niches with real-time Keepa validation
    */
   async discoverAuto(
     count: number = 3,
-    shuffle: boolean = true
+    shuffle: boolean = true,
+    strategy?: NicheStrategy
   ): Promise<NicheDiscoveryResponse> {
     try {
-      console.log(`🎲 Auto-discovering ${count} niches (shuffle=${shuffle})`)
+      const strategyLabel = strategy ? `[${strategy}]` : '[all]'
+      console.log(
+        `[NicheDiscovery] Auto-discovering ${count} niches ${strategyLabel} (shuffle=${shuffle})`
+      )
+
+      const params: Record<string, unknown> = { count, shuffle }
+      if (strategy) {
+        params.strategy = strategy
+      }
 
       const response = await api.get<NicheDiscoveryResponse>(
         '/api/v1/niches/discover',
-        { params: { count, shuffle } }
+        { params }
       )
 
-      console.log('✅ Auto-discovery completed:', {
+      console.log('[NicheDiscovery] Auto-discovery completed:', {
         nichesCount: response.data.metadata.niches_count,
+        strategy: strategy || 'all',
         totalProducts: response.data.metadata.niches.reduce(
           (sum, n) => sum + n.products_found,
           0
         ),
+        tokensConsumed: response.data.metadata.tokens_consumed,
       })
 
       return response.data

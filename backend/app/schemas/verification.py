@@ -82,9 +82,38 @@ class VerificationResponse(BaseModel):
         None, description="Profit change vs saved analysis (%)"
     )
 
+    # Buy opportunities from third-party sellers
+    buy_opportunities: List["BuyOpportunity"] = Field(
+        default_factory=list,
+        description="Available buy opportunities from third-party sellers"
+    )
+    sell_price: Optional[Decimal] = Field(
+        None, description="Current Amazon sell price (for reference)"
+    )
+
     model_config = ConfigDict(
         json_encoders={
             datetime: lambda v: v.isoformat(),
+            Decimal: lambda v: float(v)
+        }
+    )
+
+
+class BuyOpportunity(BaseModel):
+    """A single buy opportunity from a third-party seller."""
+    seller_id: str = Field(..., description="Seller ID on Amazon")
+    condition: str = Field(..., description="Product condition (New, Used-Good, etc.)")
+    condition_code: int = Field(..., description="Keepa condition code (1=New, 2-5=Used)")
+    price: Decimal = Field(..., ge=0, description="Item price in USD")
+    shipping: Decimal = Field(Decimal("0"), ge=0, description="Shipping cost in USD")
+    total_cost: Decimal = Field(..., ge=0, description="Total buy cost (price + shipping)")
+    profit: Decimal = Field(..., description="Estimated profit after fees")
+    roi_percent: float = Field(..., description="Return on investment percentage")
+    is_fba: bool = Field(False, description="Whether seller uses FBA")
+    is_prime: bool = Field(False, description="Whether offer is Prime eligible")
+
+    model_config = ConfigDict(
+        json_encoders={
             Decimal: lambda v: float(v)
         }
     )

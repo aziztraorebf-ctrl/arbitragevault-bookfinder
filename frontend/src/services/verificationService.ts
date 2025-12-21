@@ -15,6 +15,19 @@ export interface VerificationChange {
   message: string;
 }
 
+export interface BuyOpportunity {
+  seller_id: string;
+  condition: string;
+  condition_code: number;
+  price: number;
+  shipping: number;
+  total_cost: number;
+  profit: number;
+  roi_percent: number;
+  is_fba: boolean;
+  is_prime: boolean;
+}
+
 export interface VerificationRequest {
   asin: string;
   saved_price?: number;
@@ -34,6 +47,8 @@ export interface VerificationResponse {
   changes: VerificationChange[];
   estimated_profit?: number;
   profit_change_percent?: number;
+  buy_opportunities: BuyOpportunity[];
+  sell_price?: number;
 }
 
 class VerificationService {

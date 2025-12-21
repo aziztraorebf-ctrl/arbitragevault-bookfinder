@@ -15,6 +15,7 @@ from app.schemas.verification import (
     VerificationRequest,
     VerificationResponse,
     VerificationThresholds,
+    BuyOpportunity,
 )
 from app.services.keepa_service import KeepaService
 from app.core.logging import get_logger
@@ -51,6 +52,56 @@ def calculate_profit(sell_price: float, buy_cost_factor: float = 0.50) -> float:
     fulfillment = FBA_FEES["fba_base"] + (extra_weight * FBA_FEES["fba_per_lb"])
     total_fees = referral + closing + fulfillment + FBA_FEES["prep_fee"] + FBA_FEES["inbound_shipping"]
     return sell_price - buy_cost - total_fees
+
+
+def calculate_profit_with_buy_price(sell_price: float, buy_price: float) -> float:
+    """Calculate profit given explicit buy and sell prices.
+
+    Args:
+        sell_price: Expected selling price on Amazon
+        buy_price: Actual buy cost from seller
+
+    Returns:
+        Net profit after all fees
+    """
+    referral = sell_price * FBA_FEES["referral_percent"]
+    closing = FBA_FEES["closing_fee"]
+    extra_weight = max(0, FBA_FEES["avg_book_weight"] - 1)
+    fulfillment = FBA_FEES["fba_base"] + (extra_weight * FBA_FEES["fba_per_lb"])
+    total_fees = referral + closing + fulfillment + FBA_FEES["prep_fee"] + FBA_FEES["inbound_shipping"]
+    return sell_price - buy_price - total_fees
+
+
+def calculate_roi(sell_price: float, buy_price: float) -> float:
+    """Calculate ROI percentage.
+
+    Args:
+        sell_price: Expected selling price
+        buy_price: Buy cost
+
+    Returns:
+        ROI as percentage
+    """
+    profit = calculate_profit_with_buy_price(sell_price, buy_price)
+    if buy_price <= 0:
+        return 0.0
+    return (profit / buy_price) * 100
+
+
+# Keepa condition codes mapping
+CONDITION_MAP = {
+    0: "Unknown",
+    1: "New",
+    2: "Used - Like New",
+    3: "Used - Very Good",
+    4: "Used - Good",
+    5: "Used - Acceptable",
+    6: "Refurbished",
+    7: "Collectible - Like New",
+    8: "Collectible - Very Good",
+    9: "Collectible - Good",
+    10: "Collectible - Acceptable",
+}
 
 
 class VerificationService:
@@ -131,8 +182,9 @@ class VerificationService:
             # Calculate profit impact
             profit = None
             profit_change = None
-            if current_data.get("price"):
-                profit = Decimal(str(round(calculate_profit(float(current_data["price"])), 2)))
+            sell_price = current_data.get("price")
+            if sell_price:
+                profit = Decimal(str(round(calculate_profit(float(sell_price)), 2)))
                 if request.saved_price:
                     saved_profit = calculate_profit(float(request.saved_price))
                     if saved_profit > 0:
@@ -140,7 +192,16 @@ class VerificationService:
                             ((float(profit) - saved_profit) / saved_profit) * 100, 1
                         )
 
-            logger.info(f"[VERIFY] Completed for {request.asin}: status={status.value}")
+            # Parse buy opportunities from seller offers
+            buy_opportunities = self._parse_buy_opportunities(
+                product_data,
+                float(sell_price) if sell_price else None
+            )
+
+            logger.info(
+                f"[VERIFY] Completed for {request.asin}: status={status.value}, "
+                f"buy_opportunities={len(buy_opportunities)}"
+            )
 
             return VerificationResponse(
                 asin=request.asin,
@@ -153,6 +214,8 @@ class VerificationService:
                 changes=changes,
                 estimated_profit=profit,
                 profit_change_percent=profit_change,
+                buy_opportunities=buy_opportunities,
+                sell_price=sell_price,
                 verified_at=datetime.now(timezone.utc)
             )
 
@@ -321,3 +384,105 @@ class VerificationService:
                 VerificationStatus.OK,
                 "Product conditions unchanged. Safe to proceed with purchase."
             )
+
+    def _parse_buy_opportunities(
+        self,
+        product_data: dict,
+        sell_price: Optional[float]
+    ) -> List[BuyOpportunity]:
+        """Parse buy opportunities from Keepa product offers.
+
+        Args:
+            product_data: Raw Keepa product response with offers
+            sell_price: Current sell price for profit calculation
+
+        Returns:
+            List of BuyOpportunity objects sorted by profit (descending)
+        """
+        if not sell_price or sell_price <= 0:
+            logger.warning("[VERIFY] No sell price available, cannot calculate opportunities")
+            return []
+
+        offers = product_data.get("offers", [])
+        live_offers_order = product_data.get("liveOffersOrder", [])
+
+        if not offers or not live_offers_order:
+            logger.info("[VERIFY] No offers data available")
+            return []
+
+        logger.info(
+            f"[VERIFY] Parsing {len(live_offers_order)} live offers "
+            f"from {len(offers)} total offers"
+        )
+
+        buy_opportunities = []
+
+        for offer_index in live_offers_order[:20]:  # Limit to first 20 live offers
+            if offer_index >= len(offers):
+                continue
+
+            offer = offers[offer_index]
+
+            # Skip Amazon as seller (cannot resell Amazon products)
+            is_amazon = offer.get("isAmazon", False)
+            if is_amazon:
+                continue
+
+            # Extract offer details
+            seller_id = offer.get("sellerId", "Unknown")
+            condition_code = offer.get("condition", 0)
+            condition_str = CONDITION_MAP.get(condition_code, f"Unknown ({condition_code})")
+            is_fba = offer.get("isFBA", False)
+            is_prime = offer.get("isPrime", False)
+
+            # Get current price from offerCSV (format: [time1, price1, time2, price2, ...])
+            offer_csv = offer.get("offerCSV", [])
+            if not offer_csv or len(offer_csv) < 2:
+                continue
+
+            # Last value in offerCSV is the current price (in cents)
+            current_price_cents = offer_csv[-1]
+            if not current_price_cents or current_price_cents <= 0:
+                continue
+
+            item_price = current_price_cents / 100.0
+
+            # Shipping cost (in cents)
+            shipping_cents = offer.get("shipping", 0)
+            shipping = (shipping_cents / 100.0) if shipping_cents and shipping_cents > 0 else 0.0
+
+            # Total buy cost
+            total_cost = item_price + shipping
+
+            # Calculate profit and ROI
+            profit = calculate_profit_with_buy_price(sell_price, total_cost)
+            roi = calculate_roi(sell_price, total_cost)
+
+            # Only include profitable opportunities
+            if profit <= 0:
+                continue
+
+            opportunity = BuyOpportunity(
+                seller_id=seller_id[:20],  # Truncate long seller IDs
+                condition=condition_str,
+                condition_code=condition_code,
+                price=Decimal(str(round(item_price, 2))),
+                shipping=Decimal(str(round(shipping, 2))),
+                total_cost=Decimal(str(round(total_cost, 2))),
+                profit=Decimal(str(round(profit, 2))),
+                roi_percent=round(roi, 1),
+                is_fba=is_fba,
+                is_prime=is_prime
+            )
+
+            buy_opportunities.append(opportunity)
+
+        # Sort by profit descending (best deals first)
+        buy_opportunities.sort(key=lambda x: float(x.profit), reverse=True)
+
+        # Limit to top 10 opportunities
+        buy_opportunities = buy_opportunities[:10]
+
+        logger.info(f"[VERIFY] Found {len(buy_opportunities)} profitable opportunities")
+
+        return buy_opportunities

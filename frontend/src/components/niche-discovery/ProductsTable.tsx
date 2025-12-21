@@ -340,7 +340,7 @@ export function ProductsTable({ products, title = 'Produits Trouves' }: Products
 
 /**
  * Verification Details Component
- * Shows expanded verification result with changes
+ * Shows expanded verification result with changes and buy opportunities
  */
 function VerificationDetails({ result }: { result: VerificationResponse }) {
   const statusColors: Record<VerificationStatus, string> = {
@@ -349,6 +349,8 @@ function VerificationDetails({ result }: { result: VerificationResponse }) {
     avoid: 'border-red-500',
   }
 
+  const buyOpportunities = result.buy_opportunities || []
+
   return (
     <div className={`border-l-4 ${statusColors[result.status]} pl-4`}>
       {/* Message */}
@@ -356,10 +358,10 @@ function VerificationDetails({ result }: { result: VerificationResponse }) {
 
       {/* Current Data Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-        {result.current_price !== undefined && (
+        {result.sell_price !== undefined && (
           <div>
-            <p className="text-xs text-gray-500">Prix actuel</p>
-            <p className="text-sm font-semibold">${result.current_price.toFixed(2)}</p>
+            <p className="text-xs text-gray-500">Prix de vente Amazon</p>
+            <p className="text-sm font-semibold text-blue-600">${result.sell_price.toFixed(2)}</p>
           </div>
         )}
         {result.current_bsr !== undefined && (
@@ -374,22 +376,10 @@ function VerificationDetails({ result }: { result: VerificationResponse }) {
             <p className="text-sm font-semibold">{result.current_fba_count}</p>
           </div>
         )}
-        {result.estimated_profit !== undefined && (
+        {buyOpportunities.length > 0 && (
           <div>
-            <p className="text-xs text-gray-500">Profit estime</p>
-            <p className="text-sm font-semibold text-green-600">
-              ${result.estimated_profit.toFixed(2)}
-              {result.profit_change_percent !== undefined && (
-                <span
-                  className={`ml-1 text-xs ${
-                    result.profit_change_percent >= 0 ? 'text-green-500' : 'text-red-500'
-                  }`}
-                >
-                  ({result.profit_change_percent >= 0 ? '+' : ''}
-                  {result.profit_change_percent.toFixed(1)}%)
-                </span>
-              )}
-            </p>
+            <p className="text-xs text-gray-500">Opportunites</p>
+            <p className="text-sm font-semibold text-green-600">{buyOpportunities.length} offres</p>
           </div>
         )}
       </div>
@@ -403,9 +393,86 @@ function VerificationDetails({ result }: { result: VerificationResponse }) {
         </div>
       )}
 
+      {/* Buy Opportunities Table */}
+      {buyOpportunities.length > 0 && (
+        <div className="mt-4">
+          <p className="text-xs text-gray-500 uppercase mb-2 font-semibold">
+            Opportunites d'achat (Top {Math.min(buyOpportunities.length, 5)}):
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-2 py-1 text-left">Condition</th>
+                  <th className="px-2 py-1 text-right">Prix</th>
+                  <th className="px-2 py-1 text-right">Livraison</th>
+                  <th className="px-2 py-1 text-right">Total</th>
+                  <th className="px-2 py-1 text-right">Profit</th>
+                  <th className="px-2 py-1 text-right">ROI</th>
+                  <th className="px-2 py-1 text-center">FBA</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {buyOpportunities.slice(0, 5).map((opp, idx) => (
+                  <tr key={idx} className={idx === 0 ? 'bg-green-50' : ''}>
+                    <td className="px-2 py-1.5">
+                      <span className={`inline-block px-1.5 py-0.5 rounded text-xs ${
+                        opp.condition_code === 1
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        {opp.condition}
+                      </span>
+                    </td>
+                    <td className="px-2 py-1.5 text-right font-mono">
+                      ${opp.price.toFixed(2)}
+                    </td>
+                    <td className="px-2 py-1.5 text-right font-mono text-gray-500">
+                      {opp.shipping > 0 ? `+$${opp.shipping.toFixed(2)}` : 'Gratuit'}
+                    </td>
+                    <td className="px-2 py-1.5 text-right font-mono font-semibold">
+                      ${opp.total_cost.toFixed(2)}
+                    </td>
+                    <td className="px-2 py-1.5 text-right font-mono font-semibold text-green-600">
+                      ${opp.profit.toFixed(2)}
+                    </td>
+                    <td className="px-2 py-1.5 text-right font-mono text-green-600">
+                      {opp.roi_percent.toFixed(0)}%
+                    </td>
+                    <td className="px-2 py-1.5 text-center">
+                      {opp.is_fba ? (
+                        <span className="text-orange-600 font-semibold">FBA</span>
+                      ) : (
+                        <span className="text-gray-400">FBM</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {buyOpportunities.length > 0 && (
+            <p className="text-xs text-gray-500 mt-2 italic">
+              Meilleure offre: ${buyOpportunities[0].total_cost.toFixed(2)}
+              {' '}({buyOpportunities[0].condition})
+              {' '}= ${buyOpportunities[0].profit.toFixed(2)} profit
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* No opportunities message */}
+      {buyOpportunities.length === 0 && !result.amazon_selling && (
+        <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-md px-3 py-2">
+          <p className="text-xs text-yellow-700">
+            Aucune opportunite d'achat profitable trouvee actuellement.
+          </p>
+        </div>
+      )}
+
       {/* Changes List */}
       {result.changes.length > 0 && (
-        <div className="mt-2">
+        <div className="mt-3">
           <p className="text-xs text-gray-500 uppercase mb-1">Changements detectes:</p>
           <ul className="space-y-1">
             {result.changes.map((change, idx) => (

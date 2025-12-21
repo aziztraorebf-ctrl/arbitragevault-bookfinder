@@ -909,12 +909,16 @@ class KeepaProductFinderService:
             - velocity_score
             - recommendation
         """
-        # Step 1: Discover ASINs (with cache, unless force_refresh)
+        # Step 1: Discover ASINs (with cache, unless force_refresh or strategy specified)
+        # Phase 9 Fix: Bypass discovery cache when strategy is specified
+        # Strategy-specific discovery uses sub-segments for balanced BSR distribution
+        # Cached ASINs may be clustered at low BSR (pre-fix data)
         asins = []
         discovery_cache_hit = False
+        use_discovery_cache = self.cache_service and not force_refresh and not strategy
 
-        if self.cache_service and not force_refresh:
-            # Try cache first
+        if use_discovery_cache:
+            # Try cache first (only for non-strategy queries)
             cached_asins = await self.cache_service.get_discovery_cache(
                 domain=domain,
                 category=category,
@@ -930,6 +934,8 @@ class KeepaProductFinderService:
                 logger.info(f"[DISCOVERY] Cache HIT: {len(asins)} ASINs")
             else:
                 logger.debug(f"[DISCOVERY] Cache MISS - calling Keepa API")
+        elif strategy:
+            logger.info(f"[DISCOVERY] Strategy '{strategy}' - bypassing cache for fresh sub-segments")
         elif force_refresh:
             logger.info(f"[DISCOVERY] FORCE REFRESH - bypassing cache")
 

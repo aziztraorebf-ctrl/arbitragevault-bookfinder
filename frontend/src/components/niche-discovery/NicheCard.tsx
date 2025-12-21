@@ -24,18 +24,20 @@ export function NicheCard({ niche, onExplore }: NicheCardProps) {
     <div className="bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 hover:border-purple-300 group">
       {/* Header */}
       <div className="p-6 border-b border-gray-100">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <span className="text-5xl">{niche.icon}</span>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            <span className="text-4xl flex-shrink-0">{niche.icon}</span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-bold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-2" title={niche.name}>
                 {niche.name}
               </h3>
-              <p className="text-sm text-gray-600 mt-1">{niche.description}</p>
+              <p className="text-sm text-gray-600 mt-1 line-clamp-2" title={niche.description}>
+                {niche.description}
+              </p>
             </div>
           </div>
           <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold ${qualityBadge.color}`}
+            className={`px-2 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${qualityBadge.color}`}
           >
             {qualityBadge.label}
           </span>

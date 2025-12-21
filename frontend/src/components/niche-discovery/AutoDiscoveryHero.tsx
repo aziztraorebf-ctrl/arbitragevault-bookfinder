@@ -30,7 +30,7 @@ const STRATEGY_BUTTONS: Array<{
     icon: 'BOOKS',
     gradient: 'from-green-500 to-emerald-600',
     hoverGradient: 'hover:from-green-600 hover:to-emerald-700',
-    description: 'Rotation 7-14 jours. Equilibre profit/velocite.',
+    description: 'Rotation 2-4 semaines. Equilibre profit/velocite.',
   },
   {
     strategy: 'textbooks_patience',
@@ -39,7 +39,7 @@ const STRATEGY_BUTTONS: Array<{
     icon: 'CLOCK',
     gradient: 'from-amber-500 to-orange-600',
     hoverGradient: 'hover:from-amber-600 hover:to-orange-700',
-    description: 'Rotation 4-6 semaines. Profit plus eleve, capital immobilise.',
+    description: 'Rotation 4-8 semaines. Profit plus eleve, capital immobilise.',
   },
 ]
 
@@ -65,8 +65,8 @@ export function AutoDiscoveryHero({
 
         {/* Subtitle */}
         <p className="text-white/90 text-lg mb-6 max-w-2xl">
-          Choisissez votre strategie : <strong>Standard</strong> pour rotation rapide (7-14j)
-          ou <strong>Patience</strong> pour profit eleve (4-6 semaines).
+          Choisissez votre strategie : <strong>Standard</strong> pour rotation moderee (2-4 sem)
+          ou <strong>Patience</strong> pour profit eleve (4-8 semaines).
           Validee avec vraies donnees Keepa en temps reel.
         </p>
 

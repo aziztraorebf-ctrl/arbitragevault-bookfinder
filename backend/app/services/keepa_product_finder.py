@@ -240,7 +240,8 @@ class KeepaProductFinderService:
         price_max: Optional[float],
         max_results: int,
         max_fba_sellers: Optional[int] = None,
-        exclude_amazon_seller: bool = True
+        exclude_amazon_seller: bool = True,
+        use_subsegments: bool = True
     ) -> List[str]:
         """
         Discover via Product Finder /query endpoint with post-filtering.
@@ -249,9 +250,14 @@ class KeepaProductFinderService:
         - Pre-filter: rootCategory + BSR + Price (API supports these)
         - Post-filter: Amazon exclusion + FBA count (API doesn't support combo)
 
+        Phase 9: Option B - BSR Sub-Segments
+        - Divides BSR range into 3 sub-segments for better coverage
+        - Each sub-segment queried separately, results merged
+        - Provides products across full BSR range instead of clustering at bottom
+
         Keepa API: /query
         Returns: Array of ASINs matching pre-filters
-        Cost: ~10 tokens per query
+        Cost: ~10 tokens per query (x3 for sub-segments = ~30 tokens)
 
         Why post-filtering:
         - API returns 0 results when combining current_AMAZON_lte:-1 with offerCountFBA_lte
@@ -266,75 +272,33 @@ class KeepaProductFinderService:
                     f"[PRODUCT_FINDER] Mapped category {category} -> root {root_category}"
                 )
 
-            # Build selection object for Product Finder
-            # Only include filters that work together in the API
-            # CRITICAL: Keepa API requires perPage >= 50, otherwise returns 400 error
-            selection = {
-                "rootCategory": root_category,
-                "perPage": max(50, min(100, max_results))  # Minimum 50, maximum 100
-            }
-
-            # Add BSR range if specified (convert to Keepa format)
-            if bsr_min is not None:
-                selection["current_SALES_gte"] = bsr_min
-            if bsr_max is not None:
-                selection["current_SALES_lte"] = bsr_max
-
-            # Add price range if specified (convert dollars to cents)
-            if price_min is not None:
-                selection["current_NEW_gte"] = int(price_min * 100)
-            if price_max is not None:
-                selection["current_NEW_lte"] = int(price_max * 100)
-
-            # NOTE: We do NOT add current_AMAZON_lte or offerCountFBA_lte here
-            # because API returns 0 when combined. These are applied post-filtering.
-
-            logger.info(
-                f"[PRODUCT_FINDER] Query: rootCategory={root_category}, "
-                f"BSR={bsr_min}-{bsr_max}, Price=${price_min}-${price_max}"
-            )
-
-            # Call Product Finder /query endpoint
-            endpoint = "/query"
-            params = {
-                "domain": domain,
-                "selection": json.dumps(selection)
-            }
-
-            response = await self.keepa_service._make_request(endpoint, params)
-
-            if not response:
-                logger.warning("[PRODUCT_FINDER] No response from /query endpoint")
-                return []
-
-            asins = response.get("asinList", [])
-            total = response.get("totalResults", 0)
-            tokens = response.get("tokensConsumed", 0)
-
-            logger.info(
-                f"[PRODUCT_FINDER] Found {total} total, returned {len(asins)} ASINs "
-                f"(cost: {tokens} tokens)"
-            )
-
-            if not asins:
-                logger.warning("[PRODUCT_FINDER] No ASINs found with current filters")
-                return []
-
-            # Post-filter via /product endpoint if Amazon/FBA filters needed
-            if exclude_amazon_seller or max_fba_sellers is not None:
-                logger.info(
-                    f"[PRODUCT_FINDER] Post-filtering {len(asins)} ASINs "
-                    f"(exclude_amazon={exclude_amazon_seller}, max_fba={max_fba_sellers})"
-                )
-                filtered_asins = await self._post_filter_asins(
+            # Phase 9: Option B - BSR Sub-Segments for better coverage
+            # Only use sub-segments if both bsr_min and bsr_max are specified
+            if use_subsegments and bsr_min is not None and bsr_max is not None:
+                return await self._discover_with_subsegments(
                     domain=domain,
-                    asins=asins[:100],  # Limit to 100 for token efficiency
+                    root_category=root_category,
+                    bsr_min=bsr_min,
+                    bsr_max=bsr_max,
+                    price_min=price_min,
+                    price_max=price_max,
+                    max_results=max_results,
                     max_fba_sellers=max_fba_sellers,
                     exclude_amazon_seller=exclude_amazon_seller
                 )
-                return filtered_asins[:max_results]
 
-            return asins[:max_results]
+            # Standard single query (fallback or when sub-segments not applicable)
+            return await self._single_product_finder_query(
+                domain=domain,
+                root_category=root_category,
+                bsr_min=bsr_min,
+                bsr_max=bsr_max,
+                price_min=price_min,
+                price_max=price_max,
+                max_results=max_results,
+                max_fba_sellers=max_fba_sellers,
+                exclude_amazon_seller=exclude_amazon_seller
+            )
 
         except Exception as e:
             logger.error(f"[PRODUCT_FINDER] Error: {e}")
@@ -350,6 +314,203 @@ class KeepaProductFinderService:
                 max_results=max_results,
                 max_fba_sellers=max_fba_sellers
             )
+
+    async def _discover_with_subsegments(
+        self,
+        domain: int,
+        root_category: int,
+        bsr_min: int,
+        bsr_max: int,
+        price_min: Optional[float],
+        price_max: Optional[float],
+        max_results: int,
+        max_fba_sellers: Optional[int] = None,
+        exclude_amazon_seller: bool = True
+    ) -> List[str]:
+        """
+        Phase 9: Option B - Discover products using BSR sub-segments.
+
+        Divides BSR range into 3 equal sub-segments and queries each separately.
+        This provides better coverage across the full BSR range instead of
+        clustering results at the lower BSR end.
+
+        Example for BSR 100K-250K:
+        - Segment 1: 100K-150K (lower third)
+        - Segment 2: 150K-200K (middle third)
+        - Segment 3: 200K-250K (upper third)
+
+        Args:
+            domain: Amazon domain ID
+            root_category: Root category for Product Finder
+            bsr_min: Minimum BSR for full range
+            bsr_max: Maximum BSR for full range
+            price_min: Minimum price filter
+            price_max: Maximum price filter
+            max_results: Maximum total results to return
+            max_fba_sellers: Maximum FBA sellers (competition filter)
+            exclude_amazon_seller: Exclude products where Amazon sells
+
+        Returns:
+            Merged list of ASINs from all sub-segments, deduplicated
+
+        Token cost: ~30 tokens (3 queries x 10 tokens each)
+        """
+        # Calculate sub-segment boundaries
+        bsr_range = bsr_max - bsr_min
+        segment_size = bsr_range // 3
+
+        segments = [
+            (bsr_min, bsr_min + segment_size),                    # Lower third
+            (bsr_min + segment_size, bsr_min + 2 * segment_size), # Middle third
+            (bsr_min + 2 * segment_size, bsr_max)                 # Upper third
+        ]
+
+        logger.info(
+            f"[PRODUCT_FINDER] Sub-segments strategy: "
+            f"[{segments[0][0]:,}-{segments[0][1]:,}], "
+            f"[{segments[1][0]:,}-{segments[1][1]:,}], "
+            f"[{segments[2][0]:,}-{segments[2][1]:,}]"
+        )
+
+        # Query each segment (sequentially to avoid rate limits)
+        all_asins = []
+        results_per_segment = max(20, max_results // 3)  # Distribute results across segments
+
+        for i, (seg_min, seg_max) in enumerate(segments):
+            try:
+                segment_asins = await self._single_product_finder_query(
+                    domain=domain,
+                    root_category=root_category,
+                    bsr_min=seg_min,
+                    bsr_max=seg_max,
+                    price_min=price_min,
+                    price_max=price_max,
+                    max_results=results_per_segment,
+                    max_fba_sellers=max_fba_sellers,
+                    exclude_amazon_seller=exclude_amazon_seller
+                )
+
+                logger.info(
+                    f"[PRODUCT_FINDER] Segment {i+1}/3 (BSR {seg_min:,}-{seg_max:,}): "
+                    f"{len(segment_asins)} ASINs"
+                )
+
+                all_asins.extend(segment_asins)
+
+                # Small delay between segments to avoid rate limiting
+                if i < len(segments) - 1:
+                    await asyncio.sleep(0.5)
+
+            except Exception as e:
+                logger.warning(f"[PRODUCT_FINDER] Segment {i+1} failed: {e}")
+                continue
+
+        # Deduplicate while preserving order
+        seen = set()
+        unique_asins = []
+        for asin in all_asins:
+            if asin not in seen:
+                seen.add(asin)
+                unique_asins.append(asin)
+
+        logger.info(
+            f"[PRODUCT_FINDER] Sub-segments total: {len(unique_asins)} unique ASINs "
+            f"(from {len(all_asins)} total)"
+        )
+
+        return unique_asins[:max_results]
+
+    async def _single_product_finder_query(
+        self,
+        domain: int,
+        root_category: int,
+        bsr_min: Optional[int],
+        bsr_max: Optional[int],
+        price_min: Optional[float],
+        price_max: Optional[float],
+        max_results: int,
+        max_fba_sellers: Optional[int] = None,
+        exclude_amazon_seller: bool = True
+    ) -> List[str]:
+        """
+        Execute a single Product Finder /query request.
+
+        Extracted from _discover_via_product_finder for reuse in sub-segments.
+
+        Args:
+            domain: Amazon domain ID
+            root_category: Root category (already mapped)
+            bsr_min: Minimum BSR filter
+            bsr_max: Maximum BSR filter
+            price_min: Minimum price in dollars
+            price_max: Maximum price in dollars
+            max_results: Maximum ASINs to return
+            max_fba_sellers: Maximum FBA sellers (post-filter)
+            exclude_amazon_seller: Exclude Amazon as seller (post-filter)
+
+        Returns:
+            List of ASINs matching filters
+        """
+        # Build selection object for Product Finder
+        # CRITICAL: Keepa API requires perPage >= 50, otherwise returns 400 error
+        selection = {
+            "rootCategory": root_category,
+            "perPage": max(50, min(100, max_results))
+        }
+
+        # Add BSR range if specified
+        if bsr_min is not None:
+            selection["current_SALES_gte"] = bsr_min
+        if bsr_max is not None:
+            selection["current_SALES_lte"] = bsr_max
+
+        # Add price range if specified (convert dollars to cents)
+        if price_min is not None:
+            selection["current_NEW_gte"] = int(price_min * 100)
+        if price_max is not None:
+            selection["current_NEW_lte"] = int(price_max * 100)
+
+        logger.debug(
+            f"[PRODUCT_FINDER] Query: rootCategory={root_category}, "
+            f"BSR={bsr_min}-{bsr_max}, Price=${price_min}-${price_max}"
+        )
+
+        # Call Product Finder /query endpoint
+        endpoint = "/query"
+        params = {
+            "domain": domain,
+            "selection": json.dumps(selection)
+        }
+
+        response = await self.keepa_service._make_request(endpoint, params)
+
+        if not response:
+            logger.warning("[PRODUCT_FINDER] No response from /query endpoint")
+            return []
+
+        asins = response.get("asinList", [])
+        total = response.get("totalResults", 0)
+        tokens = response.get("tokensConsumed", 0)
+
+        logger.debug(
+            f"[PRODUCT_FINDER] Found {total} total, returned {len(asins)} ASINs "
+            f"(cost: {tokens} tokens)"
+        )
+
+        if not asins:
+            return []
+
+        # Post-filter via /product endpoint if Amazon/FBA filters needed
+        if exclude_amazon_seller or max_fba_sellers is not None:
+            filtered_asins = await self._post_filter_asins(
+                domain=domain,
+                asins=asins[:100],
+                max_fba_sellers=max_fba_sellers,
+                exclude_amazon_seller=exclude_amazon_seller
+            )
+            return filtered_asins[:max_results]
+
+        return asins[:max_results]
 
     async def _post_filter_asins(
         self,

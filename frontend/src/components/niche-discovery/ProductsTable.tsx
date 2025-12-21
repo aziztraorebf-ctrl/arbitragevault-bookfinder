@@ -227,44 +227,59 @@ export function ProductsTable({ products, title = 'Produits Trouves' }: Products
                       </span>
                     </td>
 
-                    {/* Actions - Verify Button */}
+                    {/* Actions - Verify Button + Amazon Link */}
                     <td className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center gap-2">
-                        <button
-                          onClick={() => handleVerify(product)}
-                          disabled={verifyState?.loading}
-                          className={`
-                            px-3 py-1.5 text-xs font-medium rounded-md border transition-all
-                            ${verifyState?.loading
-                              ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                              : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300'
-                            }
-                          `}
-                        >
-                          {verifyState?.loading ? (
-                            <span className="flex items-center gap-1">
-                              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                  fill="none"
-                                />
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                                />
-                              </svg>
-                              Verification...
-                            </span>
-                          ) : (
-                            'Verifier'
-                          )}
-                        </button>
+                        {/* Row with both buttons */}
+                        <div className="flex items-center gap-2">
+                          {/* Amazon Link */}
+                          <a
+                            href={`https://www.amazon.com/dp/${product.asin}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 text-xs font-medium rounded-md border transition-all bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 hover:border-orange-300"
+                            title="Voir sur Amazon"
+                          >
+                            Amazon
+                          </a>
+
+                          {/* Verify Button */}
+                          <button
+                            onClick={() => handleVerify(product)}
+                            disabled={verifyState?.loading}
+                            className={`
+                              px-3 py-1.5 text-xs font-medium rounded-md border transition-all
+                              ${verifyState?.loading
+                                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300'
+                              }
+                            `}
+                          >
+                            {verifyState?.loading ? (
+                              <span className="flex items-center gap-1">
+                                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                    fill="none"
+                                  />
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                  />
+                                </svg>
+                                Verification...
+                              </span>
+                            ) : (
+                              'Verifier'
+                            )}
+                          </button>
+                        </div>
 
                         {/* Verification Result Badge */}
                         {verifyState?.result && (
@@ -357,11 +372,17 @@ function VerificationDetails({ result }: { result: VerificationResponse }) {
       <p className="text-sm font-medium text-gray-700 mb-3">{result.message}</p>
 
       {/* Current Data Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-3">
         {result.sell_price !== undefined && (
           <div>
-            <p className="text-xs text-gray-500">Prix de vente Amazon</p>
+            <p className="text-xs text-gray-500">Prix vente NEW</p>
             <p className="text-sm font-semibold text-blue-600">${result.sell_price.toFixed(2)}</p>
+          </div>
+        )}
+        {result.used_sell_price !== undefined && (
+          <div>
+            <p className="text-xs text-gray-500">Prix vente USED</p>
+            <p className="text-sm font-semibold text-purple-600">${result.used_sell_price.toFixed(2)}</p>
           </div>
         )}
         {result.current_bsr !== undefined && (
@@ -404,9 +425,10 @@ function VerificationDetails({ result }: { result: VerificationResponse }) {
               <thead className="bg-gray-100">
                 <tr>
                   <th className="px-2 py-1 text-left">Condition</th>
-                  <th className="px-2 py-1 text-right">Prix</th>
+                  <th className="px-2 py-1 text-right">Prix Achat</th>
                   <th className="px-2 py-1 text-right">Livraison</th>
-                  <th className="px-2 py-1 text-right">Total</th>
+                  <th className="px-2 py-1 text-right">Total Achat</th>
+                  <th className="px-2 py-1 text-right">Prix Vente</th>
                   <th className="px-2 py-1 text-right">Profit</th>
                   <th className="px-2 py-1 text-right">ROI</th>
                   <th className="px-2 py-1 text-center">FBA</th>
@@ -416,13 +438,14 @@ function VerificationDetails({ result }: { result: VerificationResponse }) {
                 {buyOpportunities.slice(0, 5).map((opp, idx) => (
                   <tr key={idx} className={idx === 0 ? 'bg-green-50' : ''}>
                     <td className="px-2 py-1.5">
-                      <span className={`inline-block px-1.5 py-0.5 rounded text-xs ${
-                        opp.condition_code === 1
+                      <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold ${
+                        opp.is_new
                           ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-700'
+                          : 'bg-purple-100 text-purple-700'
                       }`}>
-                        {opp.condition}
+                        {opp.is_new ? 'NEW' : 'USED'}
                       </span>
+                      <span className="ml-1 text-gray-500">{opp.condition}</span>
                     </td>
                     <td className="px-2 py-1.5 text-right font-mono">
                       ${opp.price.toFixed(2)}
@@ -433,10 +456,17 @@ function VerificationDetails({ result }: { result: VerificationResponse }) {
                     <td className="px-2 py-1.5 text-right font-mono font-semibold">
                       ${opp.total_cost.toFixed(2)}
                     </td>
-                    <td className="px-2 py-1.5 text-right font-mono font-semibold text-green-600">
+                    <td className="px-2 py-1.5 text-right font-mono font-semibold text-blue-600">
+                      ${opp.sell_price.toFixed(2)}
+                    </td>
+                    <td className={`px-2 py-1.5 text-right font-mono font-semibold ${
+                      opp.profit > 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
                       ${opp.profit.toFixed(2)}
                     </td>
-                    <td className="px-2 py-1.5 text-right font-mono text-green-600">
+                    <td className={`px-2 py-1.5 text-right font-mono ${
+                      opp.roi_percent > 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
                       {opp.roi_percent.toFixed(0)}%
                     </td>
                     <td className="px-2 py-1.5 text-center">
@@ -453,8 +483,9 @@ function VerificationDetails({ result }: { result: VerificationResponse }) {
           </div>
           {buyOpportunities.length > 0 && (
             <p className="text-xs text-gray-500 mt-2 italic">
-              Meilleure offre: ${buyOpportunities[0].total_cost.toFixed(2)}
-              {' '}({buyOpportunities[0].condition})
+              Meilleure offre: Acheter a ${buyOpportunities[0].total_cost.toFixed(2)}
+              {' '}({buyOpportunities[0].is_new ? 'NEW' : 'USED'})
+              {' -> Vendre a $'}{buyOpportunities[0].sell_price.toFixed(2)}
               {' '}= ${buyOpportunities[0].profit.toFixed(2)} profit
             </p>
           )}

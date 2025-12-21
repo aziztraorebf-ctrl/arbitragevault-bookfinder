@@ -1156,6 +1156,7 @@ class KeepaProductFinderService:
                         "asin": asin,
                         "title": title[:100],  # Truncate long titles
                         "price": float(price),
+                        "current_price": float(price),  # Alias for frontend compatibility
                         "bsr": bsr,
                         "roi_percent": roi_percent,
                         "velocity_score": velocity_score,
@@ -1191,13 +1192,84 @@ class KeepaProductFinderService:
             )
 
 
-        # Sort by combined score (ROI + Velocity)
-        scored_products.sort(
-            key=lambda p: p["roi_percent"] * 0.6 + p["velocity_score"] * 0.4,
-            reverse=True
-        )
+        # Phase 9: Balanced selection across BSR range
+        # Instead of pure score sorting (which clusters at low BSR),
+        # we ensure representation from all BSR segments
+        if bsr_min is not None and bsr_max is not None and len(scored_products) > max_results:
+            # Calculate BSR segments (same logic as sub-segments discovery)
+            bsr_range = bsr_max - bsr_min
+            segment_size = bsr_range // 3
+            segments_bounds = [
+                (bsr_min, bsr_min + segment_size),                    # Lower third
+                (bsr_min + segment_size, bsr_min + 2 * segment_size), # Middle third
+                (bsr_min + 2 * segment_size, bsr_max + 1)             # Upper third (+1 for inclusive)
+            ]
 
-        return scored_products[:max_results]
+            # Group products by BSR segment
+            segment_products = [[], [], []]
+            for p in scored_products:
+                product_bsr = p.get("bsr", 0)
+                for i, (seg_min, seg_max) in enumerate(segments_bounds):
+                    if seg_min <= product_bsr < seg_max:
+                        segment_products[i].append(p)
+                        break
+                else:
+                    # Product outside expected range - add to closest segment
+                    if product_bsr < bsr_min:
+                        segment_products[0].append(p)
+                    else:
+                        segment_products[2].append(p)
+
+            # Sort each segment by score internally
+            for segment in segment_products:
+                segment.sort(
+                    key=lambda p: p["roi_percent"] * 0.6 + p["velocity_score"] * 0.4,
+                    reverse=True
+                )
+
+            # Take balanced representation from each segment
+            results_per_segment = max(1, max_results // 3)
+            balanced_results = []
+
+            for i, segment in enumerate(segment_products):
+                # Take up to results_per_segment from each segment
+                segment_take = segment[:results_per_segment]
+                balanced_results.extend(segment_take)
+                logger.debug(
+                    f"[SCORING] Segment {i+1}: {len(segment)} total, taking {len(segment_take)}"
+                )
+
+            # If we need more products, take remaining from any segment
+            remaining_needed = max_results - len(balanced_results)
+            if remaining_needed > 0:
+                all_remaining = []
+                for i, segment in enumerate(segment_products):
+                    all_remaining.extend(segment[results_per_segment:])
+                all_remaining.sort(
+                    key=lambda p: p["roi_percent"] * 0.6 + p["velocity_score"] * 0.4,
+                    reverse=True
+                )
+                balanced_results.extend(all_remaining[:remaining_needed])
+
+            # Final sort by score for display order
+            balanced_results.sort(
+                key=lambda p: p["roi_percent"] * 0.6 + p["velocity_score"] * 0.4,
+                reverse=True
+            )
+
+            logger.info(
+                f"[SCORING] Balanced selection: {len(balanced_results)} products "
+                f"from segments [{len(segment_products[0])}, {len(segment_products[1])}, {len(segment_products[2])}]"
+            )
+
+            return balanced_results[:max_results]
+        else:
+            # Fallback to simple score sorting if no BSR range specified
+            scored_products.sort(
+                key=lambda p: p["roi_percent"] * 0.6 + p["velocity_score"] * 0.4,
+                reverse=True
+            )
+            return scored_products[:max_results]
 
     def _calculate_fees(self, price: Decimal, fees_config) -> Decimal:
         """Calculer fees totaux."""

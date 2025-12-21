@@ -205,6 +205,7 @@ class CacheService:
                 "asin": cache_entry.asin,
                 "title": cache_entry.title,
                 "price": cache_entry.price,
+                "current_price": cache_entry.price,  # Alias for frontend compatibility
                 "bsr": cache_entry.bsr,
                 "roi_percent": cache_entry.roi_percent,
                 "velocity_score": cache_entry.velocity_score,

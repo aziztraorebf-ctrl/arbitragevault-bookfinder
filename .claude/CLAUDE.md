@@ -269,6 +269,90 @@ Repondre plutot : "Tache en cours. Il me reste a : [liste des verifications manq
 
 ---
 
+## SENIOR REVIEW GATE (Phases Majeures)
+
+### Objectif
+Verification finale par Claude en mode "Senior Developer" pour identifier les gaps, incoherences et manques avant commit final d'une phase majeure.
+
+### Declenchement
+
+**Automatique (suggestion)** : Claude PROPOSE le Senior Review quand :
+- Une phase numerotee est completee (Phase 7, 8, 9...)
+- Un audit ou refactor significatif est termine
+- Le checkpoint validation standard est passe
+
+**Manuel** : L'utilisateur peut invoquer `/senior-review` a tout moment.
+
+### Processus
+
+**Etape 1 : Changement de posture**
+Claude annonce : "Je passe en mode Senior Developer Review"
+- Ne plus defendre le code implemente
+- Chercher activement les failles et gaps
+- Penser utilisateur final, pas juste technique
+
+**Etape 2 : 5 Questions OBLIGATOIRES**
+
+Claude doit repondre a CHAQUE question avec analyse concrete :
+
+| # | Question |
+|---|----------|
+| 1 | Quels GAPS existent dans la couverture de tests ? |
+| 2 | Les services combines peuvent-ils produire des resultats ABSURDES ? (coherence) |
+| 3 | Les seuils/valeurs hardcodes sont-ils documentes et justifies ? |
+| 4 | Le frontend est-il teste pour cette feature/phase ? |
+| 5 | Quels edge cases UTILISATEUR ne sont pas geres ? |
+
+**Etape 3 : Verdict**
+
+Claude produit un verdict structure :
+
+```
+## Senior Review Verdict - [Phase/Feature]
+
+**Gaps identifies :** [Nombre]
+
+| # | Gap | Severite | Action proposee |
+|---|-----|----------|-----------------|
+| 1 | [Description] | Critique/Important/Mineur | [Fix] |
+
+**Verdict :**
+- [ ] PRET pour commit final
+- [ ] NEEDS WORK (gaps a corriger)
+```
+
+**Etape 4 : Suite selon verdict**
+
+| Verdict | Action |
+|---------|--------|
+| PRET (0 gap critique) | Proposer commit final |
+| NEEDS WORK (1-3 gaps) | Proposer mini-plan, attendre validation user |
+| NEEDS WORK (4+ gaps) | Questionner si phase etait vraiment prete |
+
+### Anti-Boucle (MAX 2 iterations)
+
+Si apres 2 iterations de Senior Review des gaps persistent :
+
+1. Documenter les gaps non resolus
+2. Proposer a l'utilisateur :
+   - A) Committer avec gaps documentes dans KNOWN_ISSUES.md
+   - B) Continuer a iterer (non recommande)
+   - C) Revoir l'approche/architecture
+3. ATTENDRE choix explicite - NE PAS boucler
+
+### Ce que Senior Review N'EST PAS
+
+- Applicable a chaque petit fix (seulement phases majeures)
+- Une raison de tout refaire ou over-engineer
+- Un blocage indefini
+- Obligatoire si user dit explicitement "skip review"
+
+### Slash Command
+
+`/senior-review` - Declenche manuellement le processus Senior Review Gate
+
+---
+
 ## Playwright Skills Evaluation (OBLIGATOIRE)
 
 ### Quand evaluer Playwright
@@ -365,5 +449,5 @@ Voulez-vous que je lance `playwright-skill` pour creer ce test?"
 
 ---
 
-**Version** : 3.2 - Zero-Tolerance Engineering + Mandatory Checkpoints + Playwright Evaluation
-**Mise a jour** : 2025-12-08
+**Version** : 3.3 - Zero-Tolerance Engineering + Mandatory Checkpoints + Playwright Evaluation + Senior Review Gate
+**Mise a jour** : 2025-12-25

@@ -66,19 +66,19 @@ export function VelocityDetailsSection({ product }: AccordionSectionProps) {
         )}
 
         {/* Price Volatility */}
-        {priceVolatility !== null && priceVolatility !== undefined && (
+        {priceVolatility != null && (
           <div className="flex items-center justify-between">
             <span className="text-gray-600">Price Swings:</span>
-            <span className="font-medium text-gray-900">±{priceVolatility.toFixed(1)}%</span>
+            <span className="font-medium text-gray-900">+/-{priceVolatility.toFixed(1)}%</span>
           </div>
         )}
 
         {/* Price Range */}
-        {priceRange && (
+        {priceRange?.min != null && priceRange?.max != null && (
           <div className="flex items-center justify-between">
             <span className="text-gray-600">Price Range:</span>
             <span className="font-medium text-gray-900">
-              ${priceRange.min.toFixed(2)} – ${priceRange.max.toFixed(2)}
+              ${priceRange.min.toFixed(2)} - ${priceRange.max.toFixed(2)}
             </span>
           </div>
         )}
@@ -87,16 +87,16 @@ export function VelocityDetailsSection({ product }: AccordionSectionProps) {
       {/* Indicateur visuel selon velocity tier */}
       <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs">
         {velocityTier === 'fast' && (
-          <span className="text-green-700">🚀 Rotation rapide – Opportunité quick flip</span>
+          <span className="text-green-700">🚀 Rotation rapide - Opportunité quick flip</span>
         )}
         {velocityTier === 'medium' && (
-          <span className="text-blue-700">⚡ Rotation moyenne – Vente sous 30-60 jours</span>
+          <span className="text-blue-700">⚡ Rotation moyenne - Vente sous 30-60 jours</span>
         )}
         {velocityTier === 'slow' && (
-          <span className="text-orange-700">🐢 Rotation lente – Risque de stock dormant</span>
+          <span className="text-orange-700">🐢 Rotation lente - Risque de stock dormant</span>
         )}
         {velocityTier === 'very_slow' && (
-          <span className="text-red-700">❌ Rotation très lente – Éviter sauf niche spécifique</span>
+          <span className="text-red-700">❌ Rotation très lente - Éviter sauf niche spécifique</span>
         )}
         {velocityTier === 'unknown' && (
           <span className="text-gray-700">⚠️ Données insuffisantes pour évaluation précise</span>

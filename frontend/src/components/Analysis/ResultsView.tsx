@@ -316,7 +316,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
                     </td>
                     {/* ROI USED Column */}
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {result?.pricing?.used?.roi_percentage !== null && result?.pricing?.used?.roi_percentage !== undefined ? (
+                      {result?.pricing?.used?.roi_percentage != null ? (
                         <span className={`font-medium ${
                           Number(result.pricing.used.roi_percentage) >= 30 ? 'text-green-600' :
                           Number(result.pricing.used.roi_percentage) >= 15 ? 'text-yellow-600' :

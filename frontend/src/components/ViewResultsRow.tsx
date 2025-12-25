@@ -116,7 +116,7 @@ export function ViewResultsRow({ product, isExpanded, onToggle }: ViewResultsRow
 
         {/* ROI USED */}
         <td className="px-4 py-3 text-center text-sm">
-          {usedROI !== undefined && usedROI !== null ? (
+          {usedROI != null ? (
             <span className={`font-semibold ${
               usedROI >= 30 ? 'text-green-600' :
               usedROI >= 15 ? 'text-yellow-600' :

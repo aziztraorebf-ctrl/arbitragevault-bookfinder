@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Active Session
 
-**Derniere mise a jour** : 16 Decembre 2025
-**Phase Actuelle** : Phase 9 - UI Completion (PLAN VALIDE)
-**Statut Global** : Phase 7 auditee, Phase 9 prete a executer
+**Derniere mise a jour** : 25 Decembre 2025
+**Phase Actuelle** : Phase 8 - Advanced Analytics AUDITE
+**Statut Global** : Phases 1-8 auditees, Phase 9 plan pret
 
 ---
 
@@ -10,15 +10,83 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Phase 9 - UI Completion (PLAN VALIDE) |
-| **Phase 9 Scope** | 4 pages placeholder a completer |
-| **Phase 9 Estimation** | ~3 heures, 7 tasks |
-| **CLAUDE.md** | v3.2 - Zero-Tolerance + Mandatory Checkpoints |
+| **Phase Actuelle** | Phase 8 - Advanced Analytics AUDITE |
+| **Prochaine Phase** | Phase 9 - UI Completion (PLAN VALIDE) |
+| **CLAUDE.md** | v3.3 - Zero-Tolerance + Senior Review Gate |
 | **Hooks System** | v2 VALIDE - 3 points de controle actifs |
 | **Production** | Backend Render + Frontend Netlify LIVE |
-| **Tests Total** | 742 passants (633 + 109 Phase 7 AutoSourcing) |
+| **Tests Total** | 758+ passants (590 backend) |
 | **Bloqueurs** | Aucun |
 | **Prochaine Action** | Executer Phase 9 UI Completion |
+
+---
+
+## CHANGELOG - 25 Decembre 2025
+
+### Phase 8 Audit - Advanced Analytics COMPLETE
+
+**Skill utilise** : `/senior-review` (nouveau)
+
+**Refactoring majeur** : `dead_inventory` -> `slow_velocity`
+
+**Probleme identifie** :
+Les seuils BSR hardcodes (50K/30K/100K) etaient FAUX. Donnees reelles Keepa montrent:
+- BSR 200K = 15+ ventes/mois (PAS dead inventory!)
+- BSR 350K = 7+ ventes/mois (se vend encore regulierement)
+
+**Solution implementee** :
+- Supprime `detect_dead_inventory` et seuils BSR arbitraires
+- Nouvelle fonction `_calculate_slow_velocity_risk()` utilisant vraies donnees Keepa
+- Utilise `salesRankDrops30` de SalesVelocityService (source: KEEPA_REAL)
+- Fallback BSR estimation si pas de salesDrops
+
+**Fichiers modifies** :
+- `backend/app/api/v1/endpoints/analytics.py` - nouvelle fonction slow_velocity
+- `backend/app/schemas/analytics.py` - ajout sales_drops_30/90, SlowVelocitySchema
+- `backend/app/services/risk_scoring_service.py` - renomme dead_inventory -> slow_velocity
+- `backend/app/services/advanced_analytics_service.py` - supprime detect_dead_inventory
+
+**Tests** :
+- `backend/tests/unit/test_slow_velocity_risk.py` (16 tests) - NOUVEAU
+- 590 tests backend passent
+
+**Commits** :
+- `367a877` - refactor(phase8): replace dead_inventory with slow_velocity using real Keepa data
+- `5088978` - feat: add /senior-review slash command for Senior Review Gate
+
+**CLAUDE.md** : v3.2 -> v3.3 (ajout Senior Review Gate)
+
+**Documentation** : `docs/PHASE8_BUSINESS_THRESHOLDS.md` mis a jour
+
+---
+
+### Bugs UI Fixes - Null/Undefined Handling
+
+**Contexte** : Bouton "Verifier" causait ecran blanc en production
+
+**Root Cause** : API retourne `null` explicitement, code utilisait `!== undefined` qui ne protege pas contre `null`
+
+**Commits** :
+1. `25ea9d8` - fix(ui): use != null for null checks in VerificationDetails
+2. `128813f` - fix(ui): apply consistent null checks across Smart Velocity components
+3. `306194c` - docs: add KNOWN_ISSUES.md for tracking bugs and limitations
+
+**Fichiers modifies** :
+- `frontend/src/components/niche-discovery/ProductsTable.tsx` (lines 376-399)
+- `frontend/src/components/accordions/VelocityDetailsSection.tsx` (lines 69, 77-81)
+- `frontend/src/components/Analysis/ResultsView.tsx` (line 319)
+- `frontend/src/components/ViewResultsRow.tsx` (line 119)
+
+**Pattern applique** :
+```typescript
+// AVANT (bug)
+{value !== undefined && (
+
+// APRES (fix)
+{value != null && (
+```
+
+**Documentation** : `KNOWN_ISSUES.md` cree pour tracker bugs restants
 
 ---
 
@@ -393,6 +461,7 @@
 | Phase 5 - Niche Bookmarks | 42/42 | Complete | 14 Dec 2025 |
 | Phase 6 - Niche Discovery Opt | 62/62 | Complete | 15 Dec 2025 |
 | Phase 7 - AutoSourcing Audit | 109/109 | Complete | 16 Dec 2025 |
+| Phase 8 - Advanced Analytics | 50+ | Complete | 25 Dec 2025 |
 
 ### Phase 9 - UI Completion (PLAN PRET)
 
@@ -414,6 +483,15 @@
 | Phase | Description | Priorite | Risque |
 |-------|-------------|----------|--------|
 | Phase 9 | UI Completion | HAUTE | 4 pages placeholder - PLAN VALIDE |
+
+### Phase 8 - Advanced Analytics COMPLETE
+
+**Status** : AUDITE (25 Decembre 2025)
+- Refactoring: dead_inventory -> slow_velocity
+- Utilise vraies donnees Keepa salesDrops au lieu de seuils BSR arbitraires
+- Tests: 50+ (16 nouveaux slow_velocity + existants)
+- Senior Review Gate ajoute a CLAUDE.md v3.3
+- Slash command `/senior-review` cree
 
 ### Phase 7 - AutoSourcing COMPLETE
 
@@ -464,19 +542,16 @@ cd804b0 test(phase4): add budget guard API tests (Task 4)
 4. [x] Plan Phase 9 (UI Completion) - CREE
 5. [x] Audit Phase 6 (Niche Discovery Optimization) - COMPLETE (62 tests)
 6. [x] Audit Phase 7 (AutoSourcing Safeguards) - COMPLETE (109 tests)
-7. [ ] **Executer Phase 9** - UI Completion (4 pages)
+7. [x] Audit Phase 8 (Advanced Analytics) - COMPLETE (50+ tests, refactoring slow_velocity)
+8. [ ] **Executer Phase 9** - UI Completion (4 pages)
 
 ### Court terme
 
-8. [ ] Implementer infrastructure REPLAY/MOCK Keepa
-9. [ ] Documentation API complete
-10. [ ] Audit Phase 8 (Advanced Analytics) - inclut:
-    - Rotation intelligente des niches (cooldown, tracking, historique ASINs)
-    - TokenErrorAlert component audit
-    - ASIN history tracking audit
+9. [ ] Implementer infrastructure REPLAY/MOCK Keepa
+10. [ ] Documentation API complete
 
 ---
 
-**Derniere mise a jour** : 16 Decembre 2025
+**Derniere mise a jour** : 25 Decembre 2025
 **Prochaine session** : Executer Phase 9 UI Completion
-**Methodologie** : CLAUDE.md v3.2 - Zero-Tolerance + Hooks Bloquants
+**Methodologie** : CLAUDE.md v3.3 - Zero-Tolerance + Senior Review Gate

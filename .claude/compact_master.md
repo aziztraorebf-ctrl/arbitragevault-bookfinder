@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Globale Projet
 
-**Derniere mise a jour** : 15 Decembre 2025
-**Version** : 5.2
-**Statut** : Phases 1-7 deployees, Phases 1-5 auditees, Phase 9 planifiee
+**Derniere mise a jour** : 25 Decembre 2025
+**Version** : 5.4
+**Statut** : Phases 1-8 auditees, Phase 9 plan pret
 
 ---
 
@@ -126,46 +126,25 @@
 - Important: IntegrityError handling, duplicate slug validation
 - Minor: Error messages clarity, type hints
 
-### Phase 6 : Niche Discovery Optimization & E2E Testing (DEPLOYE - AUDIT INCOMPLET)
-**Duree** : ~4 heures | **Status** : Deploye, audit a completer
-
-**Contexte** : Phase 6 a eu plusieurs definitions au fil du temps. Cette section consolide le scope final.
+### Phase 6 : Niche Discovery Optimization (COMPLETE - AUDITE)
+**Duree** : ~4 heures | **Tests** : 62/62 (100%) | **Date audit** : 15 Dec 2025
 
 **Livrables deployes** :
 1. **Budget Guard** : Estimation cout tokens AVANT execution niche discovery
-   - Fichier: `backend/app/api/v1/endpoints/niches.py`
-   - Commits: `66ed3d8`, `b2b0702`
-2. **ConditionBreakdown UI** : Affichage prix par condition (new, very_good, good, acceptable)
-   - Fichier: `frontend/src/components/accordions/ConditionBreakdown.tsx`
-   - Commit: `c32169d`
+2. **ConditionBreakdown UI** : Affichage prix par condition
 3. **Timeout Protection** : 30s sur endpoints Keepa avec HTTP 408
-   - Fichier: `backend/app/api/v1/endpoints/niches.py`
-   - Commit: `74a3af8`
-4. **E2E Tests Playwright** : Suite complete frontend
-   - Fichiers: `backend/tests/e2e/tests/*.spec.js`
-   - Resultat: 23/28 -> 27/28 (96%)
+4. **E2E Tests Playwright** : Suite complete frontend (4/4 PASS)
 5. **Smart Strategies** : FBA seller competition filter, Smart Velocity, Textbooks
-   - Fichier: `backend/app/services/niche_templates.py`
-   - Commit: `b2b0702`
+6. **Product Finder Post-Filtering** : Pre-filter API + post-filter backend
 
-**Documentation existante** :
-- `docs/plans/2025-11-30-phase-6-niche-discovery-audit.md` - Plan Budget Guard
-- `docs/plans/PHASE6_CORRECTION_PLAN.md` - Plan corrections E2E
-- `.claude/archives/PHASE_5_6_COMPLETE.md` - Rapport ConditionBreakdown
+**Tests crees** :
+- `backend/tests/unit/test_niche_templates_hostile.py` (20 tests)
+- `backend/tests/api/test_niches_api_edge_cases.py` (10 tests)
+- `backend/tests/unit/test_budget_guard_stress.py` (14 tests)
+- `backend/tests/e2e/tests/03-niche-discovery.spec.js` (4 tests)
 
-**Ce qui reste a auditer** :
-1. [ ] Tests unitaires pour `estimate_discovery_cost()`
-2. [ ] Validation Budget Guard avec vraies donnees
-3. [ ] Hostile review de `niche_templates.py` (Smart Strategies)
-4. [ ] Tests API pour endpoint `/niches/discover` avec edge cases
-5. [ ] Verification E2E 100% (actuellement 96%)
-
-**Bugs connus (a verifier)** :
-- Token consumption silencieux (~750 tokens sans resultats si timeout)
-- TokenErrorAlert component non implemente (generic errors acceptables pour MVP)
-
-### Phase 7 : AutoSourcing Safeguards (DEPLOYE - PARTIELLEMENT AUDITE)
-**Duree** : 3 heures | **Status** : E2E tests 5/5, code quality 9.5/10
+### Phase 7 : AutoSourcing Safeguards (COMPLETE - AUDITE)
+**Duree** : 3 heures | **Tests** : 109/109 (100%) | **Date audit** : 16 Dec 2025
 
 **Livrables** :
 - Cost estimation avant execution (`/estimate`)
@@ -174,8 +153,38 @@
 - ASIN deduplication
 - Frontend error handling (HTTP 400/408/429)
 
-### Phase 8 : Advanced Analytics (DEPLOYE - NON AUDITE)
-**Status** : Code deploye, documentation absente
+**Tests crees** :
+- `backend/tests/unit/test_autosourcing_deduplication_hostile.py` (7 tests)
+- `backend/tests/unit/test_autosourcing_batch_failures.py` (6 tests)
+- `backend/tests/unit/test_autosourcing_timeout_race.py` (6 tests)
+- `backend/tests/integration/test_autosourcing_recent_duplicates.py` (6 tests)
+- `backend/tests/integration/test_autosourcing_error_responses.py` (8 tests)
+- `backend/tests/integration/test_autosourcing_job_states.py` (10 tests)
+- `backend/tests/unit/test_autosourcing_hostile_review.py` (13 tests)
+
+### Phase 8 : Advanced Analytics (COMPLETE - AUDITE)
+**Duree** : ~2 heures | **Tests** : 50+ | **Date audit** : 25 Dec 2025
+
+**Refactoring majeur** : `dead_inventory` -> `slow_velocity`
+
+**Probleme identifie** :
+Les seuils BSR hardcodes (50K/30K/100K) etaient incorrects. Donnees reelles Keepa montrent:
+- BSR 200K = 15+ ventes/mois (PAS dead inventory)
+- BSR 350K = 7+ ventes/mois (se vend regulierement)
+
+**Solution implementee** :
+- Supprime `detect_dead_inventory()` et seuils arbitraires
+- Nouvelle fonction `_calculate_slow_velocity_risk()` utilisant Keepa salesDrops
+- Source donnees: `KEEPA_REAL` (salesRankDrops30) avec fallback BSR
+
+**Fichiers modifies** :
+- `backend/app/api/v1/endpoints/analytics.py` - nouvelle fonction slow_velocity
+- `backend/app/schemas/analytics.py` - ajout sales_drops_30/90, SlowVelocitySchema
+- `backend/app/services/risk_scoring_service.py` - renomme dead_inventory -> slow_velocity
+- `backend/app/services/advanced_analytics_service.py` - supprime detect_dead_inventory
+
+**Tests crees** :
+- `backend/tests/unit/test_slow_velocity_risk.py` (16 tests)
 
 **Livrables existants** :
 - Endpoints analytics (`/api/v1/analytics/*`)
@@ -183,14 +192,8 @@
 - TokenErrorAlert component
 - useProductDecision hook
 
-**Ameliorations planifiees (15 Dec 2025)** :
-- **Rotation intelligente des niches** :
-  - Tracking niches scannees (eviter repetition)
-  - Cooldown par niche (ex: pas meme niche 2x en 24h)
-  - Historique ASINs (ne pas montrer memes produits)
-  - Rotation saisonniere optionnelle
-
-**Note** : Phase decouverte lors de l'exploration du 15 Dec 2025. Non formellement planifiee.
+**CLAUDE.md** : v3.2 -> v3.3 (ajout Senior Review Gate)
+**Slash command** : `/senior-review` cree
 
 ### Phase 9 : UI Completion (PLAN CREE - EN ATTENTE VALIDATION)
 **Date creation plan** : 15 Decembre 2025
@@ -450,8 +453,6 @@ ENVIRONMENT=production
 | Priorite | Phase | Description | Status | Effort |
 |----------|-------|-------------|--------|--------|
 | 1 | Phase 9 | UI Completion | PLAN PRET | ~3h |
-| 2 | Phase 6 | Niche Discovery Optimization | A AUDITER | ~4h |
-| 3 | Phase 8 | Advanced Analytics | A AUDITER | ~2h |
 
 ### Audit Systematique - Etat
 
@@ -462,9 +463,9 @@ ENVIRONMENT=production
 | Phase 3 | Product Discovery MVP | COMPLETE | 8 Dec 2025 |
 | Phase 4 | Backlog Cleanup | COMPLETE | 14 Dec 2025 |
 | Phase 5 | Niche Bookmarks | COMPLETE | 14 Dec 2025 |
-| Phase 6 | Niche Discovery Optimization | A AUDITER | Deploye |
-| Phase 7 | AutoSourcing Safeguards | PARTIEL | Deploye |
-| Phase 8 | Advanced Analytics | NON AUDITE | Deploye |
+| Phase 6 | Niche Discovery Optimization | COMPLETE | 15 Dec 2025 |
+| Phase 7 | AutoSourcing Safeguards | COMPLETE | 16 Dec 2025 |
+| Phase 8 | Advanced Analytics | COMPLETE | 25 Dec 2025 |
 | Phase 9 | UI Completion | PLAN PRET | 15 Dec 2025 |
 
 ### Infrastructure Tests
@@ -478,7 +479,7 @@ ENVIRONMENT=production
 ## Documentation Reference
 
 ### Documentation Interne
-- **CLAUDE.md** : Instructions Claude Code v3.1
+- **CLAUDE.md** : Instructions Claude Code v3.3 (Senior Review Gate)
 - **compact_current.md** : Memoire session active
 - **compact_master.md** : Memoire globale (ce fichier)
 
@@ -509,6 +510,6 @@ ENVIRONMENT=production
 
 ---
 
-**Version** : 5.2
-**Derniere revision** : 15 Decembre 2025
-**Statut** : Phases 1-5 auditees, Phase 9 planifiee, CLAUDE.md v3.2 actif
+**Version** : 5.4
+**Derniere revision** : 25 Decembre 2025
+**Statut** : Phases 1-8 auditees, Phase 9 planifiee

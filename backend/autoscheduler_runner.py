@@ -226,8 +226,7 @@ class AutoSchedulerRunner:
                 
                 # Extraction des produits avec tiers
                 products_with_tiers = []
-                tokens_estimated = 0  # TODO: récupérer vrais tokens depuis KeepaService
-                
+
                 for pick in job_result.discovered_products:
                     product_data = {
                         "asin": pick.asin,

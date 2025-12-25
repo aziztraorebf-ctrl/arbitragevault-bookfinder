@@ -405,8 +405,10 @@ def sanitize_keepa_response(data: Any) -> Any:
     if hasattr(data, 'item'):
         try:
             return data.item()
-        except Exception:
-            pass
+        except (ValueError, TypeError, AttributeError) as e:
+            # Log the error instead of silently ignoring
+            logger.debug(f"Failed to convert numpy scalar via item(): {e}")
+            # Fall through to dict/list handling below
 
     # Handle dictionaries - recurse into values
     if isinstance(data, dict):

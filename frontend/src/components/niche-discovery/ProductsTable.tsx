@@ -373,25 +373,25 @@ function VerificationDetails({ result }: { result: VerificationResponse }) {
 
       {/* Current Data Grid */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-3">
-        {result.sell_price !== undefined && (
+        {result.sell_price != null && (
           <div>
             <p className="text-xs text-gray-500">Prix vente NEW</p>
             <p className="text-sm font-semibold text-blue-600">${result.sell_price.toFixed(2)}</p>
           </div>
         )}
-        {result.used_sell_price !== undefined && (
+        {result.used_sell_price != null && (
           <div>
             <p className="text-xs text-gray-500">Prix vente USED</p>
             <p className="text-sm font-semibold text-purple-600">${result.used_sell_price.toFixed(2)}</p>
           </div>
         )}
-        {result.current_bsr !== undefined && (
+        {result.current_bsr != null && (
           <div>
             <p className="text-xs text-gray-500">BSR actuel</p>
             <p className="text-sm font-semibold">#{result.current_bsr.toLocaleString()}</p>
           </div>
         )}
-        {result.current_fba_count !== undefined && (
+        {result.current_fba_count != null && result.current_fba_count >= 0 && (
           <div>
             <p className="text-xs text-gray-500">Vendeurs FBA</p>
             <p className="text-sm font-semibold">{result.current_fba_count}</p>

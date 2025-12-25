@@ -42,7 +42,7 @@ test.describe('Phase 8 Analytics API - E2E Audit', () => {
       expect(data).toHaveProperty('price_stability')
       expect(data).toHaveProperty('roi')
       expect(data).toHaveProperty('competition')
-      expect(data).toHaveProperty('dead_inventory_risk')
+      expect(data).toHaveProperty('slow_velocity_risk')  // Renamed from dead_inventory_risk
 
       // Verify velocity structure
       expect(data.velocity).toHaveProperty('velocity_score')

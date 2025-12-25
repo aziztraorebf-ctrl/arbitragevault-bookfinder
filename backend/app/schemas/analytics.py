@@ -15,6 +15,10 @@ class AnalyticsRequestSchema(BaseModel):
     bsr: Optional[int] = None
     bsr_history: Optional[List[Dict[str, Any]]] = None
 
+    # Keepa real data - used for accurate velocity calculation
+    sales_drops_30: Optional[int] = None  # From Keepa salesRankDrops30
+    sales_drops_90: Optional[int] = None  # From Keepa salesRankDrops90
+
     price_history: Optional[List[Dict[str, Any]]] = None
     estimated_buy_price: Decimal = Field(..., decimal_places=2)
     estimated_sell_price: Decimal = Field(..., decimal_places=2)
@@ -90,14 +94,13 @@ class CompetitionAnalysisSchema(BaseModel):
     amazon_risk: str
 
 
-class DeadInventorySchema(BaseModel):
-    """Dead inventory detection response."""
-    is_dead_risk: bool
-    risk_score: float
-    threshold: int
-    bsr_current: Optional[int] = None
-    reason: str
-    days_to_threshold: Optional[float] = None
+class SlowVelocitySchema(BaseModel):
+    """Slow velocity risk assessment based on real Keepa salesDrops data."""
+    velocity_tier: str  # PREMIUM, HIGH, MEDIUM, LOW, DEAD
+    monthly_sales_estimate: int
+    risk_score: float  # 0-100, higher = slower/riskier
+    tier_description: str
+    data_source: str  # 'KEEPA_REAL' or 'ESTIMATED'
 
 
 class RiskComponentSchema(BaseModel):

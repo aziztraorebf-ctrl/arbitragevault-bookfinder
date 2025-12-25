@@ -31,23 +31,36 @@ class TestAnalyticsGolden:
         assert result['risk_level'] == 'LOW', \
             f"BSR 5000 should be LOW risk, got {result['risk_level']}"
 
-    def test_high_bsr_book_indicates_slow_sales(self):
+    def test_high_bsr_book_with_real_sales_data(self):
         """
-        BUSINESS RULE: A book with BSR > 100,000 sells slowly.
-        Expected: This is detected as potential slow-moving inventory.
+        BUSINESS RULE: Use REAL Keepa salesDrops data, not arbitrary BSR thresholds.
 
-        Real-world context: BSR 150,000 in Books might take weeks/months to sell.
+        REFACTORED: Old test used detect_dead_inventory with arbitrary BSR thresholds.
+        Real data shows BSR 150,000 can still have 15+ sales/month (NOT dead inventory).
+
+        New test validates that velocity scoring uses the SalesVelocityService
+        which bases risk on actual salesDrops data.
         """
-        dead_inventory = AdvancedAnalyticsService.detect_dead_inventory(
+        # Import the new function
+        from app.api.v1.endpoints.analytics import _calculate_slow_velocity_risk
+
+        # With real salesDrops data showing 10 sales/month
+        result = _calculate_slow_velocity_risk(
+            sales_drops_30=10,
             bsr=150000,
             category='books'
         )
 
-        # BSR 150k > threshold 50k for books = dead inventory risk
-        assert dead_inventory['is_dead_risk'] == True, \
-            f"BSR 150000 should be flagged as dead inventory risk"
-        assert dead_inventory['threshold'] == 50000, \
-            f"Books threshold should be 50000, got {dead_inventory['threshold']}"
+        # 10 sales/month = LOW tier = 60 risk (not 90+ like old dead inventory)
+        assert result['velocity_tier'] == 'LOW', \
+            f"10 sales/month should be LOW tier, got {result['velocity_tier']}"
+        assert result['monthly_sales_estimate'] >= 10, \
+            f"Should estimate ~10 sales/month, got {result['monthly_sales_estimate']}"
+        assert result['data_source'] == 'KEEPA_REAL', \
+            f"Should use real data, got {result['data_source']}"
+        # Risk should be moderate, not extreme like old "dead inventory" flag
+        assert result['risk_score'] <= 70, \
+            f"10 sales/month should not be high risk, got {result['risk_score']}"
 
     def test_roi_calculation_accuracy(self):
         """

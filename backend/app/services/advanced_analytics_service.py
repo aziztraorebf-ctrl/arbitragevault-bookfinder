@@ -1,6 +1,10 @@
 """
 Advanced Analytics Service for Phase 8.0
 Implements velocity intelligence, price stability, ROI calculation, competition analysis.
+
+REFACTORED: Removed detect_dead_inventory and hardcoded BSR thresholds.
+Velocity risk is now calculated using real Keepa salesDrops data via SalesVelocityService.
+See analytics.py:_calculate_slow_velocity_risk() for the new implementation.
 """
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
@@ -15,11 +19,8 @@ from app.models.analytics import ASINHistory, DecisionOutcome
 class AdvancedAnalyticsService:
     """Service for advanced product analytics calculations."""
 
-    CATEGORY_DEAD_INVENTORY_THRESHOLDS = {
-        'books': 50000,
-        'textbooks': 30000,
-        'general': 100000,
-    }
+    # REMOVED: CATEGORY_DEAD_INVENTORY_THRESHOLDS - was based on arbitrary BSR values
+    # Now using real Keepa salesDrops data via SalesVelocityService
 
     STORAGE_COSTS_MONTHLY = {
         'standard': Decimal('0.87'),
@@ -257,47 +258,12 @@ class AdvancedAnalyticsService:
             'amazon_risk': 'CRITICAL' if amazon_on_listing else 'NONE'
         }
 
-    @staticmethod
-    def detect_dead_inventory(
-        bsr: Optional[int],
-        category: str = 'books',
-        seller_count: Optional[int] = None
-    ) -> Dict[str, Any]:
-        """
-        Detect if product is at risk of becoming dead inventory.
-        """
-        threshold = AdvancedAnalyticsService.CATEGORY_DEAD_INVENTORY_THRESHOLDS.get(
-            category, 100000
-        )
-
-        is_dead_risk = False
-        risk_score = 0
-
-        if bsr is None:
-            return {
-                'is_dead_risk': False,
-                'risk_score': 0,
-                'reason': 'NO_BSR_DATA',
-                'days_to_threshold': None
-            }
-
-        if bsr > threshold:
-            is_dead_risk = True
-            risk_score = min(100, ((bsr - threshold) / threshold) * 50)
-
-        if is_dead_risk:
-            if seller_count and seller_count <= 3:
-                risk_score += 20
-
-            days_estimate = (bsr / 100) if bsr > 0 else None
-        else:
-            days_estimate = None
-
-        return {
-            'is_dead_risk': is_dead_risk,
-            'risk_score': risk_score,
-            'threshold': threshold,
-            'bsr_current': bsr,
-            'reason': 'BSR_EXCEEDS_THRESHOLD' if is_dead_risk else 'BSR_ACCEPTABLE',
-            'days_to_threshold': days_estimate
-        }
+    # REMOVED: detect_dead_inventory method
+    # This method used arbitrary BSR thresholds (50K, 30K, 100K) that didn't reflect
+    # real sales velocity. Based on actual Keepa salesDrops data:
+    # - BSR 200K = 15+ sales/month (NOT dead inventory)
+    # - BSR 350K = 7+ sales/month (still sells regularly)
+    # - Only 0-4 sales/month is truly "DEAD"
+    #
+    # Velocity risk is now calculated using SalesVelocityService with real Keepa data.
+    # See analytics.py:_calculate_slow_velocity_risk()

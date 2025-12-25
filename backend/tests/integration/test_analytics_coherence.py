@@ -1,6 +1,9 @@
 """
 Coherence tests for Phase 8 Analytics services.
 Ensures services work together logically and don't produce absurd recommendations.
+
+REFACTORED: dead_inventory_data replaced with slow_velocity_data
+Now uses real Keepa salesDrops data instead of arbitrary BSR thresholds.
 """
 import pytest
 from decimal import Decimal
@@ -16,7 +19,8 @@ class TestAnalyticsCoherence:
     def test_high_risk_cannot_be_strong_buy(self):
         """A product with risk_score > 70 should NEVER be STRONG_BUY."""
         price_stability = {'stability_score': 20}
-        dead_inventory = {'is_dead_risk': True, 'risk_score': 80}
+        # DEAD velocity tier = 90 risk score (only 0-4 sales/month)
+        slow_velocity = {'velocity_tier': 'DEAD', 'risk_score': 90, 'monthly_sales_estimate': 2}
 
         risk_data = RiskScoringService.calculate_risk_score(
             bsr=200000,
@@ -24,7 +28,7 @@ class TestAnalyticsCoherence:
             seller_count=50,
             amazon_on_listing=True,
             price_stability_data=price_stability,
-            dead_inventory_data=dead_inventory
+            slow_velocity_data=slow_velocity
         )
 
         recommendation = RecommendationEngineService.generate_recommendation(
@@ -107,10 +111,8 @@ class TestAnalyticsCoherence:
             price_history=[{'price': 25.0}, {'price': 24.5}, {'price': 25.5}]
         )
 
-        dead_inventory = AdvancedAnalyticsService.detect_dead_inventory(
-            bsr=5000,
-            category='books'
-        )
+        # LOW BSR = HIGH velocity tier = 15 risk score (50+ sales/month)
+        slow_velocity = {'velocity_tier': 'HIGH', 'risk_score': 15, 'monthly_sales_estimate': 50}
 
         risk_data = RiskScoringService.calculate_risk_score(
             bsr=5000,
@@ -118,7 +120,7 @@ class TestAnalyticsCoherence:
             seller_count=3,
             amazon_on_listing=False,
             price_stability_data=price_stability,
-            dead_inventory_data=dead_inventory
+            slow_velocity_data=slow_velocity
         )
 
         recommendation = RecommendationEngineService.generate_recommendation(

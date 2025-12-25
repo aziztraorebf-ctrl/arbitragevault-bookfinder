@@ -183,21 +183,11 @@ class TestCompetitionScoreHostile:
         assert result['competition_level'] in ['MEDIUM', 'HIGH']
 
 
-class TestDeadInventoryHostile:
-    """Test detect_dead_inventory with hostile inputs."""
-
-    def test_none_bsr_no_crash(self):
-        """None BSR should not crash and return safe defaults."""
-        result = AdvancedAnalyticsService.detect_dead_inventory(
-            bsr=None, category='books'
-        )
-        assert result['is_dead_risk'] == False
-        assert result['reason'] == 'NO_BSR_DATA'
-
-    def test_unknown_category_uses_default_threshold(self):
-        """Unknown category should use default threshold 100000."""
-        result = AdvancedAnalyticsService.detect_dead_inventory(
-            bsr=150000, category='some_weird_category'
-        )
-        assert result['threshold'] == 100000
-        assert result['is_dead_risk'] == True
+# TestDeadInventoryHostile REMOVED
+# detect_dead_inventory was removed because it used arbitrary BSR thresholds
+# that didn't reflect real sales velocity. Based on actual Keepa data:
+# - BSR 200K = 15+ sales/month (NOT dead inventory)
+# - BSR 350K = 7+ sales/month (still sells regularly)
+#
+# Velocity risk is now calculated using SalesVelocityService with real Keepa data.
+# Tests for the new slow_velocity_risk are in test_slow_velocity_risk.py

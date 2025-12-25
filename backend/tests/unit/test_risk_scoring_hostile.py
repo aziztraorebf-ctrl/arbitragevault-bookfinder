@@ -1,6 +1,9 @@
 """
 Hostile tests for RiskScoringService - Phase 8 Audit
 Testing edge cases, component isolation, boundary values.
+
+REFACTORED: dead_inventory_data replaced with slow_velocity_data
+Now uses real Keepa salesDrops data instead of arbitrary BSR thresholds.
 """
 import pytest
 from typing import Dict, Any
@@ -19,7 +22,7 @@ class TestRiskScoreHostile:
             seller_count=None,
             amazon_on_listing=None,
             price_stability_data={'stability_score': 50},
-            dead_inventory_data={'is_dead_risk': False, 'risk_score': 0}
+            slow_velocity_data={'velocity_tier': 'MEDIUM', 'risk_score': 35, 'monthly_sales_estimate': 25}
         )
         assert 'total_risk_score' in result
         assert 'risk_level' in result
@@ -34,21 +37,21 @@ class TestRiskScoreHostile:
             seller_count=5,
             amazon_on_listing=False,
             price_stability_data={},
-            dead_inventory_data={'is_dead_risk': False, 'risk_score': 0}
+            slow_velocity_data={'velocity_tier': 'HIGH', 'risk_score': 15, 'monthly_sales_estimate': 50}
         )
         assert result['components']['price_stability']['score'] == 50
 
-    def test_empty_dead_inventory_data(self):
-        """Empty dead inventory dict should not crash."""
+    def test_empty_slow_velocity_data(self):
+        """Empty slow velocity dict should use default 50."""
         result = RiskScoringService.calculate_risk_score(
             bsr=10000,
             category='books',
             seller_count=5,
             amazon_on_listing=False,
             price_stability_data={'stability_score': 80},
-            dead_inventory_data={}
+            slow_velocity_data={}
         )
-        assert result['components']['dead_inventory']['score'] == 0
+        assert result['components']['slow_velocity']['score'] == 50
 
     def test_unknown_category_uses_default(self):
         """Unknown category should use default risk factor 50."""
@@ -58,7 +61,7 @@ class TestRiskScoreHostile:
             seller_count=5,
             amazon_on_listing=False,
             price_stability_data={'stability_score': 50},
-            dead_inventory_data={'is_dead_risk': False, 'risk_score': 0}
+            slow_velocity_data={'velocity_tier': 'MEDIUM', 'risk_score': 35, 'monthly_sales_estimate': 25}
         )
         assert result['components']['category']['score'] == 50
 
@@ -70,7 +73,7 @@ class TestRiskScoreHostile:
             seller_count=5,
             amazon_on_listing=True,
             price_stability_data={'stability_score': 80},
-            dead_inventory_data={'is_dead_risk': False, 'risk_score': 0}
+            slow_velocity_data={'velocity_tier': 'HIGH', 'risk_score': 15, 'monthly_sales_estimate': 50}
         )
         assert result['components']['amazon_presence']['score'] == 95
 
@@ -82,7 +85,7 @@ class TestRiskScoreHostile:
             seller_count=5,
             amazon_on_listing=False,
             price_stability_data={'stability_score': 80},
-            dead_inventory_data={'is_dead_risk': False, 'risk_score': 0}
+            slow_velocity_data={'velocity_tier': 'HIGH', 'risk_score': 15, 'monthly_sales_estimate': 50}
         )
         assert result['components']['amazon_presence']['score'] == 5
 
@@ -94,9 +97,32 @@ class TestRiskScoreHostile:
             seller_count=99999,
             amazon_on_listing=False,
             price_stability_data={'stability_score': 80},
-            dead_inventory_data={'is_dead_risk': False, 'risk_score': 0}
+            slow_velocity_data={'velocity_tier': 'HIGH', 'risk_score': 15, 'monthly_sales_estimate': 50}
         )
         assert result['components']['competition']['score'] <= 100
+
+    def test_slow_velocity_component_includes_metadata(self):
+        """slow_velocity component should include velocity_tier, monthly_sales, and data_source."""
+        result = RiskScoringService.calculate_risk_score(
+            bsr=10000,
+            category='books',
+            seller_count=5,
+            amazon_on_listing=False,
+            price_stability_data={'stability_score': 80},
+            slow_velocity_data={
+                'velocity_tier': 'HIGH',
+                'risk_score': 15,
+                'monthly_sales_estimate': 50,
+                'data_source': 'KEEPA_REAL'
+            }
+        )
+        component = result['components']['slow_velocity']
+        assert 'velocity_tier' in component
+        assert component['velocity_tier'] == 'HIGH'
+        assert 'monthly_sales' in component
+        assert component['monthly_sales'] == 50
+        assert 'data_source' in component
+        assert component['data_source'] == 'KEEPA_REAL'
 
 
 class TestRiskRecommendationsHostile:

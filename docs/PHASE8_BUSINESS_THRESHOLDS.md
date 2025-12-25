@@ -2,24 +2,50 @@
 
 Ce document explique les seuils utilises dans les services Phase 8 Advanced Analytics.
 
-## 1. Dead Inventory Thresholds (BSR)
+## 1. Slow Velocity Risk (Refactored from Dead Inventory)
 
-| Categorie | Seuil BSR | Justification |
-|-----------|-----------|---------------|
-| books | 50,000 | Livres au-dela de ce BSR peuvent prendre > 30 jours a vendre |
-| textbooks | 30,000 | Textbooks ont un marche plus restreint, seuil plus strict |
-| general | 100,000 | Seuil par defaut pour categories non specifiees |
+**REFACTORED (2025-12-25):** Les seuils BSR hardcodes ont ete SUPPRIMES.
+Le systeme utilise maintenant les vraies donnees Keepa salesDrops.
 
-**Source:** Experience empirique du marche Amazon FBA Books. A valider avec donnees historiques de ventes reelles.
+### Pourquoi ce changement?
 
-**Fichier:** `backend/app/services/advanced_analytics_service.py:18-22`
+Les seuils BSR arbitraires etaient FAUX. Donnees reelles montrent:
+- BSR 100K-150K: 30 sales/month, 1 jour pour vendre
+- BSR 150K-200K: 20 sales/month, 1.5 jours pour vendre
+- BSR 200K-250K: 15 sales/month, 2 jours pour vendre
+- BSR 350K-400K: 7 sales/month, 4.4 jours pour vendre
+
+Un livre avec BSR 150,000 et 15+ ventes/mois n'est PAS "dead inventory"!
+
+### Nouveau systeme: Velocity Tiers
+
+| Tier | Ventes/mois | Risk Score | Description |
+|------|-------------|------------|-------------|
+| PREMIUM | 100+ | 5 | Vente quasi-instantanee |
+| HIGH | 50-99 | 15 | Vente en quelques jours |
+| MEDIUM | 20-49 | 35 | Vente en 1-2 semaines |
+| LOW | 5-19 | 60 | Vente en 2-4 semaines |
+| DEAD | 0-4 | 90 | Vente incertaine |
+
+**Source:** Keepa `salesRankDrops30` = vraies donnees de ventes
+
+**Fichier:** `backend/app/api/v1/endpoints/analytics.py:_calculate_slow_velocity_risk()`
 
 ```python
-CATEGORY_DEAD_INVENTORY_THRESHOLDS = {
-    'books': 50000,
-    'textbooks': 30000,
-    'general': 100000,
-}
+def _calculate_slow_velocity_risk(
+    sales_drops_30: int | None,
+    bsr: int | None,
+    category: str = 'books'
+) -> dict:
+    """Uses real Keepa salesDrops data instead of arbitrary BSR thresholds."""
+    if sales_drops_30 is not None:
+        # Use REAL Keepa data
+        monthly_sales = _velocity_service.estimate_monthly_sales(...)
+        velocity_tier = _velocity_service.classify_velocity_tier(monthly_sales)
+        data_source = 'KEEPA_REAL'
+    elif bsr is not None:
+        # Fallback estimation (less accurate)
+        data_source = 'ESTIMATED_FROM_BSR'
 ```
 
 ---
@@ -50,19 +76,19 @@ MAX_SALE_CYCLE_DAYS = 45
 
 | Composant | Poids | Justification |
 |-----------|-------|---------------|
-| dead_inventory | 35% | Risque principal: produit qui ne se vend pas |
+| slow_velocity | 35% | Risque principal: produit a rotation lente |
 | competition | 25% | Beaucoup de vendeurs = guerre des prix |
 | amazon_presence | 20% | Amazon sur listing = tres difficile de gagner BuyBox |
 | price_stability | 10% | Prix volatils = marges imprevisibles |
 | category | 10% | Certaines categories plus risquees |
 
-**Source:** Ponderation basee sur impact relatif sur profitabilite. Dead inventory est le risque #1 car un produit invendu = perte totale.
+**Source:** Ponderation basee sur impact relatif sur profitabilite. Slow velocity = risque #1 car produit lent = frais stockage accumules.
 
-**Fichier:** `backend/app/services/risk_scoring_service.py:14-20`
+**Fichier:** `backend/app/services/risk_scoring_service.py:16-22`
 
 ```python
 RISK_WEIGHTS = {
-    'dead_inventory': 0.35,
+    'slow_velocity': 0.35,  # Renamed from dead_inventory
     'competition': 0.25,
     'amazon_presence': 0.20,
     'price_stability': 0.10,
@@ -172,3 +198,4 @@ Ces regles FORCENT une recommendation quel que soit les autres indicateurs:
 | Date | Modification | Auteur |
 |------|--------------|--------|
 | 2025-12-25 | Documentation initiale des seuils Phase 8 | Claude Code Senior Review |
+| 2025-12-25 | Refactoring: dead_inventory -> slow_velocity, seuils BSR supprimes, utilisation vraies donnees Keepa salesDrops | Claude Code |

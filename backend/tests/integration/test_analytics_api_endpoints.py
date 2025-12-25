@@ -51,7 +51,7 @@ class TestAnalyticsEndpoints:
         assert 'price_stability' in data
         assert 'roi' in data
         assert 'competition' in data
-        assert 'dead_inventory_risk' in data
+        assert 'slow_velocity_risk' in data  # Renamed from dead_inventory_risk
 
     def test_calculate_risk_score_valid(self, client):
         """POST /calculate-risk-score returns proper risk assessment."""

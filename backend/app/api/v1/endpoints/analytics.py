@@ -16,8 +16,77 @@ from app.schemas.analytics import (
 from app.services.advanced_analytics_service import AdvancedAnalyticsService
 from app.services.risk_scoring_service import RiskScoringService
 from app.services.recommendation_engine_service import RecommendationEngineService
+from app.services.sales_velocity_service import SalesVelocityService
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
+
+# Initialize velocity service
+_velocity_service = SalesVelocityService()
+
+
+def _calculate_slow_velocity_risk(
+    sales_drops_30: int | None,
+    bsr: int | None,
+    category: str = 'books'
+) -> dict:
+    """
+    Calculate slow velocity risk using real Keepa salesDrops data.
+
+    This replaces the old hardcoded BSR thresholds with actual sales data.
+    Based on real data analysis:
+    - BSR 200K can have 15+ sales/month (NOT dead inventory)
+    - BSR 350K can have 7+ sales/month (still sells regularly)
+    - Only 0-4 sales/month is truly "DEAD"
+    """
+    if sales_drops_30 is not None:
+        # Use REAL Keepa data
+        monthly_sales = _velocity_service.estimate_monthly_sales(
+            sales_drops_30, bsr or 0, category
+        )
+        velocity_tier = _velocity_service.classify_velocity_tier(monthly_sales)
+        tier_info = _velocity_service.get_tier_description(velocity_tier)
+        data_source = 'KEEPA_REAL'
+    elif bsr is not None:
+        # Fallback: estimate from BSR only (less accurate)
+        # Use conservative estimates based on our real data analysis
+        if bsr < 50000:
+            monthly_sales = 50  # HIGH tier
+        elif bsr < 150000:
+            monthly_sales = 25  # MEDIUM tier
+        elif bsr < 350000:
+            monthly_sales = 10  # LOW tier
+        elif bsr < 500000:
+            monthly_sales = 4   # borderline DEAD
+        else:
+            monthly_sales = 1   # DEAD
+        velocity_tier = _velocity_service.classify_velocity_tier(monthly_sales)
+        tier_info = _velocity_service.get_tier_description(velocity_tier)
+        data_source = 'ESTIMATED_FROM_BSR'
+    else:
+        # No data available
+        monthly_sales = 0
+        velocity_tier = 'UNKNOWN'
+        tier_info = {'label': 'Unknown', 'description': 'No data available'}
+        data_source = 'NO_DATA'
+
+    # Convert velocity tier to risk score (inverse relationship)
+    tier_to_risk = {
+        'PREMIUM': 5,   # Very low risk
+        'HIGH': 15,     # Low risk
+        'MEDIUM': 35,   # Moderate risk
+        'LOW': 60,      # Higher risk
+        'DEAD': 90,     # Very high risk
+        'UNKNOWN': 50   # Default moderate
+    }
+    risk_score = tier_to_risk.get(velocity_tier, 50)
+
+    return {
+        'velocity_tier': velocity_tier,
+        'monthly_sales_estimate': monthly_sales,
+        'risk_score': risk_score,
+        'tier_description': tier_info.get('description', ''),
+        'data_source': data_source
+    }
 
 
 @router.post("/calculate-analytics", response_model=dict)
@@ -57,10 +126,11 @@ async def calculate_product_analytics(
             amazon_on_listing=request.amazon_on_listing
         )
 
-        dead_inventory_data = AdvancedAnalyticsService.detect_dead_inventory(
+        # Use real Keepa salesDrops data instead of hardcoded BSR thresholds
+        slow_velocity_data = _calculate_slow_velocity_risk(
+            sales_drops_30=request.sales_drops_30,
             bsr=request.bsr,
-            category=request.category or 'books',
-            seller_count=request.seller_count
+            category=request.category or 'books'
         )
 
         return {
@@ -70,7 +140,7 @@ async def calculate_product_analytics(
             'price_stability': price_stability_data,
             'roi': roi_data,
             'competition': competition_data,
-            'dead_inventory_risk': dead_inventory_data
+            'slow_velocity_risk': slow_velocity_data
         }
 
     except Exception as e:
@@ -103,10 +173,11 @@ async def calculate_risk_score(
             price_history=request.price_history or []
         )
 
-        dead_inventory_data = AdvancedAnalyticsService.detect_dead_inventory(
+        # Use real Keepa salesDrops data instead of hardcoded BSR thresholds
+        slow_velocity_data = _calculate_slow_velocity_risk(
+            sales_drops_30=request.sales_drops_30,
             bsr=request.bsr,
-            category=request.category or 'books',
-            seller_count=request.seller_count
+            category=request.category or 'books'
         )
 
         risk_data = RiskScoringService.calculate_risk_score(
@@ -115,7 +186,7 @@ async def calculate_risk_score(
             seller_count=request.seller_count,
             amazon_on_listing=request.amazon_on_listing,
             price_stability_data=price_stability_data,
-            dead_inventory_data=dead_inventory_data
+            slow_velocity_data=slow_velocity_data
         )
 
         recommendations = RiskScoringService.get_risk_recommendations(
@@ -175,10 +246,11 @@ async def generate_recommendation(
             sale_cycle_days=request.estimated_sale_cycle_days or 30
         )
 
-        dead_inventory_data = AdvancedAnalyticsService.detect_dead_inventory(
+        # Use real Keepa salesDrops data instead of hardcoded BSR thresholds
+        slow_velocity_data = _calculate_slow_velocity_risk(
+            sales_drops_30=request.sales_drops_30,
             bsr=request.bsr,
-            category=request.category or 'books',
-            seller_count=request.seller_count
+            category=request.category or 'books'
         )
 
         risk_data = RiskScoringService.calculate_risk_score(
@@ -187,7 +259,7 @@ async def generate_recommendation(
             seller_count=request.seller_count,
             amazon_on_listing=request.amazon_on_listing,
             price_stability_data=price_stability_data,
-            dead_inventory_data=dead_inventory_data
+            slow_velocity_data=slow_velocity_data
         )
 
         recommendation = RecommendationEngineService.generate_recommendation(
@@ -254,10 +326,11 @@ async def get_product_decision(
             amazon_on_listing=request.amazon_on_listing
         )
 
-        dead_inventory_data = AdvancedAnalyticsService.detect_dead_inventory(
+        # Use real Keepa salesDrops data instead of hardcoded BSR thresholds
+        slow_velocity_data = _calculate_slow_velocity_risk(
+            sales_drops_30=request.sales_drops_30,
             bsr=request.bsr,
-            category=request.category or 'books',
-            seller_count=request.seller_count
+            category=request.category or 'books'
         )
 
         risk_data = RiskScoringService.calculate_risk_score(
@@ -266,7 +339,7 @@ async def get_product_decision(
             seller_count=request.seller_count,
             amazon_on_listing=request.amazon_on_listing,
             price_stability_data=price_stability_data,
-            dead_inventory_data=dead_inventory_data
+            slow_velocity_data=slow_velocity_data
         )
 
         recommendations = RiskScoringService.get_risk_recommendations(

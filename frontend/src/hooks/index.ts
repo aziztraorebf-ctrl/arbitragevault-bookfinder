@@ -21,5 +21,12 @@ export {
   configQueryKeys
 } from './useConfig'
 
+export {
+  useAllStrategicViews,
+  useStrategicView,
+  useTargetPrices,
+  strategicQueryKeys
+} from './useStrategicViews'
+
 // Re-export types for convenience
 export type { Batch, BatchList, HealthCheck, ApiError } from '../services/api'

@@ -1,5 +1,10 @@
 // Common types for ArbitrageVault frontend
 
+// Phase 9: Config, Strategic, Stock types
+export * from './config'
+export * from './strategic'
+export * from './stock'
+
 export interface Product {
   asin: string
   title: string

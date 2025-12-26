@@ -261,6 +261,27 @@ export const apiService = {
       throw error
     }
   },
+
+  // ===== Phase 9: Configuration Endpoints =====
+
+  async getConfig(domainId: number = 1, category: string = 'books'): Promise<any> {
+    const response = await api.get('/api/v1/config/', {
+      params: { domain_id: domainId, category, force_refresh: false }
+    })
+    return response.data
+  },
+
+  async updateConfig(scope: string, request: any): Promise<any> {
+    const response = await api.put('/api/v1/config/', request, {
+      params: { scope }
+    })
+    return response.data
+  },
+
+  async getConfigStats(): Promise<any> {
+    const response = await api.get('/api/v1/config/stats')
+    return response.data
+  },
 }
 
 // Export functions for backward compatibility

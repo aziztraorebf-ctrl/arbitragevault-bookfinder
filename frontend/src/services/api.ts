@@ -301,6 +301,13 @@ export const apiService = {
     const response = await api.get(`/api/v1/strategic-views/${viewType}/target-prices`)
     return response.data
   },
+
+  // ===== Phase 9: Stock Estimates Endpoint =====
+
+  async getStockEstimate(asin: string): Promise<any> {
+    const response = await api.get(`/api/v1/products/${asin}/stock-estimate`)
+    return response.data
+  },
 }
 
 // Export functions for backward compatibility

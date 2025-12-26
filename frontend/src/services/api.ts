@@ -282,6 +282,25 @@ export const apiService = {
     const response = await api.get('/api/v1/config/stats')
     return response.data
   },
+
+  // ===== Phase 9: Strategic Views Endpoints =====
+
+  async getStrategicView(viewType: string, niches?: string[]): Promise<any> {
+    const response = await api.get(`/api/v1/strategic-views/${viewType}`, {
+      params: niches ? { niches: niches.join(',') } : {}
+    })
+    return response.data
+  },
+
+  async getAllStrategicViews(): Promise<any> {
+    const response = await api.get('/api/v1/strategic-views/')
+    return response.data
+  },
+
+  async getTargetPrices(viewType: string): Promise<any> {
+    const response = await api.get(`/api/v1/strategic-views/${viewType}/target-prices`)
+    return response.data
+  },
 }
 
 // Export functions for backward compatibility

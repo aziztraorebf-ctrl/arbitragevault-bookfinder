@@ -14,7 +14,7 @@ export function useStockEstimate(asin: string) {
     queryFn: () => apiService.getStockEstimate(asin),
     staleTime: 5 * 60 * 1000, // 5 min
     enabled: !!asin && asin.length >= 10,
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: Error & { status?: number }) => {
       // Don't retry on 404 (ASIN not found)
       if (error?.status === 404) return false
       return failureCount < 2

@@ -72,7 +72,7 @@ export default function StockEstimates() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <h2 className="text-red-800 font-semibold">Erreur</h2>
           <p className="text-red-600 text-sm mt-1">
-            {(error as any)?.status === 404
+            {(error as Error & { status?: number })?.status === 404
               ? 'ASIN non trouve dans la base de donnees'
               : (error as Error).message}
           </p>

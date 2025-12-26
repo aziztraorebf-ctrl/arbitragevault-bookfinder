@@ -43,7 +43,7 @@ export default function Configuration() {
       })
       toast.success('Configuration sauvegardee')
       setEditMode(false)
-    } catch (err) {
+    } catch {
       toast.error('Erreur lors de la sauvegarde')
     }
   }

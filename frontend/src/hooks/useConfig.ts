@@ -1,10 +1,21 @@
 /**
  * React Query hooks for Configuration
  * Phase 9 - UI Completion
+ *
+ * Configuration:
+ * - staleTime (effective): 5 min - config rarely changes
+ * - staleTime (stats): 1 min - stats can change more often
+ * - retry: 3 attempts for effective, 2 for stats (no retry on 4xx client errors)
+ * - retryDelay: Exponential backoff, max 30s
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiService, ApiError } from '../services/api'
 import { toast } from 'react-hot-toast'
+
+// Retry configuration constants
+const MAX_RETRY_EFFECTIVE = 3 // More retries for critical config data
+const MAX_RETRY_STATS = 2     // Fewer retries for non-critical stats
+const MAX_RETRY_DELAY_MS = 30000 // Cap retry delay at 30 seconds
 
 // Query keys factory pattern - consistent with other hooks
 export const configQueryKeys = {
@@ -27,9 +38,9 @@ export function useEffectiveConfig(domainId: number = 1, category: string = 'boo
           return false
         }
       }
-      return failureCount < 3
+      return failureCount < MAX_RETRY_EFFECTIVE
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, MAX_RETRY_DELAY_MS),
     meta: {
       errorMessage: 'Failed to load configuration',
     },
@@ -48,7 +59,7 @@ export function useConfigStats() {
           return false
         }
       }
-      return failureCount < 2
+      return failureCount < MAX_RETRY_STATS
     },
     meta: {
       errorMessage: 'Failed to load configuration stats',

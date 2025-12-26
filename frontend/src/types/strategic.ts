@@ -17,7 +17,7 @@ export type StrategicMetric = z.infer<typeof StrategicMetricSchema>
 
 export const StrategicViewResponseSchema = z.object({
   view_type: z.string(),
-  metrics: z.record(StrategicMetricSchema).optional(),
+  metrics: z.record(z.string(), StrategicMetricSchema).optional(),
   summary: z.object({
     total_products: z.number(),
     avg_score: z.number(),

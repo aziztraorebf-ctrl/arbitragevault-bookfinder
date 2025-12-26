@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAllStrategicViews, useStrategicView } from '../hooks/useStrategicViews'
+import { useStrategicView } from '../hooks/useStrategicViews'
 import type { ViewType, StrategicMetric } from '../types/strategic'
 
 const VIEW_LABELS: Record<ViewType, { label: string; description: string }> = {
@@ -13,10 +13,9 @@ const VIEW_LABELS: Record<ViewType, { label: string; description: string }> = {
 export default function AnalyseStrategique() {
   const [selectedView, setSelectedView] = useState<ViewType>('velocity')
 
-  const { data: allViews, isLoading: loadingAll } = useAllStrategicViews()
   const { data: viewData, isLoading: loadingView, error } = useStrategicView(selectedView)
 
-  if (loadingAll) {
+  if (loadingView && !viewData) {
     return (
       <div className="p-8">
         <div className="animate-pulse space-y-4">

@@ -32,7 +32,7 @@ export const ConfigResponseSchema = z.object({
   config: BusinessConfigSchema,
   version: z.number(),
   effective_config: BusinessConfigSchema,
-  sources: z.record(z.string()).optional(),
+  sources: z.record(z.string(), z.string()).optional(),
   updated_at: z.string(),
 })
 
@@ -40,7 +40,7 @@ export type ConfigResponse = z.infer<typeof ConfigResponseSchema>
 
 export const ConfigStatsSchema = z.object({
   total_configs: z.number(),
-  by_scope: z.record(z.number()),
+  by_scope: z.record(z.string(), z.number()),
   last_updated: z.string().nullable(),
   cache_status: z.string(),
 })

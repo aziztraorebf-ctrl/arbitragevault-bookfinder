@@ -136,6 +136,7 @@ export default function Configuration() {
               { key: 'excellent', label: 'Excellent (%)', type: 'number' },
             ]}
             editMode={editMode}
+            isSaving={updateMutation.isPending}
             onSave={(values) => handleSave('roi_thresholds', values)}
           />
 
@@ -148,6 +149,7 @@ export default function Configuration() {
               { key: 'ideal_max', label: 'Ideal max', type: 'number' },
             ]}
             editMode={editMode}
+            isSaving={updateMutation.isPending}
             onSave={(values) => handleSave('bsr_limits', values)}
           />
 
@@ -160,6 +162,7 @@ export default function Configuration() {
               { key: 'fee_estimate_percent', label: 'Estimation frais (%)', type: 'number' },
             ]}
             editMode={editMode}
+            isSaving={updateMutation.isPending}
             onSave={(values) => handleSave('pricing', values)}
           />
 
@@ -172,6 +175,7 @@ export default function Configuration() {
               { key: 'weight_in_scoring', label: 'Poids scoring', type: 'number' },
             ]}
             editMode={editMode}
+            isSaving={updateMutation.isPending}
             onSave={(values) => handleSave('velocity', values)}
           />
         </div>
@@ -187,19 +191,64 @@ interface ConfigSectionProps {
   config: Record<string, number>
   fields: Array<{ key: string; label: string; type: string }>
   editMode: boolean
+  isSaving: boolean
   onSave: (values: Record<string, number>) => void
 }
 
-function ConfigSection({ title, config, fields, editMode, onSave }: ConfigSectionProps) {
+function ConfigSection({ title, sectionKey, config, fields, editMode, isSaving, onSave }: ConfigSectionProps) {
   const [values, setValues] = useState<Record<string, number>>(config)
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   // Sync local state when config changes (e.g., domain/category switch)
   useEffect(() => {
     setValues(config)
+    setValidationError(null)
   }, [config])
 
   const handleChange = (key: string, value: string) => {
-    setValues((prev) => ({ ...prev, [key]: Number(value) }))
+    const numValue = Number(value)
+    setValues((prev) => ({ ...prev, [key]: numValue }))
+    setValidationError(null)
+  }
+
+  // Validation rules per section
+  const validateValues = (): string | null => {
+    // All values must be >= 0
+    for (const field of fields) {
+      if ((values[field.key] ?? 0) < 0) {
+        return `${field.label} ne peut pas etre negatif`
+      }
+    }
+
+    // ROI thresholds: minimum < target < excellent
+    if (sectionKey === 'roi_thresholds') {
+      const { minimum, target, excellent } = values
+      if (minimum >= target) {
+        return 'Minimum doit etre inferieur a Cible'
+      }
+      if (target >= excellent) {
+        return 'Cible doit etre inferieur a Excellent'
+      }
+    }
+
+    // BSR limits: ideal_max < max_acceptable
+    if (sectionKey === 'bsr_limits') {
+      const { ideal_max, max_acceptable } = values
+      if (ideal_max >= max_acceptable) {
+        return 'Ideal max doit etre inferieur a Max acceptable'
+      }
+    }
+
+    return null
+  }
+
+  const handleSave = () => {
+    const error = validateValues()
+    if (error) {
+      setValidationError(error)
+      return
+    }
+    onSave(values)
   }
 
   return (
@@ -228,13 +277,21 @@ function ConfigSection({ title, config, fields, editMode, onSave }: ConfigSectio
           ))}
         </div>
         {editMode && (
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={() => onSave(values)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-            >
-              Sauvegarder
-            </button>
+          <div className="mt-4">
+            {validationError && (
+              <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                {validationError}
+              </div>
+            )}
+            <div className="flex justify-end">
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -1,18 +1,31 @@
 import { useState } from 'react'
 import { useStockEstimate } from '../hooks/useStockEstimate'
 
+// ASIN format: B0 + 8 alphanumeric chars (Amazon standard)
+const ASIN_REGEX = /^B0[A-Z0-9]{8}$/
+
 export default function StockEstimates() {
   const [asinInput, setAsinInput] = useState('')
   const [submittedAsin, setSubmittedAsin] = useState('')
+  const [formatError, setFormatError] = useState<string | null>(null)
 
   const { data: stockData, isLoading, error, refetch } = useStockEstimate(submittedAsin)
+
+  const validateAsin = (asin: string): boolean => {
+    return ASIN_REGEX.test(asin)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const cleanAsin = asinInput.trim().toUpperCase()
-    if (cleanAsin.length >= 10) {
-      setSubmittedAsin(cleanAsin)
+
+    if (!validateAsin(cleanAsin)) {
+      setFormatError('Format ASIN invalide. Doit commencer par B0 suivi de 8 caracteres alphanumeriques.')
+      return
     }
+
+    setFormatError(null)
+    setSubmittedAsin(cleanAsin)
   }
 
   const getConfidenceBadge = (confidence: string | null) => {
@@ -55,6 +68,11 @@ export default function StockEstimates() {
             </button>
           </div>
         </form>
+        {formatError && (
+          <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded text-amber-700 text-sm">
+            {formatError}
+          </div>
+        )}
       </div>
 
       {/* Loading state */}

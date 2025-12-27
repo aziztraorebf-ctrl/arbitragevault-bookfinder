@@ -7,4 +7,4 @@ export { CacheIndicator } from './CacheIndicator'
 export { AutoDiscoveryHero } from './AutoDiscoveryHero'
 export { NicheCard } from './NicheCard'
 export { ManualFiltersSection } from './ManualFiltersSection'
-export { ProductsTable } from './ProductsTable'
+// ProductsTable deprecated - use UnifiedProductTable from components/unified

@@ -1,0 +1,101 @@
+
+================================================================================
+DETAILED COMPARISON SUMMARY: CURRENT vs SUB-SEGMENTS
+================================================================================
+
+========================================
+STRATEGY: TEXTBOOKS_STANDARD
+========================================
+
+Target BSR Range: 100,000 - 250,000
+
+-- BSR COVERAGE --
+  Current:     21.3% of range
+  Sub-segment: 160.1% of range
+  Improvement: +138.8%
+
+-- DISTRIBUTION BY THIRDS --
+                     Current    Sub-seg      Delta
+  lower_third             20          9        -11
+  middle_third             0          6         +6
+  upper_third              0          6         +6
+
+-- BSR STATISTICS --
+  Metric                  Current     Sub-segment
+  Min BSR                  84,839          80,203
+  Max BSR                 116,829         320,399
+  Mean BSR                101,146         155,357
+  Median BSR              100,014         150,009
+  StdDev                    7,981          63,540
+
+-- QUALITY METRICS --
+  Metric                  Current     Sub-segment
+  Avg ROI                   49.9%           44.5%
+  Avg Velocity               69.5            54.9
+
+-- RECOMMENDATIONS --
+  Type               Current    Sub-seg
+  STRONG_BUY              20         15
+  BUY                      0          3
+  CONSIDER                 0          1
+  SKIP                     0          2
+
+-- TOKEN COST --
+  Current:     ~20 tokens
+  Sub-segment: ~21 tokens
+  Ratio:       1.1x
+
+========================================
+STRATEGY: TEXTBOOKS_PATIENCE
+========================================
+
+Target BSR Range: 250,000 - 400,000
+
+-- BSR COVERAGE --
+  Current:     186.7% of range
+  Sub-segment: 234.2% of range
+  Improvement: +47.5%
+
+-- DISTRIBUTION BY THIRDS --
+                     Current    Sub-seg      Delta
+  lower_third             17          7        -10
+  middle_third             1          2         +1
+  upper_third              2         12        +10
+
+-- BSR STATISTICS --
+  Metric                  Current     Sub-segment
+  Min BSR                 208,249         208,442
+  Max BSR                 488,249         559,737
+  Mean BSR                280,264         356,695
+  Median BSR              250,050         350,013
+  StdDev                   68,833         100,436
+
+-- QUALITY METRICS --
+  Metric                  Current     Sub-segment
+  Avg ROI                   32.0%           24.8%
+  Avg Velocity               45.1            33.3
+
+-- RECOMMENDATIONS --
+  Type               Current    Sub-seg
+  STRONG_BUY              17          7
+  BUY                      1          4
+  CONSIDER                 1          6
+  SKIP                     1          4
+
+-- TOKEN COST --
+  Current:     ~20 tokens
+  Sub-segment: ~21 tokens
+  Ratio:       1.1x
+
+================================================================================
+CONCLUSION
+================================================================================
+
+Sub-segment approach provides:
+  [+] Better BSR coverage across the full range
+  [+] More balanced distribution (products in all thirds)
+  [+] Higher StdDev = more variety
+  [+] Better recommendations with strategy-aware thresholds
+  [-] ~1.5-2x token cost per discovery (3 queries vs 1)
+
+Recommendation: Implement Option B for production

@@ -1,0 +1,136 @@
+[
+  {
+    "strategy": "product_finder_post_filter",
+    "category": 3508,
+    "filters": {
+      "bsr_min": 10000,
+      "bsr_max": 80000,
+      "price_min": 20.0,
+      "price_max": 50.0,
+      "max_fba_sellers": 5,
+      "exclude_amazon": true
+    },
+    "pre_filter_count": 50,
+    "post_filter_count": 3,
+    "tokens_used": 61,
+    "sample_products": [
+      {
+        "asin": "1639622977",
+        "title": "Highlights My First Hidden Pictures 2026 Activity Books for ",
+        "bsr": 10011,
+        "price": "$26.99",
+        "fba_sellers": 1,
+        "amazon_sells": false
+      },
+      {
+        "asin": "B0DHDBW3G6",
+        "title": "The King Arthur Baking Company Big Book of Bread: 125+ Recip",
+        "bsr": 9745,
+        "price": "$41.64",
+        "fba_sellers": 4,
+        "amazon_sells": false
+      },
+      {
+        "asin": "B0FBRD4DBQ",
+        "title": "The Way of Wisdom - Bible Study with Video Access for Women ",
+        "bsr": 9849,
+        "price": "$34.99",
+        "fba_sellers": 2,
+        "amazon_sells": false
+      }
+    ],
+    "test_name": "Smart Velocity (BSR 10K-80K, $20-50, FBA<=5)"
+  },
+  {
+    "strategy": "product_finder_post_filter",
+    "category": 10777,
+    "filters": {
+      "bsr_min": 30000,
+      "bsr_max": 250000,
+      "price_min": 40.0,
+      "price_max": 150.0,
+      "max_fba_sellers": 3,
+      "exclude_amazon": true
+    },
+    "pre_filter_count": 50,
+    "post_filter_count": 11,
+    "tokens_used": 61,
+    "sample_products": [
+      {
+        "asin": "1989975291",
+        "title": "Little Pilgrim's Big Journey: The Complete Box Set (Part I, ",
+        "bsr": 31071,
+        "price": "$69.99",
+        "fba_sellers": 1,
+        "amazon_sells": false
+      },
+      {
+        "asin": "1637993099",
+        "title": "The PANCE PREP PEARLS V5 BOOK Series, 2 Books collection set",
+        "bsr": 32877,
+        "price": "$74.00",
+        "fba_sellers": 1,
+        "amazon_sells": false
+      },
+      {
+        "asin": "9526522214",
+        "title": "Death Note Black Edition Volume 1-6 Collection 6 Books Set M",
+        "bsr": 31544,
+        "price": "$99.98",
+        "fba_sellers": 1,
+        "amazon_sells": false
+      },
+      {
+        "asin": "1068472707",
+        "title": "Land of Ingary Trilogy Howl's Moving Castle Complete Series ",
+        "bsr": 31608,
+        "price": "$59.90",
+        "fba_sellers": 3,
+        "amazon_sells": false
+      },
+      {
+        "asin": "B0DKK2NW5D",
+        "title": "Wings of Fire Series 5 Books Set (# 11 - # 15) - Paperback E",
+        "bsr": 30979,
+        "price": "$44.98",
+        "fba_sellers": 1,
+        "amazon_sells": false
+      }
+    ],
+    "test_name": "Textbooks (BSR 30K-250K, $40-150, FBA<=3)"
+  },
+  {
+    "strategy": "product_finder_post_filter",
+    "category": 283155,
+    "filters": {
+      "bsr_min": 10000,
+      "bsr_max": 200000,
+      "price_min": 15.0,
+      "price_max": 100.0,
+      "max_fba_sellers": 5,
+      "exclude_amazon": true
+    },
+    "pre_filter_count": 50,
+    "post_filter_count": 2,
+    "tokens_used": 61,
+    "sample_products": [
+      {
+        "asin": "1639622977",
+        "title": "Highlights My First Hidden Pictures 2026 Activity Books for ",
+        "bsr": 10011,
+        "price": "$26.99",
+        "fba_sellers": 1,
+        "amazon_sells": false
+      },
+      {
+        "asin": "B0DHDBW3G6",
+        "title": "The King Arthur Baking Company Big Book of Bread: 125+ Recip",
+        "bsr": 9745,
+        "price": "$41.64",
+        "fba_sellers": 4,
+        "amazon_sells": false
+      }
+    ],
+    "test_name": "Broad (BSR 10K-200K, $15-100, FBA<=5)"
+  }
+]

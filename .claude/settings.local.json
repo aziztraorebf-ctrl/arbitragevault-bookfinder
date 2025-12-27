@@ -73,7 +73,9 @@
       "Bash(do wc -l \"$f\")",
       "Bash(done)",
       "Bash(python3:*)",
-      "Bash(export DATABASE_URL=\"postgresql://test:test@localhost:5432/test\")"
+      "Bash(export DATABASE_URL=\"postgresql://test:test@localhost:5432/test\")",
+      "Bash(grep:*)",
+      "Bash(echo.:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,100 @@
+[
+  {
+    "test": "1. Full arbitrage filters (strict)",
+    "selection": {
+      "rootCategory": 283155,
+      "perPage": 50,
+      "current_SALES_gte": 30000,
+      "current_SALES_lte": 250000,
+      "current_NEW_gte": 4000,
+      "current_NEW_lte": 18000,
+      "offerCountFBA_lte": 3,
+      "current_AMAZON_lte": -1
+    },
+    "total": 0,
+    "sample_count": 0
+  },
+  {
+    "test": "2. Relaxed price ($20-300)",
+    "selection": {
+      "rootCategory": 283155,
+      "perPage": 50,
+      "current_SALES_gte": 30000,
+      "current_SALES_lte": 250000,
+      "current_NEW_gte": 2000,
+      "current_NEW_lte": 30000,
+      "offerCountFBA_lte": 3,
+      "current_AMAZON_lte": -1
+    },
+    "total": 0,
+    "sample_count": 0
+  },
+  {
+    "test": "3. Relaxed BSR (10K-500K)",
+    "selection": {
+      "rootCategory": 283155,
+      "perPage": 50,
+      "current_SALES_gte": 10000,
+      "current_SALES_lte": 500000,
+      "current_NEW_gte": 2000,
+      "current_NEW_lte": 30000,
+      "offerCountFBA_lte": 3,
+      "current_AMAZON_lte": -1
+    },
+    "total": 0,
+    "sample_count": 0
+  },
+  {
+    "test": "4. Relaxed FBA (<=5)",
+    "selection": {
+      "rootCategory": 283155,
+      "perPage": 50,
+      "current_SALES_gte": 10000,
+      "current_SALES_lte": 500000,
+      "current_NEW_gte": 2000,
+      "current_NEW_lte": 30000,
+      "offerCountFBA_lte": 5,
+      "current_AMAZON_lte": -1
+    },
+    "total": 0,
+    "sample_count": 0
+  },
+  {
+    "test": "5. Allow Amazon seller",
+    "selection": {
+      "rootCategory": 283155,
+      "perPage": 50,
+      "current_SALES_gte": 10000,
+      "current_SALES_lte": 500000,
+      "current_NEW_gte": 2000,
+      "current_NEW_lte": 30000,
+      "offerCountFBA_lte": 5
+    },
+    "total": 100953,
+    "sample_count": 50
+  },
+  {
+    "test": "6. Minimum viable (BSR + price only)",
+    "selection": {
+      "rootCategory": 283155,
+      "perPage": 50,
+      "current_SALES_gte": 10000,
+      "current_SALES_lte": 200000,
+      "current_NEW_gte": 2000,
+      "current_NEW_lte": 15000
+    },
+    "total": 32897,
+    "sample_count": 50
+  },
+  {
+    "test": "7. Low competition focus (FBA<=3 only)",
+    "selection": {
+      "rootCategory": 283155,
+      "perPage": 50,
+      "offerCountFBA_lte": 3,
+      "current_AMAZON_lte": -1
+    },
+    "total": 0,
+    "sample_count": 0
+  }
+]

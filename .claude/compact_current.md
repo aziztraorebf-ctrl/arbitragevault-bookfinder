@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Active Session
 
-**Derniere mise a jour** : 25 Decembre 2025
-**Phase Actuelle** : Phase 8 - Advanced Analytics AUDITE
-**Statut Global** : Phases 1-8 auditees, Phase 9 plan pret
+**Derniere mise a jour** : 27 Decembre 2025
+**Phase Actuelle** : Phase 10 - Unified Product Table (PLAN PRET)
+**Statut Global** : Phases 1-9 completes, Phase 10-11 planifiees
 
 ---
 
@@ -10,14 +10,119 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Phase 8 - Advanced Analytics AUDITE |
-| **Prochaine Phase** | Phase 9 - UI Completion (PLAN VALIDE) |
+| **Phase Actuelle** | Phase 10 - Unified Product Table (PLAN PRET) |
+| **Prochaine Phase** | Phase 11 - Page Centrale Recherches |
 | **CLAUDE.md** | v3.3 - Zero-Tolerance + Senior Review Gate |
 | **Hooks System** | v2 VALIDE - 3 points de controle actifs |
 | **Production** | Backend Render + Frontend Netlify LIVE |
-| **Tests Total** | 758+ passants (590 backend) |
+| **Tests Total** | 800+ passants (590 backend + 70+ frontend) |
 | **Bloqueurs** | Aucun |
-| **Prochaine Action** | Executer Phase 9 UI Completion |
+| **Prochaine Action** | Executer Phase 10 Unified Product Table |
+
+---
+
+## CHANGELOG - 27 Decembre 2025
+
+### Phase 9 UI Completion - COMPLETE
+
+**Tasks completees** :
+- 4 pages frontend implementees (Configuration, AnalyseStrategique, StockEstimates, AutoScheduler)
+- Hooks React Query (useConfig, useStrategicViews, useStockEstimate)
+- Unit tests pages et hooks (70+ tests)
+- E2E Playwright (26 PASS / 5 FAIL - issues API production)
+
+**Senior Review Gaps corriges** :
+- Gap 5: Tests unitaires pages -> Ajoutes
+- Gap 6: Tests hooks -> Ajoutes
+- Gap 8: Loading state submit -> Ajoute
+- Gap 9: Documentation hooks -> Ajoutee
+
+**Commits** :
+- `818eb90` - fix(phase9): address Senior Review gaps 5, 6, 8, 9
+- `25f53eb` - fix(phase9): address Senior Review gaps
+- `f6e50ee` - fix(phase9): resolve lint errors
+- `95cec5d` - fix(phase9): fix TypeScript errors
+
+---
+
+### Decision Architecture - External Validation
+
+**Feedback recu** : Pages AnalyseStrategique et StockEstimates sont **redundantes**.
+
+**Probleme identifie** :
+- Ces pages "cassent le flux naturel de decision"
+- L'utilisateur doit quitter les resultats pour voir des signaux strategiques
+- La valeur devrait etre integree directement dans les resultats de recherche
+
+**Decision prise** :
+1. Unifier les composants de resultats (ViewResultsTable + ProductsTable)
+2. Integrer les signaux strategiques dans le tableau unifie
+3. Supprimer les pages redundantes apres integration
+4. Creer page centrale `/recherches` pour persistance
+
+---
+
+### Phase 10 - Unified Product Table (PLAN CREE)
+
+**Plan** : `docs/plans/2025-12-27-unified-product-table.md`
+
+**Decisions Architecture validees** :
+
+| Decision | Choix | Justification |
+|----------|-------|---------------|
+| Accordions Niche Discovery | Desactives | Donnees NicheProduct insuffisantes |
+| Colonnes Niche Discovery | 7 colonnes (simple) | Eviter surcharge cognitive |
+| Verification data conflicts | Afficher les deux + delta | Transparence pour l'utilisateur |
+| Export CSV | Format unifie | Interoperabilite entre modules |
+| Pages supprimees | Redirect + banner | Pas de 404, education progressive |
+
+**Tasks** :
+| Phase | Description | Duree |
+|-------|-------------|-------|
+| 1 | Type DisplayableProduct + UnifiedProductRow + UnifiedProductTable | 2h |
+| 2 | Extraction VerificationPanel | 1h |
+| 3 | Integration 3 modules | 2h |
+| 4 | Suppression pages + cleanup | 1h |
+| 5 | Verification finale | 30min |
+
+---
+
+### Phase 11 - Page Centrale Recherches (PLANIFIE)
+
+**Objectif** : Centraliser tous les resultats de recherches pour preparation N8N.
+
+**Decisions** :
+- Route: `/recherches` ("Mes Recherches")
+- Persistance: Backend PostgreSQL (table `search_results`)
+- Retention: 30 jours avec auto-cleanup
+- AutoSourcing: Devient declencheur, redirect vers `/recherches`
+
+**Backend a creer** :
+```sql
+CREATE TABLE search_results (
+  id UUID PRIMARY KEY,
+  created_at TIMESTAMP NOT NULL,
+  source VARCHAR(50) NOT NULL, -- niche_discovery, autosourcing, manuel
+  filters_applied JSONB,
+  products JSONB NOT NULL,
+  product_count INTEGER NOT NULL,
+  expires_at TIMESTAMP NOT NULL -- created_at + 30 days
+);
+```
+
+---
+
+### Vision Future - N8N & ML
+
+**Phase 12 - N8N** (FUTUR - Non planifie) :
+- Pre-requis: Phases 10-11 completes + tests manuels 1-2 mois
+- API webhooks + auth API keys
+- Workflow: N8N lance recherches -> resultats en base -> utilisateur consulte
+
+**Machine Learning** (PLACEHOLDER) :
+- Decision: NE PAS implementer maintenant (YAGNI)
+- Quand: Apres 2-3 mois de donnees reelles
+- Table `purchase_decisions` a creer plus tard pour training
 
 ---
 
@@ -462,27 +567,22 @@ Les seuils BSR hardcodes (50K/30K/100K) etaient FAUX. Donnees reelles Keepa mont
 | Phase 6 - Niche Discovery Opt | 62/62 | Complete | 15 Dec 2025 |
 | Phase 7 - AutoSourcing Audit | 109/109 | Complete | 16 Dec 2025 |
 | Phase 8 - Advanced Analytics | 50+ | Complete | 25 Dec 2025 |
+| Phase 9 - UI Completion | 70+ | Complete | 27 Dec 2025 |
 
-### Phase 9 - UI Completion (PLAN PRET)
+### Phases Planifiees
 
-| Task | Description | Estimation |
-|------|-------------|------------|
-| 1 | Configuration page | 45 min |
-| 2 | AnalyseStrategique page | 45 min |
-| 3 | StockEstimates page | 30 min |
-| 4 | AutoScheduler page | 20 min |
-| 5 | Integration types | 10 min |
-| 6 | E2E tests | 20 min |
-| 7 | Verification | 15 min |
+| Phase | Description | Status | Effort | Plan |
+|-------|-------------|--------|--------|------|
+| Phase 10 | Unified Product Table | PLAN PRET | ~6.5h | `docs/plans/2025-12-27-unified-product-table.md` |
+| Phase 11 | Page Centrale Recherches | PLANIFIE | ~4-5h | A creer |
+| Phase 12 | Integration N8N | FUTUR | TBD | Apres tests manuels |
 
-**Total** : ~3 heures
-**Plan** : `docs/plans/2025-12-15-phase9-ui-completion.md`
+### Phase 9 - UI Completion COMPLETE
 
-### Audits A FAIRE
-
-| Phase | Description | Priorite | Risque |
-|-------|-------------|----------|--------|
-| Phase 9 | UI Completion | HAUTE | 4 pages placeholder - PLAN VALIDE |
+**Status** : COMPLETE (27 Decembre 2025)
+- 4 pages implementees + hooks + tests
+- Senior Review gaps corriges
+- Decision: Pages AnalyseStrategique/StockEstimates a supprimer (Phase 10)
 
 ### Phase 8 - Advanced Analytics COMPLETE
 
@@ -543,15 +643,53 @@ cd804b0 test(phase4): add budget guard API tests (Task 4)
 5. [x] Audit Phase 6 (Niche Discovery Optimization) - COMPLETE (62 tests)
 6. [x] Audit Phase 7 (AutoSourcing Safeguards) - COMPLETE (109 tests)
 7. [x] Audit Phase 8 (Advanced Analytics) - COMPLETE (50+ tests, refactoring slow_velocity)
-8. [ ] **Executer Phase 9** - UI Completion (4 pages)
+8. [x] Executer Phase 9 - UI Completion - COMPLETE (70+ tests)
+9. [ ] **Executer Phase 10** - Unified Product Table (~6.5h)
+10. [ ] Creer plan Phase 11 - Page Centrale Recherches
 
 ### Court terme
 
-9. [ ] Implementer infrastructure REPLAY/MOCK Keepa
-10. [ ] Documentation API complete
+11. [ ] Executer Phase 11 - Page Centrale + Persistance
+12. [ ] Tester manuellement l'application 1-2 mois
+13. [ ] Planifier Phase 12 - Integration N8N
+
+### Futur (Non planifie)
+
+14. [ ] Phase 12 - API webhooks + auth pour N8N
+15. [ ] Table purchase_decisions pour ML (quand necessaire)
+16. [ ] Infrastructure REPLAY/MOCK Keepa
 
 ---
 
-**Derniere mise a jour** : 25 Decembre 2025
-**Prochaine session** : Executer Phase 9 UI Completion
+## DECISIONS ARCHITECTURE CLES
+
+### Unification Composants (Phase 10)
+
+| Decision | Valeur | Raison |
+|----------|--------|--------|
+| Accordions Niche Discovery | OFF | Donnees insuffisantes |
+| Colonnes Niche Discovery | 7 (simple) | UX legere, eviter surcharge |
+| Colonnes Analyse Manuelle | 12 (complet) | Power users, analyse detaillee |
+| Verification data conflicts | Delta visuel | Transparence |
+| Export CSV | Format unifie | Interoperabilite |
+
+### Persistance (Phase 11)
+
+| Decision | Valeur | Raison |
+|----------|--------|--------|
+| Stockage | PostgreSQL | Multi-appareil, robuste |
+| Retention | 30 jours | Eviter base qui grossit |
+| AutoSourcing | Redirect /recherches | Simplifier, une source verite |
+
+### Future (N8N & ML)
+
+| Decision | Valeur | Raison |
+|----------|--------|--------|
+| N8N | Apres tests manuels | Valider app d'abord |
+| ML table | Placeholder | YAGNI - creer quand necessaire |
+
+---
+
+**Derniere mise a jour** : 27 Decembre 2025
+**Prochaine session** : Executer Phase 10 Unified Product Table
 **Methodologie** : CLAUDE.md v3.3 - Zero-Tolerance + Senior Review Gate

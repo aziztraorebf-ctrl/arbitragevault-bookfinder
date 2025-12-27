@@ -1,0 +1,74 @@
+
+================================================================================
+REAL ROTATION ANALYSIS - KEEPA SALES DROPS DATA
+================================================================================
+
+This analysis uses Keepa's salesDrops data which tracks actual BSR drops
+(each drop = 1 estimated sale) to determine real rotation times.
+
+
+============================================================
+STRATEGY: TEXTBOOKS_STANDARD (BSR 100K-250K)
+============================================================
+
+  TEXTBOOKS_STANDARD_LOWER
+    BSR Range: 100,000 - 150,000
+    Products: 20
+    Sales/month (median): 30.0
+    Days to sell (median): 1.0
+
+  TEXTBOOKS_STANDARD_MIDDLE
+    BSR Range: 150,000 - 200,000
+    Products: 20
+    Sales/month (median): 20.0
+    Days to sell (median): 1.5
+
+  TEXTBOOKS_STANDARD_UPPER
+    BSR Range: 200,000 - 250,000
+    Products: 20
+    Sales/month (median): 15.0
+    Days to sell (median): 2.0
+
+  --- STRATEGY SUMMARY ---
+  Average days to sell 1 unit: 1.5 days
+  Average monthly velocity: 21.7 sales/month
+  Rotation category: FAST (< 1 week)
+
+============================================================
+STRATEGY: TEXTBOOKS_PATIENCE (BSR 250K-400K)
+============================================================
+
+  TEXTBOOKS_PATIENCE_LOWER
+    BSR Range: 250,000 - 300,000
+    Products: 20
+    Sales/month (median): 12.0
+    Days to sell (median): 2.5
+
+  TEXTBOOKS_PATIENCE_MIDDLE
+    BSR Range: 300,000 - 350,000
+    Products: 20
+    Sales/month (median): 10.0
+    Days to sell (median): 3.0
+
+  TEXTBOOKS_PATIENCE_UPPER
+    BSR Range: 350,000 - 400,000
+    Products: 20
+    Sales/month (median): 6.8
+    Days to sell (median): 4.4
+
+  --- STRATEGY SUMMARY ---
+  Average days to sell 1 unit: 3.3 days
+  Average monthly velocity: 9.6 sales/month
+  Rotation category: FAST (< 1 week)
+
+================================================================================
+CONCLUSION - RECOMMENDED LABELS
+================================================================================
+
+Textbook Standard (BSR 100K-250K):
+  Median days to sell: 1.5
+  Recommended label: 'Rotation 1-2 semaines'
+
+Textbook Patience (BSR 250K-400K):
+  Median days to sell: 3.0
+  Recommended label: 'Rotation 2-4 semaines'

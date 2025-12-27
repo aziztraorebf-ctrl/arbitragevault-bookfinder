@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Globale Projet
 
-**Derniere mise a jour** : 25 Decembre 2025
-**Version** : 5.4
-**Statut** : Phases 1-8 auditees, Phase 9 plan pret
+**Derniere mise a jour** : 27 Decembre 2025
+**Version** : 6.0
+**Statut** : Phases 1-8 auditees, Phase 9 complete, Phases 10-11 planifiees
 
 ---
 
@@ -18,6 +18,11 @@
 - Discovery produits rentables via Product Finder Keepa
 - Dashboard decisionnel temps reel
 - AutoSourcing automation avec safeguards
+
+**Vision Long Terme** :
+- Application majoritairement automatisee via N8N
+- Machine Learning pour optimiser les decisions d'achat (futur)
+- Integration multi-outils workflow automation
 
 ---
 
@@ -195,35 +200,88 @@ Les seuils BSR hardcodes (50K/30K/100K) etaient incorrects. Donnees reelles Keep
 **CLAUDE.md** : v3.2 -> v3.3 (ajout Senior Review Gate)
 **Slash command** : `/senior-review` cree
 
-### Phase 9 : UI Completion (PLAN CREE - EN ATTENTE VALIDATION)
-**Date creation plan** : 15 Decembre 2025
-**Duree estimee** : ~3 heures | **Tasks** : 7
+### Phase 9 : UI Completion (COMPLETE)
+**Date completion** : 27 Decembre 2025
+**Duree reelle** : ~4 heures | **Tests** : 70+ frontend
 
-**Contexte** : 4 pages frontend sont des placeholders ("Page en construction..."):
-- `Configuration.tsx` (8 lignes)
-- `AnalyseStrategique.tsx` (8 lignes)
-- `StockEstimates.tsx` (8 lignes)
-- `AutoScheduler.tsx` (8 lignes)
+**Livrables** :
+- 4 pages frontend completees (Configuration, AnalyseStrategique, StockEstimates, AutoScheduler)
+- Hooks React Query (useConfig, useStrategicViews, useStockEstimate)
+- Unit tests pour pages et hooks
+- E2E tests Playwright (26 PASS / 5 FAIL - issues API production)
 
-**Backend endpoints existants** :
-- `/api/v1/config/*` - GET/PUT config, stats, preview
-- `/api/v1/strategic-views/*` - velocity, competition, volatility, consistency, confidence
-- `/api/v1/products/{asin}/stock-estimate` - stock availability
+**Senior Review** : Gaps 5, 6, 8, 9 identifies et corriges
+- Gap 5: Tests unitaires pages manquants -> Ajoutes
+- Gap 6: Tests hooks manquants -> Ajoutes
+- Gap 8: Loading state submit button -> Ajoute
+- Gap 9: Documentation hooks -> Ajoutee
 
-**Plan** : `docs/plans/2025-12-15-phase9-ui-completion.md`
+**Decision Architecture (External Validation)** :
+- Pages AnalyseStrategique et StockEstimates jugees **redundantes**
+- Ces pages "cassent le flux naturel de decision"
+- Signaux strategiques doivent etre integres dans les resultats de recherche
+- **Action** : Unification planifiee en Phase 10
+
+---
+
+### Phase 10 : Unified Product Table (PLANIFIE)
+**Date creation plan** : 27 Decembre 2025
+**Duree estimee** : ~6.5 heures | **Plan** : `docs/plans/2025-12-27-unified-product-table.md`
+
+**Objectif** : Unifier les composants `ViewResultsTable` et `ProductsTable` en un seul `UnifiedProductTable` reutilisable par tous les modules.
+
+**Decisions Architecture** :
+1. **Accordions Niche Discovery** : Desactives (donnees insuffisantes)
+2. **Colonnes Niche Discovery** : Simples (7 colonnes vs 12 pour Analyse Manuelle)
+3. **Verification data conflicts** : Afficher les deux + delta visuel
+4. **Export CSV** : Format unifie avec colonnes fixes
+5. **Pages supprimees** : Redirect automatique + banner explicatif
 
 **Tasks** :
-| # | Description | Fichiers | Estimation |
-|---|-------------|----------|------------|
-| 1 | Configuration page | config.ts, useConfig.ts, Configuration.tsx | 45 min |
-| 2 | AnalyseStrategique page | strategic.ts, useStrategicViews.ts, AnalyseStrategique.tsx | 45 min |
-| 3 | StockEstimates page | stock.ts, useStockEstimate.ts, StockEstimates.tsx | 30 min |
-| 4 | AutoScheduler page | AutoScheduler.tsx (concept UI future) | 20 min |
-| 5 | Type exports | types/index.ts, services/api.ts | 10 min |
-| 6 | E2E tests | phase9-ui-completion.spec.ts | 20 min |
-| 7 | Verification | Build + tests | 15 min |
+| Phase | Description | Duree |
+|-------|-------------|-------|
+| 1 | Type DisplayableProduct + UnifiedProductRow + UnifiedProductTable | 2h |
+| 2 | Extraction VerificationPanel composant reutilisable | 1h |
+| 3 | Integration dans NicheDiscovery, AnalyseManuelle, AutoSourcing | 2h |
+| 4 | Nettoyage: suppression pages AnalyseStrategique/StockEstimates | 1h |
+| 5 | Verification finale | 30min |
 
-**Status** : EN ATTENTE VALIDATION UTILISATEUR
+**Composants a creer** :
+- `frontend/src/types/unified.ts` - Type DisplayableProduct
+- `frontend/src/components/unified/UnifiedProductRow.tsx`
+- `frontend/src/components/unified/UnifiedProductTable.tsx`
+- `frontend/src/components/unified/VerificationPanel.tsx`
+- `frontend/src/components/unified/useVerification.ts`
+
+---
+
+### Phase 11 : Page Centrale Recherches (PLANIFIE)
+**Date creation plan** : 27 Decembre 2025
+**Duree estimee** : ~4-5 heures
+
+**Objectif** : Creer une page centrale `/recherches` ("Mes Recherches") qui centralise tous les resultats de recherches.
+
+**Contexte** : Preparation pour automatisation N8N. Quand des recherches sont lancees automatiquement, l'utilisateur doit pouvoir voir tous les resultats en un seul endroit.
+
+**Decisions Architecture** :
+1. **Route** : `/recherches` avec titre "Mes Recherches"
+2. **Persistance** : Backend PostgreSQL (table `search_results`)
+3. **Retention** : 30 jours avec auto-cleanup
+4. **AutoSourcing** : Devient declencheur, redirect vers `/recherches` apres completion
+
+**Backend a creer** :
+- Table `search_results` (id, created_at, source, filters_applied JSON, products JSON, expires_at)
+- API: POST /searches, GET /searches, DELETE /searches/{id}
+
+**Frontend** :
+- Page `/recherches` avec liste des recherches
+- Filtres par date/source
+- Accordion expand vers UnifiedProductTable
+
+**AutoSourcing Evolution** :
+- Garde son UI pour configurer/lancer jobs
+- Apres completion: redirect vers `/recherches`
+- Resultats visibles dans page centrale
 
 ---
 
@@ -452,7 +510,9 @@ ENVIRONMENT=production
 
 | Priorite | Phase | Description | Status | Effort |
 |----------|-------|-------------|--------|--------|
-| 1 | Phase 9 | UI Completion | PLAN PRET | ~3h |
+| 1 | Phase 10 | Unified Product Table | PLAN PRET | ~6.5h |
+| 2 | Phase 11 | Page Centrale Recherches | PLANIFIE | ~4-5h |
+| 3 | Phase 12 | Integration N8N | FUTUR | TBD |
 
 ### Audit Systematique - Etat
 
@@ -466,13 +526,71 @@ ENVIRONMENT=production
 | Phase 6 | Niche Discovery Optimization | COMPLETE | 15 Dec 2025 |
 | Phase 7 | AutoSourcing Safeguards | COMPLETE | 16 Dec 2025 |
 | Phase 8 | Advanced Analytics | COMPLETE | 25 Dec 2025 |
-| Phase 9 | UI Completion | PLAN PRET | 15 Dec 2025 |
+| Phase 9 | UI Completion | COMPLETE | 27 Dec 2025 |
+| Phase 10 | Unified Product Table | PLAN PRET | 27 Dec 2025 |
+| Phase 11 | Page Centrale Recherches | PLANIFIE | 27 Dec 2025 |
 
 ### Infrastructure Tests
 
 1. Implementer mode REPLAY Keepa (fixtures JSON)
 2. Creer suite Smoke Tests (5 tests critiques)
 3. Segmenter tests par niveau
+
+---
+
+## Vision Future - Automatisation & ML
+
+### Phase 12 : Integration N8N (FUTUR - Non planifie)
+
+**Objectif** : Automatiser les recherches via N8N pour sourcing continu.
+
+**Pre-requis** :
+- Phase 10 complete (composants unifies)
+- Phase 11 complete (page centrale avec persistance)
+- Tester manuellement l'app pendant 1-2 mois
+
+**A implementer** :
+- API webhooks pour N8N
+- Authentification API keys
+- Endpoints batch pour resultats automatises
+- Documentation integration N8N
+
+**Workflow cible** :
+1. N8N lance recherches automatiques (nuit, matin)
+2. Resultats sauvegardes en base
+3. Utilisateur consulte `/recherches` pour voir opportunites
+4. Decision d'achat manuelle ou semi-automatisee
+
+### Machine Learning - Preparation (PLACEHOLDER)
+
+**Objectif futur** : Utiliser ML pour predire quels produits se vendront bien.
+
+**Decision actuelle** : NE PAS implementer maintenant (YAGNI)
+
+**Quand implementer** :
+- Apres 2-3 mois de donnees d'achat/vente reelles
+- Quand pattern de decisions utilisateur est clair
+- Quand ROI de l'automatisation est prouve
+
+**Table future (non creee)** :
+```sql
+-- purchase_decisions (a creer quand necessaire)
+-- Stocke les decisions d'achat et leurs resultats
+-- Source de verite pour ML training
+CREATE TABLE purchase_decisions (
+  id UUID PRIMARY KEY,
+  asin VARCHAR(20) NOT NULL,
+  decision VARCHAR(20), -- bought, skipped, watchlist
+  decided_at TIMESTAMP,
+  buy_price DECIMAL,
+  sell_price DECIMAL,
+  actual_roi DECIMAL,
+  days_to_sell INTEGER,
+  outcome VARCHAR(20) -- success, break_even, loss
+);
+```
+
+**Documentation** : `docs/future/ML_PREPARATION.md` (a creer si besoin)
 
 ---
 
@@ -510,6 +628,6 @@ ENVIRONMENT=production
 
 ---
 
-**Version** : 5.4
-**Derniere revision** : 25 Decembre 2025
-**Statut** : Phases 1-8 auditees, Phase 9 planifiee
+**Version** : 6.0
+**Derniere revision** : 27 Decembre 2025
+**Statut** : Phases 1-9 completes, Phases 10-11 planifiees, Phase 12 (N8N) future

@@ -1,0 +1,24 @@
+{
+  "test1": {
+    "success": true,
+    "asins": [],
+    "total_results": 0,
+    "tokens_consumed": 10,
+    "tokens_left": 1190
+  },
+  "test2": {
+    "success": true,
+    "asins": [],
+    "total_results": 0,
+    "tokens_consumed": 10,
+    "tokens_left": 1180
+  },
+  "test3": {
+    "success": true,
+    "asins": [],
+    "total_results": 0,
+    "tokens_consumed": 10,
+    "tokens_left": 1170
+  },
+  "total_found": 0
+}

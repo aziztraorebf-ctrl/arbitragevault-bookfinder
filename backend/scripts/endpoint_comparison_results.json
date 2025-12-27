@@ -1,0 +1,38 @@
+{
+  "bestsellers_law": {
+    "success": true,
+    "total": 10000,
+    "tokens": 50,
+    "asin_count": 10000
+  },
+  "search_law": {
+    "success": false,
+    "error": "{\"error\":{\"details\":\"\",\"message\":\"You used an invalid parameter for this API call. Please check the documentation: https://keepa.com/#!discuss/c/api/apirequests/11\",\"type\":\"invalidParameter\"},\"process",
+    "total": 0,
+    "asin_count": 0
+  },
+  "query_minimal": {
+    "success": true,
+    "total": 0,
+    "tokens": 10,
+    "asin_count": 0
+  },
+  "query_books_root": {
+    "success": true,
+    "total": 99198752,
+    "tokens": 11,
+    "asin_count": 50
+  },
+  "query_salesrank_format": {
+    "success": true,
+    "total": 99198760,
+    "tokens": 11,
+    "asin_count": 50
+  },
+  "query_current_sales": {
+    "success": true,
+    "total": 92140,
+    "tokens": 11,
+    "asin_count": 50
+  }
+}

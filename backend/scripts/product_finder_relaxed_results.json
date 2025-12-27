@@ -1,0 +1,108 @@
+[
+  {
+    "test": "A: Remove Amazon exclusion (keep other filters)",
+    "selection": {
+      "rootCategory": 10777,
+      "perPage": 50,
+      "current_SALES_gte": 30000,
+      "current_SALES_lte": 250000,
+      "current_NEW_gte": 4000,
+      "current_NEW_lte": 18000,
+      "offerCountFBA_lte": 3
+    },
+    "total": 0,
+    "sample_count": 0
+  },
+  {
+    "test": "B: Remove FBA limit (keep Amazon exclusion)",
+    "selection": {
+      "rootCategory": 10777,
+      "perPage": 50,
+      "current_SALES_gte": 30000,
+      "current_SALES_lte": 250000,
+      "current_NEW_gte": 4000,
+      "current_NEW_lte": 18000,
+      "current_AMAZON_lte": -1
+    },
+    "total": 0,
+    "sample_count": 0
+  },
+  {
+    "test": "C: Expand BSR (1K-500K), keep FBA<=5",
+    "selection": {
+      "rootCategory": 10777,
+      "perPage": 50,
+      "current_SALES_gte": 1000,
+      "current_SALES_lte": 500000,
+      "current_NEW_gte": 4000,
+      "current_NEW_lte": 18000,
+      "offerCountFBA_lte": 5,
+      "current_AMAZON_lte": -1
+    },
+    "total": 0,
+    "sample_count": 0
+  },
+  {
+    "test": "D: Expand price ($20-300), BSR 1K-500K, FBA<=5",
+    "selection": {
+      "rootCategory": 10777,
+      "perPage": 50,
+      "current_SALES_gte": 1000,
+      "current_SALES_lte": 500000,
+      "current_NEW_gte": 2000,
+      "current_NEW_lte": 30000,
+      "offerCountFBA_lte": 5,
+      "current_AMAZON_lte": -1
+    },
+    "total": 0,
+    "sample_count": 0
+  },
+  {
+    "test": "E: Very relaxed - only FBA<=10, no Amazon, any BSR/price",
+    "selection": {
+      "rootCategory": 10777,
+      "perPage": 50,
+      "offerCountFBA_lte": 10,
+      "current_AMAZON_lte": -1
+    },
+    "total": 0,
+    "sample_count": 0
+  },
+  {
+    "test": "F: BASELINE - only category, no other filters",
+    "selection": {
+      "rootCategory": 10777,
+      "perPage": 50
+    },
+    "total": 0,
+    "sample_count": 0
+  },
+  {
+    "test": "G: Python Books (cat 3508), BSR 10K-80K, FBA<=5",
+    "selection": {
+      "rootCategory": 3508,
+      "perPage": 50,
+      "current_SALES_gte": 10000,
+      "current_SALES_lte": 80000,
+      "current_NEW_gte": 2000,
+      "current_NEW_lte": 5000,
+      "offerCountFBA_lte": 5,
+      "current_AMAZON_lte": -1
+    },
+    "total": 0,
+    "sample_count": 0
+  },
+  {
+    "test": "H: General Books (283155), FBA<=3, no Amazon",
+    "selection": {
+      "rootCategory": 283155,
+      "perPage": 50,
+      "current_SALES_gte": 50000,
+      "current_SALES_lte": 200000,
+      "offerCountFBA_lte": 3,
+      "current_AMAZON_lte": -1
+    },
+    "total": 0,
+    "sample_count": 0
+  }
+]

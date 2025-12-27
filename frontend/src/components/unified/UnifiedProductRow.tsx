@@ -5,7 +5,7 @@
  */
 
 import { Fragment } from 'react'
-import type { DisplayableProduct, Recommendation } from '../../types/unified'
+import type { DisplayableProduct } from '../../types/unified'
 
 export interface UnifiedRowFeatures {
   showScore?: boolean

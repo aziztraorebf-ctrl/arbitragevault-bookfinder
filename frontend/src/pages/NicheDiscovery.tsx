@@ -1,19 +1,22 @@
 /**
  * Phase 3 Day 9 - Niche Discovery Page
  * One-click niche discovery with curated templates + manual search
+ * Phase 10: Updated to use UnifiedProductTable
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useNicheDiscoveryState } from '../hooks/useNicheDiscovery'
 import { CacheIndicator } from '../components/niche-discovery/CacheIndicator'
 import { AutoDiscoveryHero } from '../components/niche-discovery/AutoDiscoveryHero'
 import { NicheCard } from '../components/niche-discovery/NicheCard'
 import { ManualFiltersSection } from '../components/niche-discovery/ManualFiltersSection'
-import { ProductsTable } from '../components/niche-discovery/ProductsTable'
+import { UnifiedProductTable, useVerification } from '../components/unified'
+import { normalizeNicheProduct } from '../types/unified'
 import type { ValidatedNiche, NicheStrategy } from '../services/nicheDiscoveryService'
 import type { ManualDiscoveryResponse } from '../services/nicheDiscoveryService'
 import type { SavedNiche } from '../types/bookmarks'
+import type { NicheProduct } from '../types/unified'
 
 export default function NicheDiscovery() {
   const location = useLocation()
@@ -89,10 +92,18 @@ export default function NicheDiscovery() {
     })
   }
 
+  // Verification hook for product verification
+  const { verifyProduct } = useVerification()
+
   const niches = autoDiscoveryData?.metadata.niches || []
   const products = viewMode === 'products'
     ? (rerunResults?.products || nicheExplorationData?.products || manualDiscoveryData?.products || [])
     : []
+
+  // Normalize products for UnifiedProductTable
+  const normalizedProducts = useMemo(() => {
+    return products.map((p: NicheProduct) => normalizeNicheProduct(p))
+  }, [products])
 
   const cacheHit =
     rerunResults?.cache_hit ||
@@ -181,15 +192,24 @@ export default function NicheDiscovery() {
               </div>
             )}
 
-            <ProductsTable
-              products={products}
+            <UnifiedProductTable
+              products={normalizedProducts}
               title={
                 fromNiche
                   ? `Analyse relancee: ${fromNiche.niche_name}`
                   : selectedNiche
                   ? `${selectedNiche.icon} ${selectedNiche.name}`
-                  : 'Résultats de recherche'
+                  : 'Resultats de recherche'
               }
+              features={{
+                showRecommendation: true,
+                showCategory: true,
+                showVerifyButton: true,
+                showFooterSummary: true,
+                showFilters: true,
+                showAccordion: false, // NicheProduct doesn't have accordion content
+              }}
+              onVerify={verifyProduct}
             />
           </div>
         )}

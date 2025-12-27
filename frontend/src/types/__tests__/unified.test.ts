@@ -3,7 +3,6 @@ import { describe, it, expect } from 'vitest'
 import {
   normalizeProductScore,
   normalizeNicheProduct,
-  type DisplayableProduct
 } from '../unified'
 import type { ProductScore } from '../views'
 

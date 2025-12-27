@@ -2,7 +2,8 @@ import { useState, useRef, useMemo, type ChangeEvent } from 'react';
 import { keepaService } from '../services/keepaService';
 import type { IngestResponse } from '../types/keepa';
 import ProgressBar from '../components/ProgressBar';
-import { ViewResultsTable } from '../components/ViewResultsTable';
+import { UnifiedProductTable, useVerification } from '../components/unified';
+import { normalizeProductScore } from '../types/unified';
 import { batchResultsToProductScores } from '../utils/analysisAdapter';
 
 export default function AnalyseManuelle() {
@@ -184,10 +185,14 @@ export default function AnalyseManuelle() {
     console.log('Success:', message);
   };
 
-  // Convertir les résultats Keepa en ProductScore pour ViewResultsTable
-  const productScores = useMemo(() => {
+  // Verification hook
+  const { verifyProduct } = useVerification();
+
+  // Convertir les resultats Keepa en ProductScore puis normaliser pour UnifiedProductTable
+  const normalizedProducts = useMemo(() => {
     if (!results) return [];
-    return batchResultsToProductScores(results.results);
+    const productScores = batchResultsToProductScores(results.results);
+    return productScores.map(normalizeProductScore);
   }, [results]);
 
   return (
@@ -399,18 +404,22 @@ export default function AnalyseManuelle() {
         totalItems={asins.length}
       />
 
-      {/* Section Résultats */}
+      {/* Section Resultats */}
       {results && results.results.length > 0 && (
-        <ViewResultsTable
-          products={productScores}
-          metadata={{
-            view_type: 'analyse_manuelle' as any,
-            weights_used: { roi: 0.6, velocity: 0.4, stability: 0.0 },
-            total_products: results.total_items,
-            successful_scores: results.successful,
-            failed_scores: results.failed,
-            avg_score: 50 // Placeholder
+        <UnifiedProductTable
+          products={normalizedProducts}
+          title="Analyse Manuelle - Resultats"
+          features={{
+            showScore: true,
+            showRank: true,
+            showAmazonBadges: true,
+            showFilters: true,
+            showExportCSV: true,
+            showFooterSummary: true,
+            showAccordion: false, // TODO: Add AccordionContent component
+            showVerifyButton: true,
           }}
+          onVerify={verifyProduct}
         />
       )}
     </div>

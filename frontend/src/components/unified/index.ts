@@ -1,4 +1,6 @@
 export { UnifiedProductRow } from './UnifiedProductRow'
 export { UnifiedProductTable } from './UnifiedProductTable'
+export { VerificationPanel } from './VerificationPanel'
+export { useVerification } from './useVerification'
 export type { UnifiedRowFeatures } from './UnifiedProductRow'
 export type { UnifiedTableFeatures, UnifiedTableFilters, UnifiedTableSort } from './UnifiedProductTable'

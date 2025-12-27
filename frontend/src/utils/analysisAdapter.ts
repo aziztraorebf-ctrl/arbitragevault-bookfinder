@@ -1,23 +1,23 @@
 /**
- * Adapter pour convertir AnalysisResult (API Keepa) → ProductScore (format views)
- * Permet d'utiliser ViewResultsTable pour afficher les résultats de Keepa
+ * Adapter pour convertir AnalysisResult (API Keepa) -> ProductScore (format views)
+ * Used by UnifiedProductTable via normalizeProductScore()
  */
 
 import type { AnalysisResult } from '../types/keepa'
 import type { ProductScore } from '../types/views'
 
 /**
- * Convertit un AnalysisResult de l'API Keepa en ProductScore pour ViewResultsTable
+ * Convertit un AnalysisResult de l'API Keepa en ProductScore
  *
  * Extension de ProductScore pour inclure BSR:
- * Nous ajoutons `current_bsr` comme champ custom pour éviter de modifier l'interface
+ * Nous ajoutons `current_bsr` comme champ custom pour eviter de modifier l'interface
  */
 export interface ProductScoreWithBSR extends ProductScore {
   current_bsr?: number | null;
 }
 
 /**
- * Convertit un AnalysisResult de l'API Keepa en ProductScore pour ViewResultsTable
+ * Convertit un AnalysisResult de l'API Keepa en ProductScore
  */
 export function analysisResultToProductScore(
   analysis: AnalysisResult,

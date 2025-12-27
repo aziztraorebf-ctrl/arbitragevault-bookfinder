@@ -14,7 +14,6 @@ export type Recommendation = 'STRONG_BUY' | 'BUY' | 'CONSIDER' | 'SKIP'
 
 /**
  * NicheProduct - Type for products from Niche Discovery
- * Matches ProductsTable interface in niche-discovery/ProductsTable.tsx
  */
 export interface NicheProduct {
   asin: string

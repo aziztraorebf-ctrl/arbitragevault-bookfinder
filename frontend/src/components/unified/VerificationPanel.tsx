@@ -1,6 +1,6 @@
 /**
  * VerificationPanel - Reusable component for product verification display
- * Extracted from ProductsTable for use across all modules
+ * Used with UnifiedProductTable across all modules
  */
 
 import type { VerificationResponse, VerificationStatus } from '../../services/verificationService'

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { viewsService } from '../services/viewsService'
-import type { ProductScore, StrategyProfile, ViewScoreMetadata } from '../types/views'
-import { ViewResultsTable } from '../components/ViewResultsTable'
+import type { ProductScore, StrategyProfile } from '../types/views'
+import { UnifiedProductTable, useVerification } from '../components/unified'
+import { normalizeProductScore } from '../types/unified'
 import AutoSourcingJobModal from '../components/AutoSourcingJobModal'
 import { TokenErrorAlert } from '../components/TokenErrorAlert'
 import { parseTokenError } from '../utils/tokenErrorHandler'
@@ -55,7 +56,6 @@ export default function AutoSourcing() {
   const [strategy, setStrategy] = useState<StrategyProfile>('velocity')
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<ProductScore[]>([])
-  const [metadata, setMetadata] = useState<ViewScoreMetadata | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -175,7 +175,6 @@ export default function AutoSourcing() {
       )
 
       setResults(response.products)
-      setMetadata(response.metadata)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'analyse')
     } finally {
@@ -186,9 +185,16 @@ export default function AutoSourcing() {
   const handleClear = () => {
     setIdentifiers('')
     setResults([])
-    setMetadata(null)
     setError(null)
   }
+
+  // Verification hook
+  const { verifyProduct } = useVerification()
+
+  // Normalize products for UnifiedProductTable
+  const normalizedProducts = useMemo(() => {
+    return results.map(normalizeProductScore)
+  }, [results])
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -408,8 +414,22 @@ export default function AutoSourcing() {
               </div>
             </div>
 
-            {results.length > 0 && metadata && (
-              <ViewResultsTable products={results} metadata={metadata} />
+            {normalizedProducts.length > 0 && (
+              <UnifiedProductTable
+                products={normalizedProducts}
+                title="AutoSourcing - Resultats"
+                features={{
+                  showScore: true,
+                  showRank: true,
+                  showAmazonBadges: true,
+                  showFilters: true,
+                  showExportCSV: true,
+                  showFooterSummary: true,
+                  showAccordion: false,
+                  showVerifyButton: true,
+                }}
+                onVerify={verifyProduct}
+              />
             )}
 
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">

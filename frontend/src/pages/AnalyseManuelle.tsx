@@ -186,7 +186,12 @@ export default function AnalyseManuelle() {
   };
 
   // Verification hook
-  const { verifyProduct } = useVerification();
+  const {
+    verifyProduct,
+    getVerificationState,
+    isVerificationExpanded,
+    toggleVerificationExpansion,
+  } = useVerification();
 
   // Convertir les resultats Keepa en ProductScore puis normaliser pour UnifiedProductTable
   const normalizedProducts = useMemo(() => {
@@ -420,6 +425,9 @@ export default function AnalyseManuelle() {
             showVerifyButton: true,
           }}
           onVerify={verifyProduct}
+          getVerificationState={getVerificationState}
+          isVerificationExpanded={isVerificationExpanded}
+          toggleVerificationExpansion={toggleVerificationExpansion}
         />
       )}
     </div>

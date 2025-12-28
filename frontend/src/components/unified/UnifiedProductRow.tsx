@@ -6,6 +6,8 @@
 
 import { Fragment } from 'react'
 import type { DisplayableProduct } from '../../types/unified'
+import type { VerificationResponse } from '../../services/verificationService'
+import { VerificationPanel } from './VerificationPanel'
 
 export interface UnifiedRowFeatures {
   showScore?: boolean
@@ -24,6 +26,10 @@ interface UnifiedProductRowProps {
   features: UnifiedRowFeatures
   onVerify?: (product: DisplayableProduct) => void
   verificationLoading?: boolean
+  verificationResult?: VerificationResponse
+  verificationError?: string
+  isVerificationExpanded?: boolean
+  onToggleVerification?: () => void
   AccordionComponent?: React.ComponentType<{ product: DisplayableProduct; isExpanded: boolean }>
 }
 
@@ -42,6 +48,10 @@ export function UnifiedProductRow({
   features,
   onVerify,
   verificationLoading,
+  verificationResult,
+  verificationError,
+  isVerificationExpanded,
+  onToggleVerification,
   AccordionComponent,
 }: UnifiedProductRowProps) {
   const {
@@ -199,15 +209,25 @@ export function UnifiedProductRow({
               </a>
               {onVerify && (
                 <button
-                  onClick={() => onVerify(product)}
+                  onClick={() => {
+                    if (verificationResult && onToggleVerification) {
+                      // If already verified, toggle panel visibility
+                      onToggleVerification()
+                    } else {
+                      // Otherwise, trigger verification
+                      onVerify(product)
+                    }
+                  }}
                   disabled={verificationLoading}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${
                     verificationLoading
                       ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                      : verificationResult
+                      ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
                       : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
                   }`}
                 >
-                  {verificationLoading ? 'Verification...' : 'Verifier'}
+                  {verificationLoading ? 'Verification...' : verificationResult ? (isVerificationExpanded ? 'Masquer' : 'Voir') : 'Verifier'}
                 </button>
               )}
             </div>
@@ -220,6 +240,29 @@ export function UnifiedProductRow({
         <tr>
           <td colSpan={20} className="p-0">
             <AccordionComponent product={product} isExpanded={isExpanded} />
+          </td>
+        </tr>
+      )}
+
+      {/* Verification Panel row */}
+      {isVerificationExpanded && verificationResult && (
+        <tr className="bg-gray-50">
+          <td colSpan={20} className="px-6 py-4">
+            <VerificationPanel result={verificationResult} />
+          </td>
+        </tr>
+      )}
+
+      {/* Verification Error row */}
+      {isVerificationExpanded && verificationError && !verificationResult && (
+        <tr className="bg-red-50">
+          <td colSpan={20} className="px-6 py-4">
+            <div className="flex items-center gap-2 text-red-700">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm font-medium">Erreur: {verificationError}</span>
+            </div>
           </td>
         </tr>
       )}

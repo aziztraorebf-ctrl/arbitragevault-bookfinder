@@ -93,7 +93,12 @@ export default function NicheDiscovery() {
   }
 
   // Verification hook for product verification
-  const { verifyProduct } = useVerification()
+  const {
+    verifyProduct,
+    getVerificationState,
+    isVerificationExpanded,
+    toggleVerificationExpansion,
+  } = useVerification()
 
   const niches = autoDiscoveryData?.metadata.niches || []
   const products = viewMode === 'products'
@@ -210,6 +215,9 @@ export default function NicheDiscovery() {
                 showAccordion: false, // NicheProduct doesn't have accordion content
               }}
               onVerify={verifyProduct}
+              getVerificationState={getVerificationState}
+              isVerificationExpanded={isVerificationExpanded}
+              toggleVerificationExpansion={toggleVerificationExpansion}
             />
           </div>
         )}

@@ -5,6 +5,7 @@
 
 import { useState, useMemo } from 'react'
 import type { DisplayableProduct } from '../../types/unified'
+import type { VerificationResponse } from '../../services/verificationService'
 import { UnifiedProductRow, type UnifiedRowFeatures } from './UnifiedProductRow'
 
 export interface UnifiedTableFeatures extends UnifiedRowFeatures {
@@ -26,6 +27,13 @@ export interface UnifiedTableSort {
   order: 'asc' | 'desc'
 }
 
+// Verification state for a single product
+export interface VerificationState {
+  loading: boolean
+  result?: VerificationResponse
+  error?: string
+}
+
 interface UnifiedProductTableProps {
   products: DisplayableProduct[]
   title: string
@@ -34,6 +42,10 @@ interface UnifiedProductTableProps {
   defaultSort?: UnifiedTableSort
   onExportCSV?: (products: DisplayableProduct[]) => void
   onVerify?: (product: DisplayableProduct) => void
+  // Verification state props from useVerification hook
+  getVerificationState?: (asin: string) => VerificationState | undefined
+  isVerificationExpanded?: (asin: string) => boolean
+  toggleVerificationExpansion?: (asin: string) => void
   AccordionComponent?: React.ComponentType<{ product: DisplayableProduct; isExpanded: boolean }>
 }
 
@@ -45,6 +57,9 @@ export function UnifiedProductTable({
   defaultSort = { by: 'score', order: 'desc' },
   onExportCSV,
   onVerify,
+  getVerificationState,
+  isVerificationExpanded,
+  toggleVerificationExpansion,
   AccordionComponent,
 }: UnifiedProductTableProps) {
   const {
@@ -292,17 +307,25 @@ export function UnifiedProductTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {processedProducts.map((product) => (
-              <UnifiedProductRow
-                key={product.asin}
-                product={product}
-                isExpanded={expandedRow === product.asin}
-                onToggle={() => setExpandedRow(expandedRow === product.asin ? null : product.asin)}
-                features={rowFeatures}
-                onVerify={onVerify}
-                AccordionComponent={AccordionComponent}
-              />
-            ))}
+            {processedProducts.map((product) => {
+              const verificationState = getVerificationState?.(product.asin)
+              return (
+                <UnifiedProductRow
+                  key={product.asin}
+                  product={product}
+                  isExpanded={expandedRow === product.asin}
+                  onToggle={() => setExpandedRow(expandedRow === product.asin ? null : product.asin)}
+                  features={rowFeatures}
+                  onVerify={onVerify}
+                  verificationLoading={verificationState?.loading}
+                  verificationResult={verificationState?.result}
+                  verificationError={verificationState?.error}
+                  isVerificationExpanded={isVerificationExpanded?.(product.asin)}
+                  onToggleVerification={() => toggleVerificationExpansion?.(product.asin)}
+                  AccordionComponent={AccordionComponent}
+                />
+              )
+            })}
           </tbody>
         </table>
       </div>

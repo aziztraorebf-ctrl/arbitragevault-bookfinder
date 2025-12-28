@@ -189,7 +189,12 @@ export default function AutoSourcing() {
   }
 
   // Verification hook
-  const { verifyProduct } = useVerification()
+  const {
+    verifyProduct,
+    getVerificationState,
+    isVerificationExpanded,
+    toggleVerificationExpansion,
+  } = useVerification()
 
   // Normalize products for UnifiedProductTable
   const normalizedProducts = useMemo(() => {
@@ -429,6 +434,9 @@ export default function AutoSourcing() {
                   showVerifyButton: true,
                 }}
                 onVerify={verifyProduct}
+                getVerificationState={getVerificationState}
+                isVerificationExpanded={isVerificationExpanded}
+                toggleVerificationExpansion={toggleVerificationExpansion}
               />
             )}
 

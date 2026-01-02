@@ -14,8 +14,6 @@ const navigationItems = [
   { name: 'Mes Niches', emoji: '📚', href: '/mes-niches' },
   { name: 'AutoScheduler', emoji: '🤖', href: '/autoscheduler' },
   { name: 'AutoSourcing', emoji: '📊', href: '/autosourcing' },
-  { name: 'Analyse Stratégique', emoji: '📈', href: '/analyse-strategique' },
-  { name: 'Stock Estimates', emoji: '📦', href: '/stock-estimates' },
   { name: 'Configuration', emoji: '⚙️', href: '/config' }
 ]
 
@@ -68,7 +66,7 @@ export default function Layout({ children }: LayoutProps) {
                   </Link>
 
                   {/* Separators after specific groups */}
-                  {(index === 3 || index === 6 || index === 7) && (
+                  {(index === 3 || index === 5) && (
                     <div className="my-2 border-t border-gray-200"></div>
                   )}
                 </div>

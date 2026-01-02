@@ -10,8 +10,6 @@ import NicheDiscovery from './pages/NicheDiscovery'
 import MesNiches from './pages/MesNiches'
 import AutoScheduler from './pages/AutoScheduler'
 import AutoSourcing from './pages/AutoSourcing'
-import AnalyseStrategique from './pages/AnalyseStrategique'
-import StockEstimates from './pages/StockEstimates'
 import Configuration from './pages/Configuration'
 
 // Initialize React Query client
@@ -37,8 +35,6 @@ function App() {
             <Route path="/mes-niches" element={<MesNiches />} />
             <Route path="/autoscheduler" element={<AutoScheduler />} />
             <Route path="/autosourcing" element={<AutoSourcing />} />
-            <Route path="/analyse-strategique" element={<AnalyseStrategique />} />
-            <Route path="/stock-estimates" element={<StockEstimates />} />
             <Route path="/config" element={<Configuration />} />
             {/* Fallback route */}
             <Route path="*" element={<Dashboard />} />

@@ -38,6 +38,11 @@ class TestSearchResultService:
             search_params={"strategy": "textbook"}
         )
 
+        # Mock check_duplicate to return None (no duplicate)
+        execute_result = MagicMock()
+        execute_result.scalar_one_or_none.return_value = None
+        mock_db.execute.return_value = execute_result
+
         # Mock refresh to set attributes
         async def mock_refresh(obj):
             obj.id = "test-uuid"
@@ -67,12 +72,51 @@ class TestSearchResultService:
             products=products
         )
 
+        # Mock check_duplicate to return None (no duplicate)
+        execute_result = MagicMock()
+        execute_result.scalar_one_or_none.return_value = None
+        mock_db.execute.return_value = execute_result
+
         async def mock_refresh(obj):
             pass
         mock_db.refresh = mock_refresh
 
         result = await service.create(data)
         assert result.product_count == 3
+
+    @pytest.mark.asyncio
+    async def test_create_duplicate_rejected(self, service, mock_db):
+        """Test that duplicate name+source is rejected by default."""
+        data = SearchResultCreate(
+            name="Duplicate Test",
+            source=SearchSourceEnum.NICHE_DISCOVERY,
+            products=[{"asin": "B123", "title": "Test"}]
+        )
+
+        # Mock check_duplicate to return existing result
+        existing = SearchResult(name="Duplicate Test", source="niche_discovery", products=[])
+        execute_result = MagicMock()
+        execute_result.scalar_one_or_none.return_value = existing
+        mock_db.execute.return_value = execute_result
+
+        with pytest.raises(ValueError, match="already exists"):
+            await service.create(data)
+
+    @pytest.mark.asyncio
+    async def test_create_allows_duplicate_when_flag_set(self, service, mock_db):
+        """Test that duplicate is allowed with allow_duplicate=True."""
+        data = SearchResultCreate(
+            name="Duplicate Allowed",
+            source=SearchSourceEnum.AUTOSOURCING,
+            products=[{"asin": "B123", "title": "Test"}]
+        )
+
+        async def mock_refresh(obj):
+            pass
+        mock_db.refresh = mock_refresh
+
+        result = await service.create(data, allow_duplicate=True)
+        assert result.name == "Duplicate Allowed"
 
     @pytest.mark.asyncio
     async def test_get_by_id_found(self, service, mock_db):
@@ -178,7 +222,7 @@ class TestSearchResultValidation:
         data = SearchResultCreate(
             name="  Padded Name  ",
             source=SearchSourceEnum.AUTOSOURCING,
-            products=[]
+            products=[{"asin": "B123"}]
         )
         assert data.name == "Padded Name"
 
@@ -188,8 +232,35 @@ class TestSearchResultValidation:
             SearchResultCreate(
                 name="   ",
                 source=SearchSourceEnum.MANUAL_ANALYSIS,
+                products=[{"asin": "B123"}]
+            )
+
+    def test_create_schema_empty_products_fails(self):
+        """Test that empty products array fails validation."""
+        with pytest.raises(ValueError, match="cannot be empty"):
+            SearchResultCreate(
+                name="No Products",
+                source=SearchSourceEnum.NICHE_DISCOVERY,
                 products=[]
             )
+
+    def test_create_schema_product_without_asin_fails(self):
+        """Test that product without ASIN fails validation."""
+        with pytest.raises(ValueError, match="must have an ASIN"):
+            SearchResultCreate(
+                name="Invalid Product",
+                source=SearchSourceEnum.NICHE_DISCOVERY,
+                products=[{"title": "No ASIN"}]
+            )
+
+    def test_create_schema_product_with_uppercase_asin(self):
+        """Test that product with ASIN (uppercase) is valid."""
+        data = SearchResultCreate(
+            name="Valid ASIN",
+            source=SearchSourceEnum.NICHE_DISCOVERY,
+            products=[{"ASIN": "B123"}]
+        )
+        assert len(data.products) == 1
 
     def test_update_schema_optional_fields(self):
         """Test update schema with optional fields."""

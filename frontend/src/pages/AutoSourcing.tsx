@@ -3,6 +3,7 @@ import { viewsService } from '../services/viewsService'
 import type { ProductScore, StrategyProfile } from '../types/views'
 import { UnifiedProductTable, useVerification } from '../components/unified'
 import { normalizeProductScore } from '../types/unified'
+import { SaveSearchButton } from '../components/recherches/SaveSearchButton'
 import AutoSourcingJobModal from '../components/AutoSourcingJobModal'
 import { TokenErrorAlert } from '../components/TokenErrorAlert'
 import { parseTokenError } from '../utils/tokenErrorHandler'
@@ -420,24 +421,34 @@ export default function AutoSourcing() {
             </div>
 
             {normalizedProducts.length > 0 && (
-              <UnifiedProductTable
-                products={normalizedProducts}
-                title="AutoSourcing - Resultats"
-                features={{
-                  showScore: true,
-                  showRank: true,
-                  showAmazonBadges: true,
-                  showFilters: true,
-                  showExportCSV: true,
-                  showFooterSummary: true,
-                  showAccordion: false,
-                  showVerifyButton: true,
-                }}
-                onVerify={verifyProduct}
-                getVerificationState={getVerificationState}
-                isVerificationExpanded={isVerificationExpanded}
-                toggleVerificationExpansion={toggleVerificationExpansion}
-              />
+              <>
+                <div className="flex justify-end mb-4">
+                  <SaveSearchButton
+                    products={normalizedProducts}
+                    source="autosourcing"
+                    searchParams={{ strategy }}
+                    defaultName={`AutoSourcing ${new Date().toLocaleDateString('fr-FR')}`}
+                  />
+                </div>
+                <UnifiedProductTable
+                  products={normalizedProducts}
+                  title="AutoSourcing - Resultats"
+                  features={{
+                    showScore: true,
+                    showRank: true,
+                    showAmazonBadges: true,
+                    showFilters: true,
+                    showExportCSV: true,
+                    showFooterSummary: true,
+                    showAccordion: false,
+                    showVerifyButton: true,
+                  }}
+                  onVerify={verifyProduct}
+                  getVerificationState={getVerificationState}
+                  isVerificationExpanded={isVerificationExpanded}
+                  toggleVerificationExpansion={toggleVerificationExpansion}
+                />
+              </>
             )}
 
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">

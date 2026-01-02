@@ -33,6 +33,7 @@ def get_service(db: AsyncSession = Depends(get_db_session)) -> SearchResultServi
 @router.post("", response_model=SearchResultRead, status_code=status.HTTP_201_CREATED)
 async def create_search_result(
     data: SearchResultCreate,
+    allow_duplicate: bool = Query(False, description="Allow duplicate name+source"),
     service: SearchResultService = Depends(get_service),
     current_user: CurrentUser = Depends(get_current_user)
 ):
@@ -41,14 +42,22 @@ async def create_search_result(
 
     - **name**: Name for this search
     - **source**: Source module (niche_discovery, autosourcing, manual_analysis)
-    - **products**: Array of product data
+    - **products**: Array of product data (max 500 items, each must have ASIN)
     - **search_params**: Original search parameters
-    - **notes**: Optional notes
+    - **notes**: Optional notes (max 2000 chars)
+    - **allow_duplicate**: If false, rejects duplicate name+source combinations
     """
     try:
-        result = await service.create(data)
+        result = await service.create(data, allow_duplicate=allow_duplicate)
         logger.info(f"User {current_user.email} created search result: {result.id}")
         return result
+    except ValueError as e:
+        # Duplicate or validation error
+        logger.warning(f"Validation error creating search result: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
     except Exception as e:
         logger.error(f"Error creating search result: {e}")
         raise HTTPException(

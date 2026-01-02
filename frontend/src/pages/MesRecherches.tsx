@@ -4,11 +4,11 @@
  * Phase 11 - Centralized Search Results
  */
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
-import { Loader2, Inbox, Trash2, Calendar, Package, ExternalLink, Filter } from 'lucide-react'
-import { useRecherches, useDeleteRecherche, useRechercheStats } from '../hooks/useRecherches'
+import { Loader2, Inbox, Trash2, Calendar, Package, ExternalLink, Filter, ChevronDown } from 'lucide-react'
+import { useInfiniteRecherches, useDeleteRecherche, useRechercheStats } from '../hooks/useRecherches'
 import { SOURCE_LABELS, SOURCE_COLORS } from '../types/recherches'
 import type { SearchSource, SearchResultSummary } from '../types/recherches'
 
@@ -113,12 +113,28 @@ export default function MesRecherches() {
   const [sourceFilter, setSourceFilter] = useState<SearchSource | undefined>(undefined)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const { data, isLoading, error, refetch } = useRecherches(sourceFilter)
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteRecherches(sourceFilter)
   const { data: stats } = useRechercheStats()
   const { mutate: deleteRecherche } = useDeleteRecherche()
 
+  // Flatten all pages into a single array of results
+  const allResults = useMemo(() => {
+    if (!data) return []
+    return data.pages.flatMap((page) => page.results)
+  }, [data])
+
+  const totalCount = data?.pages[0]?.total_count ?? 0
+
   const handleDelete = (id: string) => {
-    const result = data?.results.find((r) => r.id === id)
+    const result = allResults.find((r) => r.id === id)
     if (!result) return
 
     if (!window.confirm(`Supprimer "${result.name}" ?`)) {
@@ -235,7 +251,7 @@ export default function MesRecherches() {
         )}
 
         {/* Empty State */}
-        {!isLoading && !error && (!data || data.results.length === 0) && (
+        {!isLoading && !error && allResults.length === 0 && (
           <div className="bg-white rounded-lg shadow-md p-12 text-center">
             <Inbox className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-700 mb-2">
@@ -264,12 +280,12 @@ export default function MesRecherches() {
         )}
 
         {/* Results List */}
-        {!isLoading && data && data.results.length > 0 && (
+        {!isLoading && allResults.length > 0 && (
           <div className="space-y-4">
             <div className="text-sm text-gray-500">
-              {data.total_count} recherche{data.total_count !== 1 ? 's' : ''} trouvee{data.total_count !== 1 ? 's' : ''}
+              {allResults.length} sur {totalCount} recherche{totalCount !== 1 ? 's' : ''}
             </div>
-            {data.results.map((result) => (
+            {allResults.map((result) => (
               <SearchResultCard
                 key={result.id}
                 result={result}
@@ -278,6 +294,29 @@ export default function MesRecherches() {
                 isDeleting={deletingId === result.id}
               />
             ))}
+
+            {/* Load More Button */}
+            {hasNextPage && (
+              <div className="flex justify-center pt-4">
+                <button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Chargement...
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-4 h-4" />
+                      Charger plus ({totalCount - allResults.length} restants)
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

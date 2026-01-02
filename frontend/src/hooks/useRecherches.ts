@@ -3,7 +3,7 @@
  * Phase 11 - Centralized search results
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { recherchesService } from '../services/recherchesService'
 import type {
   SearchResultCreateRequest,
@@ -16,10 +16,13 @@ export const recherchesKeys = {
   all: ['recherches'] as const,
   lists: () => [...recherchesKeys.all, 'list'] as const,
   list: (source?: SearchSource) => [...recherchesKeys.lists(), { source }] as const,
+  infinite: (source?: SearchSource) => [...recherchesKeys.lists(), 'infinite', { source }] as const,
   details: () => [...recherchesKeys.all, 'detail'] as const,
   detail: (id: string) => [...recherchesKeys.details(), id] as const,
   stats: () => [...recherchesKeys.all, 'stats'] as const,
 }
+
+const PAGE_SIZE = 10
 
 /**
  * Hook to list search results with optional source filter
@@ -27,7 +30,28 @@ export const recherchesKeys = {
 export function useRecherches(source?: SearchSource) {
   return useQuery({
     queryKey: recherchesKeys.list(source),
-    queryFn: () => recherchesService.list({ source }),
+    queryFn: () => recherchesService.list({ source, limit: PAGE_SIZE }),
+    staleTime: 30 * 1000, // 30 seconds
+  })
+}
+
+/**
+ * Hook to list search results with infinite scrolling / load more
+ */
+export function useInfiniteRecherches(source?: SearchSource) {
+  return useInfiniteQuery({
+    queryKey: recherchesKeys.infinite(source),
+    queryFn: ({ pageParam = 0 }) =>
+      recherchesService.list({ source, limit: PAGE_SIZE, offset: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loadedCount = allPages.reduce((acc, page) => acc + page.results.length, 0)
+      // If we loaded less than total, there are more to load
+      if (loadedCount < lastPage.total_count) {
+        return loadedCount // offset for next page
+      }
+      return undefined // no more pages
+    },
     staleTime: 30 * 1000, // 30 seconds
   })
 }

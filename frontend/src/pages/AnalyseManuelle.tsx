@@ -5,6 +5,7 @@ import ProgressBar from '../components/ProgressBar';
 import { UnifiedProductTable, useVerification } from '../components/unified';
 import { normalizeProductScore } from '../types/unified';
 import { batchResultsToProductScores } from '../utils/analysisAdapter';
+import { SaveSearchButton } from '../components/recherches/SaveSearchButton';
 
 export default function AnalyseManuelle() {
   // États principaux
@@ -411,24 +412,34 @@ export default function AnalyseManuelle() {
 
       {/* Section Resultats */}
       {results && results.results.length > 0 && (
-        <UnifiedProductTable
-          products={normalizedProducts}
-          title="Analyse Manuelle - Resultats"
-          features={{
-            showScore: true,
-            showRank: true,
-            showAmazonBadges: true,
-            showFilters: true,
-            showExportCSV: true,
-            showFooterSummary: true,
-            showAccordion: false, // TODO: Add AccordionContent component
-            showVerifyButton: true,
-          }}
-          onVerify={verifyProduct}
-          getVerificationState={getVerificationState}
-          isVerificationExpanded={isVerificationExpanded}
-          toggleVerificationExpansion={toggleVerificationExpansion}
-        />
+        <>
+          <div className="flex justify-end mb-4">
+            <SaveSearchButton
+              products={normalizedProducts}
+              source="manual_analysis"
+              searchParams={{ strategy, minROI, maxBSR, minVelocity }}
+              defaultName={`Analyse ${new Date().toLocaleDateString('fr-FR')}`}
+            />
+          </div>
+          <UnifiedProductTable
+            products={normalizedProducts}
+            title="Analyse Manuelle - Resultats"
+            features={{
+              showScore: true,
+              showRank: true,
+              showAmazonBadges: true,
+              showFilters: true,
+              showExportCSV: true,
+              showFooterSummary: true,
+              showAccordion: false, // TODO: Add AccordionContent component
+              showVerifyButton: true,
+            }}
+            onVerify={verifyProduct}
+            getVerificationState={getVerificationState}
+            isVerificationExpanded={isVerificationExpanded}
+            toggleVerificationExpansion={toggleVerificationExpansion}
+          />
+        </>
       )}
     </div>
   )

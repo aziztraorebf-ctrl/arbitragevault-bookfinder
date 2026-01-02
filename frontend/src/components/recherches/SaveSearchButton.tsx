@@ -4,9 +4,10 @@
  * Phase 11 - Centralized Search Results
  */
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'react-hot-toast'
-import { Save, Loader2, Check } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Save, Loader2, Check, ExternalLink } from 'lucide-react'
 import { useCreateRecherche } from '../../hooks/useRecherches'
 import type { SearchSource, SearchResultCreateRequest } from '../../types/recherches'
 import type { DisplayableProduct } from '../../types/unified'
@@ -28,10 +29,31 @@ export function SaveSearchButton({
   disabled = false,
   className = '',
 }: SaveSearchButtonProps) {
+  const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
   const [name, setName] = useState(defaultName || '')
   const [notes, setNotes] = useState('')
+  const modalRef = useRef<HTMLDivElement>(null)
   const { mutate: createRecherche, isPending, isSuccess } = useCreateRecherche()
+
+  // Close modal on Escape key
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && showModal && !isPending) {
+      setShowModal(false)
+    }
+  }, [showModal, isPending])
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
+
+  // Close modal on click outside
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget && !isPending) {
+      setShowModal(false)
+    }
+  }
 
   const handleOpen = () => {
     // Generate default name with timestamp
@@ -63,11 +85,37 @@ export function SaveSearchButton({
 
     createRecherche(request, {
       onSuccess: () => {
-        toast.success(`Recherche sauvegardee (${products.length} produits)`)
+        toast.success(
+          (t) => (
+            <div className="flex items-center gap-3">
+              <span>Recherche sauvegardee ({products.length} produits)</span>
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id)
+                  navigate('/recherches')
+                }}
+                className="flex items-center gap-1 text-purple-600 hover:text-purple-800 font-medium"
+              >
+                Voir <ExternalLink className="w-3 h-3" />
+              </button>
+            </div>
+          ),
+          { duration: 5000 }
+        )
         setShowModal(false)
       },
       onError: (err) => {
-        toast.error(`Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`)
+        // Check for 409 Conflict (duplicate)
+        const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue'
+
+        if (errorMessage.includes('already exists') || errorMessage.includes('409')) {
+          toast.error(
+            `Une recherche avec ce nom existe deja. Choisissez un autre nom ou consultez vos recherches existantes.`,
+            { duration: 5000 }
+          )
+        } else {
+          toast.error(`Erreur: ${errorMessage}`)
+        }
       },
     })
   }
@@ -99,8 +147,11 @@ export function SaveSearchButton({
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={handleBackdropClick}
+        >
+          <div ref={modalRef} className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Sauvegarder la recherche
             </h3>

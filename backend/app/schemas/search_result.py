@@ -31,7 +31,8 @@ class SearchResultCreate(BaseModel):
 
     products: List[Dict[str, Any]] = Field(
         ...,
-        description="Array of product data"
+        max_length=500,
+        description="Array of product data (max 500 items)"
     )
 
     search_params: Dict[str, Any] = Field(
@@ -41,8 +42,8 @@ class SearchResultCreate(BaseModel):
 
     notes: Optional[str] = Field(
         None,
-        max_length=1000,
-        description="Optional notes about this search"
+        max_length=2000,
+        description="Optional notes about this search (max 2000 chars)"
     )
 
     @field_validator('name')
@@ -58,6 +59,16 @@ class SearchResultCreate(BaseModel):
     def validate_products(cls, v):
         if not isinstance(v, list):
             raise ValueError('Products must be a list')
+        if len(v) > 500:
+            raise ValueError('Products array cannot exceed 500 items')
+        if len(v) == 0:
+            raise ValueError('Products array cannot be empty')
+        # Validate each product has at least an ASIN
+        for i, product in enumerate(v):
+            if not isinstance(product, dict):
+                raise ValueError(f'Product at index {i} must be a dictionary')
+            if 'asin' not in product and 'ASIN' not in product:
+                raise ValueError(f'Product at index {i} must have an ASIN field')
         return v
 
     class Config:

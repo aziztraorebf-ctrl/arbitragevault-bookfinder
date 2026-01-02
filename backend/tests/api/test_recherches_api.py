@@ -41,10 +41,10 @@ class TestRecherchesSchemas:
         data = SearchResultCreate(
             name="Test AutoSourcing",
             source=SearchSourceEnum.AUTOSOURCING,
-            products=[]
+            products=[{"asin": "B789", "title": "AutoSource Product"}]
         )
         assert data.source == SearchSourceEnum.AUTOSOURCING
-        assert data.products == []
+        assert len(data.products) == 1
         assert data.notes is None
 
     def test_create_schema_valid_manual_analysis(self):
@@ -61,7 +61,7 @@ class TestRecherchesSchemas:
         data = SearchResultCreate(
             name="  Padded Name  ",
             source=SearchSourceEnum.NICHE_DISCOVERY,
-            products=[]
+            products=[{"asin": "B123"}]
         )
         assert data.name == "Padded Name"
 
@@ -71,7 +71,7 @@ class TestRecherchesSchemas:
             SearchResultCreate(
                 name="   ",
                 source=SearchSourceEnum.NICHE_DISCOVERY,
-                products=[]
+                products=[{"asin": "B123"}]
             )
 
     def test_create_schema_missing_name_fails(self):
@@ -79,7 +79,7 @@ class TestRecherchesSchemas:
         with pytest.raises(ValueError):
             SearchResultCreate(
                 source=SearchSourceEnum.NICHE_DISCOVERY,
-                products=[]
+                products=[{"asin": "B123"}]
             )
 
     def test_create_schema_invalid_source_fails(self):
@@ -88,7 +88,45 @@ class TestRecherchesSchemas:
             SearchResultCreate(
                 name="Test",
                 source="invalid_source",
+                products=[{"asin": "B123"}]
+            )
+
+    def test_create_schema_empty_products_fails(self):
+        """Test that empty products array fails validation."""
+        with pytest.raises(ValueError, match="cannot be empty"):
+            SearchResultCreate(
+                name="No Products",
+                source=SearchSourceEnum.NICHE_DISCOVERY,
                 products=[]
+            )
+
+    def test_create_schema_product_without_asin_fails(self):
+        """Test that product without ASIN field fails validation."""
+        with pytest.raises(ValueError, match="must have an ASIN"):
+            SearchResultCreate(
+                name="Bad Product",
+                source=SearchSourceEnum.NICHE_DISCOVERY,
+                products=[{"title": "No ASIN here"}]
+            )
+
+    def test_create_schema_max_products_limit(self):
+        """Test products array max limit (500)."""
+        # 500 products should be OK
+        products_500 = [{"asin": f"B{i:05d}"} for i in range(500)]
+        data = SearchResultCreate(
+            name="Max Products",
+            source=SearchSourceEnum.NICHE_DISCOVERY,
+            products=products_500
+        )
+        assert len(data.products) == 500
+
+        # 501 products should fail (Pydantic checks max_length first)
+        products_501 = [{"asin": f"B{i:05d}"} for i in range(501)]
+        with pytest.raises(Exception):  # ValidationError from Pydantic
+            SearchResultCreate(
+                name="Too Many Products",
+                source=SearchSourceEnum.NICHE_DISCOVERY,
+                products=products_501
             )
 
     def test_update_schema_partial(self):

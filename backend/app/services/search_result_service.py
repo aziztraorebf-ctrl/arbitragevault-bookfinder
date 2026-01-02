@@ -26,8 +26,48 @@ class SearchResultService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create(self, data: SearchResultCreate) -> SearchResult:
-        """Create a new search result."""
+    async def check_duplicate(
+        self,
+        name: str,
+        source: SearchSourceEnum
+    ) -> Optional[SearchResult]:
+        """
+        Check if a search result with same name and source exists.
+        Returns the existing result if found, None otherwise.
+        """
+        now = datetime.utcnow()
+        query = select(SearchResult).where(
+            SearchResult.name == name,
+            SearchResult.source == source.value,
+            SearchResult.expires_at > now
+        )
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
+
+    async def create(
+        self,
+        data: SearchResultCreate,
+        allow_duplicate: bool = False
+    ) -> SearchResult:
+        """
+        Create a new search result.
+
+        Args:
+            data: Search result data
+            allow_duplicate: If False, raises ValueError if duplicate exists
+        """
+        # Check for duplicates unless explicitly allowed
+        if not allow_duplicate:
+            existing = await self.check_duplicate(data.name, data.source)
+            if existing:
+                logger.warning(
+                    f"Duplicate search result found: name='{data.name}', source='{data.source.value}'"
+                )
+                raise ValueError(
+                    f"A search result with name '{data.name}' from {data.source.value} already exists. "
+                    f"Use a different name or delete the existing one."
+                )
+
         search_result = SearchResult.create_from_results(
             name=data.name,
             source=SearchSource(data.source.value),

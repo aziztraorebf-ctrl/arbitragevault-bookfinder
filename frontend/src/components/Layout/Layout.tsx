@@ -14,6 +14,7 @@ const navigationItems = [
   { name: 'Mes Niches', emoji: '📚', href: '/mes-niches' },
   { name: 'AutoScheduler', emoji: '🤖', href: '/autoscheduler' },
   { name: 'AutoSourcing', emoji: '📊', href: '/autosourcing' },
+  { name: 'Mes Recherches', emoji: '🔖', href: '/recherches' },
   { name: 'Configuration', emoji: '⚙️', href: '/config' }
 ]
 

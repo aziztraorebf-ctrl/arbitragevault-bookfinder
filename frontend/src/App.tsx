@@ -11,6 +11,8 @@ import MesNiches from './pages/MesNiches'
 import AutoScheduler from './pages/AutoScheduler'
 import AutoSourcing from './pages/AutoSourcing'
 import Configuration from './pages/Configuration'
+import MesRecherches from './pages/MesRecherches'
+import RechercheDetail from './pages/RechercheDetail'
 
 // Initialize React Query client
 const queryClient = new QueryClient({
@@ -36,6 +38,8 @@ function App() {
             <Route path="/autoscheduler" element={<AutoScheduler />} />
             <Route path="/autosourcing" element={<AutoSourcing />} />
             <Route path="/config" element={<Configuration />} />
+            <Route path="/recherches" element={<MesRecherches />} />
+            <Route path="/recherches/:id" element={<RechercheDetail />} />
             {/* Fallback route */}
             <Route path="*" element={<Dashboard />} />
           </Routes>

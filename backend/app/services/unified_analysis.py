@@ -641,7 +641,7 @@ async def build_unified_product_v2(
         # ====== STEP 8: Add scoring for Mes Niches/AutoSourcing ======
         best_roi_condition = pricing_metrics.get(recommended_condition, {})
 
-        if compute_score and view_type in ['mes_niches', 'autosourcing', 'auto_sourcing', 'niche_discovery']:
+        if compute_score and view_type in ['mes_niches', 'auto_sourcing', 'niche_discovery']:
             # Get weights from VIEW_WEIGHTS (single source of truth from scoring_v2)
             weights = VIEW_WEIGHTS.get(view_type, VIEW_WEIGHTS.get('dashboard', {}))
             roi_weight = weights.get('roi', 0.5)
@@ -651,7 +651,8 @@ async def build_unified_product_v2(
             # Extract raw metrics (normalized to 0-100)
             roi_pct_raw = best_roi_condition.get('roi_pct', 0) * 100  # Convert decimal to percentage
             velocity_raw = velocity_metrics.get('velocity_score', 0)
-            stability_raw = stability_normalized if stability_normalized else 50  # Default 50 if missing
+            # Default stability to 50 (neutral) if missing - represents average market stability
+            stability_raw = stability_normalized if stability_normalized else 50
 
             # Clamp metrics to 0-100 range
             roi_norm = max(0, min(100, roi_pct_raw))

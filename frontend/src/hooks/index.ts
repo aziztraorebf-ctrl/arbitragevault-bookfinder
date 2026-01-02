@@ -33,5 +33,15 @@ export {
   stockKeys
 } from './useStockEstimate'
 
+export {
+  useRecherches,
+  useRechercheDetail,
+  useRechercheStats,
+  useCreateRecherche,
+  useUpdateRecherche,
+  useDeleteRecherche,
+  recherchesKeys
+} from './useRecherches'
+
 // Re-export types for convenience
 export type { Batch, BatchList, HealthCheck, ApiError } from '../services/api'

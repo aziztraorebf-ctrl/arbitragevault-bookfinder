@@ -9,8 +9,9 @@ from .keepa_models import KeepaProduct, KeepaSnapshot, CalcMetrics, IdentifierRe
 from .business_config import BusinessConfig, ConfigChange, ConfigScope, DEFAULT_BUSINESS_CONFIG
 from .stock_estimate import StockEstimateCache
 from .bookmark import SavedNiche
+from .search_result import SearchResult, SearchSource
 
-__all__ = ["Base", "User", "RefreshToken", "Batch", "BatchStatus", "Analysis", 
+__all__ = ["Base", "User", "RefreshToken", "Batch", "BatchStatus", "Analysis",
           "KeepaProduct", "KeepaSnapshot", "CalcMetrics", "IdentifierResolutionLog", "ProductStatus",
           "BusinessConfig", "ConfigChange", "ConfigScope", "DEFAULT_BUSINESS_CONFIG", "StockEstimateCache",
-          "SavedNiche"]
+          "SavedNiche", "SearchResult", "SearchSource"]

@@ -27,7 +27,7 @@ try:
 except ImportError:
     MCP_AVAILABLE = False
 
-from app.api.v1.routers import auth, health, analyses, batches, keepa, config, autosourcing, autoscheduler, views, bookmarks, strategic_views, stock_estimate, niche_discovery
+from app.api.v1.routers import auth, health, analyses, batches, keepa, config, autosourcing, autoscheduler, views, bookmarks, strategic_views, stock_estimate, niche_discovery, recherches
 from app.api.v1.endpoints import products, niches, analytics, asin_history
 from app.core.cors import configure_cors
 from app.core.db import lifespan
@@ -98,6 +98,7 @@ app.include_router(niche_discovery.router, tags=["Niche Discovery"])
 app.include_router(bookmarks.router, prefix="/api/v1", tags=["Bookmarks"])
 app.include_router(analytics.router, prefix="/api/v1", tags=["Analytics"])
 app.include_router(asin_history.router, prefix="/api/v1", tags=["ASIN History"])
+app.include_router(recherches.router, prefix="/api/v1", tags=["Recherches"])
 
 # === MCP INTEGRATION ===
 # Mount FastAPI-MCP server if available (optional for production)

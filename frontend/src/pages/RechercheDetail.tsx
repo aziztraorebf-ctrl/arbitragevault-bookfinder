@@ -12,7 +12,7 @@ import {
   Trash2, Save, X, Clock
 } from 'lucide-react'
 import { useRechercheDetail, useUpdateRecherche, useDeleteRecherche } from '../hooks/useRecherches'
-import { UnifiedProductTable } from '../components/tables/UnifiedProductTable'
+import { UnifiedProductTable } from '../components/unified'
 import { SOURCE_LABELS, SOURCE_COLORS } from '../types/recherches'
 import type { SearchSource } from '../types/recherches'
 
@@ -305,7 +305,15 @@ export default function RechercheDetail() {
           {data.products.length > 0 ? (
             <UnifiedProductTable
               products={data.products}
-              isLoading={false}
+              title={`Produits sauvegardes (${data.product_count})`}
+              features={{
+                showRecommendation: true,
+                showCategory: true,
+                showVerifyButton: false,
+                showFooterSummary: true,
+                showFilters: true,
+                showAccordion: false,
+              }}
             />
           ) : (
             <div className="p-8 text-center text-gray-500">

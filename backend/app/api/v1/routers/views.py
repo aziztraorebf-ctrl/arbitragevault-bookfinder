@@ -334,13 +334,13 @@ async def score_products_for_view(
                     error_product["error"] = str(e)
                     scored_products.append(error_product)
 
-            # 5. Sort by score descending and assign ranks
-            scored_products.sort(key=lambda x: x["score"], reverse=True)
+            # 5. Sort by score descending and assign ranks (defensive: use .get for missing score)
+            scored_products.sort(key=lambda x: x.get("score", 0), reverse=True)
             for idx, product in enumerate(scored_products, start=1):
                 product["rank"] = idx
 
-            # 6. Calculate metadata
-            valid_scores = [p["score"] for p in scored_products if p["error"] is None]
+            # 6. Calculate metadata (defensive: use .get for missing score/error)
+            valid_scores = [p.get("score", 0) for p in scored_products if p.get("error") is None]
             avg_score = sum(valid_scores) / len(valid_scores) if valid_scores else 0.0
 
             weights = VIEW_WEIGHTS[view_type]

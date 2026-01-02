@@ -26,6 +26,7 @@ from app.core.calculations import (
     compute_overall_rating,
     generate_readable_summary
 )
+from app.services.scoring_v2 import VIEW_WEIGHTS
 
 logger = logging.getLogger(__name__)
 
@@ -640,18 +641,51 @@ async def build_unified_product_v2(
         # ====== STEP 8: Add scoring for Mes Niches/AutoSourcing ======
         best_roi_condition = pricing_metrics.get(recommended_condition, {})
 
-        if compute_score and view_type in ['mes_niches', 'autosourcing']:
-            # TODO: Integrate score calculation from existing logic
-            # For now, extract best ROI condition as a simple score
-            score_value = max(0, min(100, best_roi_condition.get('roi_pct', 0) * 100))
+        if compute_score and view_type in ['mes_niches', 'autosourcing', 'auto_sourcing', 'niche_discovery']:
+            # Get weights from VIEW_WEIGHTS (single source of truth from scoring_v2)
+            weights = VIEW_WEIGHTS.get(view_type, VIEW_WEIGHTS.get('dashboard', {}))
+            roi_weight = weights.get('roi', 0.5)
+            velocity_weight = weights.get('velocity', 0.5)
+            stability_weight = weights.get('stability', 0.3)
+
+            # Extract raw metrics (normalized to 0-100)
+            roi_pct_raw = best_roi_condition.get('roi_pct', 0) * 100  # Convert decimal to percentage
+            velocity_raw = velocity_metrics.get('velocity_score', 0)
+            stability_raw = stability_normalized if stability_normalized else 50  # Default 50 if missing
+
+            # Clamp metrics to 0-100 range
+            roi_norm = max(0, min(100, roi_pct_raw))
+            velocity_norm = max(0, min(100, velocity_raw))
+            stability_norm = max(0, min(100, stability_raw))
+
+            # Calculate weighted score (ROI + Velocity + Stability with view-specific weights)
+            score_value = (
+                roi_norm * roi_weight +
+                velocity_norm * velocity_weight +
+                stability_norm * stability_weight
+            )
+            # Normalize by total weights to get 0-100 scale
+            total_weight = roi_weight + velocity_weight + stability_weight
+            if total_weight > 0:
+                score_value = score_value / total_weight
+            score_value = max(0, min(100, score_value))
+
+            weights_applied = {'roi': roi_weight, 'velocity': velocity_weight, 'stability': stability_weight}
 
             response.update({
-                'score': score_value,
+                'score': round(score_value, 1),
                 'strategy_profile': strategy or 'balanced',
+                'weights_applied': weights_applied,
                 'components': {
-                    'roi': best_roi_condition.get('roi_pct', 0),
-                    'velocity': velocity_metrics.get('velocity_score', 0) / 100.0,
-                }
+                    'roi': roi_norm * roi_weight / total_weight if total_weight > 0 else 0,
+                    'velocity': velocity_norm * velocity_weight / total_weight if total_weight > 0 else 0,
+                    'stability': stability_norm * stability_weight / total_weight if total_weight > 0 else 0,
+                },
+                'raw_metrics': {
+                    'roi_pct': roi_pct_raw,
+                    'velocity_score': velocity_raw,
+                    'stability_score': stability_raw,
+                },
             })
 
         logger.info(
@@ -675,6 +709,14 @@ async def build_unified_product_v2(
             "current_bsr": None,
             "amazon_on_listing": False,
             "amazon_buybox": False,
+
+            # Score field required for sorting (defensive)
+            "score": 0,
+
+            # Required for ProductScore schema validation
+            "weights_applied": {"roi": 0.0, "velocity": 0.0, "stability": 0.0},
+            "components": {"roi": 0.0, "velocity": 0.0, "stability": 0.0},
+            "raw_metrics": {"roi_pct": 0.0, "velocity_score": 0.0, "stability_score": 0.0},
 
             # Error state for advanced scoring
             "velocity_score": 0,

@@ -12,6 +12,7 @@ import { AutoDiscoveryHero } from '../components/niche-discovery/AutoDiscoveryHe
 import { NicheCard } from '../components/niche-discovery/NicheCard'
 import { ManualFiltersSection } from '../components/niche-discovery/ManualFiltersSection'
 import { UnifiedProductTable, useVerification } from '../components/unified'
+import { SaveSearchButton } from '../components/recherches/SaveSearchButton'
 import { normalizeNicheProduct } from '../types/unified'
 import type { ValidatedNiche, NicheStrategy } from '../services/nicheDiscoveryService'
 import type { ManualDiscoveryResponse } from '../services/nicheDiscoveryService'
@@ -181,9 +182,10 @@ export default function NicheDiscovery() {
         {/* Results: Products Table */}
         {viewMode === 'products' && products.length > 0 && (
           <div>
-            {/* Back to Niches Button */}
-            {selectedNiche && (
-              <div className="mb-4">
+            {/* Actions Bar */}
+            <div className="flex items-center justify-between mb-4">
+              {/* Back to Niches Button */}
+              {selectedNiche ? (
                 <button
                   onClick={() => {
                     setViewMode('niches')
@@ -194,8 +196,30 @@ export default function NicheDiscovery() {
                   <span>&larr;</span>
                   <span>Retour aux niches</span>
                 </button>
-              </div>
-            )}
+              ) : (
+                <div />
+              )}
+
+              {/* Save Search Button */}
+              <SaveSearchButton
+                products={normalizedProducts}
+                source="niche_discovery"
+                defaultName={
+                  fromNiche
+                    ? `Rerun: ${fromNiche.niche_name}`
+                    : selectedNiche
+                    ? selectedNiche.name
+                    : undefined
+                }
+                searchParams={
+                  manualDiscoveryData
+                    ? { type: 'manual' }
+                    : selectedNiche
+                    ? { niche: selectedNiche.id, strategy: selectedNiche.name }
+                    : undefined
+                }
+              />
+            </div>
 
             <UnifiedProductTable
               products={normalizedProducts}

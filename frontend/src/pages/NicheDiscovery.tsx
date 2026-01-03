@@ -121,15 +121,15 @@ export default function NicheDiscovery() {
   const selectedNiche = niches.find((n) => n.id === selectedNicheId)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 p-4 md:p-8">
       {/* Page Header */}
-      <div className="max-w-7xl mx-auto mb-8">
+      <div className="max-w-7xl mx-auto mb-4 md:mb-8 overflow-x-hidden">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
               Niche Discovery
             </h1>
-            <p className="text-gray-600 text-lg">
+            <p className="text-gray-600 text-sm md:text-lg">
               Découvrez des niches rentables en un clic ou personnalisez votre recherche
             </p>
           </div>
@@ -137,7 +137,7 @@ export default function NicheDiscovery() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8 overflow-x-hidden">
         {/* Strategy-Based Discovery Hero */}
         <AutoDiscoveryHero
           onExplore={handleStrategyDiscover}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { KeepaHealthResponse } from '../../types/keepa'
 
 /**
@@ -14,6 +15,7 @@ const API_URL =
   import.meta.env.VITE_API_URL || 'https://arbitragevault-backend-v2.onrender.com'
 
 export default function Dashboard() {
+  const navigate = useNavigate()
   const [balance, setBalance] = useState<number | null>(null)
   const [lastCheck, setLastCheck] = useState<Date | null>(null)
   const [loading, setLoading] = useState(false)
@@ -140,7 +142,13 @@ export default function Dashboard() {
       {/* Row 3: Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Card 1: Analyser Manuellement */}
-        <div className="h-56 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl text-white p-8 flex flex-col justify-between cursor-pointer hover:shadow-xl transition-shadow duration-200">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate('/analyse')}
+          onKeyDown={(e) => e.key === 'Enter' && navigate('/analyse')}
+          className="h-56 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl text-white p-8 flex flex-col justify-between cursor-pointer hover:shadow-xl transition-shadow duration-200 active:scale-[0.98]"
+        >
           <div className="text-4xl">📄</div>
           <div>
             <h3 className="text-xl font-bold mb-2">
@@ -152,12 +160,18 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Card 2: Découvrir */}
-        <div className="h-56 bg-gradient-to-br from-purple-500 to-purple-600 rounded-3xl text-white p-8 flex flex-col justify-between cursor-pointer hover:shadow-xl transition-shadow duration-200">
+        {/* Card 2: Decouvrir */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate('/niche-discovery')}
+          onKeyDown={(e) => e.key === 'Enter' && navigate('/niche-discovery')}
+          className="h-56 bg-gradient-to-br from-purple-500 to-purple-600 rounded-3xl text-white p-8 flex flex-col justify-between cursor-pointer hover:shadow-xl transition-shadow duration-200 active:scale-[0.98]"
+        >
           <div className="text-4xl">🔍</div>
           <div>
             <h3 className="text-xl font-bold mb-2">
-              Découvrir
+              Decouvrir
             </h3>
             <p className="text-sm text-white/80">
               Nouvelles Niches
@@ -166,14 +180,20 @@ export default function Dashboard() {
         </div>
 
         {/* Card 3: Mes Niches */}
-        <div className="h-56 bg-gradient-to-br from-green-500 to-green-600 rounded-3xl text-white p-8 flex flex-col justify-between cursor-pointer hover:shadow-xl transition-shadow duration-200">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate('/mes-niches')}
+          onKeyDown={(e) => e.key === 'Enter' && navigate('/mes-niches')}
+          className="h-56 bg-gradient-to-br from-green-500 to-green-600 rounded-3xl text-white p-8 flex flex-col justify-between cursor-pointer hover:shadow-xl transition-shadow duration-200 active:scale-[0.98]"
+        >
           <div className="text-4xl">📚</div>
           <div>
             <h3 className="text-xl font-bold mb-2">
               Mes Niches
             </h3>
             <p className="text-sm text-white/80">
-              Sauvegardées<br />
+              Sauvegardees<br />
               (23)
             </p>
           </div>

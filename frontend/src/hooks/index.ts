@@ -43,5 +43,7 @@ export {
   recherchesKeys
 } from './useRecherches'
 
+export { useMobileMenu } from './useMobileMenu'
+
 // Re-export types for convenience
 export type { Batch, BatchList, HealthCheck, ApiError } from '../services/api'

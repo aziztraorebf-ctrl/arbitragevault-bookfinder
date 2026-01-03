@@ -203,7 +203,7 @@ export function UnifiedProductRow({
                 href={`https://www.amazon.com/dp/${product.asin}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3 py-1.5 text-xs font-medium rounded-md border bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+                className="px-3 py-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-xs font-medium rounded-md border bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
               >
                 Amazon
               </a>
@@ -219,7 +219,7 @@ export function UnifiedProductRow({
                     }
                   }}
                   disabled={verificationLoading}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                  className={`px-3 py-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-xs font-medium rounded-md border transition-all ${
                     verificationLoading
                       ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                       : verificationResult

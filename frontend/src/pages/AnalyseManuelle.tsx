@@ -202,24 +202,24 @@ export default function AnalyseManuelle() {
   }, [results]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto px-4 md:px-6 space-y-8">
       {/* Titre principal */}
-      <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-        Analyse manuelle — CSV ou ASIN.
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 text-center md:text-left">
+        Analyse manuelle - CSV ou ASIN.
       </h1>
 
       {/* Toast d'erreur */}
       {error && (
         <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-pulse">
-          ⚠️ {error}
+          Erreur: {error}
         </div>
       )}
 
       {/* Section Upload CSV / ASINs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 justify-items-center lg:justify-items-stretch">
         {/* Carte Drag & Drop CSV */}
         <div
-          className="bg-white rounded-2xl p-4 md:p-8 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 flex flex-col items-center justify-center min-h-[200px] md:min-h-[320px] cursor-pointer group"
+          className="w-full max-w-md lg:max-w-none bg-white rounded-2xl p-4 md:p-8 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 flex flex-col items-center justify-center min-h-[200px] md:min-h-[320px] cursor-pointer group"
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
@@ -245,7 +245,7 @@ export default function AnalyseManuelle() {
         </div>
 
         {/* Carte Liste ASINs */}
-        <div className="bg-white rounded-2xl p-4 md:p-8 shadow-md flex flex-col gap-4">
+        <div className="w-full max-w-md lg:max-w-none bg-white rounded-2xl p-4 md:p-8 shadow-md flex flex-col gap-4">
           <label className="text-gray-700 font-medium">
             Coller une liste d'ASINs séparés par virgule
           </label>

@@ -260,47 +260,49 @@ export function UnifiedProductTable({
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+        <table className="w-full min-w-[800px]">
+          <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
             <tr>
-              {showAccordion && <th className="px-4 py-3 w-12"></th>}
+              {showAccordion && <th className="px-3 md:px-4 py-3 w-12"></th>}
               {showRank && (
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                   Rank
                 </th>
               )}
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-3 md:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                 ASIN
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-3 md:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase max-w-[200px]">
                 Titre
               </th>
               {showScore && (
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                   Score
                 </th>
               )}
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+              <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                 ROI
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+              <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                 Velocity
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+              <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                 BSR
               </th>
               {showRecommendation && (
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                  Recommandation
+                <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                  <span className="hidden md:inline">Recommandation</span>
+                  <span className="md:hidden">Reco</span>
                 </th>
               )}
               {showAmazonBadges && (
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                  Amazon
+                <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                  <span className="hidden md:inline">Amazon</span>
+                  <span className="md:hidden">Amz</span>
                 </th>
               )}
               {showVerifyButton && (
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                   Actions
                 </th>
               )}

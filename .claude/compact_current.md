@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Active Session
 
-**Derniere mise a jour** : 27 Decembre 2025
-**Phase Actuelle** : Phase 10 - Unified Product Table (PLAN PRET)
-**Statut Global** : Phases 1-9 completes, Phase 10-11 planifiees
+**Derniere mise a jour** : 3 Janvier 2026
+**Phase Actuelle** : Phase 12 - UX Audit + Mobile-First (COMPLETE)
+**Statut Global** : Phases 1-12 completes
 
 ---
 
@@ -10,14 +10,202 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Phase 10 - Unified Product Table (PLAN PRET) |
-| **Prochaine Phase** | Phase 11 - Page Centrale Recherches |
+| **Phase Actuelle** | Phase 12 - COMPLETE |
+| **Prochaine Phase** | Phase 13 - A definir |
 | **CLAUDE.md** | v3.3 - Zero-Tolerance + Senior Review Gate |
 | **Hooks System** | v2 VALIDE - 3 points de controle actifs |
 | **Production** | Backend Render + Frontend Netlify LIVE |
-| **Tests Total** | 800+ passants (590 backend + 70+ frontend) |
+| **Tests Total** | 860+ passants (600+ backend + 103+ frontend) |
 | **Bloqueurs** | Aucun |
-| **Prochaine Action** | Executer Phase 10 Unified Product Table |
+| **Prochaine Action** | Deployer Phase 12 |
+
+---
+
+## CHANGELOG - 3 Janvier 2026
+
+### Phase 12 - UX Audit + Mobile-First COMPLETE
+
+**Execution** : Subagent-Driven Development
+
+**Plan** : `docs/plans/2026-01-01-phase12-ux-mobile-first.md`
+
+**Objectif** : Ameliorer l'experience utilisateur avec focus mobile-first et creer un wizard d'onboarding pour les nouveaux utilisateurs.
+
+**Travail effectue** :
+
+| Composant | Fichiers | Statut |
+|-----------|----------|--------|
+| useMobileMenu Hook | `hooks/useMobileMenu.ts` | COMPLETE |
+| Responsive Layout | `Layout.tsx` (hamburger + sidebar) | COMPLETE |
+| Mobile Tables | `UnifiedProductTable.tsx` (scroll + sticky) | COMPLETE |
+| Touch Targets | Dashboard button 44px min | COMPLETE |
+| Welcome Wizard | `WelcomeWizard.tsx` | COMPLETE |
+| useOnboarding Hook | `hooks/useOnboarding.ts` | COMPLETE |
+| Loading States | `LoadingSpinner.tsx`, `SkeletonCard.tsx` | COMPLETE |
+| Tests | Unit + E2E | COMPLETE |
+
+**Fichiers crees** :
+- `frontend/src/hooks/useMobileMenu.ts` - Hook pour etat sidebar mobile
+- `frontend/src/hooks/useOnboarding.ts` - Hook avec localStorage persistence
+- `frontend/src/components/onboarding/WelcomeWizard.tsx` - Wizard 3 etapes
+- `frontend/src/components/ui/LoadingSpinner.tsx` - Spinner accessible
+- `frontend/src/components/ui/SkeletonCard.tsx` - Placeholder skeleton
+- `frontend/tests/e2e/responsive-layout.spec.ts` - Tests E2E responsive
+- `frontend/tests/e2e/mobile-table.spec.ts` - Tests E2E tables
+- `frontend/tests/e2e/touch-targets.spec.ts` - Tests E2E touch
+- `frontend/tests/e2e/onboarding.spec.ts` - Tests E2E wizard
+
+**Fichiers modifies** :
+- `frontend/src/components/Layout/Layout.tsx` - Hamburger menu + responsive sidebar
+- `frontend/src/components/unified/UnifiedProductTable.tsx` - Scroll horizontal + sticky header
+- `frontend/src/components/Dashboard/Dashboard.tsx` - Touch targets 44px
+- `frontend/src/App.tsx` - Integration WelcomeWizard
+
+**Features implementees** :
+- Sidebar responsive avec hamburger menu sur mobile
+- Animation slide-in/out de la sidebar
+- Backdrop mobile pour fermer sidebar
+- Tables avec scroll horizontal sur mobile
+- Headers de table sticky
+- Colonnes condensees sur mobile (Reco, Amz)
+- Boutons avec min-height 44px pour touch
+- Wizard d'onboarding 3 etapes (Welcome, Niche Discovery, Recherches)
+- Persistance onboarding dans localStorage
+- LoadingSpinner avec 3 tailles (sm, md, lg)
+- SkeletonCard pour loading states
+
+**Commits** (7 commits) :
+```
+62266d2 feat(phase12): add useMobileMenu hook for responsive sidebar
+571b9e6 feat(phase12): implement responsive sidebar with hamburger menu
+56d3c56 feat(phase12): optimize tables for mobile horizontal scroll
+a76da87 feat(phase12): ensure 44px minimum touch targets
+db0bd3a feat(phase12): add WelcomeWizard component and useOnboarding hook
+[task6] feat(phase12): integrate welcome wizard in App
+c492346 feat(phase12): add LoadingSpinner and SkeletonCard components
+```
+
+---
+
+## CHANGELOG - 1 Janvier 2026
+
+### Phase 11 - Page Centrale Recherches COMPLETE
+
+**Execution** : Parallel Session avec executing-plans skill
+
+**Plan** : `docs/plans/2026-01-01-phase11-recherches-centralisees.md`
+
+**Objectif** : Centraliser tous les resultats de recherches avec persistance PostgreSQL et retention 30 jours.
+
+**Travail effectue** :
+
+| Composant | Fichiers | Statut |
+|-----------|----------|--------|
+| Backend Model | `search_result.py` (SearchResult, SearchSource) | COMPLETE |
+| Backend Schema | `search_result.py` (Create, Read, List schemas) | COMPLETE |
+| Backend Service | `search_result_service.py` (CRUD + cleanup) | COMPLETE |
+| Backend Router | `recherches.py` (endpoints CRUD) | COMPLETE |
+| Migration | `search_results` table | COMPLETE |
+| Frontend Types | `types/recherches.ts` | COMPLETE |
+| Frontend Service | `recherchesService.ts` | COMPLETE |
+| Frontend Hooks | `useRecherches.ts` | COMPLETE |
+| Frontend Pages | `MesRecherches.tsx`, `RechercheDetail.tsx` | COMPLETE |
+| SaveSearchButton | Integration dans 3 modules | COMPLETE |
+| Tests Backend | Unit + API tests | COMPLETE |
+
+**Fichiers crees** :
+- `backend/app/models/search_result.py` - Model SQLAlchemy
+- `backend/app/schemas/search_result.py` - Schemas Pydantic
+- `backend/app/services/search_result_service.py` - Service CRUD
+- `backend/app/api/v1/routers/recherches.py` - Router API
+- `frontend/src/types/recherches.ts` - Types TypeScript
+- `frontend/src/services/recherchesService.ts` - Service API
+- `frontend/src/hooks/useRecherches.ts` - React Query hooks
+- `frontend/src/pages/MesRecherches.tsx` - Liste recherches
+- `frontend/src/pages/RechercheDetail.tsx` - Detail avec UnifiedProductTable
+- `frontend/src/components/recherches/SaveSearchButton.tsx` - Bouton sauvegarde
+
+**Fichiers modifies** :
+- `frontend/src/App.tsx` - Routes ajoutees
+- `frontend/src/components/Layout/Layout.tsx` - Nav item "Mes Recherches"
+- `frontend/src/pages/NicheDiscovery.tsx` - Integration SaveSearchButton
+- `frontend/src/pages/AutoSourcing.tsx` - Integration SaveSearchButton
+- `frontend/src/pages/AnalyseManuelle.tsx` - Integration SaveSearchButton
+- `backend/app/models/__init__.py` - Export SearchResult, SearchSource
+
+**Features implementees** :
+- Persistance recherches en PostgreSQL (JSONB pour produits)
+- Retention automatique 30 jours avec cleanup
+- Sources: niche_discovery, autosourcing, analyse_manuelle
+- Page `/recherches` avec liste des recherches sauvegardees
+- Detail recherche avec UnifiedProductTable
+- Bouton "Sauvegarder" dans chaque module de recherche
+
+**Commits** (10 commits) :
+```
+c98a9a5 feat(phase11): implement Mes Recherches centralized search results
+d38c7ef fix(phase11): fix RechercheDetail UnifiedProductTable props
+0b0eb37 feat(phase11): add SaveSearchButton and integrate in NicheDiscovery
+bacf12f feat(phase11): add RechercheDetail page and routing
+63fb15a feat(phase11): add MesRecherches list page
+2617432 feat(phase11): add React Query hooks for recherches
+3fd7b71 feat(phase11): add frontend types and service for recherches
+e67efbf test(phase11): add API schema tests for recherches
+266fdd0 test(phase11): add unit tests for SearchResultService
+4722f2c feat(phase11): add search_results table migration
+```
+
+---
+
+### Phase 10 - Unified Product Table Cleanup COMPLETE
+
+**Execution** : Subagent-Driven Development + Senior Review Gate
+
+**Contexte** :
+- Tasks 1-3 (Types, UnifiedProductTable, Integration) etaient DEJA completes
+- Seules Tasks 4-6 restaient (suppression pages + verification)
+
+**Travail effectue** :
+
+| Task | Description | Statut |
+|------|-------------|--------|
+| 1 | Supprimer routes App.tsx | COMPLETE |
+| 2 | Supprimer nav links Layout.tsx | COMPLETE |
+| 3 | Supprimer fichiers pages | COMPLETE |
+| 4 | Supprimer tests associes | COMPLETE |
+| 5 | Verifier hooks (garder) | COMPLETE |
+| 6 | Verification finale (build + E2E) | COMPLETE |
+
+**Fichiers supprimes** (6 fichiers, -653 lignes) :
+- `frontend/src/pages/AnalyseStrategique.tsx`
+- `frontend/src/pages/StockEstimates.tsx`
+- `frontend/src/pages/__tests__/AnalyseStrategique.test.tsx`
+- `frontend/src/pages/__tests__/StockEstimates.test.tsx`
+
+**Fichiers modifies** :
+- `frontend/src/App.tsx` - Routes supprimees
+- `frontend/src/components/Layout/Layout.tsx` - Nav items supprimes (7 items restants)
+
+**Hooks conserves** (pour reutilisation future Phase 11) :
+- `useStrategicViews.ts`
+- `useStockEstimate.ts`
+
+**Verification** :
+- Build TypeScript : SUCCESS (0 erreurs)
+- E2E Playwright : 7/7 tests PASS
+  - Navigation 7 items : PASS
+  - Pages supprimees absentes : PASS
+  - Fallback /analyse-strategique : PASS (redirect Dashboard)
+  - Niche Discovery : PASS
+  - AutoSourcing : PASS
+  - Analyse Manuelle : PASS
+
+**Senior Review Verdict** : PRET - Tous gaps resolus
+
+**Commits** :
+- `8f29b1d` - chore(phase10): remove redundant AnalyseStrategique and StockEstimates pages
+
+**Plan** : `docs/plans/2026-01-01-phase10-optimized-cleanup.md`
 
 ---
 
@@ -568,14 +756,16 @@ Les seuils BSR hardcodes (50K/30K/100K) etaient FAUX. Donnees reelles Keepa mont
 | Phase 7 - AutoSourcing Audit | 109/109 | Complete | 16 Dec 2025 |
 | Phase 8 - Advanced Analytics | 50+ | Complete | 25 Dec 2025 |
 | Phase 9 - UI Completion | 70+ | Complete | 27 Dec 2025 |
+| Phase 10 - Unified Product Table | 7/7 E2E | Complete | 1 Jan 2026 |
+| Phase 11 - Page Centrale Recherches | 15+ tests | Complete | 1 Jan 2026 |
 
 ### Phases Planifiees
 
 | Phase | Description | Status | Effort | Plan |
 |-------|-------------|--------|--------|------|
-| Phase 10 | Unified Product Table | PLAN PRET | ~6.5h | `docs/plans/2025-12-27-unified-product-table.md` |
-| Phase 11 | Page Centrale Recherches | PLANIFIE | ~4-5h | A creer |
-| Phase 12 | Integration N8N | FUTUR | TBD | Apres tests manuels |
+| Phase 10 | Unified Product Table | COMPLETE | ~40min | `docs/plans/2026-01-01-phase10-optimized-cleanup.md` |
+| Phase 11 | Page Centrale Recherches | COMPLETE | ~4h | `docs/plans/2026-01-01-phase11-recherches-centralisees.md` |
+| Phase 12 | UX Audit + Mobile-First + Accueil Guide | PLANIFIE | TBD | A creer |
 
 ### Phase 9 - UI Completion COMPLETE
 
@@ -644,20 +834,22 @@ cd804b0 test(phase4): add budget guard API tests (Task 4)
 6. [x] Audit Phase 7 (AutoSourcing Safeguards) - COMPLETE (109 tests)
 7. [x] Audit Phase 8 (Advanced Analytics) - COMPLETE (50+ tests, refactoring slow_velocity)
 8. [x] Executer Phase 9 - UI Completion - COMPLETE (70+ tests)
-9. [ ] **Executer Phase 10** - Unified Product Table (~6.5h)
-10. [ ] Creer plan Phase 11 - Page Centrale Recherches
+9. [x] Executer Phase 10 - Unified Product Table Cleanup - COMPLETE (7/7 E2E)
+10. [x] Creer plan Phase 11 - Page Centrale Recherches - COMPLETE
+11. [x] Executer Phase 11 - Page Centrale + Persistance - COMPLETE (15+ tests)
+12. [ ] **Creer plan Phase 12** - UX Audit + Mobile-First + Accueil Guide
 
 ### Court terme
 
-11. [ ] Executer Phase 11 - Page Centrale + Persistance
-12. [ ] Tester manuellement l'application 1-2 mois
-13. [ ] Planifier Phase 12 - Integration N8N
+13. [ ] Executer Phase 12 - UX/Mobile polish
+14. [ ] Tester manuellement l'application 1-2 mois
+15. [ ] Planifier Phase 13 - Integration N8N
 
 ### Futur (Non planifie)
 
-14. [ ] Phase 12 - API webhooks + auth pour N8N
-15. [ ] Table purchase_decisions pour ML (quand necessaire)
-16. [ ] Infrastructure REPLAY/MOCK Keepa
+16. [ ] Phase 13+ - API webhooks + auth pour N8N
+17. [ ] Table purchase_decisions pour ML (quand necessaire)
+18. [ ] Infrastructure REPLAY/MOCK Keepa
 
 ---
 
@@ -690,6 +882,6 @@ cd804b0 test(phase4): add budget guard API tests (Task 4)
 
 ---
 
-**Derniere mise a jour** : 27 Decembre 2025
-**Prochaine session** : Executer Phase 10 Unified Product Table
+**Derniere mise a jour** : 1 Janvier 2026
+**Prochaine session** : Creer plan Phase 12 - UX Audit + Mobile-First + Accueil Guide
 **Methodologie** : CLAUDE.md v3.3 - Zero-Tolerance + Senior Review Gate

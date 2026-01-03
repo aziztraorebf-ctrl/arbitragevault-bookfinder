@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import { Menu } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
+import { useMobileMenu } from '../../hooks/useMobileMenu'
 
 interface LayoutProps {
   children: ReactNode
@@ -20,6 +22,12 @@ const navigationItems = [
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
+  const { isOpen, toggle, close } = useMobileMenu()
+
+  // Close sidebar on route change
+  useEffect(() => {
+    close()
+  }, [location.pathname, close])
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -34,15 +42,39 @@ export default function Layout({ children }: LayoutProps) {
             <span className="text-xl font-bold text-gray-900">ArbitrageVault</span>
           </div>
 
-          {/* Hamburger menu (visual only for now) */}
-          <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-100">
-            <Menu className="w-6 h-6 text-gray-700" />
+          {/* Hamburger menu - visible on mobile only */}
+          <button
+            onClick={toggle}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-100 md:hidden"
+            aria-label={isOpen ? 'Close menu' : 'Open menu'}
+          >
+            {isOpen ? (
+              <X className="w-6 h-6 text-gray-700" />
+            ) : (
+              <Menu className="w-6 h-6 text-gray-700" />
+            )}
           </button>
         </div>
       </header>
 
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          data-testid="mobile-backdrop"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          onClick={close}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="fixed left-0 top-16 bottom-0 w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto">
+      <aside
+        className={`
+          fixed left-0 top-16 bottom-0 w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto z-40
+          transform transition-transform duration-200 ease-in-out
+          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}
+        data-state={isOpen ? 'open' : 'closed'}
+      >
         <nav className="py-4 px-3">
           <div className="space-y-2">
             {navigationItems.map((item, index) => {
@@ -53,6 +85,7 @@ export default function Layout({ children }: LayoutProps) {
                 <div key={item.href}>
                   <Link
                     to={item.href}
+                    onClick={close}
                     className={`
                       flex items-center space-x-3 px-4 py-3 rounded-md
                       transition-all duration-100
@@ -78,7 +111,7 @@ export default function Layout({ children }: LayoutProps) {
       </aside>
 
       {/* Main content area */}
-      <div className="flex-1 ml-64 mt-16">
+      <div className="flex-1 ml-0 md:ml-64 mt-16">
         <main className="p-8">
           {children}
         </main>

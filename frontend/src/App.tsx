@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import Layout from './components/Layout/Layout'
 import Dashboard from './components/Dashboard/Dashboard'
+import { WelcomeWizard } from './components/onboarding/WelcomeWizard'
+import { useOnboarding } from './hooks/useOnboarding'
 
 // Import des pages
 import AnalyseManuelle from './pages/AnalyseManuelle'
@@ -24,33 +26,48 @@ const queryClient = new QueryClient({
   },
 })
 
+function AppContent() {
+  const { showWizard, isLoading, completeOnboarding } = useOnboarding()
+
+  if (isLoading) {
+    return null
+  }
+
+  return (
+    <>
+      {showWizard && <WelcomeWizard onComplete={completeOnboarding} />}
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/analyse" element={<AnalyseManuelle />} />
+          <Route path="/niche-discovery" element={<NicheDiscovery />} />
+          <Route path="/mes-niches" element={<MesNiches />} />
+          <Route path="/autoscheduler" element={<AutoScheduler />} />
+          <Route path="/autosourcing" element={<AutoSourcing />} />
+          <Route path="/config" element={<Configuration />} />
+          <Route path="/recherches" element={<MesRecherches />} />
+          <Route path="/recherches/:id" element={<RechercheDetail />} />
+          {/* Fallback route */}
+          <Route path="*" element={<Dashboard />} />
+        </Routes>
+      </Layout>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          className: 'bg-white shadow-lg border',
+        }}
+      />
+    </>
+  )
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/analyse" element={<AnalyseManuelle />} />
-            <Route path="/niche-discovery" element={<NicheDiscovery />} />
-            <Route path="/mes-niches" element={<MesNiches />} />
-            <Route path="/autoscheduler" element={<AutoScheduler />} />
-            <Route path="/autosourcing" element={<AutoSourcing />} />
-            <Route path="/config" element={<Configuration />} />
-            <Route path="/recherches" element={<MesRecherches />} />
-            <Route path="/recherches/:id" element={<RechercheDetail />} />
-            {/* Fallback route */}
-            <Route path="*" element={<Dashboard />} />
-          </Routes>
-        </Layout>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            className: 'bg-white shadow-lg border',
-          }}
-        />
+        <AppContent />
       </Router>
     </QueryClientProvider>
   )

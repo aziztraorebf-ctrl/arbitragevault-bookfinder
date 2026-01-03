@@ -45,5 +45,7 @@ export {
 
 export { useMobileMenu } from './useMobileMenu'
 
+export { useOnboarding } from './useOnboarding'
+
 // Re-export types for convenience
 export type { Batch, BatchList, HealthCheck, ApiError } from '../services/api'

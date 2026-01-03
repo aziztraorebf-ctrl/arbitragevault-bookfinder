@@ -266,12 +266,14 @@ export function UnifiedProductTable({
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[800px]">
+        <table className="w-full md:min-w-[800px]">
           <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
             <tr>
               {showAccordion && <th className="px-3 md:px-4 py-3 w-12"></th>}
+              {/* Mobile expand button - only visible on mobile */}
+              <th className="md:hidden px-2 py-3 w-10"></th>
               {showRank && (
-                <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                <th className="hidden md:table-cell px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                   Rank
                 </th>
               )}
@@ -282,29 +284,27 @@ export function UnifiedProductTable({
                 Titre
               </th>
               {showScore && (
-                <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                <th className="hidden md:table-cell px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                   Score
                 </th>
               )}
               <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                 ROI
               </th>
-              <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+              <th className="hidden md:table-cell px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                 Velocity
               </th>
-              <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+              <th className="hidden md:table-cell px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                 BSR
               </th>
               {showRecommendation && (
-                <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
-                  <span className="hidden md:inline">Recommandation</span>
-                  <span className="md:hidden">Reco</span>
+                <th className="hidden md:table-cell px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                  Recommandation
                 </th>
               )}
               {showAmazonBadges && (
-                <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
-                  <span className="hidden md:inline">Amazon</span>
-                  <span className="md:hidden">Amz</span>
+                <th className="hidden md:table-cell px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                  Amazon
                 </th>
               )}
               {showVerifyButton && (
@@ -331,6 +331,8 @@ export function UnifiedProductTable({
                   isVerificationExpanded={isVerificationExpanded?.(product.asin)}
                   onToggleVerification={() => toggleVerificationExpansion?.(product.asin)}
                   AccordionComponent={AccordionComponent}
+                  isMobileExpanded={expandedRow === product.asin}
+                  onMobileToggle={() => setExpandedRow(expandedRow === product.asin ? null : product.asin)}
                 />
               )
             })}

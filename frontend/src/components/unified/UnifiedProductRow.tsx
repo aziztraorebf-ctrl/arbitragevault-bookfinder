@@ -31,6 +31,8 @@ interface UnifiedProductRowProps {
   isVerificationExpanded?: boolean
   onToggleVerification?: () => void
   AccordionComponent?: React.ComponentType<{ product: DisplayableProduct; isExpanded: boolean }>
+  isMobileExpanded?: boolean
+  onMobileToggle?: () => void
 }
 
 // Recommendation badge colors and labels
@@ -53,6 +55,8 @@ export function UnifiedProductRow({
   isVerificationExpanded,
   onToggleVerification,
   AccordionComponent,
+  isMobileExpanded = false,
+  onMobileToggle,
 }: UnifiedProductRowProps) {
   const {
     showScore = false,
@@ -101,9 +105,27 @@ export function UnifiedProductRow({
           </td>
         )}
 
+        {/* Mobile expand button - visible only on mobile */}
+        <td className="md:hidden px-2 py-3 text-center">
+          <button
+            onClick={onMobileToggle}
+            className="p-2 text-gray-500 hover:text-gray-700 transition-transform min-h-[44px] min-w-[44px] flex items-center justify-center"
+            aria-label={isMobileExpanded ? 'Collapse details' : 'Expand details'}
+          >
+            <svg
+              className={`w-5 h-5 transition-transform duration-300 ${isMobileExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </td>
+
         {/* Rank (optional) */}
         {showRank && (
-          <td className="px-4 py-3 text-center text-sm font-medium text-gray-900">
+          <td className="hidden md:table-cell px-4 py-3 text-center text-sm font-medium text-gray-900">
             {product.rank ?? '-'}
           </td>
         )}
@@ -132,7 +154,7 @@ export function UnifiedProductRow({
 
         {/* Score (optional - ProductScore only) */}
         {showScore && (
-          <td className="px-4 py-3 text-center text-sm font-bold text-purple-600">
+          <td className="hidden md:table-cell px-4 py-3 text-center text-sm font-bold text-purple-600">
             {product.score?.toFixed(1) ?? '-'}
           </td>
         )}
@@ -143,7 +165,7 @@ export function UnifiedProductRow({
         </td>
 
         {/* Velocity */}
-        <td className="px-4 py-3 text-center">
+        <td className="hidden md:table-cell px-4 py-3 text-center">
           <div className="flex items-center justify-center space-x-2">
             <span className="text-sm font-medium text-gray-900">
               {product.velocity_score.toFixed(0)}
@@ -158,13 +180,13 @@ export function UnifiedProductRow({
         </td>
 
         {/* BSR */}
-        <td className="px-4 py-3 text-center text-sm font-medium text-gray-700">
+        <td className="hidden md:table-cell px-4 py-3 text-center text-sm font-medium text-gray-700">
           {product.bsr ? `#${product.bsr.toLocaleString()}` : 'N/A'}
         </td>
 
         {/* Recommendation badge (optional - NicheProduct) */}
         {showRecommendation && (
-          <td className="px-4 py-3 text-center">
+          <td className="hidden md:table-cell px-4 py-3 text-center">
             {recommendationBadge ? (
               <span
                 className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${recommendationBadge.color}`}
@@ -179,7 +201,7 @@ export function UnifiedProductRow({
 
         {/* Amazon badges (optional) */}
         {showAmazonBadges && (
-          <td className="px-4 py-3 text-center">
+          <td className="hidden md:table-cell px-4 py-3 text-center">
             <div className="flex gap-1 justify-center">
               {product.amazon_on_listing && (
                 <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded">
@@ -234,6 +256,80 @@ export function UnifiedProductRow({
           </td>
         )}
       </tr>
+
+      {/* Mobile expand details row - visible only on mobile when expanded */}
+      {isMobileExpanded && (
+        <tr className="md:hidden bg-gray-50 border-t border-gray-200">
+          <td colSpan={20} className="px-4 py-3">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {/* Velocity */}
+              <div>
+                <span className="text-gray-500 text-xs">Velocity</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="font-medium">{product.velocity_score.toFixed(0)}</span>
+                  <div className="w-12 bg-gray-200 rounded-full h-1.5">
+                    <div
+                      className="bg-blue-500 h-1.5 rounded-full"
+                      style={{ width: `${Math.min(product.velocity_score, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* BSR */}
+              <div>
+                <span className="text-gray-500 text-xs">BSR</span>
+                <p className="font-medium mt-1">
+                  {product.bsr ? `#${product.bsr.toLocaleString()}` : 'N/A'}
+                </p>
+              </div>
+
+              {/* Score (if applicable) */}
+              {showScore && product.score !== undefined && (
+                <div>
+                  <span className="text-gray-500 text-xs">Score</span>
+                  <p className="font-medium text-purple-600 mt-1">{product.score.toFixed(1)}</p>
+                </div>
+              )}
+
+              {/* Rank (if applicable) */}
+              {showRank && product.rank !== undefined && (
+                <div>
+                  <span className="text-gray-500 text-xs">Rank</span>
+                  <p className="font-medium mt-1">#{product.rank}</p>
+                </div>
+              )}
+
+              {/* Recommendation (if applicable) */}
+              {showRecommendation && recommendationBadge && (
+                <div className="col-span-2">
+                  <span className="text-gray-500 text-xs">Recommandation</span>
+                  <p className="mt-1">
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${recommendationBadge.color}`}>
+                      {recommendationBadge.label}
+                    </span>
+                  </p>
+                </div>
+              )}
+
+              {/* Amazon badges (if applicable) */}
+              {showAmazonBadges && (product.amazon_on_listing || product.amazon_buybox) && (
+                <div className="col-span-2">
+                  <span className="text-gray-500 text-xs">Amazon</span>
+                  <div className="flex gap-2 mt-1">
+                    {product.amazon_on_listing && (
+                      <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded">AMZ</span>
+                    )}
+                    {product.amazon_buybox && (
+                      <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded">BB</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
 
       {/* Accordion row */}
       {showAccordion && AccordionComponent && (

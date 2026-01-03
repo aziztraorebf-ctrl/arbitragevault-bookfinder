@@ -204,7 +204,7 @@ export default function AnalyseManuelle() {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Titre principal */}
-      <h1 className="text-3xl font-bold text-gray-900">
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
         Analyse manuelle — CSV ou ASIN.
       </h1>
 
@@ -216,10 +216,10 @@ export default function AnalyseManuelle() {
       )}
 
       {/* Section Upload CSV / ASINs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Carte Drag & Drop CSV */}
         <div
-          className="bg-white rounded-2xl p-8 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 flex flex-col items-center justify-center min-h-[320px] cursor-pointer group"
+          className="bg-white rounded-2xl p-4 md:p-8 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 flex flex-col items-center justify-center min-h-[200px] md:min-h-[320px] cursor-pointer group"
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
@@ -232,7 +232,7 @@ export default function AnalyseManuelle() {
             onChange={handleFileSelect}
           />
           <div className="text-center space-y-4">
-            <div className="text-6xl mb-4">☁️</div>
+            <div className="text-4xl md:text-6xl mb-2 md:mb-4">☁️</div>
             <div>
               <p className="text-lg font-semibold text-gray-700 mb-2">
                 {csvFile ? `✅ ${csvFile.name}` : 'Drag & Drop CSV ici'}
@@ -245,14 +245,14 @@ export default function AnalyseManuelle() {
         </div>
 
         {/* Carte Liste ASINs */}
-        <div className="bg-white rounded-2xl p-8 shadow-md flex flex-col gap-4">
+        <div className="bg-white rounded-2xl p-4 md:p-8 shadow-md flex flex-col gap-4">
           <label className="text-gray-700 font-medium">
             Coller une liste d'ASINs séparés par virgule
           </label>
           <textarea
             value={asinInput}
             onChange={(e) => setAsinInput(e.target.value)}
-            className="w-full h-32 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:border-blue-500 text-sm"
+            className="w-full h-24 md:h-32 p-3 md:p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:border-blue-500 text-sm"
             placeholder="B08PGW1HW, B07FZ8C718,&#10;B06XG1NVFW, B07FZW57AR..."
           />
           <button

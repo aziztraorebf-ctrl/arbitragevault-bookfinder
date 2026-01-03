@@ -91,7 +91,7 @@ describe('UnifiedProductRow', () => {
     expect(screen.queryByText('85.5')).not.toBeInTheDocument()
   })
 
-  it('should call onToggle when chevron is clicked', () => {
+  it('should call onToggle when accordion chevron is clicked', () => {
     const onToggle = vi.fn()
     render(
       <table>
@@ -106,10 +106,35 @@ describe('UnifiedProductRow', () => {
       </table>
     )
 
-    const chevron = screen.getByRole('button', { name: /expand/i })
-    fireEvent.click(chevron)
+    // Get the accordion chevron (not mobile expand) - it's the first expand button
+    const buttons = screen.getAllByRole('button', { name: /expand/i })
+    // The accordion button is the one that calls onToggle
+    fireEvent.click(buttons[0])
 
     expect(onToggle).toHaveBeenCalledTimes(1)
+  })
+
+  it('should call onMobileToggle when mobile expand button is clicked', () => {
+    const onMobileToggle = vi.fn()
+    render(
+      <table>
+        <tbody>
+          <UnifiedProductRow
+            product={mockProductScore}
+            isExpanded={false}
+            onToggle={vi.fn()}
+            features={{}}
+            onMobileToggle={onMobileToggle}
+          />
+        </tbody>
+      </table>
+    )
+
+    // The mobile expand button is always rendered (md:hidden)
+    const mobileButton = screen.getByRole('button', { name: /expand details/i })
+    fireEvent.click(mobileButton)
+
+    expect(onMobileToggle).toHaveBeenCalledTimes(1)
   })
 
   it('should show Amazon link that opens in new tab', () => {

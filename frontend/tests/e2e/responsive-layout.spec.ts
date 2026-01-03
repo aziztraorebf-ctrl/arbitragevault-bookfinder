@@ -58,4 +58,49 @@ test.describe('Responsive Layout', () => {
     const sidebar = page.locator('aside')
     await expect(sidebar).toHaveAttribute('data-state', 'closed')
   })
+
+  test('extra small mobile (320px): layout does not overflow', async ({ page }) => {
+    // Test for very small screens (iPhone SE, older devices)
+    await page.setViewportSize({ width: 320, height: 568 })
+
+    // Check that main content is visible and not overflowing
+    const body = page.locator('body')
+    await expect(body).toBeVisible()
+
+    // Header should be fully visible
+    const header = page.locator('header')
+    await expect(header).toBeVisible()
+    const headerBox = await header.boundingBox()
+    expect(headerBox?.width).toBeLessThanOrEqual(320)
+
+    // Hamburger should be visible and clickable
+    const hamburger = page.getByRole('button', { name: /menu/i })
+    await expect(hamburger).toBeVisible()
+
+    // Main content should not have horizontal scroll at page level
+    const scrollWidth = await page.evaluate(() => document.body.scrollWidth)
+    const clientWidth = await page.evaluate(() => document.body.clientWidth)
+    // Allow small tolerance for rounding
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 5)
+  })
+
+  test('extra small mobile (320px): sidebar works correctly', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 })
+
+    const hamburger = page.getByRole('button', { name: /menu/i })
+    await hamburger.click()
+
+    // Sidebar should open
+    const sidebar = page.locator('aside')
+    await expect(sidebar).toHaveAttribute('data-state', 'open')
+
+    // Sidebar width (256px / w-64) should fit within screen with some overflow
+    // This is expected behavior - sidebar overlays content
+    const sidebarBox = await sidebar.boundingBox()
+    expect(sidebarBox?.x).toBeGreaterThanOrEqual(0)
+
+    // Navigation items should be readable
+    const dashboardLink = page.getByRole('link', { name: /Dashboard/i })
+    await expect(dashboardLink).toBeVisible()
+  })
 })

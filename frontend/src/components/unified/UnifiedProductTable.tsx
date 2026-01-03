@@ -1,6 +1,12 @@
 /**
  * UnifiedProductTable - Main table component for unified product display
  * Supports filtering, sorting, export, and feature flags
+ *
+ * UX Constants:
+ * - min-w-[800px]: Minimum table width for horizontal scroll on mobile
+ *   Ensures all columns remain readable without cramping
+ * - sticky top-0: Keeps headers visible when scrolling vertically
+ * - px-3 md:px-4: Reduced padding on mobile (12px) vs desktop (16px)
  */
 
 import { useState, useMemo } from 'react'

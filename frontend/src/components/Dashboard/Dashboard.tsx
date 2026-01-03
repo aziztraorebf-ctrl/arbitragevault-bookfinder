@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import type { KeepaHealthResponse } from '../../types/keepa'
 
+/**
+ * Dashboard - Main application dashboard with KPI cards and quick actions
+ *
+ * UX Constants:
+ * - min-h-[44px]: Minimum touch target size per Apple HIG guidelines
+ *   Ensures buttons are easily tappable on mobile devices
+ * - py-3 (12px): Vertical padding for comfortable touch interaction
+ */
+
 const API_URL =
   import.meta.env.VITE_API_URL || 'https://arbitragevault-backend-v2.onrender.com'
 

@@ -49,9 +49,9 @@ export default function Configuration() {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Configuration</h1>
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Configuration</h1>
         <button
           onClick={() => setEditMode(!editMode)}
           className={`px-4 py-2 rounded-lg font-medium ${
@@ -66,15 +66,15 @@ export default function Configuration() {
 
       {/* Domain/Category selector */}
       <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="flex gap-4">
-          <div>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Domaine Amazon
             </label>
             <select
               value={domainId}
               onChange={(e) => setDomainId(Number(e.target.value))}
-              className="border rounded-lg px-3 py-2"
+              className="w-full border rounded-lg px-3 py-2"
             >
               <option value={1}>US (.com)</option>
               <option value={2}>UK (.co.uk)</option>
@@ -83,14 +83,14 @@ export default function Configuration() {
               <option value={6}>CA (.ca)</option>
             </select>
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Categorie
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="border rounded-lg px-3 py-2"
+              className="w-full border rounded-lg px-3 py-2"
             >
               <option value="books">Livres</option>
               <option value="electronics">Electronique</option>
@@ -102,9 +102,9 @@ export default function Configuration() {
 
       {/* Stats card */}
       {stats && (
-        <div className="bg-blue-50 rounded-lg p-4 mb-6">
+        <div className="bg-blue-50 rounded-lg p-4 mb-6 overflow-hidden">
           <h3 className="font-medium text-blue-900 mb-2">Statistiques</h3>
-          <div className="grid grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-sm">
             <div>
               <span className="text-blue-600">Configs totales:</span>{' '}
               <span className="font-semibold">{stats.total_configs}</span>
@@ -123,47 +123,46 @@ export default function Configuration() {
         </div>
       )}
 
-      {/* Config sections */}
+      {/* Config sections - Keys match backend DEFAULT_BUSINESS_CONFIG */}
       {config?.effective_config && (
         <div className="space-y-6">
           <ConfigSection
             title="Seuils ROI"
-            sectionKey="roi_thresholds"
-            config={config.effective_config.roi_thresholds || {}}
+            sectionKey="roi"
+            config={config.effective_config.roi || {}}
             fields={[
-              { key: 'minimum', label: 'Minimum (%)', type: 'number' },
-              { key: 'target', label: 'Cible (%)', type: 'number' },
-              { key: 'excellent', label: 'Excellent (%)', type: 'number' },
+              { key: 'min_for_buy', label: 'Minimum pour achat (%)', type: 'number' },
+              { key: 'target_pct_default', label: 'Cible par defaut (%)', type: 'number' },
+              { key: 'excellent_threshold', label: 'Seuil excellent (%)', type: 'number' },
             ]}
             editMode={editMode}
             isSaving={updateMutation.isPending}
-            onSave={(values) => handleSave('roi_thresholds', values)}
+            onSave={(values) => handleSave('roi', values)}
           />
 
           <ConfigSection
-            title="Limites BSR"
-            sectionKey="bsr_limits"
-            config={config.effective_config.bsr_limits || {}}
+            title="Score combine"
+            sectionKey="combined_score"
+            config={config.effective_config.combined_score || {}}
             fields={[
-              { key: 'max_acceptable', label: 'Max acceptable', type: 'number' },
-              { key: 'ideal_max', label: 'Ideal max', type: 'number' },
+              { key: 'roi_weight', label: 'Poids ROI (0-1)', type: 'number' },
+              { key: 'velocity_weight', label: 'Poids Velocite (0-1)', type: 'number' },
             ]}
             editMode={editMode}
             isSaving={updateMutation.isPending}
-            onSave={(values) => handleSave('bsr_limits', values)}
+            onSave={(values) => handleSave('combined_score', values)}
           />
 
           <ConfigSection
-            title="Tarification"
-            sectionKey="pricing"
-            config={config.effective_config.pricing || {}}
+            title="Frais (buffer)"
+            sectionKey="fees"
+            config={config.effective_config.fees || {}}
             fields={[
-              { key: 'min_profit_margin', label: 'Marge min (%)', type: 'number' },
-              { key: 'fee_estimate_percent', label: 'Estimation frais (%)', type: 'number' },
+              { key: 'buffer_pct_default', label: 'Buffer securite (%)', type: 'number' },
             ]}
             editMode={editMode}
             isSaving={updateMutation.isPending}
-            onSave={(values) => handleSave('pricing', values)}
+            onSave={(values) => handleSave('fees', values)}
           />
 
           <ConfigSection
@@ -171,8 +170,9 @@ export default function Configuration() {
             sectionKey="velocity"
             config={config.effective_config.velocity || {}}
             fields={[
-              { key: 'min_score', label: 'Score minimum', type: 'number' },
-              { key: 'weight_in_scoring', label: 'Poids scoring', type: 'number' },
+              { key: 'fast_threshold', label: 'Seuil rapide', type: 'number' },
+              { key: 'medium_threshold', label: 'Seuil moyen', type: 'number' },
+              { key: 'slow_threshold', label: 'Seuil lent', type: 'number' },
             ]}
             editMode={editMode}
             isSaving={updateMutation.isPending}
@@ -220,22 +220,36 @@ function ConfigSection({ title, sectionKey, config, fields, editMode, isSaving, 
       }
     }
 
-    // ROI thresholds: minimum < target < excellent
-    if (sectionKey === 'roi_thresholds') {
-      const { minimum, target, excellent } = values
-      if (minimum >= target) {
-        return 'Minimum doit etre inferieur a Cible'
+    // ROI: min_for_buy < target_pct_default < excellent_threshold
+    if (sectionKey === 'roi') {
+      const { min_for_buy, target_pct_default, excellent_threshold } = values
+      if (min_for_buy !== undefined && target_pct_default !== undefined && min_for_buy >= target_pct_default) {
+        return 'Minimum pour achat doit etre inferieur a Cible'
       }
-      if (target >= excellent) {
-        return 'Cible doit etre inferieur a Excellent'
+      if (target_pct_default !== undefined && excellent_threshold !== undefined && target_pct_default >= excellent_threshold) {
+        return 'Cible doit etre inferieur a Seuil excellent'
       }
     }
 
-    // BSR limits: ideal_max < max_acceptable
-    if (sectionKey === 'bsr_limits') {
-      const { ideal_max, max_acceptable } = values
-      if (ideal_max >= max_acceptable) {
-        return 'Ideal max doit etre inferieur a Max acceptable'
+    // Combined score: weights must sum to 1
+    if (sectionKey === 'combined_score') {
+      const { roi_weight, velocity_weight } = values
+      if (roi_weight !== undefined && velocity_weight !== undefined) {
+        const sum = roi_weight + velocity_weight
+        if (Math.abs(sum - 1.0) > 0.01) {
+          return `Les poids doivent totaliser 1.0 (actuellement ${sum.toFixed(2)})`
+        }
+      }
+    }
+
+    // Velocity: fast > medium > slow
+    if (sectionKey === 'velocity') {
+      const { fast_threshold, medium_threshold, slow_threshold } = values
+      if (fast_threshold !== undefined && medium_threshold !== undefined && fast_threshold < medium_threshold) {
+        return 'Seuil rapide doit etre superieur au seuil moyen'
+      }
+      if (medium_threshold !== undefined && slow_threshold !== undefined && medium_threshold < slow_threshold) {
+        return 'Seuil moyen doit etre superieur au seuil lent'
       }
     }
 
@@ -257,7 +271,7 @@ function ConfigSection({ title, sectionKey, config, fields, editMode, isSaving, 
         <h3 className="font-semibold text-gray-900">{title}</h3>
       </div>
       <div className="p-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {fields.map((field) => (
             <div key={field.key}>
               <label className="block text-sm text-gray-600 mb-1">{field.label}</label>

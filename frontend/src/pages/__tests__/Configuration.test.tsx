@@ -35,10 +35,10 @@ const createWrapper = () => {
 
 const mockConfig = {
   effective_config: {
-    roi_thresholds: { minimum: 15, target: 30, excellent: 50 },
-    bsr_limits: { max_acceptable: 500000, ideal_max: 100000 },
-    pricing: { min_profit_margin: 20, fee_estimate_percent: 15 },
-    velocity: { min_score: 5, weight_in_scoring: 0.3 },
+    roi: { min_for_buy: 15, target_pct_default: 30, excellent_threshold: 50 },
+    combined_score: { roi_weight: 0.6, velocity_weight: 0.4 },
+    fees: { buffer_pct_default: 5 },
+    velocity: { fast_threshold: 80, medium_threshold: 60, slow_threshold: 40 },
   },
 }
 
@@ -97,8 +97,8 @@ describe('Configuration', () => {
     render(<Configuration />, { wrapper: createWrapper() })
 
     expect(screen.getByText('Seuils ROI')).toBeInTheDocument()
-    expect(screen.getByText('Limites BSR')).toBeInTheDocument()
-    expect(screen.getByText('Tarification')).toBeInTheDocument()
+    expect(screen.getByText('Score combine')).toBeInTheDocument()
+    expect(screen.getByText('Frais (buffer)')).toBeInTheDocument()
     expect(screen.getByText('Velocite')).toBeInTheDocument()
   })
 
@@ -128,11 +128,11 @@ describe('Configuration', () => {
     // Enter edit mode
     fireEvent.click(screen.getByText('Modifier'))
 
-    // Find minimum input and set invalid value (higher than target)
+    // Find min_for_buy input and set invalid value (higher than target_pct_default which is 30)
     const inputs = document.querySelectorAll('input[type="number"]')
-    const minimumInput = inputs[0] as HTMLInputElement
+    const minForBuyInput = inputs[0] as HTMLInputElement
 
-    fireEvent.change(minimumInput, { target: { value: '60' } }) // min > target (30)
+    fireEvent.change(minForBuyInput, { target: { value: '60' } }) // min > target (30)
 
     // Try to save
     const saveButtons = screen.getAllByText('Sauvegarder')
@@ -140,7 +140,7 @@ describe('Configuration', () => {
 
     // Should show validation error
     await waitFor(() => {
-      expect(screen.getByText('Minimum doit etre inferieur a Cible')).toBeInTheDocument()
+      expect(screen.getByText('Minimum pour achat doit etre inferieur a Cible')).toBeInTheDocument()
     })
   })
 })

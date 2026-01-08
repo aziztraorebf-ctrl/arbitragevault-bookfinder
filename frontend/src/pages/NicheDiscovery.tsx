@@ -181,9 +181,9 @@ export default function NicheDiscovery() {
 
         {/* Results: Products Table */}
         {viewMode === 'products' && products.length > 0 && (
-          <div>
+          <div className="overflow-x-hidden">
             {/* Actions Bar */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
               {/* Back to Niches Button */}
               {selectedNiche ? (
                 <button

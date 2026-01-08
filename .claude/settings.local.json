@@ -75,7 +75,9 @@
       "Bash(python3:*)",
       "Bash(export DATABASE_URL=\"postgresql://test:test@localhost:5432/test\")",
       "Bash(grep:*)",
-      "Bash(echo.:*)"
+      "Bash(echo.:*)",
+      "Skill(playwright-skill)",
+      "Skill(playwright-skill:*)"
     ],
     "deny": [],
     "ask": []

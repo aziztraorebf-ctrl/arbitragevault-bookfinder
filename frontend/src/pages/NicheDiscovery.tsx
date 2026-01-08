@@ -121,7 +121,7 @@ export default function NicheDiscovery() {
   const selectedNiche = niches.find((n) => n.id === selectedNicheId)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50">
       {/* Page Header */}
       <div className="max-w-7xl mx-auto mb-4 md:mb-8 overflow-x-hidden">
         <div className="flex items-center justify-between">

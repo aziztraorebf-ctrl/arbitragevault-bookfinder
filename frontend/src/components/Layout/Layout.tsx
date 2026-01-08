@@ -112,7 +112,7 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main content area */}
       <div className="flex-1 ml-0 md:ml-64 mt-16">
-        <main className="p-8">
+        <main className="p-2 sm:p-4 md:p-8">
           {children}
         </main>
       </div>

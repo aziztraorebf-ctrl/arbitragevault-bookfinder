@@ -202,7 +202,7 @@ export default function AnalyseManuelle() {
   }, [results]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-6 space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8">
       {/* Titre principal */}
       <h1 className="text-2xl md:text-3xl font-bold text-gray-900 text-center md:text-left">
         Analyse manuelle - CSV ou ASIN.

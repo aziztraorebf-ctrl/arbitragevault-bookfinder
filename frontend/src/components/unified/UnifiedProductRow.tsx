@@ -106,10 +106,10 @@ export function UnifiedProductRow({
         )}
 
         {/* Mobile expand button - visible only on mobile */}
-        <td className="md:hidden px-2 py-3 text-center">
+        <td className="md:hidden px-1 py-2 text-center">
           <button
             onClick={onMobileToggle}
-            className="p-2 text-gray-500 hover:text-gray-700 transition-transform min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-1 text-gray-500 hover:text-gray-700 transition-transform min-h-[36px] min-w-[36px] flex items-center justify-center"
             aria-label={isMobileExpanded ? 'Collapse details' : 'Expand details'}
           >
             <svg
@@ -131,7 +131,7 @@ export function UnifiedProductRow({
         )}
 
         {/* ASIN with Amazon link */}
-        <td className="px-4 py-3 text-sm font-mono text-blue-600">
+        <td className="px-1 md:px-4 py-2 md:py-3 text-xs md:text-sm font-mono text-blue-600">
           <a
             href={`https://www.amazon.com/dp/${product.asin}`}
             target="_blank"
@@ -142,10 +142,10 @@ export function UnifiedProductRow({
           </a>
         </td>
 
-        {/* Title */}
-        <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate">
+        {/* Title - reduced width on mobile */}
+        <td className="px-1 md:px-4 py-2 md:py-3 text-sm text-gray-900 max-w-[80px] md:max-w-xs truncate">
           <div>
-            <p className="truncate">{product.title || 'N/A'}</p>
+            <p className="truncate text-xs md:text-sm">{product.title || 'N/A'}</p>
             {showCategory && product.category_name && (
               <p className="text-xs text-gray-400 mt-1">{product.category_name}</p>
             )}
@@ -160,7 +160,7 @@ export function UnifiedProductRow({
         )}
 
         {/* ROI */}
-        <td className={`px-4 py-3 text-center text-sm font-semibold ${roiColorClass}`}>
+        <td className={`px-1 md:px-4 py-2 md:py-3 text-center text-xs md:text-sm font-semibold ${roiColorClass}`}>
           {product.roi_percent.toFixed(1)}%
         </td>
 
@@ -217,9 +217,9 @@ export function UnifiedProductRow({
           </td>
         )}
 
-        {/* Actions: Verify button (optional) */}
+        {/* Actions: Verify button (optional) - hidden on mobile */}
         {showVerifyButton && (
-          <td className="px-4 py-3 text-center">
+          <td className="hidden md:table-cell px-4 py-3 text-center">
             <div className="flex gap-2 justify-center">
               <a
                 href={`https://www.amazon.com/dp/${product.asin}`}

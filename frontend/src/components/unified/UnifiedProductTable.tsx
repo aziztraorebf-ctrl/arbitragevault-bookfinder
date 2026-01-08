@@ -85,6 +85,8 @@ export function UnifiedProductTable({
   const [filters, setFilters] = useState<UnifiedTableFilters>(defaultFilters)
   const [sort, setSort] = useState<UnifiedTableSort>(defaultSort)
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
+  // Separate state for mobile expand (different from desktop accordion)
+  const [mobileExpandedRow, setMobileExpandedRow] = useState<string | null>(null)
 
   // Process products with filters and sorting
   const processedProducts = useMemo(() => {
@@ -266,7 +268,7 @@ export function UnifiedProductTable({
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full md:min-w-[800px]">
+        <table className="w-full min-w-0 md:min-w-[800px]">
           <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
             <tr>
               {showAccordion && <th className="px-3 md:px-4 py-3 w-12"></th>}
@@ -280,7 +282,7 @@ export function UnifiedProductTable({
               <th className="px-3 md:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                 ASIN
               </th>
-              <th className="px-3 md:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase max-w-[200px]">
+              <th className="px-3 md:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase max-w-[80px] md:max-w-[200px]">
                 Titre
               </th>
               {showScore && (
@@ -308,7 +310,7 @@ export function UnifiedProductTable({
                 </th>
               )}
               {showVerifyButton && (
-                <th className="px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                <th className="hidden md:table-cell px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                   Actions
                 </th>
               )}
@@ -331,8 +333,8 @@ export function UnifiedProductTable({
                   isVerificationExpanded={isVerificationExpanded?.(product.asin)}
                   onToggleVerification={() => toggleVerificationExpansion?.(product.asin)}
                   AccordionComponent={AccordionComponent}
-                  isMobileExpanded={expandedRow === product.asin}
-                  onMobileToggle={() => setExpandedRow(expandedRow === product.asin ? null : product.asin)}
+                  isMobileExpanded={mobileExpandedRow === product.asin}
+                  onMobileToggle={() => setMobileExpandedRow(mobileExpandedRow === product.asin ? null : product.asin)}
                 />
               )
             })}

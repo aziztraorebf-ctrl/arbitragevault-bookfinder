@@ -1,9 +1,10 @@
 /**
  * Auto-Discovery Hero Section
  * Strategic buttons for Textbook Standard and Textbook Patience
- * Phase 8: Dual Template Strategy
+ * Phase 8: Dual Template Strategy - Vault Elegance Design
  */
 
+import { BookOpen, Zap, Clock } from 'lucide-react'
 import type { NicheStrategy } from '../../services/nicheDiscoveryService'
 
 interface AutoDiscoveryHeroProps {
@@ -18,27 +19,21 @@ const STRATEGY_BUTTONS: Array<{
   strategy: NicheStrategy
   label: string
   subtitle: string
-  icon: string
-  gradient: string
-  hoverGradient: string
+  icon: 'zap' | 'clock'
   description: string
 }> = [
   {
     strategy: 'textbooks_standard',
     label: 'Textbook Standard',
     subtitle: 'BSR 100K-250K',
-    icon: 'BOOKS',
-    gradient: 'from-green-500 to-emerald-600',
-    hoverGradient: 'hover:from-green-600 hover:to-emerald-700',
+    icon: 'zap',
     description: 'Rotation 2-4 semaines. Equilibre profit/velocite.',
   },
   {
     strategy: 'textbooks_patience',
     label: 'Textbook Patience',
     subtitle: 'BSR 250K-400K',
-    icon: 'CLOCK',
-    gradient: 'from-amber-500 to-orange-600',
-    hoverGradient: 'hover:from-amber-600 hover:to-orange-700',
+    icon: 'clock',
     description: 'Rotation 4-8 semaines. Profit plus eleve, capital immobilise.',
   },
 ]
@@ -50,31 +45,28 @@ export function AutoDiscoveryHero({
   lastExploration,
 }: AutoDiscoveryHeroProps) {
   return (
-    <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 p-8 text-white shadow-2xl">
-      {/* Animated background pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent)]"></div>
-      </div>
-
+    <div className="bg-gradient-to-r from-vault-accent to-vault-accent-dark rounded-2xl p-6 md:p-8 shadow-vault-md border border-vault-accent/20">
       <div className="relative z-10">
         {/* Title */}
-        <h2 className="text-3xl md:text-4xl font-bold mb-2 flex items-center gap-3">
-          <span className="text-4xl md:text-5xl">BOOKS</span>
+        <h2 className="text-2xl md:text-3xl font-display font-semibold text-white flex items-center gap-3">
+          <BookOpen className="w-8 h-8" />
           <span>Strategie Textbook</span>
         </h2>
 
         {/* Subtitle */}
-        <p className="text-white/90 text-lg mb-6 max-w-2xl">
+        <p className="text-white/90 text-sm md:text-base mt-3 max-w-2xl">
           Choisissez votre strategie : <strong>Standard</strong> pour rotation moderee (2-4 sem)
           ou <strong>Patience</strong> pour profit eleve (4-8 semaines).
           Validee avec vraies donnees Keepa en temps reel.
         </p>
 
         {/* Strategy Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 mt-6">
           {STRATEGY_BUTTONS.map((btn) => {
             const isThisLoading = isLoading && loadingStrategy === btn.strategy
             const isDisabled = isLoading
+            const isStandard = btn.strategy === 'textbooks_standard'
+            const IconComponent = btn.icon === 'zap' ? Zap : Clock
 
             return (
               <button
@@ -82,41 +74,28 @@ export function AutoDiscoveryHero({
                 onClick={() => onExplore(btn.strategy)}
                 disabled={isDisabled}
                 className={`
-                  flex-1 px-6 py-4 bg-gradient-to-r ${btn.gradient} ${btn.hoverGradient}
-                  rounded-lg font-bold text-lg shadow-lg hover:shadow-xl
-                  hover:scale-105 transition-all
-                  disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
-                  flex flex-col items-center gap-1 text-white
+                  flex-1 px-6 py-4 rounded-xl font-semibold
+                  ${isStandard
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    : 'bg-amber-600 hover:bg-amber-700'
+                  }
+                  text-white shadow-lg hover:shadow-xl
+                  transition-all duration-200
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  flex flex-col items-center gap-2
                 `}
               >
                 {isThisLoading ? (
                   <>
-                    <svg
-                      className="animate-spin h-6 w-6"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
+                    <div className="animate-spin h-6 w-6 border-2 border-white border-t-transparent rounded-full" />
                     <span className="text-sm">Exploration...</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-2xl">{btn.icon}</span>
-                    <span>{btn.label}</span>
+                    <div className="flex items-center gap-2">
+                      <IconComponent className="w-5 h-5" />
+                      <span>{btn.label}</span>
+                    </div>
                     <span className="text-xs font-normal opacity-90">
                       {btn.subtitle}
                     </span>

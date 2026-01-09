@@ -121,16 +121,16 @@ export default function NicheDiscovery() {
   const selectedNiche = niches.find((n) => n.id === selectedNicheId)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50">
+    <div className="min-h-screen bg-vault-bg">
       {/* Page Header */}
       <div className="max-w-7xl mx-auto mb-4 md:mb-8 overflow-x-hidden">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl md:text-5xl font-display font-semibold text-vault-text tracking-tight">
               Niche Discovery
             </h1>
-            <p className="text-gray-600 text-sm md:text-lg">
-              Découvrez des niches rentables en un clic ou personnalisez votre recherche
+            <p className="text-vault-text-secondary text-sm md:text-base mt-2">
+              Decouvrez des niches rentables en un clic ou personnalisez votre recherche
             </p>
           </div>
           {cacheHit && <CacheIndicator cacheHit={cacheHit} />}
@@ -147,12 +147,12 @@ export default function NicheDiscovery() {
         />
 
         {/* Divider "OU" */}
-        <div className="flex items-center gap-4">
-          <div className="h-px bg-gray-300 flex-1"></div>
-          <span className="text-gray-500 font-semibold text-lg px-4 py-2 bg-white rounded-full shadow-sm">
+        <div className="flex items-center gap-4 my-8">
+          <div className="h-px bg-vault-border flex-1"></div>
+          <span className="text-vault-text-muted font-medium text-sm px-4 py-1 bg-vault-card border border-vault-border rounded-full">
             OU
           </span>
-          <div className="h-px bg-gray-300 flex-1"></div>
+          <div className="h-px bg-vault-border flex-1"></div>
         </div>
 
         {/* Manual Filters Section */}
@@ -164,8 +164,8 @@ export default function NicheDiscovery() {
         {/* Results: Niches Cards */}
         {viewMode === 'niches' && niches.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Niches Découvertes
+            <h2 className="text-2xl font-display font-semibold text-vault-text mb-6">
+              Niches Decouvertes
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {niches.map((niche) => (
@@ -191,7 +191,7 @@ export default function NicheDiscovery() {
                     setViewMode('niches')
                     setSelectedNicheId(undefined)
                   }}
-                  className="px-4 py-2 bg-white text-purple-600 border border-purple-300 rounded-lg font-medium hover:bg-purple-50 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-vault-card text-vault-accent border border-vault-border rounded-xl font-medium hover:bg-vault-hover transition-colors flex items-center gap-2"
                 >
                   <span>&larr;</span>
                   <span>Retour aux niches</span>
@@ -250,8 +250,8 @@ export default function NicheDiscovery() {
         {(isDiscoveringAuto || isDiscoveringManual || isExploringNiche) && (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mb-4"></div>
-              <p className="text-gray-600 text-lg font-medium">
+              <div className="animate-spin h-12 w-12 border-4 border-vault-accent border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-vault-text-secondary text-base mt-4">
                 {isDiscoveringAuto && 'Exploration des niches en cours...'}
                 {isDiscoveringManual && 'Recherche de produits...'}
                 {isExploringNiche && 'Chargement des produits de la niche...'}
@@ -266,11 +266,11 @@ export default function NicheDiscovery() {
           !isExploringNiche &&
           niches.length === 0 &&
           products.length === 0 && (
-            <div className="text-center py-12 bg-white rounded-xl shadow-md border border-gray-200">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            <div className="text-center py-12 bg-vault-card border border-vault-border rounded-2xl shadow-vault-sm">
+              <h3 className="text-xl font-semibold text-vault-text mb-2">
                 Pret a decouvrir des niches rentables ?
               </h3>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              <p className="text-vault-text-secondary text-sm max-w-md mx-auto">
                 Choisissez une strategie Textbook ci-dessus pour decouvrir des niches
                 validees avec vraies donnees Keepa, ou utilisez la recherche personnalisee.
               </p>

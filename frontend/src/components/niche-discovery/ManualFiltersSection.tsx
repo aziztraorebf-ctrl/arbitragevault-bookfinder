@@ -1,9 +1,11 @@
 /**
  * Manual Filters Section Component
  * Allows users to search with custom filters (category, BSR, price)
+ * Vault Elegance Design - Collapsible accordion
  */
 
 import { useState } from 'react'
+import { Search, ChevronDown } from 'lucide-react'
 import type { ManualDiscoveryFilters } from '../../services/nicheDiscoveryService'
 
 interface ManualFiltersSectionProps {
@@ -46,46 +48,36 @@ export function ManualFiltersSection({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+    <div className="bg-vault-card border border-vault-border rounded-2xl shadow-vault-sm overflow-hidden">
       {/* Toggle Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+        className="w-full px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-vault-hover transition-colors"
       >
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🔍</span>
+          <Search className="w-5 h-5 text-vault-accent" />
           <div className="text-left">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Recherche Personnalisée
+            <h3 className="text-base font-semibold text-vault-text">
+              Recherche Personnalisee
             </h3>
-            <p className="text-sm text-gray-600">
-              Définissez vos propres critères de recherche
+            <p className="text-sm text-vault-text-secondary">
+              Definissez vos propres criteres de recherche
             </p>
           </div>
         </div>
-        <svg
-          className={`w-6 h-6 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+        <ChevronDown
+          className={`w-5 h-5 text-vault-text-muted transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+        />
       </button>
 
       {/* Filters Form */}
       {isExpanded && (
-        <form onSubmit={handleSubmit} className="p-6 border-t border-gray-100">
-          <div className="grid grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="px-6 pb-6 pt-2 border-t border-vault-border">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4">
             {/* Category */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Catégorie Amazon
+              <label className="block text-sm font-medium text-vault-text-secondary mb-2">
+                Categorie Amazon
               </label>
               <select
                 value={filters.category || ''}
@@ -95,9 +87,9 @@ export function ManualFiltersSection({
                     category: e.target.value ? Number(e.target.value) : undefined,
                   })
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-vault-bg border border-vault-border rounded-xl px-4 py-3 text-vault-text focus:ring-2 focus:ring-vault-accent focus:border-transparent"
               >
-                <option value="">Toutes catégories</option>
+                <option value="">Toutes categories</option>
                 <option value="3">Books</option>
                 <option value="172">Electronics</option>
                 <option value="193">Toys & Games</option>
@@ -108,8 +100,8 @@ export function ManualFiltersSection({
 
             {/* Max Results */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nombre max résultats
+              <label className="block text-sm font-medium text-vault-text-secondary mb-2">
+                Nombre max resultats
               </label>
               <input
                 type="number"
@@ -119,13 +111,13 @@ export function ManualFiltersSection({
                 }
                 min={1}
                 max={50}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-vault-bg border border-vault-border rounded-xl px-4 py-3 text-vault-text placeholder:text-vault-text-muted focus:ring-2 focus:ring-vault-accent focus:border-transparent"
               />
             </div>
 
             {/* BSR Min */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-vault-text-secondary mb-2">
                 BSR Minimum
               </label>
               <input
@@ -135,13 +127,13 @@ export function ManualFiltersSection({
                   setFilters({ ...filters, bsr_min: Number(e.target.value) })
                 }
                 min={1}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-vault-bg border border-vault-border rounded-xl px-4 py-3 text-vault-text placeholder:text-vault-text-muted focus:ring-2 focus:ring-vault-accent focus:border-transparent"
               />
             </div>
 
             {/* BSR Max */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-vault-text-secondary mb-2">
                 BSR Maximum
               </label>
               <input
@@ -151,13 +143,13 @@ export function ManualFiltersSection({
                   setFilters({ ...filters, bsr_max: Number(e.target.value) })
                 }
                 min={1}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-vault-bg border border-vault-border rounded-xl px-4 py-3 text-vault-text placeholder:text-vault-text-muted focus:ring-2 focus:ring-vault-accent focus:border-transparent"
               />
             </div>
 
             {/* Price Min */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-vault-text-secondary mb-2">
                 Prix Minimum ($)
               </label>
               <input
@@ -168,13 +160,13 @@ export function ManualFiltersSection({
                 }
                 min={0}
                 step={0.01}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-vault-bg border border-vault-border rounded-xl px-4 py-3 text-vault-text placeholder:text-vault-text-muted focus:ring-2 focus:ring-vault-accent focus:border-transparent"
               />
             </div>
 
             {/* Price Max */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-vault-text-secondary mb-2">
                 Prix Maximum ($)
               </label>
               <input
@@ -185,13 +177,13 @@ export function ManualFiltersSection({
                 }
                 min={0}
                 step={0.01}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-vault-bg border border-vault-border rounded-xl px-4 py-3 text-vault-text placeholder:text-vault-text-muted focus:ring-2 focus:ring-vault-accent focus:border-transparent"
               />
             </div>
 
             {/* Min ROI */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-vault-text-secondary mb-2">
                 ROI Minimum (%)
               </label>
               <input
@@ -202,14 +194,14 @@ export function ManualFiltersSection({
                 }
                 min={0}
                 max={100}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-vault-bg border border-vault-border rounded-xl px-4 py-3 text-vault-text placeholder:text-vault-text-muted focus:ring-2 focus:ring-vault-accent focus:border-transparent"
               />
             </div>
 
             {/* Min Velocity */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Vélocité Minimum
+              <label className="block text-sm font-medium text-vault-text-secondary mb-2">
+                Velocite Minimum
               </label>
               <input
                 type="number"
@@ -219,7 +211,7 @@ export function ManualFiltersSection({
                 }
                 min={0}
                 max={100}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full bg-vault-bg border border-vault-border rounded-xl px-4 py-3 text-vault-text placeholder:text-vault-text-muted focus:ring-2 focus:ring-vault-accent focus:border-transparent"
               />
             </div>
           </div>
@@ -229,16 +221,16 @@ export function ManualFiltersSection({
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold shadow-md hover:bg-purple-700 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-vault-accent hover:bg-vault-accent-dark text-white font-medium px-6 py-3 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Recherche en cours...' : 'Rechercher'}
             </button>
             <button
               type="button"
               onClick={handleReset}
-              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+              className="px-6 py-3 bg-vault-hover text-vault-text rounded-xl font-medium hover:bg-vault-border transition-colors"
             >
-              Réinitialiser
+              Reinitialiser
             </button>
           </div>
         </form>

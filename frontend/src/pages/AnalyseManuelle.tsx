@@ -2,7 +2,7 @@ import { useState, useRef, useMemo, type ChangeEvent } from 'react';
 import { keepaService } from '../services/keepaService';
 import type { IngestResponse } from '../types/keepa';
 import ProgressBar from '../components/ProgressBar';
-import { UnifiedProductTable, useVerification } from '../components/unified';
+import { UnifiedProductTable, useVerification, AccordionContent } from '../components/unified';
 import { normalizeProductScore } from '../types/unified';
 import { batchResultsToProductScores } from '../utils/analysisAdapter';
 import { SaveSearchButton } from '../components/recherches/SaveSearchButton';
@@ -431,9 +431,10 @@ export default function AnalyseManuelle() {
               showFilters: true,
               showExportCSV: true,
               showFooterSummary: true,
-              showAccordion: false, // TODO: Add AccordionContent component
+              showAccordion: true,
               showVerifyButton: true,
             }}
+            AccordionComponent={AccordionContent}
             onVerify={verifyProduct}
             getVerificationState={getVerificationState}
             isVerificationExpanded={isVerificationExpanded}

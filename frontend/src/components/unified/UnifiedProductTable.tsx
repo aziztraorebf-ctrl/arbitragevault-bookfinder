@@ -53,6 +53,24 @@ interface UnifiedProductTableProps {
   isVerificationExpanded?: (asin: string) => boolean
   toggleVerificationExpansion?: (asin: string) => void
   AccordionComponent?: React.ComponentType<{ product: DisplayableProduct; isExpanded: boolean }>
+  // Optional timestamp for "last updated" indicator
+  lastUpdated?: Date | string
+}
+
+// Helper function to format relative time
+function formatRelativeTime(date: Date | string): string {
+  const now = new Date()
+  const then = typeof date === 'string' ? new Date(date) : date
+  const diffMs = now.getTime() - then.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'a l\'instant'
+  if (diffMins < 60) return `il y a ${diffMins} min`
+  if (diffHours < 24) return `il y a ${diffHours}h`
+  if (diffDays < 7) return `il y a ${diffDays}j`
+  return then.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
 export function UnifiedProductTable({
@@ -67,6 +85,7 @@ export function UnifiedProductTable({
   isVerificationExpanded,
   toggleVerificationExpansion,
   AccordionComponent,
+  lastUpdated,
 }: UnifiedProductTableProps) {
   const {
     showFilters = false,
@@ -171,12 +190,19 @@ export function UnifiedProductTable({
       {/* Header */}
       <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <span>{title}</span>
-            <span className="text-sm font-normal text-gray-600">
-              ({processedProducts.length} produits)
-            </span>
-          </h3>
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span>{title}</span>
+              <span className="text-sm font-normal text-gray-600">
+                ({processedProducts.length} produits)
+              </span>
+            </h3>
+            {lastUpdated && (
+              <p className="text-xs text-gray-400 mt-1">
+                Mis a jour {formatRelativeTime(lastUpdated)}
+              </p>
+            )}
+          </div>
           {showExportCSV && onExportCSV && (
             <button
               onClick={() => onExportCSV(processedProducts)}

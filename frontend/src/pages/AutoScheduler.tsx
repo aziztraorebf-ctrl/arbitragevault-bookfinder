@@ -37,10 +37,15 @@ export default function AutoScheduler() {
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 text-amber-500 text-xl">!</div>
           <div>
-            <h3 className="text-amber-800 font-semibold">Feature en developpement</h3>
+            <h3 className="text-amber-800 font-semibold">Fonctionnalite a venir - Phase 12</h3>
             <p className="text-amber-700 text-sm mt-1">
-              L'AutoScheduler sera disponible dans une prochaine version.
-              Cette interface montre les fonctionnalites prevues.
+              L'AutoScheduler sera disponible apres l'integration N8N (Phase 12).
+              En attendant, utilisez <a href="/autosourcing" className="underline font-medium">AutoSourcing</a> pour
+              lancer des analyses manuellement, ou <a href="/niche-discovery" className="underline font-medium">Niche Discovery</a> pour
+              explorer des niches.
+            </p>
+            <p className="text-amber-600 text-xs mt-2">
+              Cette interface montre les fonctionnalites prevues pour la planification automatique.
             </p>
           </div>
         </div>

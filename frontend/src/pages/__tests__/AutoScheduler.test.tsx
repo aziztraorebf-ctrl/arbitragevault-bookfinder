@@ -4,47 +4,57 @@
  */
 import { describe, it, expect } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 
 import AutoScheduler from '../AutoScheduler'
 
+// Helper to render with router for links
+const renderWithRouter = (component: React.ReactElement) => {
+  return render(
+    <MemoryRouter>
+      {component}
+    </MemoryRouter>
+  )
+}
+
 describe('AutoScheduler', () => {
   it('renders page title', () => {
-    render(<AutoScheduler />)
+    renderWithRouter(<AutoScheduler />)
     expect(screen.getByText('AutoScheduler')).toBeInTheDocument()
   })
 
   it('renders subtitle', () => {
-    render(<AutoScheduler />)
+    renderWithRouter(<AutoScheduler />)
     expect(screen.getByText('Planification automatique des analyses')).toBeInTheDocument()
   })
 
   it('renders development status banner', () => {
-    render(<AutoScheduler />)
-    expect(screen.getByText('Feature en developpement')).toBeInTheDocument()
-    expect(screen.getByText(/sera disponible dans une prochaine version/)).toBeInTheDocument()
+    renderWithRouter(<AutoScheduler />)
+    expect(screen.getByText('Fonctionnalite a venir - Phase 12')).toBeInTheDocument()
+    expect(screen.getByText(/sera disponible apres l'integration N8N/)).toBeInTheDocument()
   })
 
   it('renders new task button', () => {
-    render(<AutoScheduler />)
+    renderWithRouter(<AutoScheduler />)
     expect(screen.getByText('Nouvelle tache')).toBeInTheDocument()
   })
 
   it('renders mock scheduled tasks', () => {
-    render(<AutoScheduler />)
+    renderWithRouter(<AutoScheduler />)
     expect(screen.getByText('Scan Livres US')).toBeInTheDocument()
     expect(screen.getByText('Analyse Competition')).toBeInTheDocument()
     expect(screen.getByText('Refresh Prix')).toBeInTheDocument()
   })
 
   it('renders planned features cards', () => {
-    render(<AutoScheduler />)
+    renderWithRouter(<AutoScheduler />)
     expect(screen.getByText('Analyse automatique')).toBeInTheDocument()
     expect(screen.getByText('Alertes prix')).toBeInTheDocument()
     expect(screen.getByText('Rapports automatiques')).toBeInTheDocument()
   })
 
   it('opens create modal on button click', () => {
-    render(<AutoScheduler />)
+    renderWithRouter(<AutoScheduler />)
 
     const newTaskButton = screen.getByText('Nouvelle tache')
     fireEvent.click(newTaskButton)
@@ -55,7 +65,7 @@ describe('AutoScheduler', () => {
   })
 
   it('closes modal on close button click', () => {
-    render(<AutoScheduler />)
+    renderWithRouter(<AutoScheduler />)
 
     // Open modal
     fireEvent.click(screen.getByText('Nouvelle tache'))
@@ -67,7 +77,7 @@ describe('AutoScheduler', () => {
   })
 
   it('has disabled create button in modal', () => {
-    render(<AutoScheduler />)
+    renderWithRouter(<AutoScheduler />)
 
     fireEvent.click(screen.getByText('Nouvelle tache'))
 
@@ -76,7 +86,7 @@ describe('AutoScheduler', () => {
   })
 
   it('shows task status badges', () => {
-    render(<AutoScheduler />)
+    renderWithRouter(<AutoScheduler />)
 
     expect(screen.getAllByText('Actif').length).toBe(2)
     expect(screen.getByText('En pause')).toBeInTheDocument()

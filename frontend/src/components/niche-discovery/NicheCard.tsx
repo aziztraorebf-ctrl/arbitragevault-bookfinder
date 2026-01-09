@@ -12,13 +12,28 @@ interface NicheCardProps {
   onExplore: (niche: ValidatedNiche) => void
 }
 
+/**
+ * Quality Score Thresholds
+ * avgScore = (avg_roi + avg_velocity) / 2
+ * - Excellent: >= 60 (high ROI + high velocity, best niches)
+ * - Bon: >= 45 (decent performance, worth exploring)
+ * - Moyen: < 45 (lower performance, may require patience)
+ *
+ * Source: Business rules based on historical arbitrage performance data.
+ * ROI and velocity are both 0-100 scale scores.
+ */
+const QUALITY_THRESHOLDS = {
+  EXCELLENT: 60, // Combined score >= 60 = excellent niche
+  BON: 45,       // Combined score >= 45 = good niche
+} as const
+
 export function NicheCard({ niche, onExplore }: NicheCardProps) {
-  // Quality badge based on combined score
+  // Quality badge based on combined score (avg of ROI + velocity)
   const avgScore = (niche.avg_roi + niche.avg_velocity) / 2
   const qualityBadge =
-    avgScore >= 60
+    avgScore >= QUALITY_THRESHOLDS.EXCELLENT
       ? { label: 'Excellent', color: 'bg-vault-accent-light text-vault-accent' }
-      : avgScore >= 45
+      : avgScore >= QUALITY_THRESHOLDS.BON
         ? { label: 'Bon', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' }
         : { label: 'Moyen', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' }
 

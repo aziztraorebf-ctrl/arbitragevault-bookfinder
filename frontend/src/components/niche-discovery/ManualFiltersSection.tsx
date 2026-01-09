@@ -13,21 +13,48 @@ interface ManualFiltersSectionProps {
   isLoading: boolean
 }
 
+/**
+ * Default Filter Values for Manual Discovery
+ *
+ * BSR Range (10,000 - 100,000):
+ * - Min 10K: Excludes ultra-competitive best-sellers where margins are thin
+ * - Max 100K: Sweet spot for moderate-velocity products with good margins
+ *
+ * Price Range ($15 - $50):
+ * - Min $15: Below this, shipping costs eat into margins for FBA arbitrage
+ * - Max $50: Higher prices reduce impulse purchases and slow velocity
+ *
+ * ROI Minimum (25%):
+ * - Covers Amazon fees (~15%), shipping (~5%), and leaves profit margin
+ * - Below 25% ROI, deals become marginal after all costs
+ *
+ * Velocity Minimum (50):
+ * - Score 0-100 based on BSR stability and sales frequency
+ * - 50+ indicates consistent sales, not just occasional purchases
+ *
+ * Max Results (20):
+ * - Balances API token usage vs. user needs
+ * - Can be increased up to 50 for deeper exploration
+ *
+ * Source: ArbitrageVault business rules and Textbook Arbitrage methodology
+ */
+const DEFAULT_FILTERS: ManualDiscoveryFilters = {
+  category: undefined,
+  bsr_min: 10000,     // Excludes ultra-competitive products
+  bsr_max: 100000,    // Sweet spot for arbitrage
+  price_min: 15,      // Minimum viable for FBA margins
+  price_max: 50,      // Optimal price point for velocity
+  min_roi: 25,        // Minimum profitable after all fees
+  min_velocity: 50,   // Consistent sales indicator
+  max_results: 20,    // Balance API tokens vs coverage
+}
+
 export function ManualFiltersSection({
   onSearch,
   isLoading,
 }: ManualFiltersSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [filters, setFilters] = useState<ManualDiscoveryFilters>({
-    category: undefined,
-    bsr_min: 10000,
-    bsr_max: 100000,
-    price_min: 15,
-    price_max: 50,
-    min_roi: 25,
-    min_velocity: 50,
-    max_results: 20,
-  })
+  const [filters, setFilters] = useState<ManualDiscoveryFilters>({ ...DEFAULT_FILTERS })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,16 +62,7 @@ export function ManualFiltersSection({
   }
 
   const handleReset = () => {
-    setFilters({
-      category: undefined,
-      bsr_min: 10000,
-      bsr_max: 100000,
-      price_min: 15,
-      price_max: 50,
-      min_roi: 25,
-      min_velocity: 50,
-      max_results: 20,
-    })
+    setFilters({ ...DEFAULT_FILTERS })
   }
 
   return (

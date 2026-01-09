@@ -1,0 +1,151 @@
+/* Vault Elegance Theme System */
+/* A refined, warm aesthetic for book arbitrage professionals */
+
+/* ========================================
+   LIGHT MODE - Warm Library Aesthetic
+   ======================================== */
+:root {
+  /* Backgrounds */
+  --bg-primary: #f5f0e8;
+  --bg-card: #ffffff;
+  --bg-sidebar: #faf8f5;
+  --bg-hover: #f0ebe3;
+
+  /* Text */
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b5b4f;
+  --text-muted: #9a8b7d;
+
+  /* Accent - Bordeaux/Mahogany */
+  --accent: #8b5a4a;
+  --accent-hover: #6d4539;
+  --accent-light: rgba(139, 90, 74, 0.1);
+
+  /* Semantic */
+  --success: #059669;
+  --success-light: rgba(5, 150, 105, 0.1);
+  --danger: #dc2626;
+  --danger-light: rgba(220, 38, 38, 0.1);
+  --warning: #d97706;
+  --warning-light: rgba(217, 119, 6, 0.1);
+
+  /* Borders & Shadows */
+  --border: #e5e0d8;
+  --border-light: #f0ebe3;
+  --shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.04);
+  --shadow-md: 0 4px 12px rgba(26, 26, 26, 0.08);
+  --shadow-lg: 0 8px 24px rgba(26, 26, 26, 0.12);
+
+  /* Sparkline */
+  --sparkline-stroke: #8b5a4a;
+  --sparkline-fill: rgba(139, 90, 74, 0.1);
+}
+
+/* ========================================
+   DARK MODE - Navy & Gold Sophistication
+   ======================================== */
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg-primary: #0f172a;
+  --bg-card: #1e293b;
+  --bg-sidebar: #0c1222;
+  --bg-hover: #273549;
+
+  /* Text */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* Accent - Gold */
+  --accent: #d4af37;
+  --accent-hover: #c9a227;
+  --accent-light: rgba(212, 175, 55, 0.15);
+
+  /* Semantic */
+  --success: #10b981;
+  --success-light: rgba(16, 185, 129, 0.15);
+  --danger: #ef4444;
+  --danger-light: rgba(239, 68, 68, 0.15);
+  --warning: #f59e0b;
+  --warning-light: rgba(245, 158, 11, 0.15);
+
+  /* Borders & Shadows */
+  --border: #334155;
+  --border-light: #1e293b;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+  /* Sparkline */
+  --sparkline-stroke: #d4af37;
+  --sparkline-fill: rgba(212, 175, 55, 0.15);
+}
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-out;
+}
+
+/* Disable transitions on page load */
+.no-transition * {
+  transition: none !important;
+}
+
+/* ========================================
+   TYPOGRAPHY UTILITIES
+   ======================================== */
+.font-display {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+}
+
+.font-body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ========================================
+   SCROLLBAR STYLING
+   ======================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ========================================
+   FOCUS STYLES
+   ======================================== */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   SELECTION STYLES
+   ======================================== */
+::selection {
+  background-color: var(--accent-light);
+  color: var(--text-primary);
+}

@@ -1,121 +1,224 @@
-import { useEffect } from 'react'
+// Layout - Vault Elegance Design System
+// Premium sidebar navigation with collapsible behavior
+import { useEffect, useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import { Menu, X } from 'lucide-react'
-import { useMobileMenu } from '../../hooks/useMobileMenu'
+import {
+  Menu,
+  X,
+  LayoutDashboard,
+  BarChart3,
+  Search,
+  BookMarked,
+  Bot,
+  Package,
+  Bookmark,
+  Settings,
+  BookOpen
+} from 'lucide-react'
+import { ThemeToggle, SearchBar } from '../vault'
 
 interface LayoutProps {
   children: ReactNode
 }
 
-// Navigation items avec emojis
 const navigationItems = [
-  { name: 'Dashboard', emoji: '🏠', href: '/dashboard' },
-  { name: 'Analyse Manuelle', emoji: '📋', href: '/analyse' },
-  { name: 'Niche Discovery', emoji: '🔍', href: '/niche-discovery' },
-  { name: 'Mes Niches', emoji: '📚', href: '/mes-niches' },
-  { name: 'AutoScheduler', emoji: '🤖', href: '/autoscheduler' },
-  { name: 'AutoSourcing', emoji: '📊', href: '/autosourcing' },
-  { name: 'Mes Recherches', emoji: '🔖', href: '/recherches' },
-  { name: 'Configuration', emoji: '⚙️', href: '/config' }
+  { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+  { name: 'Analytics', icon: BarChart3, href: '/analyse' },
+  { name: 'Discovery', icon: Search, href: '/niche-discovery' },
+  { name: 'Bookmarks', icon: BookMarked, href: '/mes-niches' },
+  { type: 'separator' as const },
+  { name: 'Scheduler', icon: Bot, href: '/autoscheduler' },
+  { name: 'Sourcing', icon: Package, href: '/autosourcing' },
+  { name: 'Searches', icon: Bookmark, href: '/recherches' },
+  { type: 'separator' as const },
+  { name: 'Settings', icon: Settings, href: '/config' },
 ]
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
-  const { isOpen, toggle, close } = useMobileMenu()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false)
 
-  // Close sidebar on route change
+  // Close mobile menu on route change
   useEffect(() => {
-    close()
-  }, [location.pathname, close])
+    setIsMobileMenuOpen(false)
+  }, [location.pathname])
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isMobileMenuOpen])
+
+  const sidebarExpanded = isSidebarHovered || isMobileMenuOpen
 
   return (
-    <div className="flex min-h-screen bg-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50">
-        <div className="flex items-center justify-between h-full px-6">
+    <div className="min-h-screen bg-vault-bg font-sans">
+      {/* ========================================
+          HEADER
+          ======================================== */}
+      <header className="fixed top-0 left-0 right-0 h-16 bg-vault-card border-b border-vault-border z-50">
+        <div className="flex items-center justify-between h-full px-4 lg:px-6">
           {/* Logo */}
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">A</span>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-vault-accent rounded-xl flex items-center justify-center shadow-vault-sm">
+              <BookOpen className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">ArbitrageVault</span>
+            <span className="text-xl tracking-tight hidden sm:block">
+              <span className="font-normal text-vault-text">Arbitrage</span>
+              <span className="font-bold text-vault-text">Vault</span>
+            </span>
           </div>
 
-          {/* Hamburger menu - visible on mobile only */}
-          <button
-            onClick={toggle}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-100 md:hidden"
-            aria-label={isOpen ? 'Close menu' : 'Open menu'}
-          >
-            {isOpen ? (
-              <X className="w-6 h-6 text-gray-700" />
-            ) : (
-              <Menu className="w-6 h-6 text-gray-700" />
-            )}
-          </button>
+          {/* Center: Search (hidden on mobile) */}
+          <div className="hidden lg:block flex-1 max-w-md mx-8">
+            <SearchBar />
+          </div>
+
+          {/* Right: Theme toggle + Avatar + Mobile menu */}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+
+            {/* Avatar */}
+            <div className="w-10 h-10 rounded-full bg-vault-accent/10 border-2 border-vault-accent flex items-center justify-center overflow-hidden">
+              <span className="text-sm font-semibold text-vault-accent">AZ</span>
+            </div>
+
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-xl hover:bg-vault-hover transition-colors duration-150 lg:hidden"
+              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isMobileMenuOpen}
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-6 h-6 text-vault-text" />
+              ) : (
+                <Menu className="w-6 h-6 text-vault-text" />
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Mobile backdrop */}
-      {isOpen && (
-        <div
-          data-testid="mobile-backdrop"
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
-          onClick={close}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
+      {/* ========================================
+          MOBILE BACKDROP
+          ======================================== */}
+      <div
         className={`
-          fixed left-0 top-16 bottom-0 w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto z-40
-          transform transition-transform duration-200 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          fixed inset-0 bg-black/50 z-30 lg:hidden
+          transition-opacity duration-300
+          ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}
         `}
-        data-state={isOpen ? 'open' : 'closed'}
+        onClick={() => setIsMobileMenuOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* ========================================
+          SIDEBAR
+          ======================================== */}
+      <aside
+        onMouseEnter={() => setIsSidebarHovered(true)}
+        onMouseLeave={() => setIsSidebarHovered(false)}
+        className={`
+          fixed left-0 top-16 bottom-0 bg-vault-sidebar border-r border-vault-border z-40
+          transition-all duration-300 ease-out
+          ${isMobileMenuOpen
+            ? 'w-64 translate-x-0'
+            : '-translate-x-full lg:translate-x-0'
+          }
+          ${sidebarExpanded ? 'lg:w-64' : 'lg:w-[72px]'}
+        `}
       >
-        <nav className="py-4 px-3">
-          <div className="space-y-2">
+        <nav className="h-full py-4 px-2 overflow-y-auto overflow-x-hidden">
+          <div className="space-y-1">
             {navigationItems.map((item, index) => {
-              const isActive = location.pathname === item.href ||
-                             (item.href === '/dashboard' && location.pathname === '/')
+              if (item.type === 'separator') {
+                return (
+                  <div
+                    key={`sep-${index}`}
+                    className="my-3 mx-3 border-t border-vault-border"
+                  />
+                )
+              }
+
+              const isActive =
+                location.pathname === item.href ||
+                (item.href === '/dashboard' && location.pathname === '/')
+              const Icon = item.icon!
 
               return (
-                <div key={item.href}>
-                  <Link
-                    to={item.href}
-                    onClick={close}
+                <Link
+                  key={item.href}
+                  to={item.href!}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`
+                    relative flex items-center gap-3 px-3 py-3 rounded-xl
+                    transition-all duration-150 group
+                    ${isActive
+                      ? 'bg-vault-accent-light text-vault-accent'
+                      : 'text-vault-text-secondary hover:bg-vault-hover hover:text-vault-text'
+                    }
+                  `}
+                >
+                  {/* Active indicator bar */}
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-8 bg-vault-accent rounded-r-full" />
+                  )}
+
+                  <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-vault-accent' : ''}`} />
+
+                  <span
                     className={`
-                      flex items-center space-x-3 px-4 py-3 rounded-md
-                      transition-all duration-100
-                      ${isActive
-                        ? 'bg-blue-100 font-semibold text-blue-700'
-                        : 'text-gray-700 hover:bg-blue-50'
-                      }
+                      text-sm font-medium whitespace-nowrap
+                      transition-all duration-200
+                      ${sidebarExpanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 lg:opacity-0'}
                     `}
                   >
-                    <span className="text-xl">{item.emoji}</span>
-                    <span className="text-sm">{item.name}</span>
-                  </Link>
+                    {item.name}
+                  </span>
 
-                  {/* Separators after specific groups */}
-                  {(index === 3 || index === 5) && (
-                    <div className="my-2 border-t border-gray-200"></div>
+                  {/* Tooltip for collapsed state */}
+                  {!sidebarExpanded && (
+                    <div className="
+                      absolute left-full ml-2 px-2 py-1
+                      bg-vault-card border border-vault-border rounded-lg shadow-vault-md
+                      text-sm font-medium text-vault-text whitespace-nowrap
+                      opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                      transition-all duration-150
+                      hidden lg:block
+                    ">
+                      {item.name}
+                    </div>
                   )}
-                </div>
+                </Link>
               )
             })}
           </div>
         </nav>
       </aside>
 
-      {/* Main content area */}
-      <div className="flex-1 ml-0 md:ml-64 mt-16 overflow-x-hidden">
-        <main className="p-2 sm:p-4 md:p-8 overflow-x-hidden">
+      {/* ========================================
+          MAIN CONTENT
+          ======================================== */}
+      <main
+        className={`
+          pt-16 min-h-screen
+          transition-all duration-300 ease-out
+          ${sidebarExpanded ? 'lg:ml-64' : 'lg:ml-[72px]'}
+        `}
+      >
+        <div className="p-4 md:p-6 lg:p-8 max-w-[1400px]">
           {children}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   )
 }

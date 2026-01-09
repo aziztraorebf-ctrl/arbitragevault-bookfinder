@@ -96,3 +96,48 @@ class KeepaRateLimitError(AppException):
         )
         self.tokens_left = tokens_left
         self.retry_after = retry_after
+
+
+class InvalidCredentialsError(AppException):
+    """Raised when login credentials are invalid."""
+    def __init__(self):
+        super().__init__(
+            message="Invalid email or password",
+            details={"error_code": "INVALID_CREDENTIALS"}
+        )
+
+
+class AccountLockedError(AppException):
+    """Raised when account is temporarily locked."""
+    def __init__(self, locked_until: str = None):
+        super().__init__(
+            message="Account temporarily locked due to too many failed attempts",
+            details={"error_code": "ACCOUNT_LOCKED", "locked_until": locked_until}
+        )
+
+
+class AccountInactiveError(AppException):
+    """Raised when account is deactivated."""
+    def __init__(self):
+        super().__init__(
+            message="Account is deactivated",
+            details={"error_code": "ACCOUNT_INACTIVE"}
+        )
+
+
+class InvalidTokenError(AppException):
+    """Raised when JWT token is invalid or expired."""
+    def __init__(self, reason: str = "Invalid or expired token"):
+        super().__init__(
+            message=reason,
+            details={"error_code": "INVALID_TOKEN"}
+        )
+
+
+class WeakPasswordError(AppException):
+    """Raised when password doesn't meet strength requirements."""
+    def __init__(self, errors: list):
+        super().__init__(
+            message="Password does not meet security requirements",
+            details={"error_code": "WEAK_PASSWORD", "validation_errors": errors}
+        )

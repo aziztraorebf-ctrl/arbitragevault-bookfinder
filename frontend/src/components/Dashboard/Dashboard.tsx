@@ -8,6 +8,7 @@ import {
   getGreeting,
   formatDate
 } from '../../data/mockDashboard'
+import { USER_CONFIG } from '../../config/user'
 
 export default function Dashboard() {
   const greeting = getGreeting()
@@ -20,7 +21,7 @@ export default function Dashboard() {
           ======================================== */}
       <section className="mb-8">
         <h1 className="text-4xl md:text-5xl font-display font-semibold text-vault-text mb-2 tracking-tight">
-          {greeting} Aziz
+          {greeting} {USER_CONFIG.displayName}
         </h1>
         <p className="text-sm md:text-base text-vault-text-secondary">
           {dateString}

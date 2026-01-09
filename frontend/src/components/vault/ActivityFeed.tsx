@@ -4,7 +4,8 @@ import {
   CheckCircle,
   Bookmark,
   AlertTriangle,
-  TrendingUp
+  TrendingUp,
+  Clock
 } from 'lucide-react'
 import type { ActivityEvent } from '../../data/mockDashboard'
 
@@ -55,7 +56,14 @@ export function ActivityFeed({ events, className = '' }: ActivityFeedProps) {
 
       {/* Events */}
       <div className="divide-y divide-vault-border-light">
-        {events.map((event) => {
+        {events.length === 0 ? (
+          <div className="px-6 py-8 text-center">
+            <Clock className="w-8 h-8 text-vault-text-muted mx-auto mb-3" />
+            <p className="text-sm text-vault-text-muted">
+              No recent activity
+            </p>
+          </div>
+        ) : events.map((event) => {
           const IconComponent = iconMap[event.type]
           const colorClass = colorMap[event.type]
           const bgClass = bgColorMap[event.type]
@@ -98,3 +106,4 @@ export function ActivityFeed({ events, className = '' }: ActivityFeedProps) {
     </div>
   )
 }
+

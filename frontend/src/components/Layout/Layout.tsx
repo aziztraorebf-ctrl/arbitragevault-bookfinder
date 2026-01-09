@@ -17,6 +17,7 @@ import {
   BookOpen
 } from 'lucide-react'
 import { ThemeToggle, SearchBar } from '../vault'
+import { USER_CONFIG } from '../../config/user'
 
 interface LayoutProps {
   children: ReactNode
@@ -88,7 +89,7 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Avatar */}
             <div className="w-10 h-10 rounded-full bg-vault-accent/10 border-2 border-vault-accent flex items-center justify-center overflow-hidden">
-              <span className="text-sm font-semibold text-vault-accent">AZ</span>
+              <span className="text-sm font-semibold text-vault-accent">{USER_CONFIG.initials}</span>
             </div>
 
             {/* Mobile menu button */}

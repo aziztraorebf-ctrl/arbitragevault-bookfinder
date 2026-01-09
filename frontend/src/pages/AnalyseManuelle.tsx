@@ -6,9 +6,10 @@ import { UnifiedProductTable, useVerification, AccordionContent } from '../compo
 import { normalizeProductScore } from '../types/unified';
 import { batchResultsToProductScores } from '../utils/analysisAdapter';
 import { SaveSearchButton } from '../components/recherches/SaveSearchButton';
+import { Upload, CheckCircle, Play, ChevronDown, FileCheck, AlertCircle } from 'lucide-react';
 
 export default function AnalyseManuelle() {
-  // États principaux
+  // Etats principaux
   const [asins, setAsins] = useState<string[]>([]);
   const [asinInput, setAsinInput] = useState('');
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -18,6 +19,7 @@ export default function AnalyseManuelle() {
   const [progressMessage, setProgressMessage] = useState('');
   const [results, setResults] = useState<IngestResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Configuration
   const [strategy, setStrategy] = useState<'balanced' | 'aggressive' | 'conservative'>('balanced');
@@ -25,18 +27,26 @@ export default function AnalyseManuelle() {
   const [maxBSR, setMaxBSR] = useState(50000);
   const [minVelocity, setMinVelocity] = useState(10);
 
-  // Référence pour l'input file
+  // Reference pour l'input file
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Gestionnaire Drag & Drop
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
   };
 
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDragOver(false);
 
     const files = Array.from(e.dataTransfer.files);
     const csvFile = files.find(f => f.name.endsWith('.csv'));
@@ -44,7 +54,7 @@ export default function AnalyseManuelle() {
     if (csvFile) {
       await handleCSVFile(csvFile);
     } else {
-      showError('Veuillez déposer un fichier CSV valide');
+      showError('Veuillez deposer un fichier CSV valide');
     }
   };
 
@@ -61,7 +71,7 @@ export default function AnalyseManuelle() {
       const extractedAsins = await keepaService.parseCSV(file);
 
       if (extractedAsins.length === 0) {
-        showError('Aucun ASIN valide trouvé dans le fichier CSV');
+        showError('Aucun ASIN valide trouve dans le fichier CSV');
         return;
       }
 
@@ -76,12 +86,12 @@ export default function AnalyseManuelle() {
     const extractedAsins = keepaService.extractIdentifiers(asinInput);
 
     if (extractedAsins.length === 0) {
-      showError('Aucun ASIN valide trouvé. Vérifiez le format (10 ou 13 caractères)');
+      showError('Aucun ASIN valide trouve. Verifiez le format (10 ou 13 caracteres)');
       return;
     }
 
     setAsins(extractedAsins);
-    showSuccess(`${extractedAsins.length} ASINs validés`);
+    showSuccess(`${extractedAsins.length} ASINs valides`);
   };
 
   const handleLaunchAnalysis = async () => {
@@ -106,7 +116,7 @@ export default function AnalyseManuelle() {
     }, 500);
 
     try {
-      // Configuration mappée vers le backend
+      // Configuration mappee vers le backend
       const configProfile = strategy === 'balanced' ? 'balanced' :
                            strategy === 'aggressive' ? 'aggressive' :
                            'conservative';
@@ -122,14 +132,14 @@ export default function AnalyseManuelle() {
           const chunk = asins.slice(i, i + CHUNK_SIZE);
           const chunkProgress = ((i + chunk.length) / asins.length) * 90;
           setProgress(chunkProgress);
-          setProgressMessage(`Traitement des produits ${i + 1} à ${Math.min(i + CHUNK_SIZE, asins.length)}...`);
+          setProgressMessage(`Traitement des produits ${i + 1} a ${Math.min(i + CHUNK_SIZE, asins.length)}...`);
 
           const response = await keepaService.ingestBatch({
             identifiers: chunk,
             config_profile: configProfile
           });
 
-          // Fusionner les résultats
+          // Fusionner les resultats
           if (!allResults) {
             allResults = response;
           } else {
@@ -151,14 +161,14 @@ export default function AnalyseManuelle() {
       clearInterval(progressInterval);
       setProgress(100);
       setProgressStatus('success');
-      setProgressMessage('Analyse terminée avec succès !');
+      setProgressMessage('Analyse terminee avec succes !');
       setResults(allResults);
 
       // Log pour debug
-      console.log('Résultats reçus:', allResults);
-      console.log('Nombre de résultats:', allResults?.results?.length);
+      console.log('Resultats recus:', allResults);
+      console.log('Nombre de resultats:', allResults?.results?.length);
 
-      // Masquer la barre de progression après 2 secondes
+      // Masquer la barre de progression apres 2 secondes
       setTimeout(() => {
         setProgressStatus('idle');
         setProgress(0);
@@ -182,7 +192,7 @@ export default function AnalyseManuelle() {
 
   const showSuccess = (message: string) => {
     // Pour l'instant on utilise juste console.log
-    // On pourrait ajouter un toast de succès plus tard
+    // On pourrait ajouter un toast de succes plus tard
     console.log('Success:', message);
   };
 
@@ -202,25 +212,45 @@ export default function AnalyseManuelle() {
   }, [results]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      {/* Titre principal */}
-      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 text-center md:text-left">
-        Analyse manuelle - CSV ou ASIN.
-      </h1>
+    <div className="space-y-8 animate-fade-in">
+      {/* ========================================
+          HEADER SECTION
+          ======================================== */}
+      <section className="mb-8">
+        <h1 className="text-4xl md:text-5xl font-display font-semibold text-vault-text mb-2 tracking-tight">
+          Analyse Manuelle
+        </h1>
+        <p className="text-sm md:text-base text-vault-text-secondary">
+          Importez vos ASINs ou un fichier CSV pour lancer une analyse approfondie
+        </p>
+      </section>
 
       {/* Toast d'erreur */}
       {error && (
-        <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-pulse">
-          Erreur: {error}
+        <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-3 rounded-xl shadow-vault-lg z-50 flex items-center gap-3 animate-fade-in">
+          <AlertCircle className="w-5 h-5" />
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Section Upload CSV / ASINs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 justify-items-center lg:justify-items-stretch">
+      {/* ========================================
+          INPUT ZONES
+          ======================================== */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Carte Drag & Drop CSV */}
         <div
-          className="w-full max-w-md lg:max-w-none bg-white rounded-2xl p-4 md:p-8 border-2 border-dashed border-blue-300 hover:border-blue-500 transition-all duration-200 flex flex-col items-center justify-center min-h-[200px] md:min-h-[320px] cursor-pointer group"
+          className={`
+            bg-vault-card border-2 border-dashed rounded-2xl p-8
+            flex flex-col items-center justify-center min-h-[240px]
+            cursor-pointer transition-all duration-200
+            ${isDragOver
+              ? 'border-vault-accent bg-vault-accent/5'
+              : 'border-vault-border-light hover:border-vault-accent'
+            }
+            ${csvFile ? 'border-solid border-vault-accent/50' : ''}
+          `}
           onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
         >
@@ -232,176 +262,239 @@ export default function AnalyseManuelle() {
             onChange={handleFileSelect}
           />
           <div className="text-center space-y-4">
-            <div className="text-4xl md:text-6xl mb-2 md:mb-4">☁️</div>
+            {csvFile ? (
+              <FileCheck className="w-12 h-12 text-vault-accent mx-auto" />
+            ) : (
+              <Upload className={`w-12 h-12 mx-auto transition-colors ${isDragOver ? 'text-vault-accent' : 'text-vault-text-muted'}`} />
+            )}
             <div>
-              <p className="text-lg font-semibold text-gray-700 mb-2">
-                {csvFile ? `✅ ${csvFile.name}` : 'Drag & Drop CSV ici'}
+              <p className="text-lg font-semibold text-vault-text mb-1">
+                {csvFile ? csvFile.name : 'Drag & Drop CSV ici'}
               </p>
-              <p className="text-sm text-gray-500">
-                {csvFile ? `${asins.length} ASINs chargés` : 'ou cliquez pour sélectionner'}
+              <p className="text-sm text-vault-text-secondary">
+                {csvFile ? `${asins.length} ASINs charges` : 'ou cliquez pour selectionner'}
               </p>
             </div>
           </div>
         </div>
 
         {/* Carte Liste ASINs */}
-        <div className="w-full max-w-md lg:max-w-none bg-white rounded-2xl p-4 md:p-8 shadow-md flex flex-col gap-4">
-          <label className="text-gray-700 font-medium">
-            Coller une liste d'ASINs séparés par virgule
+        <div className="bg-vault-card border border-vault-border rounded-2xl p-6 shadow-vault-sm flex flex-col gap-4">
+          <label className="text-sm font-medium text-vault-text">
+            Coller une liste d'ASINs separes par virgule
           </label>
           <textarea
             value={asinInput}
             onChange={(e) => setAsinInput(e.target.value)}
-            className="w-full h-24 md:h-32 p-3 md:p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:border-blue-500 text-sm"
+            className="
+              w-full min-h-[120px] px-4 py-3
+              bg-vault-bg border border-vault-border rounded-xl
+              text-vault-text placeholder:text-vault-text-muted
+              focus:ring-2 focus:ring-vault-accent focus:border-transparent
+              resize-none transition-all duration-200
+            "
             placeholder="B08PGW1HW, B07FZ8C718,&#10;B06XG1NVFW, B07FZW57AR..."
           />
           <button
             onClick={handleValidateASINs}
             disabled={!asinInput.trim() || isLoading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-lg px-6 py-3 transition-colors duration-200"
+            className="
+              bg-vault-accent text-white font-medium px-6 py-3 rounded-xl
+              hover:bg-vault-accent-dark transition-colors duration-200
+              disabled:bg-vault-border disabled:text-vault-text-muted disabled:cursor-not-allowed
+            "
           >
             Valider ASINs
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Indicateur ASINs chargés */}
+      {/* ========================================
+          FEEDBACK BANNER
+          ======================================== */}
       {asins.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
-          ✅ {asins.length} ASINs prêts pour l'analyse
+        <div className="bg-vault-accent-light border border-vault-accent/20 rounded-xl px-4 py-3 flex items-center gap-3 animate-fade-in">
+          <CheckCircle className="w-5 h-5 text-vault-accent flex-shrink-0" />
+          <span className="text-sm font-medium text-vault-accent">
+            {asins.length} ASINs valides et prets pour l'analyse
+          </span>
         </div>
       )}
 
-      {/* Section Configuration Analyse */}
-      <div className="bg-white rounded-2xl p-8 shadow-md">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Configuration Analyse</h2>
+      {/* ========================================
+          CONFIGURATION SECTION
+          ======================================== */}
+      <section className="bg-vault-card border border-vault-border rounded-2xl p-6 shadow-vault-sm">
+        <h2 className="text-lg font-semibold text-vault-text mb-6">
+          Configuration Analyse
+        </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Stratégie primaire */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {/* Strategie primaire */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-700">
-              Stratégie primaire
+            <label className="text-sm font-medium text-vault-text-secondary">
+              Strategie primaire
             </label>
-            <select
-              value={strategy}
-              onChange={(e) => {
-                const newStrategy = e.target.value as 'balanced' | 'aggressive' | 'conservative';
-                setStrategy(newStrategy);
+            <div className="relative">
+              <select
+                value={strategy}
+                onChange={(e) => {
+                  const newStrategy = e.target.value as 'balanced' | 'aggressive' | 'conservative';
+                  setStrategy(newStrategy);
 
-                // Ajuster automatiquement les valeurs selon la stratégie
-                switch (newStrategy) {
-                  case 'balanced':
-                    setMinROI(30);
-                    setMaxBSR(50000);
-                    setMinVelocity(10);
-                    break;
-                  case 'aggressive':
-                    setMinROI(50);
-                    setMaxBSR(10000);
-                    setMinVelocity(20);
-                    break;
-                  case 'conservative':
-                    setMinROI(20);
-                    setMaxBSR(100000);
-                    setMinVelocity(5);
-                    break;
-                }
-              }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-            >
-              <option value="balanced">Balanced</option>
-              <option value="aggressive">Aggressive</option>
-              <option value="conservative">Conservative</option>
-            </select>
+                  // Ajuster automatiquement les valeurs selon la strategie
+                  switch (newStrategy) {
+                    case 'balanced':
+                      setMinROI(30);
+                      setMaxBSR(50000);
+                      setMinVelocity(10);
+                      break;
+                    case 'aggressive':
+                      setMinROI(50);
+                      setMaxBSR(10000);
+                      setMinVelocity(20);
+                      break;
+                    case 'conservative':
+                      setMinROI(20);
+                      setMaxBSR(100000);
+                      setMinVelocity(5);
+                      break;
+                  }
+                }}
+                className="
+                  w-full px-4 py-3 pr-10
+                  bg-vault-bg border border-vault-border rounded-xl
+                  text-vault-text appearance-none cursor-pointer
+                  focus:ring-2 focus:ring-vault-accent focus:border-transparent
+                  transition-all duration-200
+                "
+              >
+                <option value="balanced">Balanced</option>
+                <option value="aggressive">Aggressive</option>
+                <option value="conservative">Conservative</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-vault-text-muted pointer-events-none" />
+            </div>
           </div>
 
           {/* ROI minimum */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-vault-text-secondary">
               ROI minimum [%]
             </label>
             <input
               type="number"
               value={minROI}
               onChange={(e) => setMinROI(Number(e.target.value))}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              className="
+                w-full px-4 py-3
+                bg-vault-bg border border-vault-border rounded-xl
+                text-vault-text
+                focus:ring-2 focus:ring-vault-accent focus:border-transparent
+                transition-all duration-200
+              "
               placeholder="30"
             />
           </div>
 
           {/* BSR maximum */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-vault-text-secondary">
               BSR maximum
             </label>
             <input
               type="number"
               value={maxBSR}
               onChange={(e) => setMaxBSR(Number(e.target.value))}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              className="
+                w-full px-4 py-3
+                bg-vault-bg border border-vault-border rounded-xl
+                text-vault-text
+                focus:ring-2 focus:ring-vault-accent focus:border-transparent
+                transition-all duration-200
+              "
               placeholder="50000"
             />
           </div>
 
           {/* Velocity min */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-vault-text-secondary">
               Velocity min.
             </label>
             <input
               type="number"
               value={minVelocity}
               onChange={(e) => setMinVelocity(Number(e.target.value))}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              className="
+                w-full px-4 py-3
+                bg-vault-bg border border-vault-border rounded-xl
+                text-vault-text
+                focus:ring-2 focus:ring-vault-accent focus:border-transparent
+                transition-all duration-200
+              "
               placeholder="10"
             />
           </div>
         </div>
 
         {/* Checkboxes */}
-        <div className="flex gap-8 mt-6">
-          <label className="flex items-center gap-2 text-gray-700">
+        <div className="flex flex-wrap gap-6 mt-6">
+          <label className="flex items-center gap-2 text-vault-text-secondary cursor-pointer">
             <input
               type="checkbox"
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 accent-vault-accent rounded"
               disabled
             />
-            <span className="text-sm">Analyse multi-stratégies</span>
+            <span className="text-sm">Analyse multi-strategies</span>
           </label>
 
-          <label className="flex items-center gap-2 text-gray-700">
+          <label className="flex items-center gap-2 text-vault-text-secondary cursor-pointer">
             <input
               type="checkbox"
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 accent-vault-accent rounded"
               disabled
             />
-            <span className="text-sm">Vérification stock</span>
+            <span className="text-sm">Verification stock</span>
           </label>
 
-          <label className="flex items-center gap-2 text-gray-700">
+          <label className="flex items-center gap-2 text-vault-text-secondary cursor-pointer">
             <input
               type="checkbox"
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 accent-vault-accent rounded"
               disabled
             />
             <span className="text-sm">Export CSV</span>
           </label>
         </div>
-      </div>
+      </section>
 
-      {/* Bouton principal */}
+      {/* ========================================
+          CTA BUTTON
+          ======================================== */}
       <div className="flex justify-center">
         <button
           onClick={handleLaunchAnalysis}
           disabled={asins.length === 0 || isLoading}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold rounded-lg px-8 py-4 text-lg transition-colors duration-200 flex items-center gap-2"
+          className="
+            bg-vault-accent hover:bg-vault-accent-dark text-white
+            font-medium px-8 py-4 rounded-xl
+            shadow-vault-md hover:shadow-vault-lg
+            transition-all duration-200
+            flex items-center justify-center gap-3
+            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-vault-md
+          "
         >
-          <span className="text-xl">🚀</span>
-          <span>{isLoading ? 'Analyse en cours...' : 'Lancer analyse'}</span>
+          <Play className="w-5 h-5" />
+          <span className="text-lg">
+            {isLoading ? 'Analyse en cours...' : 'Lancer l\'analyse'}
+          </span>
         </button>
       </div>
 
-      {/* Section Progression */}
+      {/* ========================================
+          PROGRESS SECTION
+          ======================================== */}
       <ProgressBar
         progress={progress}
         status={progressStatus}
@@ -410,7 +503,9 @@ export default function AnalyseManuelle() {
         totalItems={asins.length}
       />
 
-      {/* Section Resultats */}
+      {/* ========================================
+          RESULTS SECTION
+          ======================================== */}
       {results && results.results.length > 0 && (
         <>
           <div className="flex justify-end mb-4">

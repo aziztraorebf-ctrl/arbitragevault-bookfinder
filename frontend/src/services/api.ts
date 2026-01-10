@@ -1,6 +1,7 @@
 import axios from 'axios'
+import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { z } from 'zod'
-import { getIdToken } from '../config/firebase'
+import { getIdToken, getIdTokenForced } from '../config/firebase'
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -55,22 +56,91 @@ api.interceptors.request.use(
   }
 )
 
-// Response interceptor with proper error handling
+// Flag to prevent infinite retry loops
+let isRefreshing = false
+let failedQueue: Array<{
+  resolve: (token: string | null) => void
+  reject: (error: Error) => void
+}> = []
+
+const processQueue = (error: Error | null, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token)
+    }
+  })
+  failedQueue = []
+}
+
+// Response interceptor with token refresh on 401
 api.interceptors.response.use(
   (response) => {
     return response
   },
-  (error) => {
-    // Message d'erreur amélioré pour timeout
-    let message = error.response?.data?.message || error.response?.data?.detail || error.message
-    
-    if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
-      message = 'L\'analyse prend plus de temps que prévu. Essayez avec moins de produits ou réessayez plus tard.'
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+
+    // Handle 401 Unauthorized - try to refresh token
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        })
+          .then((token) => {
+            if (token && originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`
+            }
+            return api(originalRequest)
+          })
+          .catch((err) => Promise.reject(err))
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      try {
+        // Force refresh the Firebase token
+        const newToken = await getIdTokenForced()
+
+        if (newToken) {
+          // Update the failed request with new token
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`
+          }
+
+          // Process queued requests
+          processQueue(null, newToken)
+
+          // Retry the original request
+          return api(originalRequest)
+        } else {
+          // No token available - user needs to re-login
+          processQueue(new Error('No token available'), null)
+          // Redirect to login handled by AuthContext
+        }
+      } catch (refreshError) {
+        processQueue(refreshError as Error, null)
+        return Promise.reject(refreshError)
+      } finally {
+        isRefreshing = false
+      }
     }
-    
+
+    // Standard error handling for non-401 errors
+    let message = (error.response?.data as { message?: string; detail?: string })?.message ||
+      (error.response?.data as { message?: string; detail?: string })?.detail ||
+      error.message
+
+    if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+      message = 'L\'analyse prend plus de temps que prevu. Essayez avec moins de produits ou reessayez plus tard.'
+    }
+
     const status = error.response?.status
     const data = error.response?.data
-    
+
     console.error('API Response Error:', { message, status, data })
     throw new ApiError(message, status, data)
   }

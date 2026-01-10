@@ -132,6 +132,14 @@ async def lifespan(app):
     logger.info("Starting up application")
     await db_manager.initialize()
 
+    # Initialize Firebase Admin SDK
+    try:
+        from app.core.firebase import init_firebase
+        init_firebase()
+        logger.info("Firebase Admin SDK initialized")
+    except Exception as e:
+        logger.warning("Firebase Admin SDK initialization failed - auth endpoints may not work", error=str(e))
+
     yield
 
     # Shutdown

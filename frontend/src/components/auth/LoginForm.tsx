@@ -9,9 +9,10 @@ import { useAuth } from "../../contexts/AuthContext";
 interface LoginFormProps {
   onSuccess?: () => void;
   onSwitchToRegister?: () => void;
+  onForgotPassword?: () => void;
 }
 
-export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
+export function LoginForm({ onSuccess, onSwitchToRegister, onForgotPassword }: LoginFormProps) {
   const { login, isLoading, error, clearError } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -81,9 +82,20 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
 
       {/* Password Field */}
       <div className="space-y-2">
-        <label htmlFor="password" className="block text-sm font-medium text-vault-text">
-          Password
-        </label>
+        <div className="flex items-center justify-between">
+          <label htmlFor="password" className="block text-sm font-medium text-vault-text">
+            Password
+          </label>
+          {onForgotPassword && (
+            <button
+              type="button"
+              onClick={onForgotPassword}
+              className="text-sm text-vault-accent hover:text-vault-accent-hover transition-colors"
+            >
+              Forgot password?
+            </button>
+          )}
+        </div>
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-vault-text-muted" />
           <input

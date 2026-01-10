@@ -3,11 +3,18 @@
 import json
 import os
 from functools import lru_cache
+from pathlib import Path
 from typing import Optional
 
 import structlog
+from dotenv import load_dotenv
 from firebase_admin import auth, credentials, initialize_app
 from firebase_admin.auth import ExpiredIdTokenError, InvalidIdTokenError, RevokedIdTokenError
+
+# Load .env file for Firebase credentials
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
 
 logger = structlog.get_logger()
 

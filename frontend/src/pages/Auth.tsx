@@ -7,9 +7,10 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Vault, Sparkles } from "lucide-react";
 import { LoginForm, RegisterForm } from "../components/auth";
+import { ForgotPasswordForm } from "../components/auth/ForgotPasswordForm";
 import { useAuth } from "../contexts/AuthContext";
 
-type AuthTab = "login" | "register";
+type AuthTab = "login" | "register" | "forgot-password";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -124,16 +125,21 @@ export default function AuthPage() {
             </div>
 
             {/* Form */}
-            {activeTab === "login" ? (
+            {activeTab === "login" && (
               <LoginForm
                 onSuccess={handleAuthSuccess}
                 onSwitchToRegister={() => setActiveTab("register")}
+                onForgotPassword={() => setActiveTab("forgot-password")}
               />
-            ) : (
+            )}
+            {activeTab === "register" && (
               <RegisterForm
                 onSuccess={handleAuthSuccess}
                 onSwitchToLogin={() => setActiveTab("login")}
               />
+            )}
+            {activeTab === "forgot-password" && (
+              <ForgotPasswordForm onBack={() => setActiveTab("login")} />
             )}
           </div>
         </div>

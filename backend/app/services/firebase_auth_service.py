@@ -117,6 +117,8 @@ class FirebaseAuthService:
             first_name = parts[0]
             last_name = parts[1] if len(parts) > 1 else None
 
+        # Default role: "sourcer" - standard user role for book arbitrage platform
+        # Admin role must be assigned manually by existing admin
         user = await self.user_repo.create_user_from_firebase(
             firebase_uid=firebase_uid,
             email=email,

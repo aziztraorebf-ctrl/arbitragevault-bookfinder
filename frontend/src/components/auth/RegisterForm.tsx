@@ -11,7 +11,17 @@ interface RegisterFormProps {
   onSwitchToLogin?: () => void;
 }
 
-// Password strength requirements
+/**
+ * Password strength requirements
+ *
+ * Thresholds and justification:
+ * - Min 6 characters: Firebase minimum requirement
+ * - Contains number: Basic complexity for security
+ * - Contains letter: Basic complexity for security
+ *
+ * Note: Firebase has its own validation and may enforce additional rules.
+ * These client-side checks provide immediate feedback.
+ */
 const PASSWORD_REQUIREMENTS = [
   { label: "At least 6 characters", check: (p: string) => p.length >= 6 },
   { label: "Contains a number", check: (p: string) => /\d/.test(p) },

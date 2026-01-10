@@ -27,11 +27,15 @@ class User(Base):
     )
 
     # Firebase UID (primary auth method)
+    # Threshold: Max 128 chars
+    # Justification: Firebase UIDs are 28 chars, extra margin for future changes
+    # Nullable: True for legacy users created before Firebase migration
     firebase_uid: Mapped[Optional[str]] = mapped_column(
         String(128), unique=True, index=True, nullable=True
     )
 
     # Password hash (legacy, nullable for Firebase users)
+    # Nullable: True because Firebase users don't have passwords stored locally
     password_hash: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Profile information

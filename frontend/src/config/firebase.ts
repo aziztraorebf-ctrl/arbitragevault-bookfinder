@@ -14,6 +14,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import type { Auth, User as FirebaseUser, UserCredential } from "firebase/auth";
 
@@ -99,6 +100,10 @@ export function subscribeToAuthChanges(
 
 export function getCurrentUser(): FirebaseUser | null {
   return auth.currentUser;
+}
+
+export async function resetPassword(email: string): Promise<void> {
+  return sendPasswordResetEmail(auth, email);
 }
 
 export { app, auth };

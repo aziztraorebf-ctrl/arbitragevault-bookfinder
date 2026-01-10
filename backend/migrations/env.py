@@ -64,7 +64,13 @@ def run_migrations_online_sync() -> None:
         db_url = db_url.replace("postgresql+asyncpg", "postgresql")
     elif "postgresql://" in db_url and "postgresql+psycopg" not in db_url:
         db_url = db_url.replace("postgresql://", "postgresql+psycopg2://")
-    
+
+    # Convert ssl=require to sslmode=require for psycopg2
+    if "?ssl=require" in db_url:
+        db_url = db_url.replace("?ssl=require", "?sslmode=require")
+    elif "&ssl=require" in db_url:
+        db_url = db_url.replace("&ssl=require", "&sslmode=require")
+
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = db_url
     

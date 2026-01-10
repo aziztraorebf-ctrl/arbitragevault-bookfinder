@@ -32,20 +32,113 @@ class UserRepository(BaseRepository[User]):
                 select(User).where(User.email == email.lower())
             )
             user = result.scalar_one_or_none()
-            
+
             if user:
                 logger.info(
                     "User retrieved by email",
                     extra={"email": email, "user_id": user.id},
                 )
-            
+
             return user
-            
+
         except Exception as e:
             logger.error(
                 "Failed to get user by email",
                 extra={"email": email, "error": str(e)},
             )
+            raise
+
+    async def get_by_firebase_uid(self, firebase_uid: str) -> Optional[User]:
+        """Get user by Firebase UID."""
+        try:
+            result = await self.db.execute(
+                select(User).where(User.firebase_uid == firebase_uid)
+            )
+            user = result.scalar_one_or_none()
+
+            if user:
+                logger.info(
+                    "User retrieved by Firebase UID",
+                    extra={"firebase_uid": firebase_uid, "user_id": user.id},
+                )
+
+            return user
+
+        except Exception as e:
+            logger.error(
+                "Failed to get user by Firebase UID",
+                extra={"firebase_uid": firebase_uid, "error": str(e)},
+            )
+            raise
+
+    async def create_user_from_firebase(
+        self,
+        firebase_uid: str,
+        email: str,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        role: str = "sourcer",
+    ) -> User:
+        """
+        Create a new user from Firebase authentication.
+
+        Raises:
+            DuplicateEmailError: If email is already taken
+        """
+        try:
+            email_lower = email.lower()
+
+            # Check for duplicate email first
+            if await self.is_email_taken(email_lower):
+                raise DuplicateEmailError(email_lower)
+
+            user = User(
+                firebase_uid=firebase_uid,
+                email=email_lower,
+                password_hash=None,  # Firebase handles auth
+                first_name=first_name,
+                last_name=last_name,
+                role=role.lower(),
+                is_active=True,
+                is_verified=True,  # Firebase verifies email
+            )
+
+            self.db.add(user)
+            await self.db.commit()
+            await self.db.refresh(user)
+
+            logger.info(
+                "Firebase user created successfully",
+                user_id=user.id,
+                email=email_lower,
+                firebase_uid=firebase_uid,
+            )
+
+            return user
+
+        except DuplicateEmailError:
+            await self.db.rollback()
+            raise
+        except IntegrityError as e:
+            await self.db.rollback()
+            if "UNIQUE constraint failed" in str(e):
+                raise DuplicateEmailError(email_lower)
+            logger.error("Database integrity error creating Firebase user", error=str(e))
+            raise
+        except Exception as e:
+            await self.db.rollback()
+            logger.error("Failed to create Firebase user", error=str(e))
+            raise
+
+    async def link_firebase_uid(self, user_id: str, firebase_uid: str) -> Optional[User]:
+        """Link a Firebase UID to an existing user."""
+        try:
+            user = await self.update(user_id, firebase_uid=firebase_uid)
+            if user:
+                logger.info("Firebase UID linked to user", user_id=user_id)
+            return user
+        except Exception as e:
+            logger.error("Failed to link Firebase UID", user_id=user_id, error=str(e))
             raise
 
     async def is_email_taken(self, email: str, exclude_user_id: Optional[str] = None) -> bool:

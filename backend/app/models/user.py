@@ -26,7 +26,13 @@ class User(Base):
         String(255), unique=True, index=True, nullable=False
     )
 
-    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    # Firebase UID (primary auth method)
+    firebase_uid: Mapped[Optional[str]] = mapped_column(
+        String(128), unique=True, index=True, nullable=True
+    )
+
+    # Password hash (legacy, nullable for Firebase users)
+    password_hash: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Profile information
     first_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)

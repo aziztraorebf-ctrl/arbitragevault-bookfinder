@@ -1,33 +1,24 @@
-"""Authentication and authorization dependencies."""
+"""Authentication and authorization dependencies.
+
+This module provides Firebase-based authentication for all protected endpoints.
+Firebase ID tokens are verified and mapped to local user records.
+"""
 
 from typing import List, Optional, Set
 
 import structlog
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, Header, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .db import get_db_session
 from .logging import set_user_context
-from .security import decode_token, scopes_for_role, validate_scopes
+from .security import scopes_for_role, validate_scopes
 
 logger = structlog.get_logger()
 
-# OAuth2 scheme for token extraction
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/api/v1/auth/login",
-    scopes={
-        "analyses:read": "Read analysis data",
-        "analyses:write": "Create and update analyses",
-        "analyses:delete": "Delete analyses",
-        "batches:read": "Read batch data",
-        "batches:write": "Create and update batches",
-        "batches:delete": "Delete batches",
-        "users:read": "Read user profiles",
-        "users:write": "Update user profiles",
-        "users:admin": "Administrative user operations",
-    },
-)
+# HTTP Bearer scheme for Firebase tokens
+http_bearer = HTTPBearer(auto_error=False)
 
 
 class CurrentUser:
@@ -66,68 +57,68 @@ class CurrentUser:
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db_session)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(http_bearer),
+    db: AsyncSession = Depends(get_db_session),
 ) -> CurrentUser:
-    """Get current authenticated user from JWT token."""
+    """
+    Get current authenticated user from Firebase ID token.
+
+    This is the primary authentication dependency for all protected endpoints.
+    It verifies the Firebase ID token and returns the corresponding local user.
+    """
+    from ..services.firebase_auth_service import FirebaseAuthService
+    from ..core.exceptions import InvalidTokenError, AccountInactiveError
 
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Not authenticated",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    # Decode token
-    payload = decode_token(token)
-    if not payload:
-        logger.warning("Invalid token provided")
+    # Check if credentials provided
+    if not credentials:
+        logger.warning("No authorization credentials provided")
         raise credentials_exception
 
-    # Check token type
-    token_type = payload.get("type")
-    if token_type != "access":
-        logger.warning("Invalid token type", token_type=token_type)
-        raise credentials_exception
+    token = credentials.credentials
 
-    # Extract user info
-    user_id = payload.get("sub")
-    if not user_id:
-        logger.warning("Token missing user ID")
-        raise credentials_exception
+    try:
+        # Verify Firebase token and get/create user
+        auth_service = FirebaseAuthService(db)
+        user, decoded_token = await auth_service.verify_token_and_get_user(token)
 
-    # Import here to avoid circular imports
-    from ..repositories.user_repo import UserRepository
+        # Get user scopes based on role
+        user_scopes = scopes_for_role(user.role)
 
-    user_repo = UserRepository(db)
+        # Set user context for logging
+        set_user_context(user.id)
 
-    # Get user from database
-    user = await user_repo.get_by_id(user_id)
-    if not user:
-        logger.warning("User not found", user_id=user_id)
-        raise credentials_exception
+        logger.debug("User authenticated via Firebase", user_id=user.id, role=user.role)
 
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user"
+        return CurrentUser(
+            id=user.id,
+            email=user.email,
+            role=user.role,
+            scopes=user_scopes,
+            is_active=user.is_active,
         )
 
-    # Check if token is blacklisted (for access tokens, we check refresh token blacklist)
-    # This is a simple approach - in production you might want separate blacklists
-
-    # Get user scopes based on role
-    user_scopes = scopes_for_role(user.role)
-
-    # Set user context for logging
-    set_user_context(user_id)
-
-    logger.info("User authenticated", user_id=user_id, role=user.role)
-
-    return CurrentUser(
-        id=user.id,
-        email=user.email,
-        role=user.role,
-        scopes=user_scopes,
-        is_active=user.is_active,
-    )
+    except InvalidTokenError as e:
+        logger.warning("Invalid Firebase token", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=e.message,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except AccountInactiveError:
+        logger.warning("Inactive account attempted access")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is deactivated",
+        )
+    except Exception as e:
+        logger.error("Unexpected authentication error", error=str(e), error_type=type(e).__name__)
+        raise credentials_exception
 
 
 def require_scopes(required_scopes: List[str]):
@@ -191,15 +182,15 @@ require_users_admin = require_scopes(["users:admin"])
 
 
 async def get_current_user_optional(
-    token: Optional[str] = Depends(oauth2_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(http_bearer),
     db: AsyncSession = Depends(get_db_session),
 ) -> Optional[CurrentUser]:
     """Get current user if token is provided, otherwise return None."""
-    if not token:
+    if not credentials:
         return None
 
     try:
-        return await get_current_user(token, db)
+        return await get_current_user(credentials, db)
     except HTTPException:
         return None
 

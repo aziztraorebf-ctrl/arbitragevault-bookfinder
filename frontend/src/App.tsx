@@ -2,12 +2,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { AuthProvider } from './contexts/AuthContext'
+import { ProtectedRoute } from './components/auth'
 import Layout from './components/Layout/Layout'
 import Dashboard from './components/Dashboard/Dashboard'
 import { WelcomeWizard } from './components/onboarding/WelcomeWizard'
 import { useOnboarding } from './hooks/useOnboarding'
 
 // Import des pages
+import AuthPage from './pages/Auth'
 import AnalyseManuelle from './pages/AnalyseManuelle'
 import NicheDiscovery from './pages/NicheDiscovery'
 import MesNiches from './pages/MesNiches'
@@ -27,7 +30,7 @@ const queryClient = new QueryClient({
   },
 })
 
-function AppContent() {
+function ProtectedAppContent() {
   const { showWizard, isLoading, completeOnboarding } = useOnboarding()
 
   if (isLoading) {
@@ -64,12 +67,33 @@ function AppContent() {
   )
 }
 
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Public route - Auth page */}
+      <Route path="/auth" element={<AuthPage />} />
+
+      {/* Protected routes - everything else */}
+      <Route
+        path="/*"
+        element={
+          <ProtectedRoute>
+            <ProtectedAppContent />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
+  )
+}
+
 function App() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <Router>
-          <AppContent />
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
         </Router>
       </QueryClientProvider>
     </ThemeProvider>

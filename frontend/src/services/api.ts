@@ -1,11 +1,12 @@
 import axios from 'axios'
 import { z } from 'zod'
+import { getIdToken } from '../config/firebase'
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 // Type-safe API client
-// Timeout: 300s (5 min) pour supporter jusqu'à 200 ASINs
+// Timeout: 300s (5 min) pour supporter jusqu'a 200 ASINs
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 300000, // 300 secondes = 5 minutes (supporte 200+ ASINs)
@@ -31,9 +32,20 @@ export class ApiError extends Error {
   }
 }
 
-// Request interceptor
+// Request interceptor - Add Firebase token to all requests
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    // Get Firebase ID token if user is logged in
+    try {
+      const token = await getIdToken()
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+    } catch (error) {
+      // Token fetch failed - continue without auth (will fail on protected endpoints)
+      console.warn('Failed to get Firebase token:', error)
+    }
+
     console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`)
     return config
   },

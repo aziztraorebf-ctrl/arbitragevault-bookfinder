@@ -34,6 +34,11 @@ ENVIRONMENT=production
 LOG_LEVEL=INFO
 CORS_ALLOWED_ORIGINS=["*"]
 
+# Firebase Authentication (Required)
+FIREBASE_PROJECT_ID=your_firebase_project_id
+FIREBASE_PRIVATE_KEY=your_firebase_private_key
+FIREBASE_CLIENT_EMAIL=your_firebase_client_email
+
 # External APIs (Configure as needed)
 KEEPA_API_KEY=your_production_keepa_key
 OPENAI_API_KEY=your_production_openai_key

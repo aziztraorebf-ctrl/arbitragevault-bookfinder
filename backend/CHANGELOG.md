@@ -2,6 +2,37 @@
 
 All notable changes to the ArbitrageVault Backend project are documented in this file.
 
+## [1.7.0] - 2026-01-10 - Firebase Authentication
+
+### Added
+- **Firebase Authentication**: Complete auth system with Firebase Admin SDK
+  - POST /api/v1/auth/sync - Sync user from Firebase
+  - GET /api/v1/auth/me - Get current user
+  - GET /api/v1/auth/verify - Verify token
+  - POST /api/v1/auth/logout - Logout placeholder
+- **Firebase Admin SDK** integration for token verification
+- **User model** with firebase_uid field for linking accounts
+- **Auth exceptions**: InvalidTokenError, AccountInactiveError, WeakPasswordError
+- **get_current_user dependency** for protected endpoints
+
+### Changed
+- All protected endpoints now use Firebase token verification
+- User repository updated with Firebase-specific methods
+
+### Fixed
+- Production white screen issue (wrong VITE_API_URL on Netlify)
+
+---
+
+## [1.6.4] - 2026-01-03 - UX Mobile-First (Phase 12)
+
+### Added
+- **Mobile-First UX**: Responsive design with touch-friendly UI
+- **Mes Recherches**: Centralized search results page with 30-day retention
+- **Unified Product Table**: Consistent product display across features
+
+---
+
 ## [1.6.3] - 2025-12-07 - Documentation Cleanup
 
 ### Changed

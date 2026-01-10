@@ -22,8 +22,48 @@ curl "https://arbitragevault-backend-v2.onrender.com/health"
 ```
 **Response:**
 ```json
-{"status": "ready", "service": "ArbitrageVault API", "version": "1.6.3"}
+{"status": "ready", "service": "ArbitrageVault API", "version": "1.7.0"}
 ```
+
+---
+
+## Authentication (Firebase)
+
+All protected endpoints require a Firebase ID token in the Authorization header:
+```
+Authorization: Bearer <firebase_id_token>
+```
+
+### GET /api/v1/auth/me
+Get current authenticated user information.
+```bash
+curl -H "Authorization: Bearer <token>" \
+  "https://arbitragevault-backend-v2.onrender.com/api/v1/auth/me"
+```
+**Response:**
+```json
+{
+  "id": "uuid",
+  "email": "user@example.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "role": "sourcer",
+  "is_active": true
+}
+```
+
+### POST /api/v1/auth/sync
+Sync user from Firebase to database (called after registration/login).
+```bash
+curl -X POST -H "Authorization: Bearer <token>" \
+  "https://arbitragevault-backend-v2.onrender.com/api/v1/auth/sync"
+```
+
+### GET /api/v1/auth/verify
+Verify Firebase token validity.
+
+### POST /api/v1/auth/logout
+Logout endpoint (placeholder - logout handled client-side).
 
 ---
 
@@ -167,6 +207,35 @@ Niche service health.
 
 ---
 
+## Bookmarks
+
+### GET /api/v1/bookmarks/niches
+List saved niche bookmarks.
+
+### POST /api/v1/bookmarks/niches
+Save a niche bookmark.
+
+### DELETE /api/v1/bookmarks/niches/{id}
+Delete a niche bookmark.
+
+---
+
+## Searches (Mes Recherches)
+
+### GET /api/v1/searches
+List saved searches with 30-day retention.
+
+### POST /api/v1/searches
+Save search results.
+
+### GET /api/v1/searches/{id}
+Get specific search details.
+
+### DELETE /api/v1/searches/{id}
+Delete a saved search.
+
+---
+
 ## Views
 
 ### POST /api/v1/views/{view_type}
@@ -221,6 +290,12 @@ Products service health.
 
 ## Common Patterns
 
+### Authentication
+Protected endpoints require Firebase ID token:
+```
+Authorization: Bearer <firebase_id_token>
+```
+
 ### Pagination Parameters
 All list endpoints support:
 - `page`: Page number (default: 1)
@@ -244,11 +319,13 @@ HTTP Status Codes:
 - `200` - Success
 - `201` - Created
 - `400` - Bad request
+- `401` - Unauthorized (invalid/missing token)
+- `403` - Forbidden (insufficient permissions)
 - `404` - Not found
 - `429` - Rate limited (Keepa tokens)
 - `500` - Internal error
 
 ---
 
-**API Version**: 1.6.3
-**Last Updated**: December 2025
+**API Version**: 1.7.0
+**Last Updated**: January 2026

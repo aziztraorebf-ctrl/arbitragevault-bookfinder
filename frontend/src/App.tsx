@@ -20,6 +20,18 @@ import Configuration from './pages/Configuration'
 import MesRecherches from './pages/MesRecherches'
 import RechercheDetail from './pages/RechercheDetail'
 
+// Import documentation pages
+import DocsIndex from './pages/docs/index'
+import GettingStarted from './pages/docs/GettingStarted'
+import SearchDocs from './pages/docs/SearchDocs'
+import AnalysisDocs from './pages/docs/AnalysisDocs'
+import SavedProductsDocs from './pages/docs/SavedProductsDocs'
+import GlossaryDocs from './pages/docs/GlossaryDocs'
+import TroubleshootingDocs from './pages/docs/TroubleshootingDocs'
+import SchedulerDocs from './pages/docs/SchedulerDocs'
+import SourcingDocs from './pages/docs/SourcingDocs'
+import DailyReviewDocs from './pages/docs/DailyReviewDocs'
+
 // Initialize React Query client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +64,17 @@ function ProtectedAppContent() {
           <Route path="/config" element={<Configuration />} />
           <Route path="/recherches" element={<MesRecherches />} />
           <Route path="/recherches/:id" element={<RechercheDetail />} />
+          {/* Documentation routes */}
+          <Route path="/docs" element={<DocsIndex />} />
+          <Route path="/docs/getting-started" element={<GettingStarted />} />
+          <Route path="/docs/search" element={<SearchDocs />} />
+          <Route path="/docs/analysis" element={<AnalysisDocs />} />
+          <Route path="/docs/saved-products" element={<SavedProductsDocs />} />
+          <Route path="/docs/glossary" element={<GlossaryDocs />} />
+          <Route path="/docs/troubleshooting" element={<TroubleshootingDocs />} />
+          <Route path="/docs/scheduler" element={<SchedulerDocs />} />
+          <Route path="/docs/sourcing" element={<SourcingDocs />} />
+          <Route path="/docs/daily-review" element={<DailyReviewDocs />} />
           {/* Fallback route */}
           <Route path="*" element={<Dashboard />} />
         </Routes>

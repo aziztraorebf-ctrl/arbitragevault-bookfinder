@@ -14,7 +14,8 @@ import {
   Package,
   Bookmark,
   Settings,
-  BookOpen
+  BookOpen,
+  HelpCircle
 } from 'lucide-react'
 import { ThemeToggle, SearchBar } from '../vault'
 import { USER_CONFIG } from '../../config/user'
@@ -34,6 +35,7 @@ const navigationItems = [
   { name: 'Searches', icon: Bookmark, href: '/recherches' },
   { type: 'separator' as const },
   { name: 'Settings', icon: Settings, href: '/config' },
+  { name: 'Documentation', icon: HelpCircle, href: '/docs' },
 ]
 
 export default function Layout({ children }: LayoutProps) {

@@ -7,7 +7,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
-import { Loader2, Inbox } from 'lucide-react'
+import { Inbox } from 'lucide-react'
 import { useBookmarks, useDeleteBookmark } from '../hooks/useBookmarks'
 import { NicheListItem } from '../components/bookmarks/NicheListItem'
 import { bookmarksService } from '../services/bookmarksService'
@@ -71,26 +71,23 @@ export default function MesNiches() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-vault-bg p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Mes Niches Sauvegardees
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Gerez vos niches decouvertes et relancez l'analyse
-            </p>
-          </div>
-          <div className="text-sm text-gray-400">Phase 5</div>
+        <div>
+          <h1 className="text-3xl md:text-5xl font-display font-semibold text-vault-text tracking-tight">
+            Mes Niches Sauvegardees
+          </h1>
+          <p className="text-vault-text-secondary text-sm md:text-base mt-2">
+            Gerez vos niches decouvertes et relancez l'analyse
+          </p>
         </div>
 
         {/* Loading State */}
         {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-            <span className="ml-3 text-gray-600">
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="animate-spin h-12 w-12 border-4 border-vault-accent border-t-transparent rounded-full" />
+            <span className="mt-4 text-vault-text-secondary">
               Chargement de vos niches...
             </span>
           </div>
@@ -98,8 +95,8 @@ export default function MesNiches() {
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">
+          <div className="bg-vault-danger-light border border-vault-danger/20 rounded-2xl p-4">
+            <p className="text-vault-danger">
               Erreur lors du chargement:{' '}
               {error instanceof Error ? error.message : 'Erreur inconnue'}
             </p>
@@ -108,18 +105,18 @@ export default function MesNiches() {
 
         {/* Empty State */}
         {!isLoading && !error && (!data || data.niches.length === 0) && (
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <Inbox className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">
+          <div className="bg-vault-card border border-vault-border rounded-2xl shadow-vault-sm p-12 text-center">
+            <Inbox className="w-16 h-16 text-vault-text-muted mx-auto mb-4" />
+            <h2 className="text-xl font-display font-semibold text-vault-text mb-2">
               Aucune niche sauvegardee
             </h2>
-            <p className="text-gray-500 mb-6">
+            <p className="text-vault-text-secondary mb-6">
               Decouvrez des niches dans la page "Niche Discovery" et
               sauvegardez-les pour y acceder rapidement.
             </p>
             <a
               href="/niche-discovery"
-              className="inline-block px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200"
+              className="inline-block px-6 py-3 bg-vault-accent hover:bg-vault-accent-hover text-white rounded-xl font-medium transition-colors duration-200"
             >
               Decouvrir des niches
             </a>
@@ -129,7 +126,7 @@ export default function MesNiches() {
         {/* Niches List */}
         {!isLoading && data && data.niches.length > 0 && (
           <div className="space-y-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-vault-text-secondary">
               {data.total_count} niche{data.total_count > 1 ? 's' : ''}{' '}
               sauvegardee{data.total_count > 1 ? 's' : ''}
             </div>
@@ -147,21 +144,21 @@ export default function MesNiches() {
 
         {/* Info Footer */}
         {!isLoading && data && data.niches.length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-blue-900 mb-2">
+          <div className="bg-vault-accent-light border border-vault-accent/20 rounded-2xl p-4">
+            <h3 className="text-sm font-semibold text-vault-accent mb-2">
               Info: Gestion des niches
             </h3>
-            <ul className="text-sm text-blue-800 space-y-1">
+            <ul className="text-sm text-vault-text-secondary space-y-1">
               <li>
-                • <strong>Relancer:</strong> Re-execute l'analyse avec les memes
+                - <strong>Relancer:</strong> Re-execute l'analyse avec les memes
                 criteres
               </li>
               <li>
-                • <strong>Supprimer:</strong> Retire la niche de vos
+                - <strong>Supprimer:</strong> Retire la niche de vos
                 favoris (irreversible)
               </li>
               <li>
-                • Les scores sont mis a jour a chaque relance d'analyse
+                - Les scores sont mis a jour a chaque relance d'analyse
               </li>
             </ul>
           </div>

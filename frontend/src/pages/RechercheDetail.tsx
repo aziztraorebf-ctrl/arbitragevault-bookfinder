@@ -19,13 +19,13 @@ import type { SearchSource } from '../types/recherches'
 // Source badge component
 function SourceBadge({ source }: { source: SearchSource }) {
   const colorClasses: Record<string, string> = {
-    purple: 'bg-purple-100 text-purple-800',
-    blue: 'bg-blue-100 text-blue-800',
-    green: 'bg-green-100 text-green-800',
+    purple: 'bg-vault-accent-light text-vault-accent',
+    blue: 'bg-vault-accent-light text-vault-accent',
+    green: 'bg-vault-success-light text-vault-success',
   }
 
   const color = SOURCE_COLORS[source] || 'gray'
-  const classes = colorClasses[color] || 'bg-gray-100 text-gray-800'
+  const classes = colorClasses[color] || 'bg-vault-hover text-vault-text-secondary'
 
   return (
     <span className={`px-3 py-1 text-sm font-medium rounded-full ${classes}`}>
@@ -107,11 +107,11 @@ export default function RechercheDetail() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-vault-bg p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-            <span className="ml-3 text-gray-600">
+            <div className="animate-spin h-12 w-12 border-4 border-vault-accent border-t-transparent rounded-full" />
+            <span className="ml-3 text-vault-text-secondary">
               Chargement des resultats...
             </span>
           </div>
@@ -123,17 +123,17 @@ export default function RechercheDetail() {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-vault-bg p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           <button
             onClick={handleBack}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
+            className="flex items-center gap-2 text-vault-text-secondary hover:text-vault-text transition-colors mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
             Retour
           </button>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">
+          <div className="bg-vault-danger-light border border-vault-danger/20 rounded-2xl p-4">
+            <p className="text-vault-danger">
               Erreur lors du chargement:{' '}
               {error instanceof Error ? error.message : 'Erreur inconnue'}
             </p>
@@ -146,17 +146,17 @@ export default function RechercheDetail() {
   // Not found
   if (!data) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-vault-bg p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           <button
             onClick={handleBack}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
+            className="flex items-center gap-2 text-vault-text-secondary hover:text-vault-text transition-colors mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
             Retour
           </button>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-yellow-800">Recherche non trouvee ou expiree.</p>
+          <div className="bg-vault-warning-light border border-vault-warning/20 rounded-2xl p-4">
+            <p className="text-vault-warning">Recherche non trouvee ou expiree.</p>
           </div>
         </div>
       </div>
@@ -178,44 +178,44 @@ export default function RechercheDetail() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-vault-bg p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Back button */}
         <button
           onClick={handleBack}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+          className="flex items-center gap-2 text-vault-text-secondary hover:text-vault-text transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Retour a Mes Recherches
         </button>
 
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-vault-card rounded-2xl shadow-vault-sm border border-vault-border p-6">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               {isEditing ? (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-vault-text-secondary mb-1">
                       Nom
                     </label>
                     <input
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-vault-border bg-vault-bg text-vault-text rounded-xl focus:ring-2 focus:ring-vault-accent focus:border-transparent"
                       placeholder="Nom de la recherche"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-vault-text-secondary mb-1">
                       Notes
                     </label>
                     <textarea
                       value={editNotes}
                       onChange={(e) => setEditNotes(e.target.value)}
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-vault-border bg-vault-bg text-vault-text rounded-xl focus:ring-2 focus:ring-vault-accent focus:border-transparent"
                       placeholder="Notes optionnelles..."
                     />
                   </div>
@@ -223,7 +223,7 @@ export default function RechercheDetail() {
                     <button
                       onClick={handleSaveEdit}
                       disabled={isUpdating || !editName.trim()}
-                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 bg-vault-accent text-white rounded-xl hover:bg-vault-accent-hover disabled:opacity-50"
                     >
                       {isUpdating ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -235,7 +235,7 @@ export default function RechercheDetail() {
                     <button
                       onClick={handleCancelEdit}
                       disabled={isUpdating}
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                      className="flex items-center gap-2 px-4 py-2 bg-vault-hover text-vault-text rounded-xl hover:bg-vault-border"
                     >
                       <X className="w-4 h-4" />
                       Annuler
@@ -246,13 +246,13 @@ export default function RechercheDetail() {
                 <>
                   <div className="flex items-center gap-3 mb-2">
                     <SourceBadge source={data.source} />
-                    <span className="text-sm text-gray-400">ID: {data.id.slice(0, 8)}...</span>
+                    <span className="text-sm text-vault-text-muted">ID: {data.id.slice(0, 8)}...</span>
                   </div>
-                  <h1 className="text-2xl font-bold text-gray-900">{data.name}</h1>
+                  <h1 className="text-2xl md:text-3xl font-display font-semibold text-vault-text">{data.name}</h1>
                   {data.notes && (
-                    <p className="text-gray-600 mt-2">{data.notes}</p>
+                    <p className="text-vault-text-secondary mt-2">{data.notes}</p>
                   )}
-                  <div className="flex items-center gap-6 mt-4 text-sm text-gray-500">
+                  <div className="flex flex-wrap items-center gap-4 md:gap-6 mt-4 text-sm text-vault-text-muted">
                     <span className="flex items-center gap-1">
                       <Package className="w-4 h-4" />
                       {data.product_count} produit{data.product_count !== 1 ? 's' : ''}
@@ -273,7 +273,7 @@ export default function RechercheDetail() {
               <div className="flex items-center gap-2 ml-4">
                 <button
                   onClick={handleStartEdit}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  className="flex items-center gap-2 px-3 py-2 bg-vault-hover text-vault-text rounded-xl hover:bg-vault-border"
                 >
                   <Edit2 className="w-4 h-4" />
                   Modifier
@@ -281,7 +281,7 @@ export default function RechercheDetail() {
                 <button
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="flex items-center gap-2 px-3 py-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50"
+                  className="flex items-center gap-2 px-3 py-2 bg-vault-danger-light text-vault-danger rounded-xl hover:bg-vault-danger/20 disabled:opacity-50"
                 >
                   {isDeleting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -296,9 +296,9 @@ export default function RechercheDetail() {
         </div>
 
         {/* Products Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
+        <div className="bg-vault-card rounded-2xl shadow-vault-sm border border-vault-border">
+          <div className="p-4 border-b border-vault-border">
+            <h2 className="text-lg font-display font-semibold text-vault-text">
               Produits ({data.product_count})
             </h2>
           </div>
@@ -316,7 +316,7 @@ export default function RechercheDetail() {
               }}
             />
           ) : (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-vault-text-muted">
               Aucun produit dans cette recherche.
             </div>
           )}

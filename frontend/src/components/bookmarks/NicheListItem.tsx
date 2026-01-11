@@ -44,37 +44,37 @@ export function NicheListItem({
   isRerunning,
 }: NicheListItemProps) {
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-200 hover:border-purple-300 p-6">
+    <div className="bg-vault-card rounded-2xl shadow-vault-sm hover:shadow-vault-md transition-shadow duration-200 border border-vault-border hover:border-vault-accent/30 p-6">
       <div className="flex items-start justify-between">
         {/* Niche Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-xl font-bold text-gray-900 mb-2 truncate">
+          <h3 className="text-xl font-display font-semibold text-vault-text mb-2 truncate">
             {niche.niche_name}
           </h3>
 
           {niche.category_name && (
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="text-sm text-vault-text-secondary mb-1">
               Categorie: {niche.category_name}
             </p>
           )}
 
           {niche.description && (
-            <p className="text-sm text-gray-500 mb-3 line-clamp-2">
+            <p className="text-sm text-vault-text-muted mb-3 line-clamp-2">
               {niche.description}
             </p>
           )}
 
-          <div className="flex items-center gap-4 text-sm text-gray-500">
+          <div className="flex items-center gap-4 text-sm text-vault-text-muted">
             {niche.last_score !== undefined && (
               <div className="flex items-center gap-1">
                 <span className="font-medium">Score:</span>
                 <span
                   className={
                     niche.last_score >= 7
-                      ? 'text-green-600 font-bold'
+                      ? 'text-vault-success font-bold'
                       : niche.last_score >= 5
-                        ? 'text-blue-600 font-bold'
-                        : 'text-gray-600 font-bold'
+                        ? 'text-vault-accent font-bold'
+                        : 'text-vault-text-secondary font-bold'
                   }
                 >
                   {niche.last_score.toFixed(1)}/10
@@ -93,7 +93,7 @@ export function NicheListItem({
           <button
             onClick={() => onRerun(niche)}
             disabled={isRerunning}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white rounded-lg transition-colors duration-200"
+            className="flex items-center gap-2 px-4 py-2 bg-vault-accent hover:bg-vault-accent-hover disabled:bg-vault-hover disabled:text-vault-text-muted text-white rounded-xl transition-colors duration-200"
             title="Relancer l'analyse"
           >
             <RefreshCw
@@ -107,7 +107,7 @@ export function NicheListItem({
           <button
             onClick={() => onDelete(niche.id)}
             disabled={isRerunning}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg transition-colors duration-200"
+            className="flex items-center gap-2 px-4 py-2 bg-vault-danger hover:bg-vault-danger/80 disabled:bg-vault-hover disabled:text-vault-text-muted text-white rounded-xl transition-colors duration-200"
             title="Supprimer cette niche"
           >
             <Trash2 className="w-4 h-4" />

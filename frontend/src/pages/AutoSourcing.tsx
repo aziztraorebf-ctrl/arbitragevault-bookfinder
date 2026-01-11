@@ -203,38 +203,35 @@ export default function AutoSourcing() {
   }, [results])
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-vault-bg">
+      <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">AutoSourcing</h1>
-            <p className="text-gray-500 mt-1">
-              Découverte automatique et analyse de produits
+            <h1 className="text-3xl font-display font-semibold text-vault-text">AutoSourcing</h1>
+            <p className="text-vault-text-secondary mt-1">
+              Decouverte automatique et analyse de produits
             </p>
-          </div>
-          <div className="text-sm text-gray-400">
-            Phase 6 • E2E Testing
           </div>
         </div>
 
-        <div className="border-b border-gray-200">
+        <div className="border-b border-vault-border">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('jobs')}
               className={`${
                 activeTab === 'jobs'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-vault-accent text-vault-accent'
+                  : 'border-transparent text-vault-text-muted hover:text-vault-text hover:border-vault-border'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
-              Jobs de Découverte
+              Jobs de Decouverte
             </button>
             <button
               onClick={() => setActiveTab('analyze')}
               className={`${
                 activeTab === 'analyze'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-vault-accent text-vault-accent'
+                  : 'border-transparent text-vault-text-muted hover:text-vault-text hover:border-vault-border'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               Analyse Manuelle
@@ -249,29 +246,29 @@ export default function AutoSourcing() {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800 text-sm">{error}</p>
+          <div className="bg-vault-danger-light border border-vault-danger/20 rounded-2xl p-4">
+            <p className="text-vault-danger text-sm">{error}</p>
           </div>
         )}
 
         {activeTab === 'jobs' && (
           <>
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-900">Jobs Récents</h2>
+              <h2 className="text-xl font-display font-semibold text-vault-text">Jobs Recents</h2>
               <button
                 onClick={() => setIsModalOpen(true)}
                 data-testid="new-job-button"
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                className="px-6 py-3 bg-vault-accent text-white rounded-xl hover:bg-vault-accent-hover font-medium transition-colors"
               >
-                Nouvelle Recherche Personnalisée
+                Nouvelle Recherche Personnalisee
               </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow-md">
+            <div className="bg-vault-card rounded-2xl shadow-vault-sm border border-vault-border">
               <div className="p-6">
                 {jobs.length === 0 ? (
                   <div data-testid="empty-jobs" className="text-center py-12">
-                    <p className="text-gray-500">Aucun job trouvé. Créez votre première recherche!</p>
+                    <p className="text-vault-text-secondary">Aucun job trouve. Creez votre premiere recherche!</p>
                   </div>
                 ) : (
                   <div data-testid="jobs-list" className="space-y-4">
@@ -279,18 +276,18 @@ export default function AutoSourcing() {
                       <div
                         key={job.id}
                         data-testid="job-card"
-                        className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
+                        className="border border-vault-border rounded-xl p-4 hover:bg-vault-hover cursor-pointer transition-colors"
                         onClick={() => handleViewJobResults(job.id)}
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h3 data-testid="job-name" className="font-semibold text-gray-900">
+                            <h3 data-testid="job-name" className="font-semibold text-vault-text">
                               {job.profile_name}
                             </h3>
-                            <p data-testid="job-id" className="text-sm text-gray-500">
+                            <p data-testid="job-id" className="text-sm text-vault-text-muted">
                               ID: {job.id}
                             </p>
-                            <p data-testid="job-date" className="text-sm text-gray-500">
+                            <p data-testid="job-date" className="text-sm text-vault-text-muted">
                               {new Date(job.launched_at).toLocaleString('fr-FR')}
                             </p>
                           </div>
@@ -299,16 +296,16 @@ export default function AutoSourcing() {
                               data-testid="job-status"
                               className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
                                 job.status === 'COMPLETED'
-                                  ? 'bg-green-100 text-green-800'
+                                  ? 'bg-vault-success-light text-vault-success'
                                   : job.status === 'RUNNING'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-gray-100 text-gray-800'
+                                  ? 'bg-vault-accent-light text-vault-accent'
+                                  : 'bg-vault-hover text-vault-text-muted'
                               }`}
                             >
                               {job.status}
                             </span>
-                            <p className="text-sm text-gray-600 mt-2">
-                              {job.total_selected} picks / {job.total_tested} testés
+                            <p className="text-sm text-vault-text-secondary mt-2">
+                              {job.total_selected} picks / {job.total_tested} testes
                             </p>
                           </div>
                         </div>
@@ -320,10 +317,10 @@ export default function AutoSourcing() {
             </div>
 
             {selectedJob && selectedJob.picks && selectedJob.picks.length > 0 && (
-              <div className="bg-white rounded-lg shadow-md">
-                <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Résultats: {selectedJob.profile_name}
+              <div className="bg-vault-card rounded-2xl shadow-vault-sm border border-vault-border">
+                <div className="p-6 border-b border-vault-border">
+                  <h2 className="text-xl font-display font-semibold text-vault-text">
+                    Resultats: {selectedJob.profile_name}
                   </h2>
                 </div>
                 <div className="p-6">
@@ -332,33 +329,33 @@ export default function AutoSourcing() {
                       <div
                         key={pick.id}
                         data-testid="pick"
-                        className="border border-gray-200 rounded-lg p-4"
+                        className="border border-vault-border rounded-xl p-4"
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h4 data-testid="pick-title" className="font-semibold text-gray-900">
+                            <h4 data-testid="pick-title" className="font-semibold text-vault-text">
                               {pick.title}
                             </h4>
-                            <p data-testid="pick-asin" className="text-sm text-gray-500">
+                            <p data-testid="pick-asin" className="text-sm text-vault-text-muted">
                               ASIN: {pick.asin}
                             </p>
                           </div>
                           <div className="text-right space-y-1">
                             <p data-testid="pick-roi" className="text-sm">
-                              <span className="font-medium">ROI:</span>{' '}
-                              <span className="text-green-600">{pick.roi_percentage.toFixed(1)}%</span>
+                              <span className="font-medium text-vault-text">ROI:</span>{' '}
+                              <span className="text-vault-success">{pick.roi_percentage.toFixed(1)}%</span>
                             </p>
                             <p data-testid="pick-velocity" className="text-sm">
-                              <span className="font-medium">Velocity:</span>{' '}
-                              <span className="text-blue-600">{pick.velocity_score}</span>
+                              <span className="font-medium text-vault-text">Velocity:</span>{' '}
+                              <span className="text-vault-accent">{pick.velocity_score}</span>
                             </p>
                             <p data-testid="pick-confidence" className="text-sm">
-                              <span className="font-medium">Confidence:</span>{' '}
-                              <span className="text-purple-600">{pick.confidence_score}</span>
+                              <span className="font-medium text-vault-text">Confidence:</span>{' '}
+                              <span className="text-vault-accent">{pick.confidence_score}</span>
                             </p>
                             <p data-testid="pick-rating" className="text-sm">
-                              <span className="font-medium">Rating:</span>{' '}
-                              <span className="text-gray-700">{pick.overall_rating}</span>
+                              <span className="font-medium text-vault-text">Rating:</span>{' '}
+                              <span className="text-vault-text-secondary">{pick.overall_rating}</span>
                             </p>
                           </div>
                         </div>
@@ -373,32 +370,32 @@ export default function AutoSourcing() {
 
         {activeTab === 'analyze' && (
           <>
-            <div className="bg-white rounded-xl shadow-md p-6 space-y-4">
+            <div className="bg-vault-card rounded-2xl shadow-vault-sm border border-vault-border p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ASINs / ISBNs à analyser
+                <label className="block text-sm font-medium text-vault-text mb-2">
+                  ASINs / ISBNs a analyser
                 </label>
                 <textarea
-                  className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                  placeholder="Entrez vos ASINs ou ISBNs (séparés par virgules ou retours à la ligne)&#10;Exemple: 0593655036, B08X6F12YZ"
+                  className="w-full h-32 px-4 py-3 border border-vault-border bg-vault-bg text-vault-text rounded-xl focus:ring-2 focus:ring-vault-accent focus:border-transparent resize-none"
+                  placeholder="Entrez vos ASINs ou ISBNs (separes par virgules ou retours a la ligne)&#10;Exemple: 0593655036, B08X6F12YZ"
                   value={identifiers}
                   onChange={(e) => setIdentifiers(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Stratégie de boost (optionnel)
+                <label className="block text-sm font-medium text-vault-text mb-2">
+                  Strategie de boost (optionnel)
                 </label>
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-vault-border bg-vault-bg text-vault-text rounded-xl focus:ring-2 focus:ring-vault-accent focus:border-transparent"
                   value={strategy || ''}
                   onChange={(e) => setStrategy((e.target.value as StrategyProfile) || null)}
                 >
                   <option value="">Aucune</option>
-                  <option value="balanced">Balanced (équilibré)</option>
+                  <option value="balanced">Balanced (equilibre)</option>
                   <option value="textbook">Textbook (livres)</option>
-                  <option value="velocity">Velocity (rotation rapide) - Recommandé</option>
+                  <option value="velocity">Velocity (rotation rapide) - Recommande</option>
                 </select>
               </div>
 
@@ -406,14 +403,14 @@ export default function AutoSourcing() {
                 <button
                   onClick={handleAnalyze}
                   disabled={loading}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
+                  className="flex-1 bg-vault-accent hover:bg-vault-accent-hover disabled:bg-vault-hover text-white font-medium py-3 px-6 rounded-xl transition-colors duration-200"
                 >
                   {loading ? 'Analyse en cours...' : 'Analyser avec scoring Velocity prioritaire'}
                 </button>
                 <button
                   onClick={handleClear}
                   disabled={loading}
-                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                  className="px-6 py-3 border border-vault-border text-vault-text rounded-xl hover:bg-vault-hover transition-colors duration-200"
                 >
                   Effacer
                 </button>
@@ -451,15 +448,15 @@ export default function AutoSourcing() {
               </>
             )}
 
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-purple-900 mb-2">
-                Scoring AutoSourcing (Phase 2)
+            <div className="bg-vault-accent-light border border-vault-accent/20 rounded-2xl p-4">
+              <h3 className="text-sm font-semibold text-vault-text mb-2">
+                Scoring AutoSourcing
               </h3>
-              <ul className="text-sm text-purple-800 space-y-1">
-                <li>• Priorité <strong>Velocity (poids 0.7)</strong> pour rotation rapide</li>
-                <li>• ROI (poids 0.3) pour rentabilité minimale acceptable</li>
-                <li>• Stability (poids 0.1) pour liquidité immédiate</li>
-                <li>• Idéal pour produits à écoulement rapide (quick flips)</li>
+              <ul className="text-sm text-vault-text-secondary space-y-1">
+                <li>- Priorite <strong>Velocity (poids 0.7)</strong> pour rotation rapide</li>
+                <li>- ROI (poids 0.3) pour rentabilite minimale acceptable</li>
+                <li>- Stability (poids 0.1) pour liquidite immediate</li>
+                <li>- Ideal pour produits a ecoulement rapide (quick flips)</li>
               </ul>
             </div>
           </>

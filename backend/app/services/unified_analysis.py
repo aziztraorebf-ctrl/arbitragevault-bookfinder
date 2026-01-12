@@ -18,6 +18,7 @@ from app.services.pricing_service import (
     calculate_pricing_metrics_unified,  # Phase 2
     calculate_pricing_metrics_with_intrinsic  # Phase 4 - Textbook Pivot
 )
+from app.services.buying_guidance_service import BuyingGuidanceService
 from app.core.calculations import (
     calculate_max_buy_price,
     VelocityData,
@@ -617,6 +618,37 @@ async def build_unified_product_v2(
         if not risk_factors:
             risk_factors = ["No major risks identified"]
 
+        # ====== STEP 6.6: Calculate BUYING GUIDANCE (Textbook UX Simplification) ======
+        # This transforms intrinsic corridor data into user-friendly buying recommendations
+        buying_guidance_service = BuyingGuidanceService()
+
+        # Prepare velocity data for days-to-sell estimation
+        velocity_for_guidance = {
+            'monthly_sales': velocity_metrics.get('estimated_sales_30d', 0) if velocity_metrics else 0,
+            'velocity_tier': velocity_metrics.get('velocity_tier', 'unknown') if velocity_metrics else 'unknown',
+        }
+
+        # Calculate comprehensive buying guidance
+        guidance_result = buying_guidance_service.calculate_guidance(
+            intrinsic_result=intrinsic_value,
+            velocity_data=velocity_for_guidance,
+            source_price=effective_source_price,
+        )
+
+        # Convert dataclass to dict for JSON serialization
+        buying_guidance = {
+            'max_buy_price': guidance_result.max_buy_price,
+            'target_sell_price': guidance_result.target_sell_price,
+            'estimated_profit': guidance_result.estimated_profit,
+            'estimated_roi_pct': guidance_result.estimated_roi_pct,
+            'price_range': guidance_result.price_range,
+            'estimated_days_to_sell': guidance_result.estimated_days_to_sell,
+            'recommendation': guidance_result.recommendation,
+            'recommendation_reason': guidance_result.recommendation_reason,
+            'confidence_label': guidance_result.confidence_label,
+            'explanations': guidance_result.explanations,
+        }
+
         # ====== STEP 7: Build core response ======
         response = {
             'asin': asin,
@@ -663,6 +695,10 @@ async def build_unified_product_v2(
             'pricing_confidence': pricing_confidence,         # HIGH/MEDIUM/LOW/INSUFFICIENT_DATA
             'pricing_source': pricing_source,                 # intrinsic_median or current_price_fallback
             'current_vs_intrinsic_pct': current_vs_intrinsic_pct,  # Gap percentage between current and intrinsic
+
+            # ====== BUYING GUIDANCE (Textbook UX Simplification) ======
+            # User-friendly buying recommendations with explanations
+            'buying_guidance': buying_guidance,
         }
 
         # ====== STEP 8: Add scoring for Mes Niches/AutoSourcing ======
@@ -768,4 +804,18 @@ async def build_unified_product_v2(
             "pricing_confidence": "INSUFFICIENT_DATA",
             "pricing_source": "no_price_available",
             "current_vs_intrinsic_pct": None,
+
+            # Buying guidance (Textbook UX Simplification) - Error defaults
+            "buying_guidance": {
+                "max_buy_price": 0.0,
+                "target_sell_price": 0.0,
+                "estimated_profit": 0.0,
+                "estimated_roi_pct": 0.0,
+                "price_range": "N/A",
+                "estimated_days_to_sell": 90,
+                "recommendation": "SKIP",
+                "recommendation_reason": f"Erreur lors de l'analyse: {str(e)}",
+                "confidence_label": "Donnees insuffisantes",
+                "explanations": {},
+            },
         }

@@ -32,6 +32,7 @@ from app.services.evergreen_identifier_service import (
     identify_evergreen,
     EvergreenClassification,
 )
+from app.services.buying_guidance_service import BuyingGuidanceService
 
 
 router = APIRouter()
@@ -100,6 +101,20 @@ class RecommendationResult(BaseModel):
     reasons: List[str] = Field(default_factory=list, description="Reasons for recommendation")
 
 
+class BuyingGuidanceSchema(BaseModel):
+    """User-friendly buying guidance with French labels and tooltips."""
+    max_buy_price: float = Field(..., description="Maximum price to pay for target ROI")
+    target_sell_price: float = Field(..., description="Expected selling price (intrinsic median)")
+    estimated_profit: float = Field(..., description="Net profit after fees")
+    estimated_roi_pct: float = Field(..., description="Return on investment percentage")
+    price_range: str = Field(..., description="Price corridor as formatted string ($XX - $YY)")
+    estimated_days_to_sell: int = Field(..., description="Estimated days to sell based on velocity")
+    recommendation: str = Field(..., description="BUY, HOLD, or SKIP recommendation")
+    recommendation_reason: str = Field(..., description="French explanation for recommendation")
+    confidence_label: str = Field(..., description="French confidence label (Fiable, Modere, etc.)")
+    explanations: Dict[str, str] = Field(default_factory=dict, description="Tooltip explanations for each field")
+
+
 class TextbookAnalysisResponse(BaseModel):
     """Complete textbook analysis response."""
     asin: str = Field(..., description="Amazon ASIN")
@@ -109,6 +124,7 @@ class TextbookAnalysisResponse(BaseModel):
     evergreen_classification: EvergreenResult = Field(..., description="Evergreen classification")
     recommendation: RecommendationResult = Field(..., description="Buy/skip recommendation")
     roi_metrics: Optional[ROIMetrics] = Field(None, description="ROI metrics (if source_price provided)")
+    buying_guidance: BuyingGuidanceSchema = Field(..., description="User-friendly buying guidance with explanations")
     analyzed_at: datetime = Field(default_factory=datetime.now, description="Analysis timestamp")
 
 
@@ -288,8 +304,40 @@ async def analyze_textbook(
             roi_metrics=roi_metrics
         )
 
-        # Build response
+        # Step 8: Calculate buying guidance
         corridor = intrinsic_result.get("corridor", {})
+        buying_guidance_service = BuyingGuidanceService()
+
+        # Prepare velocity data for days-to-sell estimation
+        velocity_data = {
+            'monthly_sales': parsed_data.get('sales_per_month', 0),
+            'velocity_tier': 'unknown',
+        }
+
+        # Use source_price or default for guidance calculation
+        effective_source_price = request.source_price if request.source_price is not None else 8.0
+
+        guidance_result = buying_guidance_service.calculate_guidance(
+            intrinsic_result=corridor,
+            velocity_data=velocity_data,
+            source_price=effective_source_price,
+        )
+
+        # Convert dataclass to schema
+        buying_guidance = BuyingGuidanceSchema(
+            max_buy_price=guidance_result.max_buy_price,
+            target_sell_price=guidance_result.target_sell_price,
+            estimated_profit=guidance_result.estimated_profit,
+            estimated_roi_pct=guidance_result.estimated_roi_pct,
+            price_range=guidance_result.price_range,
+            estimated_days_to_sell=guidance_result.estimated_days_to_sell,
+            recommendation=guidance_result.recommendation,
+            recommendation_reason=guidance_result.recommendation_reason,
+            confidence_label=guidance_result.confidence_label,
+            explanations=guidance_result.explanations,
+        )
+
+        # Build response
 
         response = TextbookAnalysisResponse(
             asin=asin,
@@ -325,6 +373,7 @@ async def analyze_textbook(
             ),
             recommendation=recommendation,
             roi_metrics=roi_metrics,
+            buying_guidance=buying_guidance,
             analyzed_at=datetime.now()
         )
 

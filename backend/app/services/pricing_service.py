@@ -11,6 +11,8 @@ Phase 2 (UNIFIED): calculate_pricing_metrics_unified() for ROI per condition
 from typing import Dict, Any, Optional
 import logging
 
+from app.services.intrinsic_value_service import get_sell_price_for_strategy
+
 logger = logging.getLogger(__name__)
 
 # Constants from keepa_parser_v2.py
@@ -396,3 +398,179 @@ def format_price_display(price: Optional[float]) -> str:
     if price is None or price <= 0:
         return "N/A"
     return f"${price:.2f}"
+
+
+# ============================================================================
+# TEXTBOOK PIVOT: Intrinsic Value Integration
+# ============================================================================
+
+def calculate_pricing_metrics_with_intrinsic(
+    parsed_data: Dict[str, Any],
+    source_price: float,
+    config: Dict[str, Any],
+    strategy: str = "balanced",
+) -> Dict[str, Any]:
+    """
+    Calculate pricing metrics using intrinsic value (historical median).
+
+    Uses the intrinsic value corridor from historical price data instead of
+    current snapshot prices for more accurate ROI calculations. Falls back
+    to current price when insufficient historical data.
+
+    Args:
+        parsed_data: Output from parse_keepa_product_unified().
+                    Must contain 'price_history' for intrinsic calculation.
+        source_price: Acquisition/source price in dollars.
+        config: Configuration dict with:
+               - amazon_fee_pct: Amazon fees percentage (default 0.15)
+               - shipping_cost: Shipping cost in dollars (default 3.0)
+        strategy: Pricing strategy - 'textbook', 'velocity', or 'balanced'.
+                 Affects window_days used for intrinsic calculation.
+
+    Returns:
+        Dict with:
+            - sell_price_used: The price used for calculations (intrinsic or fallback)
+            - source_price: The acquisition cost provided
+            - amazon_fees: Calculated Amazon fees (sell_price * 0.15)
+            - shipping_cost: Shipping cost from config or default
+            - net_revenue: Revenue after fees and shipping
+            - roi_value: Dollar profit
+            - roi_pct: Return on investment as decimal (e.g., 0.80 = 80%)
+            - profit_margin: Profit margin on sell price
+            - intrinsic_value: Full corridor dict (low, median, high, confidence, etc.)
+            - pricing_source: 'intrinsic_median' or 'current_price_fallback'
+            - pricing_confidence: Confidence level from intrinsic calculation
+            - pricing_warning: Warning message if fallback was used (or None)
+            - current_price: Current buybox/new/used price for comparison
+            - current_vs_intrinsic_pct: Gap percentage between current and intrinsic
+            - strategy: The strategy parameter provided
+
+    Example:
+        metrics = calculate_pricing_metrics_with_intrinsic(
+            parsed_data={'price_history': [...], 'current_buybox_price': 35.0},
+            source_price=10.0,
+            config={'amazon_fee_pct': 0.15, 'shipping_cost': 3.0},
+            strategy='balanced'
+        )
+    """
+    # Get config values with defaults
+    amazon_fee_pct = config.get('amazon_fee_pct', 0.15)
+    shipping_cost = config.get('shipping_cost', 3.0)
+
+    # Get sell price using intrinsic value service
+    intrinsic_result = get_sell_price_for_strategy(
+        parsed_data=parsed_data,
+        strategy=strategy,
+        config=config
+    )
+
+    sell_price = intrinsic_result['sell_price']
+    pricing_source = intrinsic_result['source']
+    corridor = intrinsic_result['corridor']
+    pricing_warning = intrinsic_result['warning']
+
+    # Map source to expected output format
+    if pricing_source == 'intrinsic_median':
+        output_source = 'intrinsic_median'
+    elif pricing_source == 'current_price_fallback':
+        output_source = 'current_price_fallback'
+    else:
+        output_source = 'no_price_available'
+
+    # Get current price for comparison
+    current_price = _get_current_price(parsed_data)
+
+    # Handle case where no price is available
+    if sell_price is None:
+        return {
+            'sell_price_used': None,
+            'source_price': source_price,
+            'amazon_fees': 0.0,
+            'shipping_cost': shipping_cost,
+            'net_revenue': 0.0,
+            'roi_value': 0.0,
+            'roi_pct': 0.0,
+            'profit_margin': 0.0,
+            'intrinsic_value': corridor,
+            'pricing_source': output_source,
+            'pricing_confidence': corridor.get('confidence', 'INSUFFICIENT_DATA'),
+            'pricing_warning': pricing_warning or "No price data available",
+            'current_price': current_price,
+            'current_vs_intrinsic_pct': None,
+            'strategy': strategy,
+        }
+
+    # Calculate fees
+    amazon_fees = sell_price * amazon_fee_pct
+    net_revenue = sell_price - amazon_fees - shipping_cost
+
+    # Calculate ROI
+    if source_price <= 0:
+        roi_value = net_revenue
+        roi_pct = 0.0
+    else:
+        roi_value = net_revenue - source_price
+        roi_pct = roi_value / source_price
+
+    # Calculate profit margin
+    profit_margin = (roi_value / sell_price) if sell_price > 0 else 0.0
+
+    # Calculate gap between current price and intrinsic median
+    if current_price is not None and corridor.get('median') is not None:
+        intrinsic_median = corridor['median']
+        if intrinsic_median > 0:
+            current_vs_intrinsic_pct = (current_price - intrinsic_median) / intrinsic_median
+        else:
+            current_vs_intrinsic_pct = None
+    else:
+        current_vs_intrinsic_pct = None
+
+    logger.info(
+        f"[INTRINSIC_PRICING] Strategy={strategy}, "
+        f"Sell=${sell_price:.2f}, Source={output_source}, "
+        f"ROI={roi_pct*100:.1f}%, Confidence={corridor.get('confidence')}"
+    )
+
+    return {
+        'sell_price_used': sell_price,
+        'source_price': source_price,
+        'amazon_fees': amazon_fees,
+        'shipping_cost': shipping_cost,
+        'net_revenue': net_revenue,
+        'roi_value': roi_value,
+        'roi_pct': roi_pct,
+        'profit_margin': profit_margin,
+        'intrinsic_value': corridor,
+        'pricing_source': output_source,
+        'pricing_confidence': corridor.get('confidence', 'INSUFFICIENT_DATA'),
+        'pricing_warning': pricing_warning,
+        'current_price': current_price,
+        'current_vs_intrinsic_pct': current_vs_intrinsic_pct,
+        'strategy': strategy,
+    }
+
+
+def _get_current_price(parsed_data: Dict[str, Any]) -> Optional[float]:
+    """
+    Get current price from parsed data for comparison.
+
+    Priority: buybox > new > used
+
+    Args:
+        parsed_data: Parsed Keepa product data.
+
+    Returns:
+        Current price or None if no price available.
+    """
+    price_fields = [
+        'current_buybox_price',
+        'current_new_price',
+        'current_used_price'
+    ]
+
+    for field in price_fields:
+        price = parsed_data.get(field)
+        if price is not None and price > 0:
+            return float(price)
+
+    return None

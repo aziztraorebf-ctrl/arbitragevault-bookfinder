@@ -15,7 +15,8 @@ from app.services.pricing_service import (
     compute_pricing_breakdown,
     calculate_roi_metrics,
     calculate_velocity_score,
-    calculate_pricing_metrics_unified  # Phase 2
+    calculate_pricing_metrics_unified,  # Phase 2
+    calculate_pricing_metrics_with_intrinsic  # Phase 4 - Textbook Pivot
 )
 from app.core.calculations import (
     calculate_max_buy_price,
@@ -490,6 +491,23 @@ async def build_unified_product_v2(
             config=config
         )
 
+        # ====== STEP 3.5: Calculate INTRINSIC VALUE pricing (Phase 4 - Textbook Pivot) ======
+        # This uses historical median instead of snapshot prices for accurate ROI
+        intrinsic_metrics = calculate_pricing_metrics_with_intrinsic(
+            parsed_data=parsed,
+            source_price=effective_source_price,
+            config=config,
+            strategy=strategy or 'balanced'
+        )
+
+        # Extract intrinsic value fields for unified response
+        intrinsic_value = intrinsic_metrics.get('intrinsic_value', {})
+        intrinsic_sell_price = intrinsic_metrics.get('sell_price_used')
+        intrinsic_roi_pct = intrinsic_metrics.get('roi_pct', 0.0)
+        pricing_confidence = intrinsic_metrics.get('pricing_confidence', 'INSUFFICIENT_DATA')
+        pricing_source = intrinsic_metrics.get('pricing_source', 'no_price_available')
+        current_vs_intrinsic_pct = intrinsic_metrics.get('current_vs_intrinsic_pct')
+
         # ====== STEP 4: Extract current prices ======
         current_prices = {
             'amazon': parsed.get('current_amazon_price'),
@@ -636,6 +654,15 @@ async def build_unified_product_v2(
             # View-specific fields
             'view_type': view_type,
             'timestamp': datetime.now().isoformat(),
+
+            # ====== INTRINSIC VALUE fields (Phase 4 - Textbook Pivot) ======
+            # These provide accurate ROI based on historical median pricing
+            'intrinsic_value': intrinsic_value,              # Full corridor dict (low, median, high, confidence, etc.)
+            'intrinsic_roi_pct': intrinsic_roi_pct,          # ROI based on intrinsic median
+            'intrinsic_sell_price': intrinsic_sell_price,    # The intrinsic median price used for calculation
+            'pricing_confidence': pricing_confidence,         # HIGH/MEDIUM/LOW/INSUFFICIENT_DATA
+            'pricing_source': pricing_source,                 # intrinsic_median or current_price_fallback
+            'current_vs_intrinsic_pct': current_vs_intrinsic_pct,  # Gap percentage between current and intrinsic
         }
 
         # ====== STEP 8: Add scoring for Mes Niches/AutoSourcing ======
@@ -733,4 +760,12 @@ async def build_unified_product_v2(
             "recommendation": "ERROR",
             "risk_factors": ["Analysis failed"],
             "strategy_profile": None,
+
+            # Intrinsic value fields (Phase 4 - Textbook Pivot) - Error defaults
+            "intrinsic_value": {},
+            "intrinsic_roi_pct": 0.0,
+            "intrinsic_sell_price": None,
+            "pricing_confidence": "INSUFFICIENT_DATA",
+            "pricing_source": "no_price_available",
+            "current_vs_intrinsic_pct": None,
         }

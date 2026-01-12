@@ -80,55 +80,73 @@
   ],
   "strategies": {
     "textbook": {
-      "description": "High margin, slow rotation - Professional/Academic books",
-      "roi_min": 80.0,
-      "velocity_min": 30.0,
-      "stability_min": 70.0,
-      "min_sell_price": 40.0,
-      "max_bsr": 250000,
-      "holding_period_days": [60, 90],
+      "description": "Textbook arbitrage - high margin, seasonal, intrinsic value based",
+      "roi_min": 50.0,
+      "velocity_min": 20.0,
+      "stability_min": 60.0,
+      "min_sell_price": 30.0,
+      "min_intrinsic_value": 35.0,
+      "max_bsr": 300000,
+      "holding_period_days": [45, 120],
       "buy_price_source": "current_fba_price",
-      "sell_price_source": "avg_90d_buybox_price",
-      "fees_estimate_pct": 25.0,
+      "sell_price_source": "intrinsic_median",
+      "use_intrinsic_value": true,
+      "intrinsic_window_days": 365,
+      "fees_estimate_pct": 22.0,
       "weights": {
-        "roi": 0.7,
-        "velocity": 0.3,
-        "stability": 0.3
-      }
+        "roi": 0.6,
+        "velocity": 0.2,
+        "stability": 0.2
+      },
+      "enabled": true,
+      "priority": 1,
+      "development_focus": true
     },
     "velocity": {
-      "description": "Modest margin, fast rotation - Popular/Bestseller books",
-      "roi_min": 30.0,
-      "velocity_min": 70.0,
-      "stability_min": 50.0,
-      "min_sell_price": 25.0,
-      "max_bsr": 250000,
-      "holding_period_days": [15, 45],
+      "description": "Fast rotation books - moderate margin, quick turnover",
+      "roi_min": 40.0,
+      "velocity_min": 60.0,
+      "stability_min": 40.0,
+      "min_sell_price": 15.0,
+      "min_intrinsic_value": 25.0,
+      "max_bsr": 100000,
+      "holding_period_days": [7, 30],
       "buy_price_source": "current_fba_price",
-      "sell_price_source": "current_buybox_price",
-      "fees_estimate_pct": 25.0,
+      "sell_price_source": "intrinsic_median",
+      "use_intrinsic_value": true,
+      "intrinsic_window_days": 90,
+      "fees_estimate_pct": 22.0,
       "weights": {
-        "roi": 0.4,
-        "velocity": 0.6,
+        "roi": 0.3,
+        "velocity": 0.5,
         "stability": 0.2
-      }
+      },
+      "enabled": true,
+      "priority": 2,
+      "development_focus": false
     },
     "balanced": {
-      "description": "Balanced approach - General books outside textbook/velocity criteria",
-      "roi_min": 25.0,
-      "velocity_min": 50.0,
-      "stability_min": 60.0,
+      "description": "Balanced approach - moderate everything",
+      "roi_min": 35.0,
+      "velocity_min": 40.0,
+      "stability_min": 50.0,
       "min_sell_price": 20.0,
-      "max_bsr": 500000,
-      "holding_period_days": [30, 60],
+      "min_intrinsic_value": 25.0,
+      "max_bsr": 150000,
+      "holding_period_days": [14, 60],
       "buy_price_source": "current_fba_price",
-      "sell_price_source": "current_buybox_price",
-      "fees_estimate_pct": 25.0,
+      "sell_price_source": "intrinsic_median",
+      "use_intrinsic_value": true,
+      "intrinsic_window_days": 90,
+      "fees_estimate_pct": 22.0,
       "weights": {
-        "roi": 0.5,
-        "velocity": 0.5,
-        "stability": 0.4
-      }
+        "roi": 0.4,
+        "velocity": 0.35,
+        "stability": 0.25
+      },
+      "enabled": true,
+      "priority": 3,
+      "development_focus": false
     },
     "aggressive": {
       "description": "LEGACY: High ROI focus (use textbook instead)",
@@ -155,11 +173,19 @@
   },
   "active_strategy": "balanced",
   "feature_flags": {
-    "strategy_profiles_v2": false,
+    "intrinsic_value_enabled": true,
+    "intrinsic_value_shadow_mode": false,
+    "strategy_profiles_v2": true,
+    "seasonal_detection_enabled": false,
     "scoring_shadow_mode": false,
     "view_specific_scoring": true,
     "direct_roi_calculation": false,
     "amazon_check_enabled": true
+  },
+  "income_smoothing": {
+    "reserve_percentage": 25,
+    "target_monthly_income": 2000,
+    "evergreen_portfolio_percentage": 30
   },
   "overrides": {
     "domain:2": {
@@ -239,14 +265,14 @@
   },
   "summary_templates": {
     "EXCELLENT": "EXCELLENT: {roi}% ROI, fast rotation ({velocity_level}), stable pricing ({stability_level})",
-    "GOOD": "GOOD: {roi}% ROI, decent opportunity ({velocity_level} rotation, {stability_level} stability)", 
+    "GOOD": "GOOD: {roi}% ROI, decent opportunity ({velocity_level} rotation, {stability_level} stability)",
     "FAIR": "FAIR: {roi}% ROI, moderate risk ({confidence_level} confidence, {velocity_level} rotation)",
     "PASS": "PASS: Below thresholds - {roi}% ROI, {primary_issue}"
   },
   "level_flags": {
     "velocity": {
       "excellent": 80,
-      "good": 60, 
+      "good": 60,
       "fair": 40,
       "poor": 0
     },
@@ -264,9 +290,9 @@
     }
   },
   "meta": {
-    "version": "1.0.0",
+    "version": "2.0.0",
     "created_by": "system_seed",
-    "description": "Default business configuration for ArbitrageVault with domain/category overrides",
-    "last_updated": "2025-08-21T14:00:00Z"
+    "description": "ArbitrageVault business configuration with intrinsic value support for textbook pivot",
+    "last_updated": "2026-01-11T00:00:00Z"
   }
 }

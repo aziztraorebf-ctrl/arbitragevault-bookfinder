@@ -366,39 +366,66 @@ def parse_keepa_product_unified(raw_keepa: Dict[str, Any]) -> Dict[str, Any]:
         parsed['offers_by_condition'] = {}
         logger.debug(f"ASIN {asin}: No offers found")
 
-    # Step 3: Extract price history from csv arrays
+    # Step 3: Extract price history - PREFER 'data' section from keepa lib (has datetime objects)
+    # The 'data' section is processed by the keepa Python library and contains proper datetime objects
+    # The 'csv' section contains raw Keepa timestamps that may have incorrect offset
+    data_section = raw_keepa.get('data', {})
     csv = raw_keepa.get('csv', [])
-    if csv and len(csv) > 10:
-        # Raw arrays for compatibility
-        parsed['history_new'] = csv[1] if len(csv) > 1 else None
-        parsed['history_used'] = csv[2] if len(csv) > 2 else None
-        parsed['history_fba'] = csv[10] if len(csv) > 10 else None
 
-        # NEW: Extract structured history for advanced scoring
+    # Try data section first (preferred - has correct datetime objects)
+    if data_section:
+        # Extract price history from data['NEW'] with data['NEW_time']
+        price_history = _extract_history_from_data_section(
+            data_section, 'NEW', 'NEW_time', is_price=True
+        )
+        if price_history:
+            parsed['price_history'] = price_history
+            logger.debug(f"ASIN {asin}: Extracted {len(price_history)} price data points from data section")
+        else:
+            parsed['price_history'] = []
+
+        # Extract BSR history from data['SALES'] with data['SALES_time']
+        bsr_history = _extract_history_from_data_section(
+            data_section, 'SALES', 'SALES_time', is_price=False
+        )
+        if bsr_history:
+            parsed['bsr_history'] = bsr_history
+            logger.debug(f"ASIN {asin}: Extracted {len(bsr_history)} BSR data points from data section")
+        else:
+            parsed['bsr_history'] = []
+
+        logger.info(f"ASIN {asin}: Using data section - price_history={len(parsed['price_history'])}, bsr_history={len(parsed['bsr_history'])}")
+
+    # Fallback to csv arrays if data section not available
+    elif csv and len(csv) > 10:
+        logger.warning(f"ASIN {asin}: data section not available, falling back to csv arrays")
+
         # BSR history from csv[3] (SALES rank)
         bsr_csv = csv[3] if len(csv) > 3 else []
         if bsr_csv and isinstance(bsr_csv, list) and len(bsr_csv) > 0:
             parsed['bsr_history'] = _parse_csv_to_timeseries(bsr_csv, is_price=False)
-            logger.debug(f"ASIN {asin}: Extracted {len(parsed['bsr_history'])} BSR data points")
+            logger.debug(f"ASIN {asin}: Extracted {len(parsed['bsr_history'])} BSR data points from csv")
         else:
             parsed['bsr_history'] = []
-            logger.debug(f"ASIN {asin}: No BSR history available")
 
         # Price history from csv[1] (NEW price)
         price_csv = csv[1] if len(csv) > 1 else []
         if price_csv and isinstance(price_csv, list) and len(price_csv) > 0:
             parsed['price_history'] = _parse_csv_to_timeseries(price_csv, is_price=True)
-            logger.debug(f"ASIN {asin}: Extracted {len(parsed['price_history'])} price data points")
+            logger.debug(f"ASIN {asin}: Extracted {len(parsed['price_history'])} price data points from csv")
         else:
             parsed['price_history'] = []
-            logger.debug(f"ASIN {asin}: No price history available")
-
-        logger.debug(f"ASIN {asin}: Extracted history arrays")
     else:
-        # No CSV data available
+        # No data available
         parsed['bsr_history'] = []
         parsed['price_history'] = []
-        logger.warning(f"ASIN {asin}: No CSV data available for history extraction")
+        logger.warning(f"ASIN {asin}: No history data available (neither data section nor csv)")
+
+    # Keep raw csv arrays for compatibility with other code
+    if csv and len(csv) > 10:
+        parsed['history_new'] = csv[1] if len(csv) > 1 else None
+        parsed['history_used'] = csv[2] if len(csv) > 2 else None
+        parsed['history_fba'] = csv[10] if len(csv) > 10 else None
 
     # Step 4: Extract metadata
     parsed['category_tree'] = raw_keepa.get('categoryTree', [])
@@ -410,9 +437,77 @@ def parse_keepa_product_unified(raw_keepa: Dict[str, Any]) -> Dict[str, Any]:
     return parsed
 
 
+def _extract_history_from_data_section(
+    data_section: Dict[str, Any],
+    value_key: str,
+    time_key: str,
+    is_price: bool = True
+) -> List[Tuple[datetime, float]]:
+    """
+    Extract history from keepa lib 'data' section which has proper datetime objects.
+
+    The keepa Python library processes raw Keepa data and creates a 'data' section
+    with numpy arrays for values and corresponding datetime lists for timestamps.
+
+    Args:
+        data_section: The 'data' dict from raw_keepa (created by keepa lib)
+        value_key: Key for values array (e.g., 'NEW', 'SALES')
+        time_key: Key for datetime array (e.g., 'NEW_time', 'SALES_time')
+        is_price: If True, values are already in dollars. If False, keep as-is (BSR).
+
+    Returns:
+        List of (datetime, value) tuples for use by intrinsic_value_service
+    """
+    values = data_section.get(value_key)
+    times = data_section.get(time_key)
+
+    # Check if data exists (handle numpy arrays properly)
+    if values is None or times is None:
+        return []
+
+    # Convert to lists if numpy arrays
+    try:
+        values_list = values.tolist() if hasattr(values, 'tolist') else list(values)
+        times_list = times.tolist() if hasattr(times, 'tolist') else list(times)
+    except (TypeError, AttributeError):
+        return []
+
+    if len(values_list) == 0 or len(times_list) == 0 or len(values_list) != len(times_list):
+        return []
+
+    result = []
+    for i in range(len(values_list)):
+        value = values_list[i]
+        time = times_list[i]
+
+        # Skip null/invalid values (-1 is Keepa's null marker)
+        if value is None or value == -1:
+            continue
+
+        # Ensure time is datetime
+        if not isinstance(time, datetime):
+            continue
+
+        # Convert value
+        try:
+            # Prices from keepa lib are already in dollars, BSR is integer
+            if is_price:
+                converted_value = float(value)
+            else:
+                converted_value = float(value)
+            result.append((time, converted_value))
+        except (ValueError, TypeError):
+            continue
+
+    return result
+
+
 def _parse_csv_to_timeseries(csv_array: List[int], is_price: bool = True) -> List[Tuple[int, float]]:
     """
     Parse Keepa CSV array to timeseries [(timestamp_minutes, value), ...].
+
+    NOTE: This is a FALLBACK function. Prefer _extract_history_from_data_section()
+    which uses the keepa lib's processed data with correct datetime objects.
 
     Args:
         csv_array: Keepa CSV array format [timestamp1, value1, timestamp2, value2, ...]

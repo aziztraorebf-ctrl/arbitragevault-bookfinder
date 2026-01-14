@@ -528,6 +528,7 @@ export default function AnalyseManuelle() {
               showFooterSummary: true,
               showAccordion: true,
               showVerifyButton: true,
+              showBuyingGuidance: true,
             }}
             AccordionComponent={AccordionContent}
             onVerify={verifyProduct}

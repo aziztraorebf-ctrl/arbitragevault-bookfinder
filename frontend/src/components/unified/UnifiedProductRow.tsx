@@ -2,12 +2,17 @@
  * UnifiedProductRow - Single row component for unified product display
  * Supports both ProductScore and NicheProduct sources
  * Feature flags control which columns are displayed
+ *
+ * Vault Elegance Design - clean, professional display with tooltips
  */
 
 import { Fragment } from 'react'
 import type { DisplayableProduct } from '../../types/unified'
 import type { VerificationResponse } from '../../services/verificationService'
 import { VerificationPanel } from './VerificationPanel'
+import { ConfidenceBadge } from '../ui/ConfidenceBadge'
+import { RecommendationBadge } from '../ui/RecommendationBadge'
+import { Tooltip } from '../ui/Tooltip'
 
 export interface UnifiedRowFeatures {
   showScore?: boolean
@@ -17,6 +22,8 @@ export interface UnifiedRowFeatures {
   showAmazonBadges?: boolean
   showVerifyButton?: boolean
   showAccordion?: boolean
+  // Textbook UX Simplification - Buying Guidance columns
+  showBuyingGuidance?: boolean
 }
 
 interface UnifiedProductRowProps {
@@ -43,6 +50,22 @@ const RECOMMENDATION_BADGES: Record<string, { label: string; color: string }> = 
   SKIP: { label: 'Passer', color: 'bg-red-500 text-white' },
 }
 
+/**
+ * Format currency with $ sign
+ */
+function formatCurrency(value: number | undefined | null): string {
+  if (value === undefined || value === null || value <= 0) return '-'
+  return `$${value.toFixed(2)}`
+}
+
+/**
+ * Format percentage (0.50 -> "50%")
+ */
+function formatPercent(value: number | undefined | null): string {
+  if (value === undefined || value === null) return '-'
+  return `${(value * 100).toFixed(0)}%`
+}
+
 export function UnifiedProductRow({
   product,
   isExpanded,
@@ -66,7 +89,11 @@ export function UnifiedProductRow({
     showAmazonBadges = false,
     showVerifyButton = false,
     showAccordion = false,
+    showBuyingGuidance = false,
   } = features
+
+  // Extract buying guidance data if available
+  const guidance = product.buying_guidance
 
   const recommendationBadge = product.recommendation
     ? RECOMMENDATION_BADGES[product.recommendation] || { label: product.recommendation, color: 'bg-gray-500 text-white' }
@@ -183,6 +210,65 @@ export function UnifiedProductRow({
         <td className="hidden md:table-cell px-4 py-3 text-center text-sm font-medium text-gray-700">
           {product.bsr ? `#${product.bsr.toLocaleString()}` : 'N/A'}
         </td>
+
+        {/* Buying Guidance Columns - Only shown when showBuyingGuidance is true */}
+        {showBuyingGuidance && (
+          <>
+            {/* Max Buy Price */}
+            <td className="hidden md:table-cell px-3 py-3 text-center">
+              <Tooltip
+                content={guidance?.explanations?.max_buy_price || "Prix maximum pour garantir le ROI cible"}
+                showIcon={false}
+              >
+                <span className="text-sm font-semibold text-blue-600">
+                  {formatCurrency(guidance?.max_buy_price)}
+                </span>
+              </Tooltip>
+            </td>
+
+            {/* Target Sell Price */}
+            <td className="hidden md:table-cell px-3 py-3 text-center">
+              <Tooltip
+                content={guidance?.explanations?.target_sell_price || "Prix median des 90 derniers jours"}
+                showIcon={false}
+              >
+                <span className="text-sm font-semibold text-emerald-600">
+                  {formatCurrency(guidance?.target_sell_price)}
+                </span>
+              </Tooltip>
+            </td>
+
+            {/* Estimated ROI */}
+            <td className="hidden md:table-cell px-3 py-3 text-center">
+              <Tooltip
+                content={guidance?.explanations?.estimated_profit || "ROI estime si achat au prix max"}
+                showIcon={false}
+              >
+                <span className="text-sm font-semibold text-purple-600">
+                  {formatPercent(guidance?.estimated_roi_pct)}
+                </span>
+              </Tooltip>
+            </td>
+
+            {/* Confidence */}
+            <td className="hidden md:table-cell px-3 py-3 text-center">
+              {guidance?.confidence_label ? (
+                <ConfidenceBadge level={guidance.confidence_label} size="sm" />
+              ) : (
+                <span className="text-gray-400 text-sm">-</span>
+              )}
+            </td>
+
+            {/* Action (Recommendation) */}
+            <td className="hidden md:table-cell px-3 py-3 text-center">
+              {guidance?.recommendation ? (
+                <RecommendationBadge recommendation={guidance.recommendation} size="sm" />
+              ) : (
+                <span className="text-gray-400 text-sm">-</span>
+              )}
+            </td>
+          </>
+        )}
 
         {/* Recommendation badge (optional - NicheProduct) */}
         {showRecommendation && (
@@ -325,6 +411,54 @@ export function UnifiedProductRow({
                     )}
                   </div>
                 </div>
+              )}
+
+              {/* Buying Guidance (mobile) */}
+              {showBuyingGuidance && guidance && (
+                <>
+                  {/* Prix achat max */}
+                  <div>
+                    <span className="text-gray-500 text-xs">Achete max</span>
+                    <p className="font-semibold text-blue-600 mt-1">
+                      {formatCurrency(guidance.max_buy_price)}
+                    </p>
+                  </div>
+
+                  {/* Prix vente cible */}
+                  <div>
+                    <span className="text-gray-500 text-xs">Vends cible</span>
+                    <p className="font-semibold text-emerald-600 mt-1">
+                      {formatCurrency(guidance.target_sell_price)}
+                    </p>
+                  </div>
+
+                  {/* ROI et Profit */}
+                  <div>
+                    <span className="text-gray-500 text-xs">ROI / Profit</span>
+                    <p className="font-semibold text-purple-600 mt-1">
+                      {formatPercent(guidance.estimated_roi_pct)} / {formatCurrency(guidance.estimated_profit)}
+                    </p>
+                  </div>
+
+                  {/* Action */}
+                  <div>
+                    <span className="text-gray-500 text-xs">Action</span>
+                    <div className="mt-1">
+                      <RecommendationBadge recommendation={guidance.recommendation} size="sm" />
+                    </div>
+                  </div>
+
+                  {/* Confiance */}
+                  <div className="col-span-2">
+                    <span className="text-gray-500 text-xs">Confiance</span>
+                    <div className="mt-1 flex items-center gap-2">
+                      <ConfidenceBadge level={guidance.confidence_label} size="sm" />
+                      <span className="text-xs text-gray-500 italic truncate">
+                        {guidance.recommendation_reason}
+                      </span>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </td>

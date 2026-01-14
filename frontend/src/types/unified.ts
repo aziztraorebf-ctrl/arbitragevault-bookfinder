@@ -4,7 +4,10 @@
  * into a single displayable format for UnifiedProductTable
  */
 
-import type { ProductScore, StrategyProfile, VelocityBreakdown } from './views'
+import type { ProductScore, StrategyProfile, VelocityBreakdown, BuyingGuidance } from './views'
+
+// Re-export BuyingGuidance for convenience
+export type { BuyingGuidance } from './views'
 
 // Source type discriminator
 export type ProductSource = 'product_score' | 'niche_product'
@@ -69,6 +72,9 @@ export interface DisplayableProduct {
   last_updated_at?: string | null
   pricing?: ProductScore['pricing']
 
+  // Buying Guidance (Textbook UX Simplification)
+  buying_guidance?: BuyingGuidance
+
   // NicheProduct-specific fields (optional)
   recommendation?: Recommendation | string
   current_price?: number
@@ -109,6 +115,7 @@ export function normalizeProductScore(product: ProductScore): DisplayableProduct
     velocity_breakdown: product.velocity_breakdown,
     last_updated_at: product.last_updated_at,
     pricing: product.pricing,
+    buying_guidance: product.buying_guidance,
   }
 }
 

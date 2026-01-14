@@ -13,6 +13,7 @@ import { useState, useMemo } from 'react'
 import type { DisplayableProduct } from '../../types/unified'
 import type { VerificationResponse } from '../../services/verificationService'
 import { UnifiedProductRow, type UnifiedRowFeatures } from './UnifiedProductRow'
+import { TooltipText } from '../ui/Tooltip'
 
 export interface UnifiedTableFeatures extends UnifiedRowFeatures {
   showFilters?: boolean
@@ -98,6 +99,7 @@ export function UnifiedProductTable({
     showAmazonBadges = false,
     showVerifyButton = false,
     showAccordion = false,
+    showBuyingGuidance = false,
   } = features
 
   // Filter state
@@ -183,6 +185,7 @@ export function UnifiedProductTable({
     showAmazonBadges,
     showVerifyButton,
     showAccordion,
+    showBuyingGuidance,
   }
 
   return (
@@ -325,6 +328,44 @@ export function UnifiedProductTable({
               <th className="hidden md:table-cell px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                 BSR
               </th>
+              {/* Buying Guidance Headers */}
+              {showBuyingGuidance && (
+                <>
+                  <th className="hidden md:table-cell px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                    <TooltipText
+                      text="Achete max"
+                      tooltip="Prix maximum a payer pour garantir votre ROI cible de 50%"
+                      className="text-blue-600"
+                    />
+                  </th>
+                  <th className="hidden md:table-cell px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                    <TooltipText
+                      text="Vends cible"
+                      tooltip="Prix de vente median base sur les 90 derniers jours"
+                      className="text-emerald-600"
+                    />
+                  </th>
+                  <th className="hidden md:table-cell px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                    <TooltipText
+                      text="ROI"
+                      tooltip="Retour sur investissement estime si achat au prix max"
+                      className="text-purple-600"
+                    />
+                  </th>
+                  <th className="hidden md:table-cell px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                    <TooltipText
+                      text="Fiabilite"
+                      tooltip="Niveau de confiance des donnees: Fiable, Modere, Incertain, ou Donnees insuffisantes"
+                    />
+                  </th>
+                  <th className="hidden md:table-cell px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                    <TooltipText
+                      text="Action"
+                      tooltip="Recommendation: ACHETER (ROI >= 50%), EVALUER (ROI >= 30%), PASSER (ROI < 30%)"
+                    />
+                  </th>
+                </>
+              )}
               {showRecommendation && (
                 <th className="hidden md:table-cell px-3 md:px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                   Recommandation

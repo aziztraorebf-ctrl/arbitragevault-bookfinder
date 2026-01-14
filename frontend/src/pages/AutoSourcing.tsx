@@ -439,6 +439,7 @@ export default function AutoSourcing() {
                     showFooterSummary: true,
                     showAccordion: false,
                     showVerifyButton: true,
+                    showBuyingGuidance: true,
                   }}
                   onVerify={verifyProduct}
                   getVerificationState={getVerificationState}

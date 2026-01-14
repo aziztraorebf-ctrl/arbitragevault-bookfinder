@@ -127,6 +127,12 @@ class ProductScore(BaseModel):
         description="Separated pricing for 'used' and 'new' conditions with ROI breakdown"
     )
 
+    # Buying Guidance (Textbook UX Simplification)
+    buying_guidance: Optional[Dict[str, Any]] = Field(
+        None,
+        description="User-friendly buying guidance with max buy price, target sell price, ROI, and recommendations"
+    )
+
     # BSR field for display in Mes Niches / AutoSourcing
     current_bsr: Optional[int] = Field(
         None,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { TrendingUp, Target, DollarSign, BarChart3, Settings, CheckCircle } from 'lucide-react'
+import ConditionFilter from './ConditionFilter'
 import type { AnalysisStrategy, AnalysisCriteria, ConfiguredAnalysis, AnalysisInput } from '../../types'
 
 interface CriteriaConfigProps {
@@ -39,6 +40,8 @@ const CriteriaConfig: React.FC<CriteriaConfigProps> = ({ analysisInput, onConfig
   const [selectedStrategy, setSelectedStrategy] = useState<AnalysisStrategy>(predefinedStrategies[1]) // Balanced par défaut
   const [customCriteria, setCustomCriteria] = useState<AnalysisCriteria>(predefinedStrategies[1].criteria)
   const [isCustomMode, setIsCustomMode] = useState(false)
+  // Default: exclude 'acceptable' (only show new, very_good, good)
+  const [conditionFilter, setConditionFilter] = useState<string[]>(['new', 'very_good', 'good'])
 
   // Synchroniser custom criteria avec stratégie sélectionnée
   useEffect(() => {
@@ -77,7 +80,8 @@ const CriteriaConfig: React.FC<CriteriaConfigProps> = ({ analysisInput, onConfig
       source: analysisInput.source,
       csvData: analysisInput.csvData,
       strategy: finalStrategy,
-      customCriteria: isCustomMode ? customCriteria : undefined
+      customCriteria: isCustomMode ? customCriteria : undefined,
+      conditionFilter: conditionFilter,
     }
 
     onConfigComplete(configuredAnalysis)
@@ -259,14 +263,20 @@ const CriteriaConfig: React.FC<CriteriaConfigProps> = ({ analysisInput, onConfig
         </div>
       </div>
 
-      {/* Résumé Configuration */}
+      {/* Filtre par Condition */}
+      <ConditionFilter
+        selectedConditions={conditionFilter}
+        onChange={setConditionFilter}
+      />
+
+      {/* Resume Configuration */}
       <div className="bg-blue-50 rounded-lg border border-blue-200">
         <div className="p-6">
           <h3 className="text-md font-medium text-blue-900 mb-3 flex items-center">
             <CheckCircle className="w-5 h-5 mr-2" />
             Configuration Finale
           </h3>
-          
+
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-blue-700 mb-2">

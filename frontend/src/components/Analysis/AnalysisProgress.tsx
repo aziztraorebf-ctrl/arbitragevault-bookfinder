@@ -62,7 +62,12 @@ const AnalysisProgressComponent: React.FC<AnalysisProgressProps> = ({
       console.log('Starting analysis with:', configuredAnalysis)
 
       // Make actual API call - extract ASINs from configured analysis
-      const response: IngestResponse = await runAnalysis(configuredAnalysis.asins, 'default')
+      // Pass conditionFilter if provided (default excludes 'acceptable')
+      const response: IngestResponse = await runAnalysis(
+        configuredAnalysis.asins,
+        'default',
+        configuredAnalysis.conditionFilter
+      )
       
       clearInterval(progressSimulation)
 

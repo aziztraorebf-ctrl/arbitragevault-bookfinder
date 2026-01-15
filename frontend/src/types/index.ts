@@ -115,6 +115,7 @@ export interface ConfiguredAnalysis {
   csvData?: UploadedCSVData
   strategy: AnalysisStrategy
   customCriteria?: AnalysisCriteria
+  conditionFilter?: string[]  // Filter by condition: 'new', 'very_good', 'good', 'acceptable'
 }
 
 // API Response Types (from backend /api/v1/keepa/ingest)
@@ -169,6 +170,9 @@ export interface AnalysisAPIResult {
   readable_summary: string
   recommendation: string
   risk_factors: string[]
+  // Seller Central Links (Phase 10)
+  amazon_url?: string
+  seller_central_url?: string
 }
 
 export interface BatchAPIResponse {

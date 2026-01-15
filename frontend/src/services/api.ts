@@ -279,17 +279,27 @@ export const apiService = {
   },
 
   // Run analysis (for keepa ingest)
-  async runAnalysis(identifiers: string[], config_profile: string = 'default'): Promise<IngestResponse> {
+  async runAnalysis(
+    identifiers: string[],
+    config_profile: string = 'default',
+    conditionFilter?: string[]
+  ): Promise<IngestResponse> {
     try {
       const batch_id = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      
+
+      // Build query params if conditionFilter provided
+      const params: Record<string, string> = {}
+      if (conditionFilter && conditionFilter.length > 0) {
+        params.condition_filter = conditionFilter.join(',')
+      }
+
       const response = await api.post('/api/v1/keepa/ingest', {
         identifiers,
         batch_id,
         config_profile,
         force_refresh: false,
         async_threshold: 100
-      })
+      }, { params })
       
       // Safe parse with correct schema
       const result = IngestResponseSchema.safeParse(response.data)
@@ -396,4 +406,8 @@ export const apiService = {
 export const healthCheck = apiService.healthCheck
 export const getBatches = apiService.getBatches
 export const getBatch = apiService.getBatch
-export const runAnalysis = apiService.runAnalysis
+export const runAnalysis = (
+  identifiers: string[],
+  config_profile: string = 'default',
+  conditionFilter?: string[]
+) => apiService.runAnalysis(identifiers, config_profile, conditionFilter)

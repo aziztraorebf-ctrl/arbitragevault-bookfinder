@@ -17,7 +17,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.services.keepa_service import KeepaService, get_keepa_service
@@ -227,6 +227,10 @@ def _generate_recommendation(
 @router.post("/analyze", response_model=TextbookAnalysisResponse)
 async def analyze_textbook(
     request: TextbookAnalysisRequest,
+    condition_filter: Optional[List[str]] = Query(
+        default=None,
+        description="Filter offers by condition: new, very_good, good, acceptable. Default: include all."
+    ),
     keepa_service: KeepaService = Depends(get_keepa_service)
 ) -> TextbookAnalysisResponse:
     """
@@ -258,7 +262,7 @@ async def analyze_textbook(
                 )
 
         # Step 2: Parse Keepa data using unified parser
-        parsed_data = parse_keepa_product_unified(keepa_data)
+        parsed_data = parse_keepa_product_unified(keepa_data, condition_filter=condition_filter)
 
         # Step 3: Calculate intrinsic value corridor
         intrinsic_result = get_sell_price_for_strategy(

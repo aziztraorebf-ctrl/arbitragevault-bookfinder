@@ -6,7 +6,8 @@ import { UnifiedProductTable, useVerification, AccordionContent } from '../compo
 import { normalizeProductScore } from '../types/unified';
 import { batchResultsToProductScores } from '../utils/analysisAdapter';
 import { SaveSearchButton } from '../components/recherches/SaveSearchButton';
-import { Upload, CheckCircle, Play, ChevronDown, FileCheck, AlertCircle } from 'lucide-react';
+import ConditionFilter from '../components/Analysis/ConditionFilter';
+import { Upload, CheckCircle, Play, ChevronDown, FileCheck, AlertCircle, Info } from 'lucide-react';
 
 export default function AnalyseManuelle() {
   // Etats principaux
@@ -26,6 +27,8 @@ export default function AnalyseManuelle() {
   const [minROI, setMinROI] = useState(30);
   const [maxBSR, setMaxBSR] = useState(50000);
   const [minVelocity, setMinVelocity] = useState(10);
+  // Condition filter: exclude 'acceptable' by default (only show new, very_good, good)
+  const [conditionFilter, setConditionFilter] = useState<string[]>(['new', 'very_good', 'good']);
 
   // Reference pour l'input file
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -136,7 +139,8 @@ export default function AnalyseManuelle() {
 
           const response = await keepaService.ingestBatch({
             identifiers: chunk,
-            config_profile: configProfile
+            config_profile: configProfile,
+            condition_filter: conditionFilter as ('new' | 'very_good' | 'good' | 'acceptable')[]
           });
 
           // Fusionner les resultats
@@ -154,7 +158,8 @@ export default function AnalyseManuelle() {
         setProgressMessage(`Analyse de ${asins.length} produits...`);
         allResults = await keepaService.ingestBatch({
           identifiers: asins,
-          config_profile: configProfile
+          config_profile: configProfile,
+          condition_filter: conditionFilter as ('new' | 'very_good' | 'good' | 'acceptable')[]
         });
       }
 
@@ -467,6 +472,14 @@ export default function AnalyseManuelle() {
             <span className="text-sm">Export CSV</span>
           </label>
         </div>
+
+        {/* Condition Filter - exclude Acceptable by default */}
+        <div className="mt-6">
+          <ConditionFilter
+            selectedConditions={conditionFilter}
+            onChange={setConditionFilter}
+          />
+        </div>
       </section>
 
       {/* ========================================
@@ -537,6 +550,52 @@ export default function AnalyseManuelle() {
             toggleVerificationExpansion={toggleVerificationExpansion}
           />
         </>
+      )}
+
+      {/* Message informatif quand aucun resultat ou tous filtres */}
+      {results && results.results.length === 0 && (
+        <div className="bg-vault-card border border-vault-border rounded-2xl p-8 text-center">
+          <Info className="w-12 h-12 text-vault-accent mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-vault-text mb-2">
+            Aucun resultat trouve
+          </h3>
+          <p className="text-vault-text-secondary mb-4">
+            Les ASINs analyses n'ont retourne aucun resultat.
+            {conditionFilter.length < 4 && (
+              <span className="block mt-2">
+                <strong>Filtre actif :</strong> Conditions {conditionFilter.join(', ')}.
+                <br />
+                Essayez d'inclure plus de conditions (ex: "Acceptable") pour voir plus d'offres.
+              </span>
+            )}
+          </p>
+          <button
+            onClick={() => setConditionFilter(['new', 'very_good', 'good', 'acceptable'])}
+            className="text-sm text-vault-accent hover:underline"
+          >
+            Inclure toutes les conditions
+          </button>
+        </div>
+      )}
+
+      {/* Message quand produits normalises sont vides malgre resultats bruts */}
+      {results && results.results.length > 0 && normalizedProducts.length === 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
+          <Info className="w-10 h-10 text-amber-500 mx-auto mb-3" />
+          <h3 className="text-lg font-semibold text-amber-800 mb-2">
+            Offres filtrees
+          </h3>
+          <p className="text-amber-700 text-sm">
+            {results.results.length} produit(s) analyse(s), mais aucune offre ne correspond aux conditions selectionnees
+            ({conditionFilter.join(', ')}).
+          </p>
+          <button
+            onClick={() => setConditionFilter(['new', 'very_good', 'good', 'acceptable'])}
+            className="mt-3 text-sm text-amber-600 hover:text-amber-800 hover:underline"
+          >
+            Afficher toutes les conditions
+          </button>
+        </div>
       )}
     </div>
   )

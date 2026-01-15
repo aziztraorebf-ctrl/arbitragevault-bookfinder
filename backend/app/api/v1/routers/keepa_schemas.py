@@ -20,6 +20,10 @@ class IngestBatchRequest(BaseModel):
     force_refresh: bool = Field(False, description="Force refresh cached data")
     async_threshold: int = Field(100, description="Use async job mode if > this many items")
     source_price: Optional[float] = Field(None, description="Acquisition cost per item (used for ROI calculation). If not provided, uses config default.")
+    condition_filter: Optional[List[str]] = Field(
+        None,
+        description="Filter offers by condition: new, very_good, good, acceptable. Default: include all."
+    )
 
     @validator('identifiers')
     def validate_identifiers(cls, v):
@@ -31,6 +35,17 @@ class IngestBatchRequest(BaseModel):
                 raise ValueError(f"Invalid identifier format: {identifier}")
             cleaned.append(clean_id)
         return cleaned
+
+    @validator('condition_filter')
+    def validate_condition_filter(cls, v):
+        """Validate condition filter values."""
+        if v is None:
+            return v
+        valid_conditions = {'new', 'very_good', 'good', 'acceptable'}
+        for condition in v:
+            if condition not in valid_conditions:
+                raise ValueError(f"Invalid condition: {condition}. Valid: {valid_conditions}")
+        return v
 
 
 class ConfigAudit(BaseModel):

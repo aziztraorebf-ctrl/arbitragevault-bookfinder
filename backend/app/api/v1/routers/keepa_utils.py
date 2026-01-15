@@ -8,7 +8,7 @@ Separated from keepa.py for SRP compliance.
 
 import uuid
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from app.services.keepa_service import KeepaService
 from app.services.unified_analysis import build_unified_product_v2
@@ -32,7 +32,8 @@ async def analyze_product(
     keepa_data: Dict[str, Any],
     config: Dict[str, Any],
     keepa_service: KeepaService,
-    source_price: Optional[float] = None
+    source_price: Optional[float] = None,
+    condition_filter: Optional[List[str]] = None
 ) -> AnalysisResult:
     """
     Analyze a single product with given config.
@@ -44,6 +45,8 @@ async def analyze_product(
         config: Business configuration
         keepa_service: Keepa service instance
         source_price: Optional source/acquisition price override
+        condition_filter: Filter offers by condition (e.g., ['new', 'very_good', 'good'])
+                         If None, all conditions are included (backward compatible)
     """
     try:
         # Use build_unified_product_v2() for unified pricing
@@ -53,7 +56,8 @@ async def analyze_product(
             config=config,
             view_type='analyse_manuelle',
             compute_score=False,
-            source_price=source_price
+            source_price=source_price,
+            condition_filter=condition_filter
         )
 
         # Convert pricing structure to match AnalysisResult schema

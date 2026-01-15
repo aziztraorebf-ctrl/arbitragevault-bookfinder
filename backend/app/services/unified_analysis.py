@@ -445,7 +445,8 @@ async def build_unified_product_v2(
     view_type: str = "analyse_manuelle",
     strategy: Optional[str] = None,
     compute_score: bool = True,
-    source_price: Optional[float] = None
+    source_price: Optional[float] = None,
+    condition_filter: Optional[List[str]] = None
 ) -> Dict[str, Any]:
     """
     UNIFIED product builder v2 - Used by ALL endpoints (Analyse Manuelle, Mes Niches, AutoSourcing).
@@ -460,6 +461,8 @@ async def build_unified_product_v2(
         strategy: Optional strategy override (for AutoSourcing/Mes Niches)
         compute_score: Whether to compute scoring (False for Analyse Manuelle)
         source_price: Acquisition cost (used by Analyse Manuelle, optional for others)
+        condition_filter: Filter offers by condition (e.g., ['new', 'very_good', 'good'])
+                         If None, all conditions are included (backward compatible)
 
     Returns:
         Complete unified product response with:
@@ -474,7 +477,8 @@ async def build_unified_product_v2(
 
     try:
         # ====== STEP 1: Parse with unified parser (Phase 1) ======
-        parsed = parse_keepa_product_unified(raw_keepa)
+        # Pass condition_filter to exclude unwanted conditions (e.g., 'acceptable')
+        parsed = parse_keepa_product_unified(raw_keepa, condition_filter=condition_filter)
         title = parsed.get("title")
         current_bsr = parsed.get("current_bsr")
 

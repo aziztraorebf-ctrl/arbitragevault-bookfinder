@@ -5,6 +5,7 @@ export interface IngestRequest {
   identifiers: string[];
   config_profile?: 'balanced' | 'aggressive' | 'conservative';
   force_refresh?: boolean;
+  condition_filter?: ('new' | 'very_good' | 'good' | 'acceptable')[];
 }
 
 // === Response Types ===

@@ -73,7 +73,8 @@ async def ingest_batch(
     logger.info(f"[{trace_id}] Starting batch ingestion", extra={
         "batch_id": batch_id,
         "count": len(request.identifiers),
-        "profile": request.config_profile
+        "profile": request.config_profile,
+        "condition_filter": request.condition_filter
     })
 
     try:
@@ -151,13 +152,14 @@ async def ingest_batch(
 
                     asin = keepa_data.get('asin', normalized_id)
 
-                    # Analyze product with optional source_price override
+                    # Analyze product with optional source_price and condition_filter
                     analysis = await analyze_product(
                         asin,
                         keepa_data,
                         config,
                         keepa_service,
-                        source_price=request.source_price
+                        source_price=request.source_price,
+                        condition_filter=request.condition_filter
                     )
 
                     # DEV/TEST ONLY: Validation logging if feature flags overridden

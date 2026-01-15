@@ -651,14 +651,23 @@ def _group_offers_by_condition(
                 # Extract price from offerCSV (latest price is first entry)
                 offer_csv = min_offer.get('offerCSV', [])
                 min_price_cents = None
+                shipping_cents = 0
 
                 if offer_csv:
-                    # offerCSV format: [[timestamp, price_cents, shipping_cents], ...]
-                    # Latest is first
-                    if isinstance(offer_csv[0], (list, tuple)) and len(offer_csv[0]) >= 2:
-                        min_price_cents = offer_csv[0][1]
+                    # offerCSV format is FLAT: [timestamp1, price1, shipping1, timestamp2, price2, shipping2, ...]
+                    # Each triplet = (timestamp, price_cents, shipping_cents)
+                    # The FIRST triplet is the most recent
+                    if len(offer_csv) >= 3:
+                        # Flat format: [timestamp, price, shipping, ...]
+                        if isinstance(offer_csv[0], int):
+                            min_price_cents = offer_csv[1]  # Index 1 = price
+                            shipping_cents = offer_csv[2] if len(offer_csv) > 2 else 0  # Index 2 = shipping
+                        # Legacy nested format (fallback): [[timestamp, price, shipping], ...]
+                        elif isinstance(offer_csv[0], (list, tuple)) and len(offer_csv[0]) >= 2:
+                            min_price_cents = offer_csv[0][1]
+                            shipping_cents = offer_csv[0][2] if len(offer_csv[0]) > 2 else 0
 
-                if min_price_cents is not None:
+                if min_price_cents is not None and min_price_cents > 0:
                     min_price_dollars = min_price_cents / KEEPA_PRICE_DIVISOR
                 else:
                     min_price_dollars = None
@@ -678,7 +687,7 @@ def _group_offers_by_condition(
                         'is_fba': min_offer.get('isFBA'),
                         'is_prime': min_offer.get('isPrime'),
                         'is_amazon': min_offer.get('isAmazon'),
-                        'shipping_cents': min_price_cents if offer_csv and isinstance(offer_csv[0], (list, tuple)) and len(offer_csv[0]) > 2 else 0
+                        'shipping_cents': shipping_cents
                     }
                 }
 
@@ -691,10 +700,24 @@ def _find_minimum_price_offer(offers: List[Dict]) -> Optional[Dict]:
         return None
 
     def get_price(offer):
-        """Extract latest price from offer."""
+        """Extract latest price from offer.
+
+        offerCSV format is FLAT: [timestamp1, price1, shipping1, timestamp2, price2, shipping2, ...]
+        The FIRST triplet is the most recent.
+        """
         offer_csv = offer.get('offerCSV', [])
-        if offer_csv and isinstance(offer_csv[0], (list, tuple)) and len(offer_csv[0]) >= 2:
+        if not offer_csv:
+            return float('inf')
+
+        # Flat format: [timestamp, price, shipping, ...]
+        if len(offer_csv) >= 2 and isinstance(offer_csv[0], int):
+            price = offer_csv[1]  # Index 1 = price
+            return price if price and price > 0 else float('inf')
+
+        # Legacy nested format (fallback): [[timestamp, price, shipping], ...]
+        if isinstance(offer_csv[0], (list, tuple)) and len(offer_csv[0]) >= 2:
             return offer_csv[0][1]
+
         return float('inf')  # Invalid offers get highest price
 
     return min(offers, key=get_price)

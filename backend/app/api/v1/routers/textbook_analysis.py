@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 
 from app.services.keepa_service import KeepaService, get_keepa_service
 from app.services.keepa_parser_v2 import parse_keepa_product_unified
+from app.services.keepa_constants import ALL_CONDITION_KEYS
 from app.services.intrinsic_value_service import get_sell_price_for_strategy
 from app.services.seasonal_detector_service import (
     detect_seasonal_pattern,
@@ -245,6 +246,23 @@ async def analyze_textbook(
     """
     asin = request.asin.upper()
     logger.info(f"[TEXTBOOK] Starting analysis for ASIN: {asin}")
+
+    # Validate condition_filter if provided (Gap #2 from Senior Review)
+    if condition_filter is not None:
+        # Treat empty list as None (include all conditions)
+        if len(condition_filter) == 0:
+            condition_filter = None
+        else:
+            # Validate each condition
+            invalid_conditions = [c for c in condition_filter if c not in ALL_CONDITION_KEYS]
+            if invalid_conditions:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "code": "INVALID_CONDITION_FILTER",
+                        "message": f"Invalid conditions: {invalid_conditions}. Valid conditions: {ALL_CONDITION_KEYS}"
+                    }
+                )
 
     try:
         # Step 1: Fetch Keepa data

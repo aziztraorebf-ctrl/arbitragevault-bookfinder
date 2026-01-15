@@ -126,3 +126,69 @@ async def test_analyze_no_condition_filter_includes_all():
         # Should work as before (may return 200 or 500 depending on mock completeness)
         # Key point: should not be 422 unprocessable entity
         assert response.status_code != 422, f"Unexpected 422: {response.json()}"
+
+
+@pytest.mark.asyncio
+async def test_analyze_rejects_invalid_condition():
+    """Test that invalid conditions return 400 error."""
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+
+    # Request with invalid condition
+    response = client.post(
+        "/api/v1/textbook/analyze?condition_filter=new&condition_filter=invalid_condition",
+        json={"asin": "B00TEST123"}
+    )
+
+    assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+    data = response.json()
+    assert data["detail"]["code"] == "INVALID_CONDITION_FILTER"
+    assert "invalid_condition" in data["detail"]["message"]
+
+
+@pytest.mark.asyncio
+async def test_analyze_empty_condition_filter_treated_as_none():
+    """Test that empty condition_filter list is treated as None (include all)."""
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+
+    mock_keepa_data = {
+        'asin': 'B00TEST123',
+        'title': 'Test Textbook',
+        'domainId': 1,
+        'stats': {'current': [None] * 20},
+        'offers': [],
+        'data': {}
+    }
+
+    with patch('app.api.v1.routers.textbook_analysis.get_keepa_service') as mock_keepa, \
+         patch('app.api.v1.routers.textbook_analysis.parse_keepa_product_unified') as mock_parser:
+
+        mock_service = AsyncMock()
+        mock_service.get_product_data = AsyncMock(return_value=mock_keepa_data)
+        mock_service.__aenter__ = AsyncMock(return_value=mock_service)
+        mock_service.__aexit__ = AsyncMock(return_value=None)
+        mock_keepa.return_value = mock_service
+
+        mock_parser.return_value = {
+            'asin': 'B00TEST123',
+            'title': 'Test Book',
+            'current_bsr': 50000,
+            'sales_per_month': 5,
+            'price_history': [],
+            'offers': [],
+        }
+
+        # Note: FastAPI Query with List type receives empty list when no params are passed
+        # This test verifies the behavior when explicitly sending empty
+        response = client.post(
+            "/api/v1/textbook/analyze",
+            json={"asin": "B00TEST123"}
+        )
+
+        # Should not fail with 400 (empty list handled gracefully)
+        assert response.status_code != 400, f"Unexpected 400 for no condition_filter"

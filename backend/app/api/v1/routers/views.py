@@ -139,6 +139,16 @@ class ProductScore(BaseModel):
         description="Current Best Seller Rank (BSR) from Keepa data"
     )
 
+    # Amazon and Seller Central URLs
+    amazon_url: Optional[str] = Field(
+        None,
+        description="Direct link to Amazon product page"
+    )
+    seller_central_url: Optional[str] = Field(
+        None,
+        description="Link to Seller Central to check selling restrictions for this ASIN"
+    )
+
 
 class ViewScoreMetadata(BaseModel):
     """Metadata for view score response."""

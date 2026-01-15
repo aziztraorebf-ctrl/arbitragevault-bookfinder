@@ -29,6 +29,7 @@ from app.core.calculations import (
     generate_readable_summary
 )
 from app.services.scoring_v2 import VIEW_WEIGHTS
+from app.utils.amazon_urls import get_amazon_product_url, get_seller_central_restriction_url
 
 logger = logging.getLogger(__name__)
 
@@ -699,6 +700,11 @@ async def build_unified_product_v2(
             # ====== BUYING GUIDANCE (Textbook UX Simplification) ======
             # User-friendly buying recommendations with explanations
             'buying_guidance': buying_guidance,
+
+            # ====== AMAZON LINKS (Seller Central Links Module) ======
+            # Direct links to Amazon product page and Seller Central restriction check
+            'amazon_url': get_amazon_product_url(asin, raw_keepa.get('domainId', 1)),
+            'seller_central_url': get_seller_central_restriction_url(asin, raw_keepa.get('domainId', 1)),
         }
 
         # ====== STEP 8: Add scoring for Mes Niches/AutoSourcing ======
@@ -818,4 +824,9 @@ async def build_unified_product_v2(
                 "confidence_label": "Donnees insuffisantes",
                 "explanations": {},
             },
+
+            # Amazon links (Seller Central Links Module) - Error defaults
+            # Still generate URLs so user can check the product manually
+            "amazon_url": get_amazon_product_url(asin, raw_keepa.get('domainId', 1)),
+            "seller_central_url": get_seller_central_restriction_url(asin, raw_keepa.get('domainId', 1)),
         }

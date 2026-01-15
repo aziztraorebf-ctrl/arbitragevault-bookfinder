@@ -65,14 +65,16 @@ async def analyze_product(
         pricing_by_condition = pricing_unified.get('by_condition', {})
 
         # Map to PricingDetail format expected by AnalysisResult
+        # Note: pricing_by_condition uses 'market_price' not 'buy_price'
         pricing_breakdown = {}
         for condition, details in pricing_by_condition.items():
+            market_price = details.get('market_price')
             pricing_breakdown[condition] = PricingDetail(
-                current_price=details.get('buy_price'),
+                current_price=market_price,
                 target_buy_price=details.get('max_buy_price', 0),
                 roi_percentage=details.get('roi_pct', 0) * 100 if details.get('roi_pct') else None,
-                net_profit=details.get('profit'),
-                available=details.get('buy_price') is not None,
+                net_profit=details.get('roi_value'),  # 'roi_value' is profit in dollars
+                available=market_price is not None,
                 recommended=details.get('is_recommended', False)
             )
 

@@ -42,8 +42,16 @@ KEEPA_CONDITION_CODES = {
     5: ('acceptable', 'Used - Acceptable')
 }
 
+# Default conditions for filtering (excludes 'acceptable' per user preference)
+DEFAULT_CONDITIONS = ['new', 'very_good', 'good']
+
+# All available condition keys
+ALL_CONDITION_KEYS = ['new', 'very_good', 'good', 'acceptable']
+
 
 __all__ = [
     'KeepaCSVType',
-    'KEEPA_CONDITION_CODES'
+    'KEEPA_CONDITION_CODES',
+    'DEFAULT_CONDITIONS',
+    'ALL_CONDITION_KEYS'
 ]

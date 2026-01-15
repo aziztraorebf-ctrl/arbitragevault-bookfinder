@@ -96,3 +96,55 @@ class TestGroupOffersByConditionFilter:
         assert 'acceptable' in result
         assert 'very_good' not in result
         assert 'good' not in result
+
+
+class TestParseKeepaProductUnifiedFilter:
+    """Tests for condition_filter in parse_keepa_product_unified."""
+
+    def test_parse_keepa_product_unified_with_condition_filter(self):
+        """Test that condition_filter is passed through to offers grouping."""
+        from app.services.keepa_parser_v2 import parse_keepa_product_unified
+        from app.services.keepa_constants import DEFAULT_CONDITIONS
+
+        # Mock Keepa data with offers in all conditions
+        mock_keepa = {
+            'asin': 'B00TEST123',
+            'title': 'Test Product',
+            'offers': [
+                {'condition': 1, 'offerCSV': [[[0, 1000, 0]]], 'sellerId': 'A1', 'isFBA': True},  # new
+                {'condition': 3, 'offerCSV': [[[0, 800, 0]]], 'sellerId': 'A2', 'isFBA': True},   # very_good
+                {'condition': 4, 'offerCSV': [[[0, 600, 0]]], 'sellerId': 'A3', 'isFBA': False},  # good
+                {'condition': 5, 'offerCSV': [[[0, 400, 0]]], 'sellerId': 'A4', 'isFBA': False},  # acceptable
+            ],
+            'stats': {'current': [None] * 20}
+        }
+
+        # With filter, acceptable should be excluded
+        result = parse_keepa_product_unified(mock_keepa, condition_filter=DEFAULT_CONDITIONS)
+
+        offers = result.get('offers_by_condition', {})
+        assert 'new' in offers
+        assert 'very_good' in offers
+        assert 'good' in offers
+        assert 'acceptable' not in offers
+
+    def test_parse_keepa_product_unified_without_filter(self):
+        """Test backward compatibility - no filter includes all."""
+        from app.services.keepa_parser_v2 import parse_keepa_product_unified
+
+        mock_keepa = {
+            'asin': 'B00TEST456',
+            'title': 'Test Product 2',
+            'offers': [
+                {'condition': 1, 'offerCSV': [[[0, 1000, 0]]], 'sellerId': 'A1', 'isFBA': True},
+                {'condition': 5, 'offerCSV': [[[0, 400, 0]]], 'sellerId': 'A4', 'isFBA': False},
+            ],
+            'stats': {'current': [None] * 20}
+        }
+
+        # Without filter, all conditions included
+        result = parse_keepa_product_unified(mock_keepa)
+
+        offers = result.get('offers_by_condition', {})
+        assert 'new' in offers
+        assert 'acceptable' in offers

@@ -286,7 +286,10 @@ def _safe_decimal(value: Any) -> Optional[Decimal]:
 # ==================== UNIFIED PARSER FOR PHASE 1 ====================
 
 
-def parse_keepa_product_unified(raw_keepa: Dict[str, Any]) -> Dict[str, Any]:
+def parse_keepa_product_unified(
+    raw_keepa: Dict[str, Any],
+    condition_filter: Optional[List[str]] = None
+) -> Dict[str, Any]:
     """
     UNIFIED parser - Extracts ALL data from Keepa response.
     Used by ALL endpoints: Analyse Manuelle + Mes Niches + AutoSourcing
@@ -297,6 +300,11 @@ def parse_keepa_product_unified(raw_keepa: Dict[str, Any]) -> Dict[str, Any]:
     - Offers detailed with conditions
     - History data
     - Metadata
+
+    Args:
+        raw_keepa: Raw Keepa API response
+        condition_filter: Optional list of conditions to include (e.g., ['new', 'very_good', 'good'])
+                         If None, all conditions are included (backward compatible)
 
     Returns: Complete structured dict ready for analysis
     """
@@ -359,7 +367,7 @@ def parse_keepa_product_unified(raw_keepa: Dict[str, Any]) -> Dict[str, Any]:
     # Step 2: Extract offers with conditions (GAME CHANGER!)
     offers = raw_keepa.get('offers', [])
     if offers:
-        offers_by_condition = _group_offers_by_condition(offers)
+        offers_by_condition = _group_offers_by_condition(offers, condition_filter=condition_filter)
         parsed['offers_by_condition'] = offers_by_condition
         logger.debug(f"ASIN {asin}: Grouped {len(offers)} offers by condition")
     else:

@@ -338,5 +338,274 @@ class TestKeepaBSRExtractor:
             assert abs(result["confidence"] - expected_confidence) < 0.1
 
 
+class TestExtractHistoryFromDataSection:
+    """Test suite for _extract_history_from_data_section() function.
+
+    This function extracts price/BSR history from the keepa Python library's
+    'data' section which contains proper datetime objects (vs raw csv timestamps).
+
+    Gap #1 from Senior Review: Add comprehensive unit tests.
+    """
+
+    def test_extract_price_history_valid_data(self):
+        """Test extraction of valid price history from data section."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+        import numpy as np
+
+        now = datetime.now()
+        data_section = {
+            'NEW': np.array([25.99, 29.99, 27.50, 31.00]),
+            'NEW_time': [
+                now - timedelta(days=90),
+                now - timedelta(days=60),
+                now - timedelta(days=30),
+                now - timedelta(days=1)
+            ]
+        }
+
+        result = _extract_history_from_data_section(data_section, 'NEW', 'NEW_time', is_price=True)
+
+        assert len(result) == 4
+        assert all(isinstance(item, tuple) and len(item) == 2 for item in result)
+        assert result[0][1] == 25.99
+        assert result[3][1] == 31.00
+        # Verify datetime objects are preserved
+        assert isinstance(result[0][0], datetime)
+
+    def test_extract_bsr_history_valid_data(self):
+        """Test extraction of valid BSR history from data section."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+        import numpy as np
+
+        now = datetime.now()
+        data_section = {
+            'SALES': np.array([150000, 125000, 100000, 85000]),
+            'SALES_time': [
+                now - timedelta(days=90),
+                now - timedelta(days=60),
+                now - timedelta(days=30),
+                now - timedelta(days=1)
+            ]
+        }
+
+        result = _extract_history_from_data_section(data_section, 'SALES', 'SALES_time', is_price=False)
+
+        assert len(result) == 4
+        assert result[0][1] == 150000.0
+        assert result[3][1] == 85000.0
+
+    def test_extract_history_skips_null_values(self):
+        """Test that -1 (Keepa null marker) values are skipped."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+        import numpy as np
+
+        now = datetime.now()
+        data_section = {
+            'NEW': np.array([25.99, -1, 27.50, -1, 31.00]),
+            'NEW_time': [
+                now - timedelta(days=90),
+                now - timedelta(days=75),  # This will be skipped (value=-1)
+                now - timedelta(days=60),
+                now - timedelta(days=45),  # This will be skipped (value=-1)
+                now - timedelta(days=30)
+            ]
+        }
+
+        result = _extract_history_from_data_section(data_section, 'NEW', 'NEW_time', is_price=True)
+
+        assert len(result) == 3  # Only 3 valid values (excluding -1)
+        assert result[0][1] == 25.99
+        assert result[1][1] == 27.50
+        assert result[2][1] == 31.00
+
+    def test_extract_history_empty_data_section(self):
+        """Test handling of empty data section."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+
+        result = _extract_history_from_data_section({}, 'NEW', 'NEW_time', is_price=True)
+        assert result == []
+
+    def test_extract_history_missing_keys(self):
+        """Test handling of missing keys in data section."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+
+        data_section = {'OTHER_KEY': [1, 2, 3]}
+        result = _extract_history_from_data_section(data_section, 'NEW', 'NEW_time', is_price=True)
+        assert result == []
+
+    def test_extract_history_mismatched_lengths(self):
+        """Test handling of mismatched array lengths."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+        import numpy as np
+
+        now = datetime.now()
+        data_section = {
+            'NEW': np.array([25.99, 29.99, 27.50]),
+            'NEW_time': [now - timedelta(days=90), now - timedelta(days=60)]  # 2 vs 3
+        }
+
+        result = _extract_history_from_data_section(data_section, 'NEW', 'NEW_time', is_price=True)
+        assert result == []  # Should return empty due to length mismatch
+
+    def test_extract_history_skips_none_values(self):
+        """Test that None values are skipped."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+
+        now = datetime.now()
+        data_section = {
+            'NEW': [25.99, None, 27.50],
+            'NEW_time': [
+                now - timedelta(days=90),
+                now - timedelta(days=60),
+                now - timedelta(days=30)
+            ]
+        }
+
+        result = _extract_history_from_data_section(data_section, 'NEW', 'NEW_time', is_price=True)
+
+        assert len(result) == 2  # Only 2 valid values
+        assert result[0][1] == 25.99
+        assert result[1][1] == 27.50
+
+    def test_extract_history_handles_list_input(self):
+        """Test that function handles regular Python lists (not just numpy arrays)."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+
+        now = datetime.now()
+        data_section = {
+            'NEW': [25.99, 29.99, 27.50],
+            'NEW_time': [
+                now - timedelta(days=90),
+                now - timedelta(days=60),
+                now - timedelta(days=30)
+            ]
+        }
+
+        result = _extract_history_from_data_section(data_section, 'NEW', 'NEW_time', is_price=True)
+
+        assert len(result) == 3
+        assert result[0][1] == 25.99
+
+    def test_extract_history_skips_invalid_timestamps(self):
+        """Test that non-datetime timestamps are skipped."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+
+        now = datetime.now()
+        data_section = {
+            'NEW': [25.99, 29.99, 27.50],
+            'NEW_time': [
+                now - timedelta(days=90),
+                "invalid_timestamp",  # This should be skipped
+                now - timedelta(days=30)
+            ]
+        }
+
+        result = _extract_history_from_data_section(data_section, 'NEW', 'NEW_time', is_price=True)
+
+        assert len(result) == 2  # Only 2 valid entries
+        assert result[0][1] == 25.99
+        assert result[1][1] == 27.50
+
+    def test_extract_history_skips_negative_prices(self):
+        """Gap #3: Test that negative prices are filtered out."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+
+        now = datetime.now()
+        data_section = {
+            'NEW': [25.99, -5.00, 27.50, -100.0, 31.00],
+            'NEW_time': [
+                now - timedelta(days=90),
+                now - timedelta(days=75),  # Negative price - skip
+                now - timedelta(days=60),
+                now - timedelta(days=45),  # Negative price - skip
+                now - timedelta(days=30)
+            ]
+        }
+
+        result = _extract_history_from_data_section(data_section, 'NEW', 'NEW_time', is_price=True)
+
+        # Should have 3 valid prices (excluding negative ones)
+        assert len(result) == 3
+        assert result[0][1] == 25.99
+        assert result[1][1] == 27.50
+        assert result[2][1] == 31.00
+
+    def test_extract_history_allows_negative_bsr(self):
+        """Gap #3: Negative filter should NOT apply to BSR (is_price=False)."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+
+        now = datetime.now()
+        # Note: BSR cannot really be negative, but -1 is Keepa's null marker
+        # This test ensures we don't accidentally filter valid BSR values
+        data_section = {
+            'SALES': [150000, 125000, 100000],
+            'SALES_time': [
+                now - timedelta(days=90),
+                now - timedelta(days=60),
+                now - timedelta(days=30)
+            ]
+        }
+
+        result = _extract_history_from_data_section(data_section, 'SALES', 'SALES_time', is_price=False)
+
+        assert len(result) == 3
+
+    def test_extract_history_skips_future_timestamps(self):
+        """Gap #4: Test that future timestamps are filtered out."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+
+        now = datetime.now()
+        data_section = {
+            'NEW': [25.99, 29.99, 27.50, 31.00],
+            'NEW_time': [
+                now - timedelta(days=90),
+                now - timedelta(days=60),
+                now + timedelta(days=10),  # Future - skip
+                now + timedelta(days=365)  # Future - skip
+            ]
+        }
+
+        result = _extract_history_from_data_section(data_section, 'NEW', 'NEW_time', is_price=True)
+
+        # Should only have 2 valid entries (past timestamps)
+        assert len(result) == 2
+        assert result[0][1] == 25.99
+        assert result[1][1] == 29.99
+
+    def test_extract_history_combined_edge_cases(self):
+        """Test combination of all edge cases together."""
+        from app.services.keepa_parser_v2 import _extract_history_from_data_section
+
+        now = datetime.now()
+        data_section = {
+            'NEW': [
+                25.99,   # Valid
+                -1,      # Keepa null marker - skip
+                -5.00,   # Negative price - skip
+                29.99,   # Valid
+                None,    # None - skip
+                27.50,   # Future timestamp - skip
+                31.00    # Valid
+            ],
+            'NEW_time': [
+                now - timedelta(days=90),
+                now - timedelta(days=80),
+                now - timedelta(days=70),
+                now - timedelta(days=60),
+                now - timedelta(days=50),
+                now + timedelta(days=10),  # Future
+                now - timedelta(days=30)
+            ]
+        }
+
+        result = _extract_history_from_data_section(data_section, 'NEW', 'NEW_time', is_price=True)
+
+        # Should have only 3 valid entries
+        assert len(result) == 3
+        assert result[0][1] == 25.99
+        assert result[1][1] == 29.99
+        assert result[2][1] == 31.00
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

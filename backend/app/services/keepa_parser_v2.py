@@ -475,6 +475,9 @@ def _extract_history_from_data_section(
     if len(values_list) == 0 or len(times_list) == 0 or len(values_list) != len(times_list):
         return []
 
+    # Get current time for future timestamp filtering (Gap #4)
+    now = datetime.now()
+
     result = []
     for i in range(len(values_list)):
         value = values_list[i]
@@ -488,13 +491,21 @@ def _extract_history_from_data_section(
         if not isinstance(time, datetime):
             continue
 
+        # Gap #4: Skip future timestamps (data corruption indicator)
+        if time > now:
+            logger.debug(f"[HISTORY] Skipping future timestamp: {time}")
+            continue
+
         # Convert value
         try:
             # Prices from keepa lib are already in dollars, BSR is integer
-            if is_price:
-                converted_value = float(value)
-            else:
-                converted_value = float(value)
+            converted_value = float(value)
+
+            # Gap #3: Skip negative prices (invalid data)
+            if is_price and converted_value < 0:
+                logger.debug(f"[HISTORY] Skipping negative price: {converted_value}")
+                continue
+
             result.append((time, converted_value))
         except (ValueError, TypeError):
             continue

@@ -604,10 +604,17 @@ def _extract_rating(array: List) -> Optional[float]:
         return None
 
 
-def _group_offers_by_condition(offers: List[Dict]) -> Dict[str, Dict[str, Any]]:
+def _group_offers_by_condition(
+    offers: List[Dict],
+    condition_filter: Optional[List[str]] = None
+) -> Dict[str, Dict[str, Any]]:
     """
     Group offers by condition (NEW, VERY_GOOD, GOOD, ACCEPTABLE).
     Extract minimum price per condition.
+
+    Args:
+        offers: List of Keepa offer dicts
+        condition_filter: If provided, only include these conditions (e.g., ['new', 'very_good', 'good'])
 
     Conditions (from Keepa):
     - 1 = NEW
@@ -618,6 +625,10 @@ def _group_offers_by_condition(offers: List[Dict]) -> Dict[str, Dict[str, Any]]:
     grouped = {}
 
     for condition_id, (condition_key, condition_label) in KEEPA_CONDITION_CODES.items():
+        # Filter by condition if specified
+        if condition_filter and condition_key not in condition_filter:
+            continue
+
         # Find all offers with this condition
         offers_for_condition = [
             o for o in offers

@@ -302,6 +302,109 @@ def test_multiple_amazon_offers():
 
 
 # ============================================================================
+# Tests - availabilityAmazon Fallback (Gap 2 Fix)
+# ============================================================================
+
+def test_availability_amazon_positive_no_offers():
+    """Test: availabilityAmazon >= 0 detects Amazon even when offers array is empty.
+
+    Gap 2 Fix: Products where offers[] is empty but Amazon sells should be detected.
+    availabilityAmazon >= 0 means Amazon has stock (value indicates delay code).
+    """
+    keepa_data = {
+        "asin": "0596517742",
+        "title": "Test Product",
+        "availabilityAmazon": 0,  # 0 = Amazon in stock
+        "offers": [],  # Empty offers (not retrieved or expired)
+    }
+
+    result = check_amazon_presence(keepa_data)
+
+    assert result["amazon_on_listing"] is True, "Should detect Amazon via availabilityAmazon"
+    assert result["amazon_buybox"] is False, "Cannot determine Buy Box without offers"
+
+
+def test_availability_amazon_delay_code():
+    """Test: availabilityAmazon > 0 (delay codes like 1-5 days) still means Amazon sells."""
+    keepa_data = {
+        "asin": "B0088PUEPK",
+        "title": "Test Product",
+        "availabilityAmazon": 3,  # Amazon ships in 3 days
+        "offers": [],
+    }
+
+    result = check_amazon_presence(keepa_data)
+
+    assert result["amazon_on_listing"] is True, "Delay code still means Amazon present"
+
+
+def test_availability_amazon_negative():
+    """Test: availabilityAmazon = -1 means Amazon NOT available."""
+    keepa_data = {
+        "asin": "B0088PUEPK",
+        "title": "Test Product",
+        "availabilityAmazon": -1,  # -1 = Not available
+        "offers": [],
+    }
+
+    result = check_amazon_presence(keepa_data)
+
+    assert result["amazon_on_listing"] is False, "-1 means Amazon not available"
+    assert result["amazon_buybox"] is False
+
+
+def test_availability_amazon_missing():
+    """Test: No availabilityAmazon field and no offers = no Amazon detected."""
+    keepa_data = {
+        "asin": "B0088PUEPK",
+        "title": "Test Product",
+        # No availabilityAmazon field
+        "offers": [],
+    }
+
+    result = check_amazon_presence(keepa_data)
+
+    assert result["amazon_on_listing"] is False, "No data = no Amazon"
+
+
+def test_availability_amazon_and_offers_both_present():
+    """Test: Both availabilityAmazon and offers present - should detect Amazon."""
+    keepa_data = {
+        "asin": "B0088PUEPK",
+        "title": "Test Product",
+        "availabilityAmazon": 0,  # Amazon available
+        "offers": [
+            {"sellerId": "ATVPDKIKX0DER", "isAmazon": True}
+        ],
+        "liveOffersOrder": [0]
+    }
+
+    result = check_amazon_presence(keepa_data)
+
+    assert result["amazon_on_listing"] is True, "Amazon detected via both methods"
+    assert result["amazon_buybox"] is True, "Buy Box from offers"
+
+
+def test_availability_amazon_positive_offers_say_no():
+    """Test: availabilityAmazon=0 but offers don't have isAmazon=True.
+
+    Edge case: availabilityAmazon should take precedence as it's more reliable.
+    """
+    keepa_data = {
+        "asin": "B0088PUEPK",
+        "title": "Test Product",
+        "availabilityAmazon": 0,  # Amazon available
+        "offers": [
+            {"sellerId": "A1QUAC68EAM09F", "isAmazon": False}  # Only 3rd party
+        ],
+    }
+
+    result = check_amazon_presence(keepa_data)
+
+    assert result["amazon_on_listing"] is True, "availabilityAmazon takes precedence"
+
+
+# ============================================================================
 # Performance / Edge Cases
 # ============================================================================
 

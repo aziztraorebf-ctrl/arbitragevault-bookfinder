@@ -91,15 +91,19 @@ class AnalysisResult(BaseModel):
     current_price: Optional[float] = Field(None, description="Current price from Keepa")
     current_bsr: Optional[int] = Field(None, description="Current sales rank")
 
-    # NEW: Pricing breakdown USED vs NEW
+    # Pricing breakdown by condition (new, very_good, good, acceptable)
     pricing: Dict[str, PricingDetail] = Field(
         default={},
-        description="Separated pricing for 'used' and 'new' conditions"
+        description="Pricing for each condition: new, very_good, good, acceptable"
     )
     roi: Dict[str, Any]
     velocity: Dict[str, Any]
 
-    # NEW: Advanced Scoring (0-100 scale)
+    # Amazon presence detection
+    amazon_on_listing: bool = Field(False, description="Amazon has any offer on this product")
+    amazon_buybox: bool = Field(False, description="Amazon currently owns the Buy Box")
+
+    # Advanced Scoring (0-100 scale)
     velocity_score: int = Field(..., ge=0, le=100, description="Velocity score 0-100")
     price_stability_score: int = Field(..., ge=0, le=100, description="Price stability score 0-100")
     confidence_score: int = Field(..., ge=0, le=100, description="Data confidence score 0-100")

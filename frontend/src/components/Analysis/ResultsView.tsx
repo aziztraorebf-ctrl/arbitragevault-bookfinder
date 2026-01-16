@@ -1,6 +1,28 @@
 import React, { useState, useMemo } from 'react'
-import { BarChart3, TrendingUp, TrendingDown, CheckCircle, XCircle, AlertTriangle, ArrowUpDown } from 'lucide-react'
-import type { AnalysisResults, AnalysisAPIResult } from '../../types'
+import { BarChart3, TrendingUp, TrendingDown, CheckCircle, XCircle, AlertTriangle, ArrowUpDown, ExternalLink, Store } from 'lucide-react'
+import type { AnalysisResults, AnalysisAPIResult, PricingDetail } from '../../types'
+
+// Helper: Get best USED pricing from very_good, good, acceptable
+// Returns the condition with lowest price that has positive ROI, or recommended
+const getBestUsedPricing = (pricing: AnalysisAPIResult['pricing']): { condition: string; detail: PricingDetail } | null => {
+  if (!pricing) return null
+
+  // Priority: very_good > good > acceptable (exclude 'new' from USED)
+  const usedConditions = ['very_good', 'good', 'acceptable'] as const
+
+  for (const condition of usedConditions) {
+    const detail = pricing[condition]
+    if (detail?.available && detail.current_price !== null) {
+      return { condition, detail }
+    }
+  }
+  return null
+}
+
+// Helper: Get best NEW pricing
+const getNewPricing = (pricing: AnalysisAPIResult['pricing']): PricingDetail | null => {
+  return pricing?.new?.available ? pricing.new : null
+}
 
 interface ResultsViewProps {
   results: AnalysisResults
@@ -73,21 +95,25 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
     }
   }
 
-  // ✅ PATTERN Context7: Defensive Programming avec optional chaining
+  // Defensive Programming: Check profitability from pricing data
   const getProfitabilityIcon = (result: AnalysisAPIResult) => {
-    // Early return si données manquantes
-    if (!result?.roi) {
-      return <XCircle className="w-5 h-5 text-gray-400" aria-label="Données manquantes" />
+    // Get best ROI from any condition
+    const newPrice = getNewPricing(result?.pricing)
+    const usedPricing = getBestUsedPricing(result?.pricing)
+    const bestRoi = Math.max(
+      newPrice?.roi_percentage ?? -Infinity,
+      usedPricing?.detail.roi_percentage ?? -Infinity
+    )
+
+    // If no pricing data available
+    if (bestRoi === -Infinity) {
+      return <XCircle className="w-5 h-5 text-gray-400" aria-label="Donnees manquantes" />
     }
 
-    if (result.roi.is_profitable) {
-      const roi = result.roi.roi_percentage != null 
-        ? parseFloat(result.roi.roi_percentage.toString()) 
-        : 0
-      if (roi >= 40) return <CheckCircle className="w-5 h-5 text-green-600" aria-label="Très rentable" />
-      if (roi >= 20) return <CheckCircle className="w-5 h-5 text-green-500" aria-label="Rentable" />
-      return <AlertTriangle className="w-5 h-5 text-yellow-500" aria-label="Borderline" />
-    }
+    // ROI-based profitability icon
+    if (bestRoi >= 40) return <CheckCircle className="w-5 h-5 text-green-600" aria-label="Tres rentable" />
+    if (bestRoi >= 20) return <CheckCircle className="w-5 h-5 text-green-500" aria-label="Rentable" />
+    if (bestRoi >= 0) return <AlertTriangle className="w-5 h-5 text-yellow-500" aria-label="Borderline" />
     return <XCircle className="w-5 h-5 text-red-500" aria-label="Non rentable" />
   }
 
@@ -143,9 +169,17 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
             </div>
             <div className="text-center p-3 bg-blue-50 rounded-lg">
               <div className="text-xl font-bold text-blue-600">
-                {/* ✅ Optional chaining dans filter */}
-                {Array.isArray(results.successful) 
-                  ? results.successful.filter(r => r?.roi?.is_profitable === true).length 
+                {/* Count products with positive ROI */}
+                {Array.isArray(results.successful)
+                  ? results.successful.filter(r => {
+                      const newPrice = getNewPricing(r?.pricing)
+                      const usedPricing = getBestUsedPricing(r?.pricing)
+                      const bestRoi = Math.max(
+                        newPrice?.roi_percentage ?? -Infinity,
+                        usedPricing?.detail.roi_percentage ?? -Infinity
+                      )
+                      return bestRoi >= 20
+                    }).length
                   : 0}
               </div>
               <div className="text-sm text-blue-700">Rentables</div>
@@ -254,14 +288,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
                     BSR
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    💚 Prix USED
+                    Amazon
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Prix NEW
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Prix USED
                   </th>
                   <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('roi_percentage')}
                   >
                     <div className="flex items-center">
-                      ROI USED
+                      ROI
                       <ArrowUpDown className="w-3 h-3 ml-1" />
                     </div>
                   </th>
@@ -286,6 +326,9 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Résumé
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Liens
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -304,36 +347,79 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                       {result?.current_bsr ? `#${result.current_bsr.toLocaleString()}` : 'N/A'}
                     </td>
-                    {/* Prix USED Column */}
+                    {/* Amazon Column */}
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {result?.pricing?.used?.available && result.pricing.used.current_price !== null ? (
-                        <span className="font-semibold text-blue-700">
-                          ${result.pricing.used.current_price.toFixed(2)}
+                      {result?.amazon_on_listing ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                          <Store className="w-3 h-3 mr-1" />
+                          OUI
                         </span>
                       ) : (
-                        <span className="text-gray-400 text-xs">Non dispo</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                          NON
+                        </span>
                       )}
                     </td>
-                    {/* ROI USED Column */}
+                    {/* Prix NEW Column */}
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {result?.pricing?.used?.roi_percentage != null ? (
-                        <span className={`font-medium ${
-                          Number(result.pricing.used.roi_percentage) >= 30 ? 'text-green-600' :
-                          Number(result.pricing.used.roi_percentage) >= 15 ? 'text-yellow-600' :
-                          'text-red-600'
-                        }`}>
-                          {formatROI(Number(result.pricing.used.roi_percentage))}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
+                      {(() => {
+                        const newPrice = getNewPricing(result?.pricing)
+                        return newPrice?.current_price !== null && newPrice?.current_price !== undefined ? (
+                          <span className="font-semibold text-gray-700">
+                            ${newPrice.current_price.toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )
+                      })()}
+                    </td>
+                    {/* Prix USED Column (best of very_good, good, acceptable) */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {(() => {
+                        const usedPricing = getBestUsedPricing(result?.pricing)
+                        return usedPricing ? (
+                          <div>
+                            <span className="font-semibold text-blue-700">
+                              ${usedPricing.detail.current_price?.toFixed(2)}
+                            </span>
+                            <span className="text-xs text-gray-500 ml-1">
+                              ({usedPricing.condition.replace('_', ' ')})
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )
+                      })()}
+                    </td>
+                    {/* ROI Column (best ROI from all conditions) */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {(() => {
+                        // Get best ROI from new or used conditions
+                        const newPrice = getNewPricing(result?.pricing)
+                        const usedPricing = getBestUsedPricing(result?.pricing)
+                        const bestRoi = Math.max(
+                          newPrice?.roi_percentage ?? -Infinity,
+                          usedPricing?.detail.roi_percentage ?? -Infinity
+                        )
+                        return bestRoi > -Infinity ? (
+                          <span className={`font-medium ${
+                            bestRoi >= 30 ? 'text-green-600' :
+                            bestRoi >= 15 ? 'text-yellow-600' :
+                            'text-red-600'
+                          }`}>
+                            {formatROI(bestRoi)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex items-center">
-                        {/* ✅ Optional chaining */}
-                        {getVelocityIcon(result?.velocity?.velocity_tier ?? 'unknown')}
+                        {/* Velocity tier/category */}
+                        {getVelocityIcon(result?.velocity?.velocity_tier ?? result?.velocity?.velocity_category ?? 'unknown')}
                         <span className="ml-2 capitalize">
-                          {result?.velocity?.velocity_tier?.replace('_', ' ') ?? 'N/A'}
+                          {(result?.velocity?.velocity_tier ?? result?.velocity?.velocity_category)?.replace('_', ' ') ?? 'N/A'}
                         </span>
                       </div>
                     </td>
@@ -344,6 +430,39 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
                       {result?.readable_summary ?? 'Aucun résumé disponible'}
+                    </td>
+                    {/* Amazon and Seller Central Links */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {(result?.amazon_url || result?.seller_central_url) ? (
+                        <div className="flex gap-3">
+                          {result.amazon_url && (
+                            <a
+                              href={result.amazon_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center text-blue-600 hover:text-blue-800 hover:underline"
+                              title="Voir sur Amazon"
+                            >
+                              <ExternalLink className="w-3 h-3 mr-1" />
+                              Amazon
+                            </a>
+                          )}
+                          {result.seller_central_url && (
+                            <a
+                              href={result.seller_central_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center text-orange-600 hover:text-orange-800 hover:underline"
+                              title="Verifier restrictions de vente"
+                            >
+                              <ExternalLink className="w-3 h-3 mr-1" />
+                              Restrictions
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -373,9 +492,16 @@ const ResultsView: React.FC<ResultsViewProps> = ({ results, onExportReady }) => 
             {JSON.stringify({
               successful_count: Array.isArray(results.successful) ? results.successful.length : 0,
               failed_count: Array.isArray(results.failed) ? results.failed.length : 0,
-              // ✅ Optional chaining dans debug info
-              profitable_count: Array.isArray(results.successful) 
-                ? results.successful.filter(r => r?.roi?.is_profitable === true).length 
+              profitable_count: Array.isArray(results.successful)
+                ? results.successful.filter(r => {
+                    const newPrice = getNewPricing(r?.pricing)
+                    const usedPricing = getBestUsedPricing(r?.pricing)
+                    const bestRoi = Math.max(
+                      newPrice?.roi_percentage ?? -Infinity,
+                      usedPricing?.detail.roi_percentage ?? -Infinity
+                    )
+                    return bestRoi >= 20
+                  }).length
                 : 0,
               sort: { field: sortField, direction: sortDirection }
             }, null, 2)}

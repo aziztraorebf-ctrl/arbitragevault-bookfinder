@@ -107,6 +107,10 @@ async def analyze_product(
             roi=unified_product.get('velocity', {}),
             velocity=unified_product.get('velocity', {}),
 
+            # Amazon presence detection
+            amazon_on_listing=unified_product.get('amazon_on_listing', False),
+            amazon_buybox=unified_product.get('amazon_buybox', False),
+
             # Advanced scoring (0-100 scale)
             velocity_score=unified_product.get('velocity_score', 0),
             price_stability_score=unified_product.get('price_stability_score', 0),
@@ -138,6 +142,10 @@ async def analyze_product(
 
             roi={"error": str(e)},
             velocity={"error": str(e)},
+
+            # Amazon presence (default to False on error)
+            amazon_on_listing=False,
+            amazon_buybox=False,
 
             # Error state for advanced scoring
             velocity_score=0,

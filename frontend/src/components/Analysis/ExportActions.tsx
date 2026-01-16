@@ -1,6 +1,22 @@
 import React, { useState } from 'react'
 import { FileOutput, Download, Package, RefreshCw, CheckCircle } from 'lucide-react'
-import type { AnalysisResults } from '../../types'
+import type { AnalysisResults, AnalysisAPIResult } from '../../types'
+
+// Helper: Get best ROI from all conditions
+const getBestRoi = (pricing: AnalysisAPIResult['pricing']): number | null => {
+  if (!pricing) return null
+  const conditions = ['new', 'very_good', 'good', 'acceptable'] as const
+  let bestRoi: number | null = null
+  for (const condition of conditions) {
+    const detail = pricing[condition]
+    if (detail?.roi_percentage !== null && detail?.roi_percentage !== undefined) {
+      if (bestRoi === null || detail.roi_percentage > bestRoi) {
+        bestRoi = detail.roi_percentage
+      }
+    }
+  }
+  return bestRoi
+}
 
 interface ExportActionsProps {
   results: AnalysisResults
@@ -20,16 +36,18 @@ const ExportActions: React.FC<ExportActionsProps> = ({ results, onNewAnalysis })
     setIsExporting(true)
 
     try {
-      // Préparer les données CSV
+      // Preparer les donnees CSV
       const headers = [
         'ASIN',
         'Title',
-        'ROI_Percentage',
-        'Is_Profitable',
-        'Net_Profit',
-        'Profit_Tier',
+        'BSR',
+        'Amazon_Present',
+        'Price_New',
+        'Price_VeryGood',
+        'Price_Good',
+        'Best_ROI',
         'Velocity_Score',
-        'Velocity_Tier',
+        'Velocity_Category',
         'Overall_Rating',
         'Recommendation',
         'Risk_Factors',
@@ -38,20 +56,25 @@ const ExportActions: React.FC<ExportActionsProps> = ({ results, onNewAnalysis })
 
       const csvRows = [
         headers.join(','),
-        ...results.successful.map(result => [
-          result.asin,
-          `"${(result.title || '').replace(/"/g, '""')}"`, // Escape quotes
-          result.roi.roi_percentage,
-          result.roi.is_profitable ? 'TRUE' : 'FALSE',
-          `"${result.roi.net_profit}"`,
-          result.roi.profit_tier,
-          result.velocity.velocity_score,
-          result.velocity.velocity_tier,
-          result.overall_rating,
-          result.recommendation,
-          `"${result.risk_factors.join('; ')}"`,
-          `"${result.readable_summary.replace(/"/g, '""')}"`
-        ].join(','))
+        ...results.successful.map(result => {
+          const bestRoi = getBestRoi(result?.pricing)
+          return [
+            result.asin,
+            `"${(result.title || '').replace(/"/g, '""')}"`,
+            result.current_bsr ?? '',
+            result.amazon_on_listing ? 'TRUE' : 'FALSE',
+            result.pricing?.new?.current_price ?? '',
+            result.pricing?.very_good?.current_price ?? '',
+            result.pricing?.good?.current_price ?? '',
+            bestRoi ?? '',
+            result.velocity?.velocity_score ?? '',
+            result.velocity?.velocity_category ?? result.velocity?.velocity_tier ?? '',
+            result.overall_rating,
+            result.recommendation,
+            `"${result.risk_factors?.join('; ') ?? ''}"`,
+            `"${(result.readable_summary || '').replace(/"/g, '""')}"`
+          ].join(',')
+        })
       ]
 
       // Créer et télécharger le fichier
@@ -79,9 +102,11 @@ const ExportActions: React.FC<ExportActionsProps> = ({ results, onNewAnalysis })
   }
 
   const getProfitableCount = () => {
-    console.log("CSV parsed:", results);
     const successful = Array.isArray(results.successful) ? results.successful : [];
-    return successful.filter(r => r.roi.is_profitable).length
+    return successful.filter(r => {
+      const bestRoi = getBestRoi(r?.pricing)
+      return bestRoi !== null && bestRoi >= 20
+    }).length
   }
 
   const getExcellentCount = () => {
@@ -91,9 +116,11 @@ const ExportActions: React.FC<ExportActionsProps> = ({ results, onNewAnalysis })
 
   const getAverageROI = () => {
     const successful = Array.isArray(results.successful) ? results.successful : [];
-    if (successful.length === 0) return 0
-    const total = successful.reduce((sum, r) => sum + parseFloat(r.roi.roi_percentage.toString()), 0)
-    return (total / successful.length).toFixed(1)
+    if (successful.length === 0) return '0'
+    const rois = successful.map(r => getBestRoi(r?.pricing)).filter((roi): roi is number => roi !== null)
+    if (rois.length === 0) return '0'
+    const total = rois.reduce((sum, roi) => sum + roi, 0)
+    return (total / rois.length).toFixed(1)
   }
 
   return (

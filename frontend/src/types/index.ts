@@ -118,59 +118,53 @@ export interface ConfiguredAnalysis {
   conditionFilter?: string[]  // Filter by condition: 'new', 'very_good', 'good', 'acceptable'
 }
 
+// Pricing detail for a specific condition
+export interface PricingDetail {
+  current_price: number | null
+  target_buy_price: number
+  roi_percentage: number | null
+  net_profit: number | null
+  available: boolean
+  recommended: boolean
+}
+
 // API Response Types (from backend /api/v1/keepa/ingest)
 export interface AnalysisAPIResult {
   asin: string
   title: string
   current_bsr?: number | null
   roi: {
-    roi_percentage: number
-    is_profitable: boolean
-    net_profit: string
-    profit_tier: string
+    roi_percentage?: number
+    is_profitable?: boolean
+    net_profit?: string
+    profit_tier?: string
+    velocity_score?: number
+    velocity_category?: string
+    avg_daily_sales?: number
+    current_bsr?: number
   }
   velocity: {
-    velocity_score: number
-    velocity_tier: string
+    velocity_score?: number
+    velocity_tier?: string
+    velocity_category?: string
+    avg_daily_sales?: number
+    current_bsr?: number
   }
-  // Pricing: Both legacy (used/new) and Phase 5 (by_condition)
+  // Pricing by condition: new, very_good, good, acceptable
   pricing?: {
-    // Legacy: USED vs NEW breakdown
-    used?: {
-      current_price: number | null
-      target_buy_price: number
-      roi_percentage: string | null
-      net_profit: string | null
-      available: boolean
-      recommended: boolean
-    }
-    new?: {
-      current_price: number | null
-      target_buy_price: number
-      roi_percentage: string | null
-      net_profit: string | null
-      available: boolean
-      recommended: boolean
-    }
-    // Phase 5: Unified pricing by condition
-    by_condition?: Record<string, {
-      market_price: number
-      roi_pct: number
-      roi_value: number
-      seller_count: number
-      fba_count: number
-      is_recommended: boolean
-      net_revenue: number
-      amazon_fees: number
-    }>
-    recommended_condition?: string
-    source_price?: number
+    new?: PricingDetail
+    very_good?: PricingDetail
+    good?: PricingDetail
+    acceptable?: PricingDetail
   }
+  // Amazon presence detection
+  amazon_on_listing?: boolean
+  amazon_buybox?: boolean
   overall_rating: string
   readable_summary: string
   recommendation: string
   risk_factors: string[]
-  // Seller Central Links (Phase 10)
+  // Seller Central Links
   amazon_url?: string
   seller_central_url?: string
 }

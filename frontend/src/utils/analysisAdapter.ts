@@ -23,10 +23,13 @@ export function analysisResultToProductScore(
   analysis: AnalysisResult,
   rank: number
 ): ProductScoreWithBSR {
-  // Extract ROI percentage
-  const roiPct = analysis.roi && 'roi_percentage' in analysis.roi
-    ? parseFloat(analysis.roi.roi_percentage)
-    : 0
+  // Extract ROI percentage from pricing (NOT from analysis.roi which contains velocity data)
+  // Priority: new > very_good > good > acceptable
+  const roiPct = analysis.pricing?.new?.roi_percentage
+    ?? analysis.pricing?.very_good?.roi_percentage
+    ?? analysis.pricing?.good?.roi_percentage
+    ?? analysis.pricing?.acceptable?.roi_percentage
+    ?? 0
 
   // Calculate score basé sur overall_rating
   const ratingScores: Record<string, number> = {

@@ -40,25 +40,40 @@ def check_amazon_presence(keepa_data: Optional[Dict[str, Any]]) -> Dict[str, boo
         return result
 
     try:
-        # Check if offers data exists
+        # Method 0: Check availabilityAmazon field (most reliable, always present)
+        # From Keepa docs: availabilityAmazon >= 0 means Amazon has stock
+        # Values: -1 = not available, 0+ = available (value indicates delay code)
+        availability_amazon = keepa_data.get("availabilityAmazon")
+        if availability_amazon is not None and availability_amazon >= 0:
+            result["amazon_on_listing"] = True
+            logger.debug(
+                "Amazon detected via availabilityAmazon",
+                asin=keepa_data.get("asin"),
+                availability_amazon=availability_amazon,
+            )
+
+        # Check if offers data exists for more detailed analysis
         offers = keepa_data.get("offers")
         if not offers or not isinstance(offers, list):
             logger.debug(
-                "No offers data in Keepa response",
+                "No offers data in Keepa response, using availabilityAmazon only",
                 has_offers=bool(offers),
                 asin=keepa_data.get("asin"),
+                amazon_detected=result["amazon_on_listing"],
             )
             return result
 
-        # Check for any Amazon offer (amazon_on_listing)
+        # Method 1: Check offers[].isAmazon for confirmation
+        # This confirms availabilityAmazon and can detect Amazon even if availabilityAmazon is missing
         for offer in offers:
             if isinstance(offer, dict) and offer.get("isAmazon") is True:
-                result["amazon_on_listing"] = True
-                logger.debug(
-                    "Amazon detected on listing",
-                    asin=keepa_data.get("asin"),
-                    seller_id=offer.get("sellerId"),
-                )
+                if not result["amazon_on_listing"]:
+                    result["amazon_on_listing"] = True
+                    logger.debug(
+                        "Amazon detected via offers[].isAmazon",
+                        asin=keepa_data.get("asin"),
+                        seller_id=offer.get("sellerId"),
+                    )
                 break
 
         # Check if Amazon owns Buy Box (amazon_buybox)

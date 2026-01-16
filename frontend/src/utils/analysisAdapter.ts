@@ -74,15 +74,22 @@ export function analysisResultToProductScore(
       stability_score: analysis.price_stability_score
     },
 
-    // Amazon check fields (defaults - Keepa doesn't provide this)
-    amazon_on_listing: false,
-    amazon_buybox: false,
+    // Amazon check fields (from API response)
+    amazon_on_listing: (analysis as any).amazon_on_listing ?? false,
+    amazon_buybox: (analysis as any).amazon_buybox ?? false,
 
-    // Market analysis
-    market_sell_price: analysis.current_price || undefined,
-    market_buy_price: analysis.pricing?.used?.current_price || undefined,
-    current_roi_pct: analysis.pricing?.used?.roi_percentage || roiPct,
-    max_buy_price_35pct: analysis.pricing?.used?.target_buy_price || undefined,
+    // Market analysis - NEW price is sell price, USED (best of very_good/good/acceptable) is buy price
+    market_sell_price: analysis.pricing?.new?.current_price || analysis.current_price || undefined,
+    market_buy_price: analysis.pricing?.very_good?.current_price
+      || analysis.pricing?.good?.current_price
+      || analysis.pricing?.acceptable?.current_price
+      || undefined,
+    current_roi_pct: analysis.pricing?.new?.roi_percentage
+      || analysis.pricing?.very_good?.roi_percentage
+      || roiPct,
+    max_buy_price_35pct: analysis.pricing?.new?.target_buy_price
+      || analysis.pricing?.very_good?.target_buy_price
+      || undefined,
     velocity_breakdown: velocityBreakdown,
 
     // Timestamp (pas disponible directement, on met undefined)

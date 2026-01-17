@@ -3,6 +3,13 @@ SQLAlchemy models for configuration management.
 
 This module defines the database tables for storing business configuration
 and category-specific overrides.
+
+NOTE: These models are LEGACY (Phase 1B, 2026-01-17).
+- ConfigService was replaced by BusinessConfigService
+- These models may still be referenced by Alembic migrations
+- Tables may exist in production DB
+- Consider dropping tables in a future migration if confirmed unused
+- See: docs/plans/2026-01-17-phase-1b-unify-config-services.md
 """
 
 from sqlalchemy import Column, String, JSON, Boolean, DateTime, ForeignKey, Integer

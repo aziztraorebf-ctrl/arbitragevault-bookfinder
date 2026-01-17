@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db_session
 from app.core.guards import require_tokens
 from app.services.keepa_service import KeepaService, get_keepa_service
-from app.services.config_service import ConfigService
+from app.services.config_adapter import get_config_adapter
 from app.services.keepa_product_finder import KeepaProductFinderService, estimate_discovery_cost
 from app.services.niche_templates import discover_curated_niches
 from app.core.config import settings
@@ -160,8 +160,8 @@ async def discover_niches_auto(
         await check_budget_before_discovery(count=count, keepa=keepa)
 
         # Initialize services - Use injected keepa instance from @require_tokens decorator
-        config_service = ConfigService(db)
-        finder_service = KeepaProductFinderService(keepa, config_service, db)
+        config_adapter = get_config_adapter()
+        finder_service = KeepaProductFinderService(keepa, config_adapter, db)
 
         # Log token balance BEFORE operation
         balance_before = await keepa.check_api_balance()

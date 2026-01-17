@@ -227,8 +227,55 @@ def _get_profit_tier(roi_percentage: Decimal, config: Optional[Dict[str, Any]] =
     elif roi_pct >= good:
         return "good"
     elif roi_pct >= fair:
-        return "fair" 
+        return "fair"
     elif roi_pct > 0:
         return "poor"
     else:
         return "loss"
+
+
+def calculate_fees_from_unified_config(
+    sell_price: Decimal,
+    weight_lbs: Decimal,
+    fee_config: "FeeConfigUnified",
+    category: str = "books"
+) -> Dict[str, Decimal]:
+    """
+    Calculate fees using unified FeeConfigUnified type.
+
+    This is a convenience wrapper around calculate_total_fees that accepts
+    the unified config type from Phase 1C.
+
+    Args:
+        sell_price: Product selling price
+        weight_lbs: Product weight in pounds
+        fee_config: Unified fee configuration
+        category: Product category (for logging)
+
+    Returns:
+        Dict with all fee components and total
+    """
+    # Import here to avoid circular imports
+    from app.schemas.config_types import FeeConfigUnified
+
+    # Calculate individual fees using unified config values
+    referral_fee = sell_price * (fee_config.referral_fee_pct / Decimal("100"))
+    closing_fee = fee_config.closing_fee
+    fba_fee = fee_config.fba_fee_base + (weight_lbs * fee_config.fba_fee_per_lb)
+    inbound_shipping = fee_config.inbound_shipping
+    prep_fee = fee_config.prep_fee
+    # Unified config does not have tax_pct, default to 0
+    tax_amount = Decimal("0")
+
+    total_fees = referral_fee + closing_fee + fba_fee + inbound_shipping + prep_fee + tax_amount
+
+    return {
+        "referral_fee": referral_fee,
+        "closing_fee": closing_fee,
+        "fba_fee": fba_fee,
+        "inbound_shipping": inbound_shipping,
+        "prep_fee": prep_fee,
+        "tax_amount": tax_amount,
+        "total_fees": total_fees,
+        "category_used": category
+    }

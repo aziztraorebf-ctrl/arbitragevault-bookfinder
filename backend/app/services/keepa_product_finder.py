@@ -1277,18 +1277,47 @@ class KeepaProductFinderService:
             )
             return scored_products[:max_results]
 
-    def _calculate_fees(self, price: Decimal, fees_config) -> Decimal:
-        """Calculer fees totaux."""
-        referral_fee = price * (fees_config.referral_fee_percent / Decimal("100"))
-        fba_fee = fees_config.fba_base_fee + fees_config.fba_per_pound
-        total = (
-            referral_fee +
-            fba_fee +
-            fees_config.closing_fee +
-            fees_config.prep_fee +
-            fees_config.shipping_cost
+    def _calculate_fees(self, price: Decimal, fees_config, weight_lbs: Decimal = Decimal("1.0")) -> Decimal:
+        """
+        Calculate total fees using canonical function.
+
+        Uses fees_config.calculate_fees_from_unified_config for consistency
+        with the rest of the application.
+
+        Args:
+            price: Product selling price
+            fees_config: Fee configuration (dict, FeeConfigUnified, or legacy object)
+            weight_lbs: Product weight in pounds (default 1.0)
+
+        Returns:
+            Total fees as Decimal
+        """
+        from app.core.fees_config import calculate_fees_from_unified_config
+        from app.schemas.config_types import fee_schema_to_unified, FeeConfigUnified
+
+        # Convert legacy config to unified type if needed
+        if isinstance(fees_config, dict):
+            unified_config = fee_schema_to_unified(fees_config)
+        elif isinstance(fees_config, FeeConfigUnified):
+            unified_config = fees_config
+        else:
+            # Legacy config object - convert field names
+            unified_config = FeeConfigUnified(
+                referral_fee_pct=getattr(fees_config, 'referral_fee_percent', getattr(fees_config, 'referral_fee_pct', Decimal("15.0"))),
+                closing_fee=getattr(fees_config, 'closing_fee', Decimal("1.80")),
+                fba_fee_base=getattr(fees_config, 'fba_base_fee', getattr(fees_config, 'fba_fee_base', Decimal("2.50"))),
+                fba_fee_per_lb=getattr(fees_config, 'fba_per_pound', getattr(fees_config, 'fba_fee_per_lb', Decimal("0.40"))),
+                inbound_shipping=getattr(fees_config, 'shipping_cost', getattr(fees_config, 'inbound_shipping', Decimal("0.40"))),
+                prep_fee=getattr(fees_config, 'prep_fee', Decimal("0.20")),
+            )
+
+        result = calculate_fees_from_unified_config(
+            sell_price=price,
+            weight_lbs=weight_lbs,
+            fee_config=unified_config
         )
-        return total
+
+        return result["total_fees"]
 
     def _calculate_velocity_score(self, bsr: int, tiers: list) -> float:
         """

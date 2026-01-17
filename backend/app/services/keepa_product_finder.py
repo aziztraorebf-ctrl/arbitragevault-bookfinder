@@ -24,7 +24,7 @@ import httpx
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.config_service import ConfigService
+from app.services.config_adapter import ConfigServiceAdapter
 from app.services.keepa_service import KeepaService, ENDPOINT_COSTS
 from app.services.cache_service import CacheService
 from app.schemas.config import CategoryConfig
@@ -119,7 +119,7 @@ class KeepaProductFinderService:
     def __init__(
         self,
         keepa_service: KeepaService,
-        config_service: ConfigService,
+        config_service: ConfigServiceAdapter,
         db: Optional[Union[Session, AsyncSession]] = None
     ):
         """

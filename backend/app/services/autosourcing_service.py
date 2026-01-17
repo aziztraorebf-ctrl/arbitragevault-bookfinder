@@ -20,7 +20,7 @@ from app.models.autosourcing import (
 from app.services.keepa_service import KeepaService
 from app.services.business_config_service import BusinessConfigService
 from app.services.keepa_product_finder import KeepaProductFinderService
-from app.services.config_service import ConfigService
+from app.services.config_adapter import get_config_adapter
 from app.core.calculations import (
     calculate_roi_metrics,
     compute_advanced_velocity_score,
@@ -51,10 +51,10 @@ class AutoSourcingService:
         self.keepa_service = keepa_service
         self.business_config = BusinessConfigService()
         # Phase 7: Use KeepaProductFinderService (REST API) instead of keepa lib
-        config_service = ConfigService(db_session)
+        config_adapter = get_config_adapter()
         self.product_finder = KeepaProductFinderService(
             keepa_service=keepa_service,
-            config_service=config_service,
+            config_service=config_adapter,
             db=db_session
         )
 

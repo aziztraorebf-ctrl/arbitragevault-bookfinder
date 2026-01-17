@@ -18,7 +18,7 @@ from app.models.niche import (
     NicheExportData
 )
 from app.services.niche_discovery_service import NicheDiscoveryService
-from app.services.keepa_service_factory import get_keepa_service
+from app.services.keepa_service import get_keepa_service, KeepaService
 from app.core.auth import get_current_user
 from app.models.user import User
 
@@ -27,9 +27,9 @@ router = APIRouter(prefix="/api/niche-discovery", tags=["niche-discovery"])
 logger = logging.getLogger(__name__)
 
 
-def get_niche_discovery_service() -> NicheDiscoveryService:
+async def get_niche_discovery_service() -> NicheDiscoveryService:
     """Dependency injection pour NicheDiscoveryService."""
-    keepa_service = get_keepa_service()
+    keepa_service = await get_keepa_service()
     return NicheDiscoveryService(keepa_service)
 
 

@@ -14,7 +14,7 @@ Last Updated: 2025-10-15
 import pytest
 from datetime import datetime
 from app.utils.keepa_utils import keepa_to_datetime, datetime_to_keepa
-from app.utils.keepa_constants import KEEPA_TIME_OFFSET_MINUTES
+from app.services.keepa_constants import KEEPA_TIME_OFFSET_MINUTES
 
 
 def test_keepa_time_conversion_official_example():
@@ -175,7 +175,7 @@ def test_keepa_constants_consistency():
     """
     Verify that constants are correctly defined.
     """
-    from app.utils.keepa_constants import (
+    from app.services.keepa_constants import (
         KEEPA_TIME_OFFSET_MINUTES,
         KEEPA_NULL_VALUE
     )

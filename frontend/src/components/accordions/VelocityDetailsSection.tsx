@@ -6,8 +6,8 @@
 import type { AccordionSectionProps } from './types'
 
 export function VelocityDetailsSection({ product }: AccordionSectionProps) {
-  // Defensive extraction
-  const velocityScore = product.raw_metrics?.velocity_score ?? 0
+  // Defensive extraction (compatible ProductScore et DisplayableProduct)
+  const velocityScore = ('raw_metrics' in product ? product.raw_metrics?.velocity_score : product.velocity_score) ?? 0
   const breakdown = product.velocity_breakdown
 
   // Extraction des données velocity avec fallbacks

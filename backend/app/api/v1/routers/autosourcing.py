@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db_session
 from app.services.autosourcing_service import AutoSourcingService
-from app.services.keepa_service import KeepaService
+from app.services.keepa_service import KeepaService, get_keepa_service
 from app.services.autosourcing_cost_estimator import AutoSourcingCostEstimator
 from app.services.autosourcing_validator import AutoSourcingValidator
 from app.models.autosourcing import JobStatus, ActionStatus
@@ -141,17 +141,11 @@ class OpportunityOfDayResponse(BaseModel):
 # DEPENDENCY INJECTION
 # ============================================================================
 
-async def get_keepa_service() -> KeepaService:
-    """Dependency to get Keepa service."""
-    settings = get_settings()
-    return KeepaService(api_key=settings.keepa_api_key)
-
 async def get_autosourcing_service(
     db: AsyncSession = Depends(get_db_session)
 ) -> AutoSourcingService:
     """Dependency to get AutoSourcing service."""
-    settings = get_settings()
-    keepa_service = KeepaService(api_key=settings.keepa_api_key)
+    keepa_service = await get_keepa_service()
     return AutoSourcingService(db, keepa_service)
 
 # ============================================================================

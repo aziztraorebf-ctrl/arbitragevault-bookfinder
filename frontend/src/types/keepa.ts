@@ -63,6 +63,10 @@ export interface AnalysisResult {
   pricing?: {
     used?: PricingDetail;
     new?: PricingDetail;
+    // Condition-specific pricing (direct access)
+    very_good?: PricingDetail;
+    good?: PricingDetail;
+    acceptable?: PricingDetail;
     // Phase 5: Unified pricing by condition
     by_condition?: Record<string, {
       market_price: number;

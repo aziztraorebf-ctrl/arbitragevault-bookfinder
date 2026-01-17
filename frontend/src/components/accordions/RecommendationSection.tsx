@@ -6,9 +6,9 @@
 import type { AccordionSectionProps } from './types'
 
 export function RecommendationSection({ product }: AccordionSectionProps) {
-  // Extraction des métriques
+  // Extraction des metriques (compatible ProductScore et DisplayableProduct)
   const roi = product.current_roi_pct ?? 0
-  const velocityScore = product.raw_metrics?.velocity_score ?? 0
+  const velocityScore = ('raw_metrics' in product ? product.raw_metrics?.velocity_score : product.velocity_score) ?? 0
   const amazonOnListing = product.amazon_on_listing
   const amazonBuybox = product.amazon_buybox
   const maxBuy35 = product.max_buy_price_35pct ?? null

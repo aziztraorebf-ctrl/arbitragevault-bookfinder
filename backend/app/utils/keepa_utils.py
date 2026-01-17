@@ -299,7 +299,7 @@ def keepa_to_datetime(keepa_time: Optional[int]) -> Optional['datetime']:
         For seconds: (keepaTime + 21564000) × 60."
     """
     from datetime import datetime
-    from app.utils.keepa_constants import KEEPA_TIME_OFFSET_MINUTES, KEEPA_NULL_VALUE
+    from app.services.keepa_constants import KEEPA_TIME_OFFSET_MINUTES, KEEPA_NULL_VALUE
 
     if keepa_time is None or keepa_time == KEEPA_NULL_VALUE:
         return None
@@ -335,7 +335,7 @@ def datetime_to_keepa(dt: 'datetime') -> int:
         Always pass UTC datetime objects.
     """
     from datetime import timezone
-    from app.utils.keepa_constants import KEEPA_TIME_OFFSET_MINUTES
+    from app.services.keepa_constants import KEEPA_TIME_OFFSET_MINUTES
 
     # Ensure UTC timestamp (avoid local timezone conversion)
     if dt.tzinfo is None:

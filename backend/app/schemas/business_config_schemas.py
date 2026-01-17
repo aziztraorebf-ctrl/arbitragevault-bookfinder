@@ -1,5 +1,8 @@
 """
 Pydantic schemas for Business Configuration API.
+
+Phase 1C: Uses unified config types from config_types.py with backward-compatible
+field name aliases (target_pct_default -> target_pct, min_for_buy -> min_acceptable).
 """
 
 from datetime import datetime
@@ -7,14 +10,33 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Any, Union
 from pydantic import BaseModel, Field, validator, root_validator
 
+# Phase 1C: Import unified config types
+from app.schemas.config_types import (
+    ROIConfigUnified,
+    FeeConfigUnified,
+    VelocityConfigUnified,
+)
 
-class RoiConfigSchema(BaseModel):
-    """ROI configuration parameters."""
-    target_pct_default: float = Field(30.0, ge=0, le=200, description="Default ROI target percentage")
-    min_for_buy: float = Field(15.0, ge=0, le=100, description="Minimum ROI for BUY recommendation")
-    excellent_threshold: float = Field(50.0, ge=0, le=200, description="ROI threshold for excellent tier")
-    good_threshold: float = Field(30.0, ge=0, le=200, description="ROI threshold for good tier")
-    fair_threshold: float = Field(15.0, ge=0, le=200, description="ROI threshold for fair tier")
+
+# LEGACY WRAPPER: Maintains backward compatibility with old field names
+# The unified types use different field names, so we create wrapper classes
+# that expose the legacy field names for existing code that depends on them.
+class RoiConfigSchema(ROIConfigUnified):
+    """ROI configuration parameters.
+
+    Phase 1C: Inherits from ROIConfigUnified with field aliases for backward compatibility.
+    Legacy field names (target_pct_default, min_for_buy) map to unified names.
+    """
+
+    @property
+    def target_pct_default(self) -> float:
+        """Legacy alias for target_pct."""
+        return float(self.target_pct)
+
+    @property
+    def min_for_buy(self) -> float:
+        """Legacy alias for min_acceptable."""
+        return float(self.min_acceptable)
 
 
 class CombinedScoreConfigSchema(BaseModel):
@@ -31,14 +53,14 @@ class CombinedScoreConfigSchema(BaseModel):
         return v
 
 
-class FeeConfigItemSchema(BaseModel):
-    """Fee configuration for a specific category."""
-    referral_fee_pct: float = Field(15.0, ge=0, le=50, description="Referral fee percentage")
-    closing_fee: float = Field(1.80, ge=0, le=10, description="Fixed closing fee")
-    fba_fee_base: float = Field(2.50, ge=0, le=20, description="Base FBA fee")
-    fba_fee_per_lb: float = Field(0.40, ge=0, le=5, description="FBA fee per pound")
-    inbound_shipping: float = Field(0.40, ge=0, le=5, description="Inbound shipping cost")
-    prep_fee: float = Field(0.20, ge=0, le=5, description="Prep fee per item")
+# LEGACY WRAPPER: Maintains backward compatibility
+# FeeConfigUnified has the same field names, so we can use direct inheritance.
+class FeeConfigItemSchema(FeeConfigUnified):
+    """Fee configuration for a specific category.
+
+    Phase 1C: Inherits from FeeConfigUnified. Field names are identical.
+    """
+    pass
 
 
 class FeesConfigSchema(BaseModel):
@@ -49,22 +71,15 @@ class FeesConfigSchema(BaseModel):
     default: Optional[FeeConfigItemSchema] = None
 
 
-class VelocityConfigSchema(BaseModel):
-    """Velocity scoring configuration."""
-    fast_threshold: float = Field(80.0, ge=0, le=100, description="Threshold for fast velocity tier")
-    medium_threshold: float = Field(60.0, ge=0, le=100, description="Threshold for medium velocity tier")
-    slow_threshold: float = Field(40.0, ge=0, le=100, description="Threshold for slow velocity tier")
+# LEGACY WRAPPER: Maintains backward compatibility
+# VelocityConfigUnified has the same field names, but adds benchmarks field for legacy code.
+class VelocityConfigSchema(VelocityConfigUnified):
+    """Velocity scoring configuration.
+
+    Phase 1C: Inherits from VelocityConfigUnified with additional benchmarks field
+    for backward compatibility.
+    """
     benchmarks: Optional[Dict[str, int]] = Field(None, description="BSR benchmarks by category")
-    
-    @root_validator(skip_on_failure=True)
-    def thresholds_must_be_ordered(cls, values):
-        fast = values.get('fast_threshold', 80.0)
-        medium = values.get('medium_threshold', 60.0)
-        slow = values.get('slow_threshold', 40.0)
-        
-        if not (fast >= medium >= slow):
-            raise ValueError('Velocity thresholds must be ordered: fast >= medium >= slow')
-        return values
 
 
 class RecommendationRuleSchema(BaseModel):

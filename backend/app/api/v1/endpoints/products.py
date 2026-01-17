@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 
 from app.core.db import get_db_session
 from app.services.keepa_service import KeepaService, get_keepa_service
-from app.services.config_service import ConfigService
+from app.services.config_adapter import get_config_adapter
 from app.services.keepa_product_finder import KeepaProductFinderService
 from app.services.verification_service import VerificationService
 from app.schemas.verification import VerificationRequest, VerificationResponse
@@ -119,8 +119,8 @@ async def discover_products(
 
     try:
         # Initialize services - Use injected keepa instance from @require_tokens decorator
-        config_service = ConfigService(db)
-        finder_service = KeepaProductFinderService(keepa, config_service, db)
+        config_adapter = get_config_adapter()
+        finder_service = KeepaProductFinderService(keepa, config_adapter, db)
 
         # Discover products
         asins = await finder_service.discover_products(
@@ -174,8 +174,8 @@ async def discover_with_scoring(
 
     try:
         # Initialize services - Use injected keepa instance from @require_tokens decorator
-        config_service = ConfigService(db)
-        finder_service = KeepaProductFinderService(keepa, config_service, db)
+        config_adapter = get_config_adapter()
+        finder_service = KeepaProductFinderService(keepa, config_adapter, db)
 
         # Discover with scoring
         # Phase 8: Pass strategy for velocity/recommendation adjustments

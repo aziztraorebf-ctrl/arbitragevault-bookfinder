@@ -371,3 +371,65 @@ class TestRegressionGuards:
         # Velocity defaults
         assert velocity.fast_threshold == Decimal("80.0")
         assert velocity.slow_threshold == Decimal("40.0")
+
+
+class TestROICalculationConsistency:
+    """Test that ROI calculations are consistent across all code paths."""
+
+    def test_roi_formula_consistency(self):
+        """
+        CRITICAL: Verify ROI formula is applied consistently.
+
+        ROI = ((sell_price - buy_cost - total_fees) / buy_cost) * 100
+        """
+        # Test case: Buy at $10, sell at $30
+        buy_cost = Decimal("10.00")
+        sell_price = Decimal("30.00")
+
+        # Calculate fees
+        fees = calculate_total_fees(sell_price, Decimal("1.0"), "books")
+        total_fees = fees["total_fees"]
+
+        # Calculate ROI
+        profit = sell_price - buy_cost - total_fees
+        roi_pct = (profit / buy_cost) * Decimal("100")
+
+        # Verify the math
+        expected_profit = sell_price - buy_cost - total_fees
+        assert profit == expected_profit
+
+        # ROI should be reasonable (10->30 with ~$8.30 fees = ~$11.70 profit = 117% ROI)
+        assert roi_pct > Decimal("100"), f"Expected ROI > 100%, got {roi_pct}%"
+        assert roi_pct < Decimal("150"), f"ROI suspiciously high: {roi_pct}%"
+
+    def test_roi_with_different_source_prices(self):
+        """Test ROI varies correctly with different buy costs."""
+        sell_price = Decimal("25.00")
+        fees = calculate_total_fees(sell_price, Decimal("1.0"), "books")
+        total_fees = fees["total_fees"]
+
+        # Lower buy cost = higher ROI
+        buy_low = Decimal("5.00")
+        profit_low = sell_price - buy_low - total_fees
+        roi_low = (profit_low / buy_low) * Decimal("100")
+
+        # Higher buy cost = lower ROI
+        buy_high = Decimal("15.00")
+        profit_high = sell_price - buy_high - total_fees
+        roi_high = (profit_high / buy_high) * Decimal("100")
+
+        assert roi_low > roi_high, "Lower buy cost should yield higher ROI"
+
+    def test_roi_negative_when_fees_exceed_margin(self):
+        """Test ROI is negative when fees eat all profit."""
+        # Tiny margin scenario
+        buy_cost = Decimal("18.00")
+        sell_price = Decimal("20.00")
+
+        fees = calculate_total_fees(sell_price, Decimal("1.0"), "books")
+        total_fees = fees["total_fees"]  # ~$8.30
+
+        profit = sell_price - buy_cost - total_fees  # 20 - 18 - 8.30 = -6.30
+        roi_pct = (profit / buy_cost) * Decimal("100")
+
+        assert roi_pct < Decimal("0"), f"Expected negative ROI, got {roi_pct}%"

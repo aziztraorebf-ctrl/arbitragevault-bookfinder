@@ -11,6 +11,14 @@ from typing import Optional, Dict, Any
 from dataclasses import dataclass
 
 from app.services.business_config_service import get_business_config_service
+from app.schemas.config_types import (
+    ROIConfigUnified,
+    FeeConfigUnified,
+    VelocityConfigUnified,
+    roi_schema_to_unified,
+    fee_schema_to_unified,
+    velocity_schema_to_unified,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +31,12 @@ CATEGORY_ID_MAP = {
 
 @dataclass
 class EffectiveConfigCompat:
-    """Compatibility wrapper mimicking ConfigService.EffectiveConfig."""
+    """Compatibility wrapper with unified config types."""
     base_config: Dict[str, Any]
     category_id: Optional[int]
-    effective_fees: Dict[str, Any]
-    effective_roi: Dict[str, Any]
-    effective_velocity: Dict[str, Any]
+    effective_fees: FeeConfigUnified
+    effective_roi: ROIConfigUnified
+    effective_velocity: VelocityConfigUnified
     applied_overrides: list
 
 
@@ -72,9 +80,10 @@ class ConfigServiceAdapter:
             logger.warning("BusinessConfigService returned None, using empty defaults")
             config_dict = {}
 
-        fees = config_dict.get("fees", {})
-        roi = config_dict.get("roi", {})
-        velocity = config_dict.get("velocity", {})
+        # Convert to unified types using the converter functions
+        fees = fee_schema_to_unified(config_dict.get("fees", {}))
+        roi = roi_schema_to_unified(config_dict.get("roi", {}))
+        velocity = velocity_schema_to_unified(config_dict.get("velocity", {}))
 
         meta = config_dict.get("_meta", {})
         sources = meta.get("sources", {})

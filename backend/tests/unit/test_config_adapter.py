@@ -4,6 +4,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.services.config_adapter import ConfigServiceAdapter
+from app.schemas.config_types import FeeConfigUnified, ROIConfigUnified, VelocityConfigUnified
 
 
 class TestConfigServiceAdapter:
@@ -27,9 +28,10 @@ class TestConfigServiceAdapter:
             adapter = ConfigServiceAdapter()
             result = await adapter.get_effective_config(category_id=283155)
 
-            assert result.effective_fees is not None
-            assert result.effective_roi is not None
-            assert result.effective_velocity is not None
+            # Check actual unified types
+            assert isinstance(result.effective_fees, FeeConfigUnified)
+            assert isinstance(result.effective_roi, ROIConfigUnified)
+            assert isinstance(result.effective_velocity, VelocityConfigUnified)
 
     @pytest.mark.asyncio
     async def test_adapter_maps_category_id_to_name(self):
@@ -64,9 +66,16 @@ class TestConfigServiceAdapter:
             # Verify structure
             assert result.base_config == mock_config
             assert result.category_id == 283155
-            assert result.effective_fees == {"buffer_pct_default": 5.0, "fba_fee_pct": 15.0}
-            assert result.effective_roi == {"target_pct_default": 25.0, "min_for_buy": 15.0}
-            assert result.effective_velocity == {"fast_threshold": 80.0, "slow_threshold": 30.0}
+            # Verify unified types with correct field names
+            assert isinstance(result.effective_fees, FeeConfigUnified)
+            assert float(result.effective_fees.buffer_pct) == 5.0
+            assert float(result.effective_fees.referral_fee_pct) == 15.0  # Default since not in mock
+            assert isinstance(result.effective_roi, ROIConfigUnified)
+            assert float(result.effective_roi.target_pct) == 25.0
+            assert float(result.effective_roi.min_acceptable) == 15.0
+            assert isinstance(result.effective_velocity, VelocityConfigUnified)
+            assert float(result.effective_velocity.fast_threshold) == 80.0
+            assert float(result.effective_velocity.slow_threshold) == 30.0
             # applied_overrides should contain "category" since it's True in sources
             assert "category" in result.applied_overrides
 

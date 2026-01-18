@@ -10,7 +10,10 @@ Date: January 2026
 
 import logging
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import Any, Dict, Optional
+
+from app.core.fees_config import calculate_total_fees
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +22,8 @@ logger = logging.getLogger(__name__)
 # CONSTANTS
 # =============================================================================
 
-# Default target ROI and fee percentage
+# Default target ROI
 DEFAULT_TARGET_ROI = 0.50  # 50%
-DEFAULT_FEE_PCT = 0.22  # 22% Amazon fees
 
 # French confidence labels mapping
 CONFIDENCE_LABELS_FR = {
@@ -38,6 +40,36 @@ ROI_THRESHOLD_HOLD = 30.0  # >= 30% ROI = HOLD, below = SKIP
 # Days estimation constants
 DEFAULT_MAX_DAYS = 90  # Max days to sell estimate
 DAYS_PER_MONTH = 30
+
+
+def calculate_fee_percentage(
+    sell_price: float,
+    weight_lbs: float = 1.0,
+    category: str = "books"
+) -> float:
+    """
+    Calculate the actual fee percentage for a given sell price using canonical fees.
+
+    This replaces the hardcoded 22% approximation with real fee calculation.
+
+    Args:
+        sell_price: Expected selling price.
+        weight_lbs: Product weight in pounds (default 1.0 for books).
+        category: Product category for fee lookup.
+
+    Returns:
+        Fee percentage as decimal (e.g., 0.22 for 22%).
+    """
+    if sell_price <= 0:
+        return 0.0
+
+    fees = calculate_total_fees(
+        Decimal(str(sell_price)),
+        Decimal(str(weight_lbs)),
+        category
+    )
+    total_fees = float(fees["total_fees"])
+    return total_fees / sell_price
 
 
 # =============================================================================
@@ -111,14 +143,15 @@ class BuyingGuidanceService:
     def __init__(
         self,
         default_target_roi: float = DEFAULT_TARGET_ROI,
-        default_fee_pct: float = DEFAULT_FEE_PCT
+        default_fee_pct: Optional[float] = None
     ):
         """
         Initialize the service with default parameters.
 
         Args:
             default_target_roi: Default target ROI (0.50 = 50%).
-            default_fee_pct: Default fee percentage (0.22 = 22%).
+            default_fee_pct: Default fee percentage. If None, calculated dynamically
+                            using canonical fee calculation from fees_config.
         """
         self.default_target_roi = default_target_roi
         self.default_fee_pct = default_fee_pct
@@ -138,13 +171,12 @@ class BuyingGuidanceService:
             intrinsic_result: Output from calculate_intrinsic_value_corridor().
             velocity_data: Velocity data with monthly_sales, velocity_tier, etc.
             source_price: The price at which the book can be sourced.
-            fee_pct: Fee percentage (defaults to self.default_fee_pct).
+            fee_pct: Fee percentage. If None, calculated dynamically from sell price.
             target_roi: Target ROI (defaults to self.default_target_roi).
 
         Returns:
             BuyingGuidance dataclass with all calculated metrics.
         """
-        fee_pct = fee_pct if fee_pct is not None else self.default_fee_pct
         target_roi = target_roi if target_roi is not None else self.default_target_roi
 
         # Extract intrinsic values
@@ -160,15 +192,24 @@ class BuyingGuidanceService:
                 intrinsic_result=intrinsic_result
             )
 
+        # Determine fee percentage: use provided, instance default, or calculate dynamically
+        if fee_pct is not None:
+            effective_fee_pct = fee_pct
+        elif self.default_fee_pct is not None:
+            effective_fee_pct = self.default_fee_pct
+        else:
+            # Calculate dynamically using canonical fees
+            effective_fee_pct = calculate_fee_percentage(median_price)
+
         # Calculate max buy price
         max_buy = calculate_max_buy_price(
             sell_price=median_price,
-            fee_pct=fee_pct,
+            fee_pct=effective_fee_pct,
             target_roi=target_roi
         )
 
         # Calculate profit and ROI
-        net_sell = median_price * (1 - fee_pct)
+        net_sell = median_price * (1 - effective_fee_pct)
         estimated_profit = round(net_sell - source_price, 2)
         estimated_roi_pct = round((estimated_profit / source_price) * 100, 1) if source_price > 0 else 0.0
 
@@ -189,7 +230,7 @@ class BuyingGuidanceService:
         )
 
         # Build explanations
-        explanations = self._build_explanations(target_roi, fee_pct)
+        explanations = self._build_explanations(target_roi, effective_fee_pct)
 
         return BuyingGuidance(
             max_buy_price=max_buy,
@@ -212,6 +253,9 @@ class BuyingGuidanceService:
         """
         Create guidance for insufficient data case.
         """
+        # Use a default fee percentage for explanations when we have no price to calculate from
+        # Typical books fee ~20% at mid-range prices
+        display_fee_pct = self.default_fee_pct if self.default_fee_pct is not None else 0.20
         return BuyingGuidance(
             max_buy_price=0.0,
             target_sell_price=0.0,
@@ -223,7 +267,7 @@ class BuyingGuidanceService:
             recommendation_reason="Donnees insuffisantes pour calculer une recommandation fiable. "
                                  "Historique de prix trop limite.",
             confidence_label=CONFIDENCE_LABELS_FR['INSUFFICIENT_DATA'],
-            explanations=self._build_explanations(self.default_target_roi, self.default_fee_pct)
+            explanations=self._build_explanations(self.default_target_roi, display_fee_pct)
         )
 
     def _format_price_range(
@@ -330,5 +374,6 @@ class BuyingGuidanceService:
 __all__ = [
     'BuyingGuidance',
     'BuyingGuidanceService',
+    'calculate_fee_percentage',
     'calculate_max_buy_price',
 ]

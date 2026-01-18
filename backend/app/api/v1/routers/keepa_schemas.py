@@ -74,6 +74,22 @@ class ScoreBreakdown(BaseModel):
     notes: str
 
 
+class DataQuality(BaseModel):
+    """Data quality assessment - NEVER silently return N/A values."""
+    has_critical_gap: bool = Field(
+        False,
+        description="True if critical data (BSR, title, or offers) is missing"
+    )
+    warnings: List[str] = Field(
+        default_factory=list,
+        description="List of data quality warnings"
+    )
+    is_complete: bool = Field(
+        True,
+        description="True if all required data is available"
+    )
+
+
 class PricingDetail(BaseModel):
     """Pricing details for a specific condition (NEW or USED)."""
     current_price: Optional[float] = Field(None, description="Current market price for this condition")
@@ -121,6 +137,12 @@ class AnalysisResult(BaseModel):
     recommendation: str
     risk_factors: List[str]
 
+    # Data quality assessment - explicit warnings for insufficient data
+    data_quality: Optional[DataQuality] = Field(
+        None,
+        description="Data quality assessment with explicit warnings"
+    )
+
 
 class MetricsResponse(BaseModel):
     """Response for product metrics endpoint."""
@@ -166,6 +188,7 @@ __all__ = [
     'ConfigAudit',
     'KeepaMetadata',
     'ScoreBreakdown',
+    'DataQuality',
     'PricingDetail',
     'AnalysisResult',
     'MetricsResponse',

@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional, List
 
 from app.services.keepa_service import KeepaService
 from app.services.unified_analysis import build_unified_product_v2
-from .keepa_schemas import AnalysisResult, PricingDetail, ScoreBreakdown
+from .keepa_schemas import AnalysisResult, PricingDetail, ScoreBreakdown, DataQuality
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,17 @@ def generate_trace_id() -> str:
 def normalize_identifier(identifier: str) -> str:
     """Normalize ASIN/ISBN format."""
     return identifier.strip().replace("-", "").replace(" ", "").upper()
+
+
+def _build_data_quality(data_quality_dict: Optional[Dict[str, Any]]) -> Optional[DataQuality]:
+    """Convert data_quality dict to DataQuality schema."""
+    if not data_quality_dict:
+        return None
+    return DataQuality(
+        has_critical_gap=data_quality_dict.get('has_critical_gap', False),
+        warnings=data_quality_dict.get('warnings', []),
+        is_complete=data_quality_dict.get('is_complete', True)
+    )
 
 
 async def analyze_product(
@@ -125,7 +136,10 @@ async def analyze_product(
 
             # Recommendation and risk factors
             recommendation=unified_product.get('recommendation', 'PASS'),
-            risk_factors=unified_product.get('risk_factors', [])
+            risk_factors=unified_product.get('risk_factors', []),
+
+            # Data quality assessment - explicit warnings for insufficient data
+            data_quality=_build_data_quality(unified_product.get('data_quality'))
         )
 
     except Exception as e:
@@ -163,7 +177,14 @@ async def analyze_product(
             strategy_profile=None,
             calculation_method=None,
             recommendation="ERROR",
-            risk_factors=["Analysis failed"]
+            risk_factors=["Analysis failed"],
+
+            # Data quality - critical gap due to error
+            data_quality=DataQuality(
+                has_critical_gap=True,
+                warnings=[f"Analysis failed: {str(e)}"],
+                is_complete=False
+            )
         )
 
 

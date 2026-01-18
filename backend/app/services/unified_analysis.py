@@ -482,6 +482,38 @@ async def build_unified_product_v2(
         title = parsed.get("title")
         current_bsr = parsed.get("current_bsr")
 
+        # ====== STEP 1.5: DATA QUALITY VALIDATION ======
+        # Detect insufficient Keepa data and generate explicit warnings
+        data_quality_warnings = []
+        has_critical_data_gap = False
+
+        # Check for missing/invalid BSR
+        if current_bsr is None or current_bsr == -1:
+            data_quality_warnings.append("BSR unavailable - product may be discontinued or new")
+            has_critical_data_gap = True
+
+        # Check for missing title (indicates product not found in Keepa)
+        if not title:
+            data_quality_warnings.append("Title unavailable - product may not exist in Keepa database")
+            has_critical_data_gap = True
+
+        # Check for empty offers (no pricing data)
+        offers_by_condition = parsed.get("offers_by_condition", {})
+        if not offers_by_condition:
+            data_quality_warnings.append("No offers found - cannot calculate ROI (product may be out of stock)")
+            has_critical_data_gap = True
+
+        # Check parsing errors
+        parsing_errors = parsed.get("errors", [])
+        if parsing_errors:
+            data_quality_warnings.extend(parsing_errors)
+
+        # Log critical data gaps
+        if has_critical_data_gap:
+            logger.warning(
+                f"[DATA_QUALITY] {asin}: Critical data gaps detected - {data_quality_warnings}"
+            )
+
         # ====== STEP 2: Amazon presence check ======
         amazon_result = check_amazon_presence(raw_keepa)
         amazon_on_listing = amazon_result.get("amazon_on_listing", False)
@@ -709,6 +741,14 @@ async def build_unified_product_v2(
             # Direct links to Amazon product page and Seller Central restriction check
             'amazon_url': get_amazon_product_url(asin, raw_keepa.get('domainId', 1)),
             'seller_central_url': get_seller_central_restriction_url(asin, raw_keepa.get('domainId', 1)),
+
+            # ====== DATA QUALITY (Explicit validation) ======
+            # Warnings about insufficient Keepa data - NEVER silently return N/A
+            'data_quality': {
+                'has_critical_gap': has_critical_data_gap,
+                'warnings': data_quality_warnings,
+                'is_complete': not has_critical_data_gap and len(data_quality_warnings) == 0,
+            },
         }
 
         # ====== STEP 8: Add scoring for Mes Niches/AutoSourcing ======

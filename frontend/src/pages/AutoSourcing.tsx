@@ -1,9 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
-import { viewsService } from '../services/viewsService'
-import type { ProductScore, StrategyProfile } from '../types/views'
-import { UnifiedProductTable, useVerification } from '../components/unified'
-import { normalizeProductScore } from '../types/unified'
-import { SaveSearchButton } from '../components/recherches/SaveSearchButton'
+import { useState, useEffect } from 'react'
 import AutoSourcingJobModal from '../components/AutoSourcingJobModal'
 import { TokenErrorAlert } from '../components/TokenErrorAlert'
 import { parseTokenError } from '../utils/tokenErrorHandler'
@@ -49,26 +44,16 @@ interface Job {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://arbitragevault-backend-v2.onrender.com';
 
-type TabType = 'analyze' | 'jobs';
-
 export default function AutoSourcing() {
-  const [activeTab, setActiveTab] = useState<TabType>('jobs')
-  const [identifiers, setIdentifiers] = useState<string>('')
-  const [strategy, setStrategy] = useState<StrategyProfile>('velocity')
-  const [loading, setLoading] = useState(false)
-  const [results, setResults] = useState<ProductScore[]>([])
   const [error, setError] = useState<string | null>(null)
-
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [jobs, setJobs] = useState<Job[]>([])
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [tokenError, setTokenError] = useState<ReturnType<typeof parseTokenError> | null>(null)
 
   useEffect(() => {
-    if (activeTab === 'jobs') {
-      fetchRecentJobs()
-    }
-  }, [activeTab])
+    fetchRecentJobs()
+  }, [])
 
   const fetchRecentJobs = async () => {
     try {
@@ -83,7 +68,6 @@ export default function AutoSourcing() {
   }
 
   const handleSubmitJob = async (data: JobConfigFormData) => {
-    setLoading(true)
     setError(null)
     setTokenError(null)
 
@@ -129,8 +113,6 @@ export default function AutoSourcing() {
     } catch (err) {
       // Re-throw the error to be handled by the modal
       throw err
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -146,62 +128,6 @@ export default function AutoSourcing() {
     }
   }
 
-  const handleAnalyze = async () => {
-    if (!identifiers.trim()) {
-      setError('Veuillez entrer au moins un ASIN ou ISBN')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-    setResults([])
-
-    try {
-      const idList = identifiers
-        .split(/[,\n\r]+/)
-        .map((id) => id.trim())
-        .filter((id) => id.length > 0)
-
-      if (idList.length === 0) {
-        throw new Error('Aucun identifiant valide trouvé')
-      }
-
-      const response = await viewsService.scoreProductsForView(
-        'auto_sourcing',
-        {
-          identifiers: idList,
-          strategy: strategy || undefined,
-        },
-        true
-      )
-
-      setResults(response.products)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'analyse')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleClear = () => {
-    setIdentifiers('')
-    setResults([])
-    setError(null)
-  }
-
-  // Verification hook
-  const {
-    verifyProduct,
-    getVerificationState,
-    isVerificationExpanded,
-    toggleVerificationExpansion,
-  } = useVerification()
-
-  // Normalize products for UnifiedProductTable
-  const normalizedProducts = useMemo(() => {
-    return results.map(normalizeProductScore)
-  }, [results])
-
   return (
     <div className="min-h-screen bg-vault-bg">
       <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
@@ -209,34 +135,15 @@ export default function AutoSourcing() {
           <div>
             <h1 className="text-3xl font-display font-semibold text-vault-text">AutoSourcing</h1>
             <p className="text-vault-text-secondary mt-1">
-              Decouverte automatique et analyse de produits
+              Decouverte automatique de produits via jobs personnalises
+            </p>
+            <p className="text-sm text-vault-text-muted mt-2">
+              Pour analyser des ASINs manuellement, utilisez{' '}
+              <a href="/analyse" className="text-vault-accent hover:underline">
+                Analyse Manuelle
+              </a>
             </p>
           </div>
-        </div>
-
-        <div className="border-b border-vault-border">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('jobs')}
-              className={`${
-                activeTab === 'jobs'
-                  ? 'border-vault-accent text-vault-accent'
-                  : 'border-transparent text-vault-text-muted hover:text-vault-text hover:border-vault-border'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-            >
-              Jobs de Decouverte
-            </button>
-            <button
-              onClick={() => setActiveTab('analyze')}
-              className={`${
-                activeTab === 'analyze'
-                  ? 'border-vault-accent text-vault-accent'
-                  : 'border-transparent text-vault-text-muted hover:text-vault-text hover:border-vault-border'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-            >
-              Analyse Manuelle
-            </button>
-          </nav>
         </div>
 
         {tokenError && (
@@ -251,216 +158,117 @@ export default function AutoSourcing() {
           </div>
         )}
 
-        {activeTab === 'jobs' && (
-          <>
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-display font-semibold text-vault-text">Jobs Recents</h2>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                data-testid="new-job-button"
-                className="px-6 py-3 bg-vault-accent text-white rounded-xl hover:bg-vault-accent-hover font-medium transition-colors"
-              >
-                Nouvelle Recherche Personnalisee
-              </button>
-            </div>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-display font-semibold text-vault-text">Jobs Recents</h2>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            data-testid="new-job-button"
+            className="px-6 py-3 bg-vault-accent text-white rounded-xl hover:bg-vault-accent-hover font-medium transition-colors"
+          >
+            Nouvelle Recherche Personnalisee
+          </button>
+        </div>
 
-            <div className="bg-vault-card rounded-2xl shadow-vault-sm border border-vault-border">
-              <div className="p-6">
-                {jobs.length === 0 ? (
-                  <div data-testid="empty-jobs" className="text-center py-12">
-                    <p className="text-vault-text-secondary">Aucun job trouve. Creez votre premiere recherche!</p>
-                  </div>
-                ) : (
-                  <div data-testid="jobs-list" className="space-y-4">
-                    {jobs.map((job) => (
-                      <div
-                        key={job.id}
-                        data-testid="job-card"
-                        className="border border-vault-border rounded-xl p-4 hover:bg-vault-hover cursor-pointer transition-colors"
-                        onClick={() => handleViewJobResults(job.id)}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h3 data-testid="job-name" className="font-semibold text-vault-text">
-                              {job.profile_name}
-                            </h3>
-                            <p data-testid="job-id" className="text-sm text-vault-text-muted">
-                              ID: {job.id}
-                            </p>
-                            <p data-testid="job-date" className="text-sm text-vault-text-muted">
-                              {new Date(job.launched_at).toLocaleString('fr-FR')}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <span
-                              data-testid="job-status"
-                              className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                                job.status === 'COMPLETED'
-                                  ? 'bg-vault-success-light text-vault-success'
-                                  : job.status === 'RUNNING'
-                                  ? 'bg-vault-accent-light text-vault-accent'
-                                  : 'bg-vault-hover text-vault-text-muted'
-                              }`}
-                            >
-                              {job.status}
-                            </span>
-                            <p className="text-sm text-vault-text-secondary mt-2">
-                              {job.total_selected} picks / {job.total_tested} testes
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+        <div className="bg-vault-card rounded-2xl shadow-vault-sm border border-vault-border">
+          <div className="p-6">
+            {jobs.length === 0 ? (
+              <div data-testid="empty-jobs" className="text-center py-12">
+                <p className="text-vault-text-secondary">Aucun job trouve. Creez votre premiere recherche!</p>
               </div>
-            </div>
-
-            {selectedJob && selectedJob.picks && selectedJob.picks.length > 0 && (
-              <div className="bg-vault-card rounded-2xl shadow-vault-sm border border-vault-border">
-                <div className="p-6 border-b border-vault-border">
-                  <h2 className="text-xl font-display font-semibold text-vault-text">
-                    Resultats: {selectedJob.profile_name}
-                  </h2>
-                </div>
-                <div className="p-6">
-                  <div data-testid="picks" className="space-y-4">
-                    {selectedJob.picks.map((pick) => (
-                      <div
-                        key={pick.id}
-                        data-testid="pick"
-                        className="border border-vault-border rounded-xl p-4"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h4 data-testid="pick-title" className="font-semibold text-vault-text">
-                              {pick.title}
-                            </h4>
-                            <p data-testid="pick-asin" className="text-sm text-vault-text-muted">
-                              ASIN: {pick.asin}
-                            </p>
-                          </div>
-                          <div className="text-right space-y-1">
-                            <p data-testid="pick-roi" className="text-sm">
-                              <span className="font-medium text-vault-text">ROI:</span>{' '}
-                              <span className="text-vault-success">{pick.roi_percentage.toFixed(1)}%</span>
-                            </p>
-                            <p data-testid="pick-velocity" className="text-sm">
-                              <span className="font-medium text-vault-text">Velocity:</span>{' '}
-                              <span className="text-vault-accent">{pick.velocity_score}</span>
-                            </p>
-                            <p data-testid="pick-confidence" className="text-sm">
-                              <span className="font-medium text-vault-text">Confidence:</span>{' '}
-                              <span className="text-vault-accent">{pick.confidence_score}</span>
-                            </p>
-                            <p data-testid="pick-rating" className="text-sm">
-                              <span className="font-medium text-vault-text">Rating:</span>{' '}
-                              <span className="text-vault-text-secondary">{pick.overall_rating}</span>
-                            </p>
-                          </div>
-                        </div>
+            ) : (
+              <div data-testid="jobs-list" className="space-y-4">
+                {jobs.map((job) => (
+                  <div
+                    key={job.id}
+                    data-testid="job-card"
+                    className="border border-vault-border rounded-xl p-4 hover:bg-vault-hover cursor-pointer transition-colors"
+                    onClick={() => handleViewJobResults(job.id)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 data-testid="job-name" className="font-semibold text-vault-text">
+                          {job.profile_name}
+                        </h3>
+                        <p data-testid="job-id" className="text-sm text-vault-text-muted">
+                          ID: {job.id}
+                        </p>
+                        <p data-testid="job-date" className="text-sm text-vault-text-muted">
+                          {new Date(job.launched_at).toLocaleString('fr-FR')}
+                        </p>
                       </div>
-                    ))}
+                      <div className="text-right">
+                        <span
+                          data-testid="job-status"
+                          className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                            job.status === 'COMPLETED'
+                              ? 'bg-vault-success-light text-vault-success'
+                              : job.status === 'RUNNING'
+                              ? 'bg-vault-accent-light text-vault-accent'
+                              : 'bg-vault-hover text-vault-text-muted'
+                          }`}
+                        >
+                          {job.status}
+                        </span>
+                        <p className="text-sm text-vault-text-secondary mt-2">
+                          {job.total_selected} picks / {job.total_tested} testes
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
             )}
-          </>
-        )}
+          </div>
+        </div>
 
-        {activeTab === 'analyze' && (
-          <>
-            <div className="bg-vault-card rounded-2xl shadow-vault-sm border border-vault-border p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-vault-text mb-2">
-                  ASINs / ISBNs a analyser
-                </label>
-                <textarea
-                  className="w-full h-32 px-4 py-3 border border-vault-border bg-vault-bg text-vault-text rounded-xl focus:ring-2 focus:ring-vault-accent focus:border-transparent resize-none"
-                  placeholder="Entrez vos ASINs ou ISBNs (separes par virgules ou retours a la ligne)&#10;Exemple: 0593655036, B08X6F12YZ"
-                  value={identifiers}
-                  onChange={(e) => setIdentifiers(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-vault-text mb-2">
-                  Strategie de boost (optionnel)
-                </label>
-                <select
-                  className="w-full px-4 py-2 border border-vault-border bg-vault-bg text-vault-text rounded-xl focus:ring-2 focus:ring-vault-accent focus:border-transparent"
-                  value={strategy || ''}
-                  onChange={(e) => setStrategy((e.target.value as StrategyProfile) || null)}
-                >
-                  <option value="">Aucune</option>
-                  <option value="balanced">Balanced (equilibre)</option>
-                  <option value="textbook">Textbook (livres)</option>
-                  <option value="velocity">Velocity (rotation rapide) - Recommande</option>
-                </select>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={handleAnalyze}
-                  disabled={loading}
-                  className="flex-1 bg-vault-accent hover:bg-vault-accent-hover disabled:bg-vault-hover text-white font-medium py-3 px-6 rounded-xl transition-colors duration-200"
-                >
-                  {loading ? 'Analyse en cours...' : 'Analyser avec scoring Velocity prioritaire'}
-                </button>
-                <button
-                  onClick={handleClear}
-                  disabled={loading}
-                  className="px-6 py-3 border border-vault-border text-vault-text rounded-xl hover:bg-vault-hover transition-colors duration-200"
-                >
-                  Effacer
-                </button>
+        {selectedJob && selectedJob.picks && selectedJob.picks.length > 0 && (
+          <div className="bg-vault-card rounded-2xl shadow-vault-sm border border-vault-border">
+            <div className="p-6 border-b border-vault-border">
+              <h2 className="text-xl font-display font-semibold text-vault-text">
+                Resultats: {selectedJob.profile_name}
+              </h2>
+            </div>
+            <div className="p-6">
+              <div data-testid="picks" className="space-y-4">
+                {selectedJob.picks.map((pick) => (
+                  <div
+                    key={pick.id}
+                    data-testid="pick"
+                    className="border border-vault-border rounded-xl p-4"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 data-testid="pick-title" className="font-semibold text-vault-text">
+                          {pick.title}
+                        </h4>
+                        <p data-testid="pick-asin" className="text-sm text-vault-text-muted">
+                          ASIN: {pick.asin}
+                        </p>
+                      </div>
+                      <div className="text-right space-y-1">
+                        <p data-testid="pick-roi" className="text-sm">
+                          <span className="font-medium text-vault-text">ROI:</span>{' '}
+                          <span className="text-vault-success">{pick.roi_percentage.toFixed(1)}%</span>
+                        </p>
+                        <p data-testid="pick-velocity" className="text-sm">
+                          <span className="font-medium text-vault-text">Velocity:</span>{' '}
+                          <span className="text-vault-accent">{pick.velocity_score}</span>
+                        </p>
+                        <p data-testid="pick-confidence" className="text-sm">
+                          <span className="font-medium text-vault-text">Confidence:</span>{' '}
+                          <span className="text-vault-accent">{pick.confidence_score}</span>
+                        </p>
+                        <p data-testid="pick-rating" className="text-sm">
+                          <span className="font-medium text-vault-text">Rating:</span>{' '}
+                          <span className="text-vault-text-secondary">{pick.overall_rating}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-
-            {normalizedProducts.length > 0 && (
-              <>
-                <div className="flex justify-end mb-4">
-                  <SaveSearchButton
-                    products={normalizedProducts}
-                    source="autosourcing"
-                    searchParams={{ strategy }}
-                    defaultName={`AutoSourcing ${new Date().toLocaleDateString('fr-FR')}`}
-                  />
-                </div>
-                <UnifiedProductTable
-                  products={normalizedProducts}
-                  title="AutoSourcing - Resultats"
-                  features={{
-                    showScore: true,
-                    showRank: true,
-                    showAmazonBadges: true,
-                    showFilters: true,
-                    showExportCSV: true,
-                    showFooterSummary: true,
-                    showAccordion: false,
-                    showVerifyButton: true,
-                    showBuyingGuidance: true,
-                  }}
-                  onVerify={verifyProduct}
-                  getVerificationState={getVerificationState}
-                  isVerificationExpanded={isVerificationExpanded}
-                  toggleVerificationExpansion={toggleVerificationExpansion}
-                />
-              </>
-            )}
-
-            <div className="bg-vault-accent-light border border-vault-accent/20 rounded-2xl p-4">
-              <h3 className="text-sm font-semibold text-vault-text mb-2">
-                Scoring AutoSourcing
-              </h3>
-              <ul className="text-sm text-vault-text-secondary space-y-1">
-                <li>- Priorite <strong>Velocity (poids 0.7)</strong> pour rotation rapide</li>
-                <li>- ROI (poids 0.3) pour rentabilite minimale acceptable</li>
-                <li>- Stability (poids 0.1) pour liquidite immediate</li>
-                <li>- Ideal pour produits a ecoulement rapide (quick flips)</li>
-              </ul>
-            </div>
-          </>
+          </div>
         )}
       </div>
 

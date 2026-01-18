@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 
 # Mapping of Keepa category IDs to category names
+# Source: Keepa API Product.java - rootCategory field
+# 283155 = "Books" category in Amazon US marketplace
 CATEGORY_ID_MAP = {
     283155: "books",
 }

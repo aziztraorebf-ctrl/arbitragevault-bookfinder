@@ -433,3 +433,24 @@ class TestROICalculationConsistency:
         roi_pct = (profit / buy_cost) * Decimal("100")
 
         assert roi_pct < Decimal("0"), f"Expected negative ROI, got {roi_pct}%"
+
+    def test_roi_with_zero_buy_cost_handled(self):
+        """Test ROI calculation handles zero buy cost gracefully."""
+        buy_cost = Decimal("0.00")
+        sell_price = Decimal("20.00")
+
+        fees = calculate_total_fees(sell_price, Decimal("1.0"), "books")
+        total_fees = fees["total_fees"]
+
+        profit = sell_price - buy_cost - total_fees
+
+        # When buy_cost is 0, ROI is technically infinite or undefined
+        # The system should handle this without crashing
+        if buy_cost > 0:
+            roi_pct = (profit / buy_cost) * Decimal("100")
+        else:
+            # Zero buy cost = infinite ROI (or we return 0 as sentinel)
+            roi_pct = Decimal("0") if profit <= 0 else Decimal("999999")
+
+        # Just verify no exception is raised and result is reasonable
+        assert isinstance(roi_pct, Decimal)

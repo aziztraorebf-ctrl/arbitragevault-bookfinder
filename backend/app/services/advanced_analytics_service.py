@@ -14,6 +14,7 @@ import statistics
 from sqlalchemy.orm import Session
 
 from app.models.analytics import ASINHistory, DecisionOutcome
+from app.core.fees_config import get_fee_config
 
 
 class AdvancedAnalyticsService:
@@ -159,12 +160,13 @@ class AdvancedAnalyticsService:
     def calculate_roi_net(
         estimated_buy_price: Decimal,
         estimated_sell_price: Decimal,
-        referral_fee_percent: Decimal = Decimal('15'),
-        fba_fee: Decimal = Decimal('2.50'),
+        referral_fee_percent: Optional[Decimal] = None,
+        fba_fee: Optional[Decimal] = None,
         prep_fee: Optional[Decimal] = None,
         return_rate_percent: Decimal = Decimal('2'),
         storage_cost_monthly: Decimal = Decimal('0.87'),
-        sale_cycle_days: int = 30
+        sale_cycle_days: int = 30,
+        category: str = 'books'
     ) -> Dict[str, Any]:
         """
         Calculate net ROI including all fees and costs.
@@ -172,21 +174,30 @@ class AdvancedAnalyticsService:
         Args:
             estimated_buy_price: Cost to acquire product
             estimated_sell_price: Expected selling price
-            referral_fee_percent: Amazon referral fee percentage
-            fba_fee: FBA fulfillment fee per unit
-            prep_fee: Prep cost per unit
+            referral_fee_percent: Amazon referral fee percentage (uses canonical config if None)
+            fba_fee: FBA fulfillment fee per unit (uses canonical config if None)
+            prep_fee: Prep cost per unit (uses canonical config if None)
             return_rate_percent: Expected return rate percentage
             storage_cost_monthly: Monthly storage cost
             sale_cycle_days: Expected days to sell
+            category: Product category for canonical fee lookup
         """
         buy = Decimal(str(estimated_buy_price))
         sell = Decimal(str(estimated_sell_price))
 
-        referral = (sell * referral_fee_percent) / Decimal('100')
+        # Use canonical fee config for defaults
+        fee_config = get_fee_config(category)
+
+        # Use passed values or fall back to canonical config
+        ref_fee_pct = referral_fee_percent if referral_fee_percent is not None else fee_config.referral_fee_pct
+        fba_fee_val = fba_fee if fba_fee is not None else fee_config.fba_fee_base
+        prep_fee_val = prep_fee if prep_fee is not None else fee_config.prep_fee
+
+        referral = (sell * Decimal(str(ref_fee_pct))) / Decimal('100')
         returns_cost = (sell * return_rate_percent) / Decimal('100')
 
-        fba = Decimal(str(fba_fee))
-        prep = prep_fee or Decimal('0')
+        fba = Decimal(str(fba_fee_val))
+        prep = Decimal(str(prep_fee_val))
 
         storage_months = Decimal(sale_cycle_days) / Decimal('30')
         storage = Decimal(str(storage_cost_monthly)) * storage_months

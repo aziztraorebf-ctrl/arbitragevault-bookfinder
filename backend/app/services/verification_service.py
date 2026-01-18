@@ -19,20 +19,13 @@ from app.schemas.verification import (
 )
 from app.services.keepa_service import KeepaService
 from app.core.logging import get_logger
+from app.core.fees_config import calculate_total_fees
 
 logger = get_logger(__name__)
 
 
-# FBA Fee structure for Books (from PDF guide)
-FBA_FEES = {
-    "referral_percent": 0.15,
-    "closing_fee": 1.80,
-    "fba_base": 3.22,
-    "fba_per_lb": 0.75,
-    "avg_book_weight": 1.5,
-    "prep_fee": 0.50,
-    "inbound_shipping": 0.40,
-}
+# Average book weight for fee calculations (in pounds)
+AVG_BOOK_WEIGHT_LBS = Decimal("1.5")
 
 
 def calculate_profit(sell_price: float, buy_cost_factor: float = 0.50) -> float:
@@ -46,11 +39,12 @@ def calculate_profit(sell_price: float, buy_cost_factor: float = 0.50) -> float:
         Net profit after all fees
     """
     buy_cost = sell_price * buy_cost_factor
-    referral = sell_price * FBA_FEES["referral_percent"]
-    closing = FBA_FEES["closing_fee"]
-    extra_weight = max(0, FBA_FEES["avg_book_weight"] - 1)
-    fulfillment = FBA_FEES["fba_base"] + (extra_weight * FBA_FEES["fba_per_lb"])
-    total_fees = referral + closing + fulfillment + FBA_FEES["prep_fee"] + FBA_FEES["inbound_shipping"]
+    fees = calculate_total_fees(
+        sell_price=Decimal(str(sell_price)),
+        weight_lbs=AVG_BOOK_WEIGHT_LBS,
+        category="books"
+    )
+    total_fees = float(fees["total_fees"])
     return sell_price - buy_cost - total_fees
 
 
@@ -64,11 +58,12 @@ def calculate_profit_with_buy_price(sell_price: float, buy_price: float) -> floa
     Returns:
         Net profit after all fees
     """
-    referral = sell_price * FBA_FEES["referral_percent"]
-    closing = FBA_FEES["closing_fee"]
-    extra_weight = max(0, FBA_FEES["avg_book_weight"] - 1)
-    fulfillment = FBA_FEES["fba_base"] + (extra_weight * FBA_FEES["fba_per_lb"])
-    total_fees = referral + closing + fulfillment + FBA_FEES["prep_fee"] + FBA_FEES["inbound_shipping"]
+    fees = calculate_total_fees(
+        sell_price=Decimal(str(sell_price)),
+        weight_lbs=AVG_BOOK_WEIGHT_LBS,
+        category="books"
+    )
+    total_fees = float(fees["total_fees"])
     return sell_price - buy_price - total_fees
 
 

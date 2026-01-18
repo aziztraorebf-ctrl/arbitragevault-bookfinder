@@ -10,10 +10,12 @@ import asyncio
 import logging
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
+from decimal import Decimal
 from statistics import mean, median
 
 from app.models.niche import NicheMetrics, NicheAnalysisCriteria, CategoryOverview
 from app.services.keepa_service import KeepaService
+from app.core.fees_config import calculate_total_fees
 
 logger = logging.getLogger(__name__)
 
@@ -369,13 +371,13 @@ class CategoryAnalyzer:
         if not current_price or current_price <= 0:
             return None
 
-        # Estimation KISS des couts basee sur le prix de vente
-        # En Phase 2+, utiliser un calculateur de frais FBA plus precis
-
-        # Frais Amazon estimes : ~15% du prix de vente + frais fixes FBA
-        referral_fee = current_price * 0.15
-        fba_fees = 3.50  # Estimation moyenne pour un livre standard
-        total_fees = referral_fee + fba_fees
+        # Calcul des frais Amazon via la configuration centralisee
+        fees = calculate_total_fees(
+            sell_price=Decimal(str(current_price)),
+            weight_lbs=Decimal('1.0'),
+            category='books'
+        )
+        total_fees = float(fees['total_fees'])
 
         # Cout d'achat estime : source_price_factor du prix de vente
         # Default 0.50 = 50% aligned with FBM->FBA arbitrage model (see ROIConfig)

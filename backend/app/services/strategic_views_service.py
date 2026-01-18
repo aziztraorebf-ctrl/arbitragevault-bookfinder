@@ -2,10 +2,12 @@
 Strategic Views Service - Wrapper around strategic views logic
 Provides service-level interface for strategic analysis configurations
 """
+from decimal import Decimal
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from pydantic import BaseModel
 from .amazon_filter_service import AmazonFilterService
+from app.core.fees_config import get_fee_config
 
 class TargetPriceResult(BaseModel):
     """Result of target price calculation."""
@@ -26,13 +28,6 @@ class TargetPriceCalculator:
         "cashflow_hunter": 0.35,    # 35%
         "balanced_score": 0.40,     # 40%
         "volume_player": 0.20       # 20%
-    }
-    
-    # Default Amazon referral fees by category (fallback)
-    DEFAULT_REFERRAL_RATES = {
-        "Books": 0.15,              # 15%
-        "Textbooks": 0.10,          # 10% 
-        "default": 0.15             # 15% fallback
     }
     
     @classmethod
@@ -72,10 +67,11 @@ class TargetPriceCalculator:
 
         # Get ROI target for strategic view
         roi_target = cls.ROI_TARGETS.get(view_name, 0.30)  # 30% fallback
-        
-        # Use default referral fee if not provided
+
+        # Use default referral fee if not provided (get from canonical fee config)
         if referral_fee_rate is None:
-            referral_fee_rate = cls.DEFAULT_REFERRAL_RATES["default"]
+            fee_config = get_fee_config()  # Default category
+            referral_fee_rate = float(fee_config.referral_fee_pct / Decimal("100"))  # Convert pct to decimal
         
         # Calculate total costs
         total_costs = buy_price + fba_fee + storage_fee

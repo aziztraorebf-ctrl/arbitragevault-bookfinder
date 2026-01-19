@@ -47,5 +47,10 @@ export { useMobileMenu } from './useMobileMenu'
 
 export { useOnboarding } from './useOnboarding'
 
+export {
+  useDashboardData,
+  dashboardKeys
+} from './useDashboardData'
+
 // Re-export types for convenience
 export type { Batch, BatchList, HealthCheck, ApiError } from '../services/api'

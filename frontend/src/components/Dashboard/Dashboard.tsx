@@ -1,18 +1,113 @@
 // Dashboard - Vault Elegance Design
-// Premium dashboard with KPIs, action cards, and activity feed
+// Premium dashboard with real-time KPIs, action cards, and activity feed
+// Phase 2D: Connected to real data endpoints
 import { KpiCard, ActionCard, ActivityFeed } from '../vault'
 import {
-  mockKpiData,
   mockActionCards,
-  mockActivityFeed,
   getGreeting,
   formatDate
 } from '../../data/mockDashboard'
+import type { ActivityEvent } from '../../data/mockDashboard'
 import { USER_CONFIG } from '../../config/user'
+import { useDashboardData } from '../../hooks'
+
+// Skeleton loader for KPI cards
+function KpiSkeleton() {
+  return (
+    <div className="bg-vault-card rounded-vault-sm p-6 animate-pulse">
+      <div className="h-4 bg-vault-border rounded w-1/2 mb-4" />
+      <div className="h-8 bg-vault-border rounded w-3/4 mb-2" />
+      <div className="h-3 bg-vault-border rounded w-1/4" />
+    </div>
+  )
+}
+
+// Format relative time from ISO date string
+function formatRelativeTime(isoDate: string): string {
+  const date = new Date(isoDate)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return `${diffDays} days ago`
+  return date.toLocaleDateString()
+}
 
 export default function Dashboard() {
   const greeting = getGreeting()
   const dateString = formatDate()
+
+  // Fetch real data from backend
+  const {
+    pendingDeals,
+    totalSearches,
+    purchasePipeline,
+    bestRoi,
+    recentJobs,
+    opportunityOfDay,
+    isLoading,
+    isError
+  } = useDashboardData()
+
+  // Transform recent jobs into ActivityEvents
+  const activityEvents: ActivityEvent[] = recentJobs.map((job) => ({
+    id: job.id,
+    type: 'analysis' as const,
+    timestamp: formatRelativeTime(job.launched_at),
+    message: `${job.profile_name} - ${job.total_selected} opportunities found`
+  }))
+
+  // Build real KPI data
+  const realKpiData = {
+    purchasePipeline: {
+      value: String(purchasePipeline),
+      label: 'Purchase Pipeline',
+      change: 0,
+      sparkData: [] as number[]
+    },
+    totalSearches: {
+      value: String(totalSearches),
+      label: 'Saved Searches',
+      change: 0,
+      sparkData: [] as number[]
+    },
+    bestRoi: {
+      value: bestRoi !== null ? `${bestRoi.toFixed(1)}%` : 'N/A',
+      label: 'Best ROI Today',
+      change: 0,
+      sparkData: [] as number[]
+    },
+    pendingDeals: {
+      value: String(pendingDeals),
+      label: 'Pending Deals',
+      change: 0,
+      sparkData: [] as number[]
+    }
+  }
+
+  // Build action cards - use opportunity of day if available
+  const actionCards = opportunityOfDay
+    ? [
+        {
+          id: 'opportunity',
+          title: 'Opportunity of the Day',
+          icon: 'BookOpen' as const,
+          lines: [
+            opportunityOfDay.pick.asin,
+            `ROI: ${opportunityOfDay.pick.roi_percentage.toFixed(1)}%`,
+            opportunityOfDay.pick.title?.slice(0, 50) || 'View details'
+          ],
+          action: { label: 'Analyze', href: `/analyse?asin=${opportunityOfDay.pick.asin}` }
+        },
+        ...mockActionCards.slice(1) // Keep other mock cards for now
+      ]
+    : mockActionCards
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -33,10 +128,25 @@ export default function Dashboard() {
           ======================================== */}
       <section>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
-          <KpiCard {...mockKpiData.totalValue} />
-          <KpiCard {...mockKpiData.productsAnalyzed} />
-          <KpiCard {...mockKpiData.avgRoi} />
-          <KpiCard {...mockKpiData.pendingReviews} />
+          {isLoading ? (
+            <>
+              <KpiSkeleton />
+              <KpiSkeleton />
+              <KpiSkeleton />
+              <KpiSkeleton />
+            </>
+          ) : isError ? (
+            <div className="col-span-full text-center py-8 text-vault-text-muted">
+              Unable to load dashboard data. Please try again later.
+            </div>
+          ) : (
+            <>
+              <KpiCard {...realKpiData.purchasePipeline} />
+              <KpiCard {...realKpiData.totalSearches} />
+              <KpiCard {...realKpiData.bestRoi} />
+              <KpiCard {...realKpiData.pendingDeals} />
+            </>
+          )}
         </div>
       </section>
 
@@ -45,7 +155,7 @@ export default function Dashboard() {
           ======================================== */}
       <section>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          {mockActionCards.map((card) => (
+          {actionCards.map((card) => (
             <ActionCard key={card.id} {...card} />
           ))}
         </div>
@@ -55,7 +165,7 @@ export default function Dashboard() {
           ACTIVITY FEED
           ======================================== */}
       <section>
-        <ActivityFeed events={mockActivityFeed} />
+        <ActivityFeed events={activityEvents} />
       </section>
     </div>
   )

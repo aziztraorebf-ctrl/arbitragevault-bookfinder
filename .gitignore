@@ -99,6 +99,7 @@ config/secrets/
 
 # Claude Code local settings (contains env vars)
 .claude/settings.local.json
+.claude/.claude/
 
 # MCP configuration files (may contain API keys)
 mcp-*.json

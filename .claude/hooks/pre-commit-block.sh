@@ -1,22 +1,35 @@
 #!/bin/bash
 # PreToolUse Hook - Bloque git commit sans checkpoint
 # Declenche AVANT execution de Bash tool
-# Version: 1.2 - Added debug logging
+# Version: 2.0 - Ajout mecanisme de deblocage via fichier flag
+#
+# Usage: Pour debloquer un commit apres validation checkpoint,
+# creer le fichier .claude/checkpoint-approved
+# Le fichier est automatiquement supprime apres le commit.
 
-# Debug: log to temp file to verify hook is triggered
-echo "[$(date)] Hook triggered" >> /tmp/claude-hook-debug.log
+PROJECT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+APPROVE_FLAG="$PROJECT_DIR/.claude/checkpoint-approved"
 
 # Lire le JSON input depuis stdin
 INPUT=$(cat)
-echo "[$(date)] INPUT: $INPUT" >> /tmp/claude-hook-debug.log
 
-# Extraire la commande du tool_input
-COMMAND=$(echo "$INPUT" | grep -oP '"command"\s*:\s*"\K[^"]+' 2>/dev/null || echo "$INPUT")
+# Extraire la commande du tool_input (compatible macOS - pas de grep -oP)
+COMMAND=$(echo "$INPUT" | sed -n 's/.*"command"\s*:\s*"\([^"]*\)".*/\1/p')
+if [ -z "$COMMAND" ]; then
+    COMMAND="$INPUT"
+fi
 
 # Verifier si c'est un git commit ou git push
 if echo "$COMMAND" | grep -qE "(git commit|git push)"; then
-    # IMPORTANT: Exit code 2 requires stderr for error message (not stdout)
-    cat >&2 << 'EOF'
+    # Verifier si le checkpoint a ete approuve
+    if [ -f "$APPROVE_FLAG" ]; then
+        # Checkpoint approuve - supprimer le flag et laisser passer
+        rm -f "$APPROVE_FLAG"
+        exit 0
+    fi
+
+    # Pas de flag = BLOQUER
+    cat >&2 << 'CHECKPOINT_MSG'
 
 ==========================================
   CHECKPOINT OBLIGATOIRE AVANT COMMIT
@@ -48,14 +61,14 @@ STOP! Avant de committer, verifier:
 ==========================================
 
 Pour debloquer, fournir le Checkpoint Validation
-avec PREUVES pour chaque point ci-dessus.
+avec PREUVES pour chaque point ci-dessus,
+puis creer .claude/checkpoint-approved
 
 Utiliser /checkpoint pour le template complet.
 ==========================================
 
-EOF
+CHECKPOINT_MSG
 
-    # Mode BLOQUANT - exit 2 = block selon doc Claude Code
     exit 2
 fi
 

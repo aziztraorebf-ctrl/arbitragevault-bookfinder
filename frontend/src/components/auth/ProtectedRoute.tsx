@@ -14,6 +14,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
+  // DEV-ONLY: bypass auth for E2E testing (never set in production)
+  if (import.meta.env.VITE_E2E_BYPASS === "true") {
+    return <>{children}</>;
+  }
+
   // Show loading spinner while checking auth state
   if (isLoading) {
     return (

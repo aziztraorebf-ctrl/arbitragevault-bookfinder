@@ -41,7 +41,8 @@ async def get_daily_review(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     """Generate today's daily review from recent AutoSourcing picks."""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+    # Use naive UTC datetime - autosourcing_jobs.created_at is TIMESTAMP without timezone
+    cutoff = datetime.utcnow() - timedelta(days=days_back)
 
     # Step 1: Fetch recent picks from AutoSourcing jobs
     try:

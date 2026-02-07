@@ -5,8 +5,8 @@ export default function DailyReviewDocs() {
   return (
     <DocsLayout
       title="Daily Review"
-      description="Votre rapport quotidien d'opportunites - En cours de developpement"
-      badge="Bientot"
+      description="Votre rapport quotidien d'opportunites classifiees"
+      badge="Actif"
     >
       <div className="space-y-8">
         {/* Coming Soon Banner */}
@@ -156,10 +156,10 @@ export default function DailyReviewDocs() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full bg-yellow-500"></div>
+              <div className="w-4 h-4 rounded-full bg-green-500"></div>
               <div>
                 <p className="font-medium text-vault-text">Phase 2: Integration Backend</p>
-                <p className="text-sm text-vault-text-secondary">Connexion avec l'API production - En cours</p>
+                <p className="text-sm text-vault-text-secondary">API endpoint + classification engine - Complete</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -170,10 +170,10 @@ export default function DailyReviewDocs() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full bg-gray-300"></div>
+              <div className="w-4 h-4 rounded-full bg-green-500"></div>
               <div>
-                <p className="font-medium text-vault-text">Phase 4: Page Frontend</p>
-                <p className="text-sm text-vault-text-secondary">Visualisation dans l'app - A venir</p>
+                <p className="font-medium text-vault-text">Phase 4: Dashboard Card</p>
+                <p className="text-sm text-vault-text-secondary">DailyReviewCard sur le dashboard - Complete</p>
               </div>
             </div>
           </div>

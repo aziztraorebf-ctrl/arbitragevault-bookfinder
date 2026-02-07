@@ -62,6 +62,27 @@ interface RecherchesStats {
   manual_analysis?: number
 }
 
+export interface DailyReviewData {
+  review_date: string
+  total: number
+  counts: {
+    STABLE: number
+    JACKPOT: number
+    REVENANT: number
+    FLUKE: number
+    REJECT: number
+  }
+  top_opportunities: Array<{
+    asin: string
+    title: string
+    roi_percentage: number
+    classification: string
+    classification_label: string
+    classification_color: string
+  }>
+  summary: string
+}
+
 // Dashboard aggregated data
 export interface DashboardData {
   // KPIs
@@ -73,6 +94,9 @@ export interface DashboardData {
   // Activity
   recentJobs: AutoSourcingJob[]
   opportunityOfDay: OpportunityOfDay | null
+
+  // Daily Review
+  dailyReview: DailyReviewData | null
 
   // Metadata
   isLoading: boolean
@@ -126,17 +150,28 @@ async function fetchRecherchesStats(): Promise<RecherchesStats | null> {
   }
 }
 
+async function fetchDailyReview(): Promise<DailyReviewData | null> {
+  try {
+    const response = await api.get('/api/v1/daily-review/today')
+    return response.data
+  } catch (error) {
+    console.warn('[Dashboard] Daily review not available:', error)
+    return null
+  }
+}
+
 // =============================================================================
 // AGGREGATOR
 // =============================================================================
 
 async function fetchDashboardData(): Promise<Omit<DashboardData, 'isLoading' | 'isError' | 'errorMessage'>> {
   // Fetch all data in parallel for performance
-  const [autoStats, jobs, opportunity, rechercheStats] = await Promise.all([
+  const [autoStats, jobs, opportunity, rechercheStats, dailyReview] = await Promise.all([
     fetchAutoSourcingStats(),
     fetchRecentJobs(5),
     fetchOpportunityOfDay(),
-    fetchRecherchesStats()
+    fetchRecherchesStats(),
+    fetchDailyReview()
   ])
 
   return {
@@ -149,6 +184,9 @@ async function fetchDashboardData(): Promise<Omit<DashboardData, 'isLoading' | '
     // Activity
     recentJobs: jobs,
     opportunityOfDay: opportunity,
+
+    // Daily Review
+    dailyReview,
   }
 }
 
@@ -180,6 +218,9 @@ export function useDashboardData() {
     // Activity
     recentJobs: query.data?.recentJobs ?? [],
     opportunityOfDay: query.data?.opportunityOfDay ?? null,
+
+    // Daily Review
+    dailyReview: query.data?.dailyReview ?? null,
 
     // Metadata
     isLoading: query.isLoading,

@@ -1,7 +1,7 @@
 // Dashboard - Vault Elegance Design
 // Premium dashboard with real-time KPIs, action cards, and activity feed
 // Phase 2D: Connected to real data endpoints
-import { KpiCard, ActionCard, ActivityFeed } from '../vault'
+import { KpiCard, ActionCard, ActivityFeed, DailyReviewCard } from '../vault'
 import {
   mockActionCards,
   getGreeting,
@@ -51,6 +51,7 @@ export default function Dashboard() {
     bestRoi,
     recentJobs,
     opportunityOfDay,
+    dailyReview,
     isLoading,
     isError
   } = useDashboardData()
@@ -148,6 +149,13 @@ export default function Dashboard() {
             </>
           )}
         </div>
+      </section>
+
+      {/* ========================================
+          DAILY REVIEW
+          ======================================== */}
+      <section>
+        <DailyReviewCard review={dailyReview} isLoading={isLoading} />
       </section>
 
       {/* ========================================

@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Active Session
 
 **Derniere mise a jour** : 6 Fevrier 2026
-**Phase Actuelle** : Refactoring Phase 2 COMPLETE - Pret pour Phase 3
-**Statut Global** : Phases 1-13 + Refactoring 1A-2C completes, Production LIVE
+**Phase Actuelle** : Phase 2D COMPLETE - Daily Review Dashboard
+**Statut Global** : Phases 1-13 + Refactoring 1A-2D completes, Production LIVE
 
 ---
 
@@ -10,12 +10,12 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Refactoring Phase 2 - COMPLETE |
-| **Prochaine Phase** | Phase 2D (Daily Review) ou Phase 3 (a definir) |
+| **Phase Actuelle** | Phase 2D - Daily Review - COMPLETE |
+| **Prochaine Phase** | Phase 14 (N8N) ou tests manuels |
 | **CLAUDE.md** | v5.2 - Instructions globales + projet |
 | **Production** | Backend Render + Frontend Netlify LIVE |
 | **Authentification** | Firebase Auth (Email/Password) |
-| **Tests Total** | 880+ passants |
+| **Tests Total** | 910+ passants (749 + 31 daily review + 130 API) |
 | **Bloqueurs** | Aucun |
 | **Environnement** | macOS (migration depuis Windows jan 2026) |
 
@@ -23,10 +23,30 @@
 
 ## CHANGELOG - 6 Fevrier 2026
 
+### Phase 2D - Daily Review Dashboard COMPLETE
+
+**Objectif** : Carte Daily Review sur le dashboard classifiant les picks AutoSourcing en 5 categories
+
+**Fichiers crees** :
+- `backend/app/services/daily_review_service.py` - Classification engine (STABLE, JACKPOT, REVENANT, FLUKE, REJECT) + generateur de review
+- `backend/app/schemas/daily_review.py` - Schemas Pydantic
+- `backend/app/api/v1/routers/daily_review.py` - Endpoint GET /daily-review/today
+- `backend/tests/services/test_daily_review_service.py` - 31 tests unitaires
+- `frontend/src/components/vault/DailyReviewCard.tsx` - Composant dashboard
+
+**Fichiers modifies** :
+- `backend/app/main.py` - Enregistrement router daily_review
+- `frontend/src/hooks/useDashboardData.ts` - Ajout fetch daily review
+- `frontend/src/components/Dashboard/Dashboard.tsx` - Integration DailyReviewCard
+- `frontend/src/components/vault/index.ts` - Export DailyReviewCard
+- `frontend/src/pages/docs/DailyReviewDocs.tsx` - Roadmap mise a jour
+
+**Resultat** : 31 tests passent, build frontend OK (1951 modules, 820KB)
+
 ### Assainissement environnement Mac
 
 - Clone propre depuis GitHub (line endings LF natifs)
-- Hook pre-commit fixe (CRLF -> LF, grep -oP -> sed compatible macOS)
+- Hook pre-commit v2.0 (mecanisme de deblocage via flag, compatible macOS)
 - .env migres, secrets verifies non-exposes sur GitHub
 - Vieux dossier Windows archive en backup
 
@@ -110,6 +130,7 @@
 | 2A | E2E Validation Tests | 19 | 17 Jan 2026 |
 | 2B | AutoSourcing Simplification | - | 18 Jan 2026 |
 | 2C | Fee Centralization | 144 | 18 Jan 2026 |
+| 2D | Daily Review Dashboard | 31 | 6 Fev 2026 |
 
 ---
 
@@ -129,7 +150,7 @@
 1. [x] Phase 13 - Firebase Authentication - COMPLETE
 2. [x] Refactoring 1A-1D - Architecture cleanup - COMPLETE
 3. [x] Refactoring 2A-2C - Validation + simplification + fees - COMPLETE
-4. [ ] Phase 2D - Daily Review Dashboard card
+4. [x] Phase 2D - Daily Review Dashboard card - COMPLETE
 5. [ ] Tests manuels application (1-2 mois)
 6. [ ] Phase 14 - Integration N8N (si necessaire)
 7. [ ] [MANUEL] Rotation cles API (Keepa, Render, DB, Firebase)

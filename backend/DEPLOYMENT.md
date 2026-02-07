@@ -32,7 +32,7 @@ DATABASE_URL=postgresql://neondb_owner:***@ep-damp-thunder-ado6n9o2-pooler.c-2.u
 # Application Settings
 ENVIRONMENT=production
 LOG_LEVEL=INFO
-CORS_ALLOWED_ORIGINS=["*"]
+CORS_ALLOWED_ORIGINS=https://arbitragevault.netlify.app,http://localhost:5173
 
 # Firebase Authentication (Required)
 FIREBASE_PROJECT_ID=your_firebase_project_id

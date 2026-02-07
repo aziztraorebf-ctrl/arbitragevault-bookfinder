@@ -59,7 +59,7 @@ class Settings(BaseSettings):
             "http://127.0.0.1:5174",
             "http://127.0.0.1:5175",
             "http://127.0.0.1:5176",
-            "*"
+            "https://arbitragevault.netlify.app",
         ],
         alias="CORS_ALLOWED_ORIGINS",
     )
@@ -145,8 +145,8 @@ class Settings(BaseSettings):
                 return [origin.strip() for origin in v.split(",")]
             return v
         except Exception as e:
-            # Fallback to default for development
-            return ["*"]
+            # Fallback to localhost for development
+            return ["http://localhost:5173", "https://arbitragevault.netlify.app"]
 
     @field_validator("trusted_hosts", mode="before")
     @classmethod

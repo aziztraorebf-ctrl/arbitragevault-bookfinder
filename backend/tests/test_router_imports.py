@@ -14,11 +14,12 @@ class TestRouterImportIntegrity:
         "app.api.v1.routers.auth",
         "app.api.v1.routers.health",
         "app.api.v1.routers.config",
-        "app.api.v1.routers.views",
-        "app.api.v1.routers.bookmarks",
-        "app.api.v1.routers.strategic_views",
+        "app.api.v1.routers.keepa",
         "app.api.v1.routers.autosourcing",
-        "app.api.v1.routers.niche_discovery",
+        "app.api.v1.routers.autoscheduler",
+        "app.api.v1.routers.stock_estimate",
+        "app.api.v1.routers.textbook_analysis",
+        "app.api.v1.routers.daily_review",
     ]
 
     def test_all_routers_importable(self):

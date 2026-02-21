@@ -28,10 +28,15 @@ from app.core.calculations import (
     compute_overall_rating,
     generate_readable_summary
 )
-from app.services.scoring_v2 import VIEW_WEIGHTS
 from app.utils.amazon_urls import get_amazon_product_url, get_seller_central_restriction_url
 
 logger = logging.getLogger(__name__)
+
+# Scoring weights per view type (inlined from archived scoring_v2.py)
+VIEW_WEIGHTS = {
+    "dashboard": {"roi": 0.5, "velocity": 0.5, "stability": 0.3},
+    "auto_sourcing": {"roi": 0.3, "velocity": 0.7, "stability": 0.1},
+}
 
 
 # ============================================================================
@@ -277,12 +282,16 @@ async def build_unified_product(
         }
 
         if compute_score:
-            from app.services.scoring_v2 import compute_view_score
-            score_result = compute_view_score(
-                parsed_data=parsed,
-                view_type=view_type,
-                strategy_profile=strategy
-            )
+            try:
+                from app.services.scoring_v2 import compute_view_score
+                score_result = compute_view_score(
+                    parsed_data=parsed,
+                    view_type=view_type,
+                    strategy_profile=strategy
+                )
+            except ImportError:
+                logger.warning("scoring_v2 archived - score computation skipped")
+                pass
 
         # Step 10: Assemble unified product dict
         unified_product = {

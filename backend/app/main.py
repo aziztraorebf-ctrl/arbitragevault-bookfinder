@@ -27,8 +27,8 @@ try:
 except ImportError:
     MCP_AVAILABLE = False
 
-from app.api.v1.routers import auth, health, analyses, batches, keepa, config, autosourcing, autoscheduler, views, bookmarks, strategic_views, stock_estimate, niche_discovery, recherches, textbook_analysis, daily_review
-from app.api.v1.endpoints import products, niches, analytics, asin_history
+from app.api.v1.routers import auth, health, keepa, config, autosourcing, autoscheduler, stock_estimate, textbook_analysis, daily_review
+from app.api.v1.endpoints import products, asin_history
 from app.core.cors import configure_cors
 from app.core.db import lifespan
 from app.core.logging import configure_logging, get_logger, log_request_middleware
@@ -83,22 +83,13 @@ configure_cors(app)
 # Include routers
 app.include_router(health.router, prefix="/api/v1/health", tags=["Health"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
-app.include_router(analyses.router, prefix="/api/v1/analyses", tags=["Analyses"])
-app.include_router(batches.router, prefix="/api/v1/batches", tags=["Batches"])
 app.include_router(keepa.router, prefix="/api/v1/keepa", tags=["Keepa"])
 app.include_router(products.router, prefix="/api/v1/products", tags=["Product Discovery"])
-app.include_router(niches.router, prefix="/api/v1/niches", tags=["Niche Discovery"])
 app.include_router(config.router, prefix="/api/v1", tags=["Configuration"])
-app.include_router(views.router, prefix="/api/v1", tags=["Views"])
 app.include_router(autosourcing.router, prefix="/api/v1", tags=["AutoSourcing"])
 app.include_router(autoscheduler.router, prefix="/api/v1", tags=["AutoScheduler Control"])
 app.include_router(stock_estimate.router, tags=["Stock Estimate"])
-app.include_router(strategic_views.router, tags=["Strategic Views"])
-app.include_router(niche_discovery.router, tags=["Niche Discovery"])
-app.include_router(bookmarks.router, prefix="/api/v1", tags=["Bookmarks"])
-app.include_router(analytics.router, prefix="/api/v1", tags=["Analytics"])
 app.include_router(asin_history.router, prefix="/api/v1", tags=["ASIN History"])
-app.include_router(recherches.router, prefix="/api/v1", tags=["Recherches"])
 app.include_router(textbook_analysis.router, prefix="/api/v1/textbook", tags=["Textbook Analysis"])
 app.include_router(daily_review.router, prefix="/api/v1", tags=["Daily Review"])
 

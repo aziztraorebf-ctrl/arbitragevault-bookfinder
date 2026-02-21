@@ -16,34 +16,6 @@ export interface Product {
   image?: string
 }
 
-export interface AnalysisResult {
-  products: Product[]
-  total_analyzed: number
-  successful_analyses: number
-  average_roi: number
-  processing_time: number
-}
-
-export interface NicheDiscoveryResult {
-  niche_id: string
-  category: string
-  score: number
-  products_count: number
-  average_roi: number
-  competition_level: string
-  created_at: string
-}
-
-export interface BookmarkedNiche {
-  id: string
-  name: string
-  category: string
-  filters: Record<string, any>
-  score: number
-  created_at: string
-  last_analyzed: string
-}
-
 export interface AutoSchedulerConfig {
   enabled: boolean
   schedule_times: string[]
@@ -62,60 +34,6 @@ export interface UploadProgress {
   loaded: number
   total: number
   percentage: number
-}
-
-// Manual Analysis Types
-export interface UploadedCSVData {
-  headers: string[]
-  rows: Record<string, string>[]
-  fileName: string
-  totalRows: number
-  asinColumnIndex?: number
-}
-
-export interface ValidationResult {
-  isValid: boolean
-  validASINs: string[]
-  invalidASINs: string[]
-  errors: string[]
-}
-
-export interface AnalysisInput {
-  asins: string[]
-  source: 'csv' | 'manual'
-  csvData?: UploadedCSVData
-  strategy?: string
-}
-
-export interface AnalysisStep {
-  step: 'upload' | 'criteria' | 'progress' | 'results' | 'export'
-  title: string
-  completed: boolean
-}
-
-// Analysis Criteria Types
-export interface AnalysisCriteria {
-  roiMin: number        // Percentage (20 = 20%)
-  bsrMax: number        // Number (250000 = 250k)
-  minSalesPerMonth: number  // Number (10 = 10+ sales/month)
-}
-
-export interface AnalysisStrategy {
-  id: 'velocity' | 'balanced' | 'profit-hunter' | 'custom'
-  name: string
-  description: string
-  criteria: AnalysisCriteria
-  color: string
-  icon: string
-}
-
-export interface ConfiguredAnalysis {
-  asins: string[]
-  source: 'csv' | 'manual'
-  csvData?: UploadedCSVData
-  strategy: AnalysisStrategy
-  customCriteria?: AnalysisCriteria
-  conditionFilter?: string[]  // Filter by condition: 'new', 'very_good', 'good', 'acceptable'
 }
 
 // Pricing detail for a specific condition
@@ -150,21 +68,18 @@ export interface AnalysisAPIResult {
     avg_daily_sales?: number
     current_bsr?: number
   }
-  // Pricing by condition: new, very_good, good, acceptable
   pricing?: {
     new?: PricingDetail
     very_good?: PricingDetail
     good?: PricingDetail
     acceptable?: PricingDetail
   }
-  // Amazon presence detection
   amazon_on_listing?: boolean
   amazon_buybox?: boolean
   overall_rating: string
   readable_summary: string
   recommendation: string
   risk_factors: string[]
-  // Seller Central Links
   amazon_url?: string
   seller_central_url?: string
 }

@@ -1,14 +1,6 @@
 // Centralized exports for all custom hooks
 
 export {
-  useBatches,
-  useBatch,
-  useRunAnalysis,
-  useBatchesStats,
-  batchesQueryKeys
-} from './useBatches'
-
-export {
   useHealthCheck,
   useConnectionStatus,
   healthCheckQueryKeys
@@ -22,26 +14,9 @@ export {
 } from './useConfig'
 
 export {
-  useAllStrategicViews,
-  useStrategicView,
-  useTargetPrices,
-  strategicQueryKeys
-} from './useStrategicViews'
-
-export {
   useStockEstimate,
   stockKeys
 } from './useStockEstimate'
-
-export {
-  useRecherches,
-  useRechercheDetail,
-  useRechercheStats,
-  useCreateRecherche,
-  useUpdateRecherche,
-  useDeleteRecherche,
-  recherchesKeys
-} from './useRecherches'
 
 export { useMobileMenu } from './useMobileMenu'
 
@@ -53,4 +28,4 @@ export {
 } from './useDashboardData'
 
 // Re-export types for convenience
-export type { Batch, BatchList, HealthCheck, ApiError } from '../services/api'
+export type { HealthCheck, ApiError } from '../services/api'

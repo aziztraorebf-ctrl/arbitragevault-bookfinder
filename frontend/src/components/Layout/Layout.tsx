@@ -7,15 +7,10 @@ import {
   Menu,
   X,
   LayoutDashboard,
-  BarChart3,
-  Search,
-  BookMarked,
   Bot,
   Package,
-  Bookmark,
   Settings,
-  BookOpen,
-  HelpCircle
+  BookOpen
 } from 'lucide-react'
 import { ThemeToggle, SearchBar } from '../vault'
 import { USER_CONFIG } from '../../config/user'
@@ -26,16 +21,11 @@ interface LayoutProps {
 
 const navigationItems = [
   { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { name: 'Analytics', icon: BarChart3, href: '/analyse' },
-  { name: 'Discovery', icon: Search, href: '/niche-discovery' },
-  { name: 'Bookmarks', icon: BookMarked, href: '/mes-niches' },
   { type: 'separator' as const },
-  { name: 'Scheduler', icon: Bot, href: '/autoscheduler' },
   { name: 'Sourcing', icon: Package, href: '/autosourcing' },
-  { name: 'Searches', icon: Bookmark, href: '/recherches' },
+  { name: 'Scheduler', icon: Bot, href: '/autoscheduler' },
   { type: 'separator' as const },
   { name: 'Settings', icon: Settings, href: '/config' },
-  { name: 'Documentation', icon: HelpCircle, href: '/docs' },
 ]
 
 export default function Layout({ children }: LayoutProps) {

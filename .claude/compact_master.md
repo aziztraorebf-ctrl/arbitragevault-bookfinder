@@ -191,24 +191,33 @@ VITE_FIREBASE_APP_ID=<app_id>
 | BSR extraction obsolete | 67% erreur | `rank_data[-1]` |
 | Throttle budget | Balance negative | `_ensure_sufficient_balance()` |
 
+### Phase 3 : Simplification Radicale (21 Fev 2026)
+
+**Objectif** : Simplifier selon methodologie BookMine (43 videos analysees).
+Focus workflow core : AutoSourcing -> Daily Review -> Decision d'achat.
+
+**Methode** : Archivage dans `_archive/` (pas suppression) pour recovery facile.
+
+**Frontend** : 45 fichiers archives, navigation de 10 items a 4 (Dashboard, Sourcing, Scheduler, Settings)
+**Backend** : 30 fichiers archives, main.py de 20 routers a 11, ~60 routes
+**Tests** : 32 fichiers archives, 785 tests restants passent
+**Dependance resolue** : VIEW_WEIGHTS inlined dans unified_analysis.py
+
+**Decisions strategiques (BookMine Feb 2026)** :
+- Prime Bump mort depuis Nov 3 2025 (Buy Box change)
+- Condition Bump : Amazon priorise condition > prix > shipping
+- Intrinsic Value = seul pricing model qui compte
+- 5 signaux Keepa : lowest used price, sales rank drops, Amazon price, offer count, stock qty
+
 ---
 
 ## Prochaines Etapes
 
 | Priorite | Phase | Description | Status |
 |----------|-------|-------------|--------|
-| 1 | - | Tests manuels 1-2 mois | A FAIRE |
-| 2 | 14 | Integration N8N | FUTUR |
-| 3 | 15 | ML predictions | FUTUR |
-
-### Vision N8N (Phase 14)
-- API webhooks pour automatisation
-- Jobs planifies nuit/matin
-- Resultats automatiques dans `/recherches`
-
-### Vision ML (Phase 15+)
-- Table `purchase_decisions` pour training
-- A implementer apres 2-3 mois de donnees
+| 1 | 3C | Condition Bump + Replenishable + Offer Count | OPTIONNEL |
+| 2 | - | Migration DB drop tables archivees | QUAND STABLE |
+| 3 | 14 | Integration N8N | FUTUR |
 
 ---
 
@@ -216,12 +225,13 @@ VITE_FIREBASE_APP_ID=<app_id>
 
 | Document | Description |
 |----------|-------------|
-| CLAUDE.md | Instructions v3.3 + Senior Review Gate |
+| CLAUDE.md | Instructions v5.2 + Senior Review Gate |
 | compact_current.md | Memoire session active |
 | compact_master.md | Memoire globale (ce fichier) |
+| `_archive/` | Code archive (frontend + backend) |
 
 ---
 
-**Version** : 7.0
-**Derniere revision** : 10 Janvier 2026
-**Statut** : Phases 1-13 completes, Firebase Auth LIVE
+**Version** : 8.0
+**Derniere revision** : 21 Fevrier 2026
+**Statut** : Phases 1-13 + Phase 3 (Simplification) completes

@@ -429,6 +429,8 @@ Voulez-vous que je lance `playwright-skill` pour creer ce test?"
 - **Feature Flags** : Header `X-Feature-Flags-Override` + `business_rules.json`
 - **Schemas/Contracts** : `backend/app/schemas/*.py` (Pydantic)
 - **Memoire projet** : `.claude/{compact_master,compact_current}.md`
+- **Pipeline phase** : `.claude/PIPELINE.md` (état temps réel de la phase en cours)
+- **Error Registry** : `.claude/errors.md` (bugs catalogués avec codes domaine)
 
 ---
 
@@ -451,3 +453,8 @@ Voulez-vous que je lance `playwright-skill` pour creer ce test?"
 
 **Version** : 3.3 - Zero-Tolerance Engineering + Mandatory Checkpoints + Playwright Evaluation + Senior Review Gate
 **Mise a jour** : 2025-12-25
+
+
+<claude-mem-context>
+
+</claude-mem-context>

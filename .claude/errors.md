@@ -1,6 +1,5 @@
 # ArbitrageVault - Error Registry
 
-Format : [CODE] Description | Cause | Fix | Date
 
 ---
 
@@ -58,6 +57,7 @@ Format : [CODE] Description | Cause | Fix | Date
 **CFG-02** — Mismatch catégories Keepa : Books=3 (frontend) vs Books=283155 (backend)
 - **Cause** : Frontend productDiscoveryService.ts utilise ID 3, backend keepa_categories.py utilise 283155
 - **Fix** : Source de vérité = backend/app/config/keepa_categories.py. Frontend doit envoyer le nom, pas l'ID.
+- **Fichier** : frontend/src/services/productDiscoveryService.ts
 - **Détecté** : Fév 2026
 
 ---
@@ -65,6 +65,16 @@ Format : [CODE] Description | Cause | Fix | Date
 ## Ajouter un nouveau bug
 
 Pour ajouter une entrée :
-1. Choisir le domaine (DB/GIT/BE/FE/CFG/TEST/PERF)
+1. Choisir le domaine selon le tableau ci-dessous
+
+| Code | Domaine |
+|------|---------|
+| DB | Base de données / asyncpg / PostgreSQL |
+| GIT | Git / Hooks / CI |
+| BE | Backend FastAPI / SQLAlchemy |
+| FE | Frontend React / TypeScript |
+| CFG | Configuration / Env / URLs |
+| TEST | Tests pytest / Playwright |
+| PERF | Performance / Optimisation |
 2. Incrémenter le numéro (ex: BE-03)
 3. Remplir : Cause | Fix | Fichiers concernés | Date détection

@@ -36,19 +36,20 @@ fi
 if [ -f "$RESET_FILE" ]; then
     TARGET_FILE=$(cat "$RESET_FILE")
     if [ "$TARGET_FILE" = "$FILE_PATH" ] || [ "$TARGET_FILE" = "ALL" ]; then
-        python3 -c "
-import json
+        FILE_PATH="$TARGET_FILE" STATE_FILE="$STATE_FILE" python3 -c "
+import json, os
+target = os.environ['FILE_PATH']
+sf = os.environ['STATE_FILE']
 try:
-    with open('$STATE_FILE', 'r') as f:
+    with open(sf, 'r') as f:
         state = json.load(f)
-except:
+except Exception:
     state = {'edits': {}, 'last_reset': ''}
-target = '$TARGET_FILE'
 if target == 'ALL':
     state['edits'] = {}
 elif target in state['edits']:
     del state['edits'][target]
-with open('$STATE_FILE', 'w') as f:
+with open(sf, 'w') as f:
     json.dump(state, f, indent=2)
 " 2>/dev/null
         rm -f "$RESET_FILE"
@@ -56,29 +57,34 @@ with open('$STATE_FILE', 'w') as f:
 fi
 
 # Lire le state actuel
-CURRENT_COUNT=$(python3 -c "
-import json
+CURRENT_COUNT=$(FILE_PATH="$FILE_PATH" STATE_FILE="$STATE_FILE" python3 -c "
+import json, os
+sf = os.environ['STATE_FILE']
+fp = os.environ['FILE_PATH']
 try:
-    with open('$STATE_FILE', 'r') as f:
+    with open(sf, 'r') as f:
         state = json.load(f)
-    print(state.get('edits', {}).get('$FILE_PATH', 0))
-except:
+    print(state.get('edits', {}).get(fp, 0))
+except Exception:
     print(0)
 " 2>/dev/null)
 
 NEW_COUNT=$((CURRENT_COUNT + 1))
 
 # Mettre a jour le compteur
-python3 -c "
-import json
+FILE_PATH="$FILE_PATH" STATE_FILE="$STATE_FILE" NEW_COUNT="$NEW_COUNT" python3 -c "
+import json, os
+sf = os.environ['STATE_FILE']
+fp = os.environ['FILE_PATH']
+count = int(os.environ['NEW_COUNT'])
 try:
-    with open('$STATE_FILE', 'r') as f:
+    with open(sf, 'r') as f:
         state = json.load(f)
-except:
+except Exception:
     state = {'edits': {}, 'last_reset': ''}
 state.setdefault('edits', {})
-state['edits']['$FILE_PATH'] = $NEW_COUNT
-with open('$STATE_FILE', 'w') as f:
+state['edits'][fp] = count
+with open(sf, 'w') as f:
     json.dump(state, f, indent=2)
 " 2>/dev/null
 

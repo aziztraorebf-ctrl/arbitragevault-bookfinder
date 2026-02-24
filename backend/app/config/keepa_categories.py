@@ -123,11 +123,20 @@ KEEPA_CATEGORIES: dict[str, CategoryConfig] = {
 LEGACY_CATEGORY_MAPPING: dict[str, str] = {
     "Books": "books",
     "Medical": "medical",
+    "Medical Books": "medical",
+    "Nursing": "medical",
     "Programming": "programming",
     "Engineering": "engineering",
     "Textbooks": "education",  # Mapped to Education (Textbooks is non-browsable)
+    "Education": "education",
+    "Education & Teaching": "education",
     "Accounting": "accounting",
+    "Business": "business",
+    "Business & Money": "business",
+    "Science": "science",
+    "Science & Math": "science",
     "Computer & Technology": "computer_technology",
+    "Computers & Technology": "computer_technology",
 }
 
 

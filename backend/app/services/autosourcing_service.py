@@ -568,6 +568,31 @@ class AutoSourcingService:
             profit_net = current_price - estimated_cost - amazon_fees
             roi_percentage = (profit_net / estimated_cost) * 100 if estimated_cost > 0 else 0
 
+            # Condition-based scoring: used price ROI and signal
+            used_price = product_data.get("used_price")
+            used_offer_count = product_data.get("used_offer_count", 0)
+            used_roi_percentage = None
+            condition_signal = None
+
+            if used_price is not None and used_price > 0:
+                used_fees = used_price * fba_fee_percentage
+                used_profit = used_price - estimated_cost - used_fees
+                used_roi_percentage = (used_profit / estimated_cost) * 100 if estimated_cost > 0 else 0.0
+
+                # Derive condition_signal from thresholds
+                cs_config = business_config.get("condition_signals", {})
+                used_roi_threshold = cs_config.get("used_roi_threshold", 30.0)
+                used_offer_threshold = cs_config.get("used_offer_threshold", 5)
+
+                if used_roi_percentage >= used_roi_threshold and used_offer_count >= used_offer_threshold:
+                    condition_signal = "STRONG_USED"
+                elif used_roi_percentage >= used_roi_threshold:
+                    condition_signal = "USED_ROI_OK"
+                elif used_offer_count >= used_offer_threshold:
+                    condition_signal = "USED_DEMAND"
+                else:
+                    condition_signal = "WEAK_USED"
+
             # Calculate advanced scores from REAL Keepa data
             velocity_score = self._calculate_velocity_from_keepa(raw_keepa, bsr)
             stability_score = self._calculate_stability_from_keepa(raw_keepa)
@@ -613,12 +638,18 @@ class AutoSourcingService:
                 is_featured=(tier == "HOT"),
                 # Phase 7: Competition data
                 fba_seller_count=fba_seller_count,
-                amazon_on_listing=amazon_on_listing
+                amazon_on_listing=amazon_on_listing,
+                # Condition-based scoring signals
+                used_price=used_price,
+                used_offer_count=used_offer_count,
+                used_roi_percentage=used_roi_percentage,
+                condition_signal=condition_signal
             )
 
             logger.info(
                 f"Analyzed {asin}: {overall_rating}, ROI={roi_percentage:.1f}%, BSR={bsr}, "
-                f"FBA={fba_seller_count}, Amazon={amazon_on_listing}"
+                f"FBA={fba_seller_count}, Amazon={amazon_on_listing}, "
+                f"used_roi={used_roi_percentage}, condition={condition_signal}"
             )
             return pick
 
@@ -680,6 +711,31 @@ class AutoSourcingService:
             profit_net = current_price - estimated_cost - amazon_fees
             roi_percentage = (profit_net / estimated_cost) * 100 if estimated_cost > 0 else 0
 
+            # Condition-based scoring: used price ROI and signal
+            used_price = product_data.get("used_price")
+            used_offer_count = product_data.get("used_offer_count", 0)
+            used_roi_percentage = None
+            condition_signal = None
+
+            if used_price is not None and used_price > 0:
+                used_fees = used_price * fba_fee_percentage
+                used_profit = used_price - estimated_cost - used_fees
+                used_roi_percentage = (used_profit / estimated_cost) * 100 if estimated_cost > 0 else 0.0
+
+                # Derive condition_signal from thresholds
+                cs_config = business_config.get("condition_signals", {})
+                used_roi_threshold = cs_config.get("used_roi_threshold", 30.0)
+                used_offer_threshold = cs_config.get("used_offer_threshold", 5)
+
+                if used_roi_percentage >= used_roi_threshold and used_offer_count >= used_offer_threshold:
+                    condition_signal = "STRONG_USED"
+                elif used_roi_percentage >= used_roi_threshold:
+                    condition_signal = "USED_ROI_OK"
+                elif used_offer_count >= used_offer_threshold:
+                    condition_signal = "USED_DEMAND"
+                else:
+                    condition_signal = "WEAK_USED"
+
             # Calculate advanced scores from REAL Keepa data
             velocity_score = self._calculate_velocity_from_keepa(raw_keepa, bsr)
             stability_score = self._calculate_stability_from_keepa(raw_keepa)
@@ -725,12 +781,18 @@ class AutoSourcingService:
                 is_featured=(tier == "HOT"),
                 # Phase 7: Competition data
                 fba_seller_count=fba_seller_count,
-                amazon_on_listing=amazon_on_listing
+                amazon_on_listing=amazon_on_listing,
+                # Condition-based scoring signals
+                used_price=used_price,
+                used_offer_count=used_offer_count,
+                used_roi_percentage=used_roi_percentage,
+                condition_signal=condition_signal
             )
 
             logger.info(
                 f"Analyzed {asin}: {overall_rating}, ROI={roi_percentage:.1f}%, BSR={bsr}, "
-                f"FBA={fba_seller_count}, Amazon={amazon_on_listing}"
+                f"FBA={fba_seller_count}, Amazon={amazon_on_listing}, "
+                f"used_roi={used_roi_percentage}, condition={condition_signal}"
             )
             return pick
 

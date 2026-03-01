@@ -242,13 +242,13 @@ class TestWebhookSchemas:
     def test_webhook_config_response_from_attributes(self):
         """WebhookConfigResponse can be created from dict (ORM compat)."""
         resp = WebhookConfigResponse(
-            id=1,
+            id="test-uuid-123",
             url="https://example.com/hook",
             secret="s",
             event_types=["autosourcing.job.completed"],
             active=True,
         )
-        assert resp.id == 1
+        assert resp.id == "test-uuid-123"
 
 
 # ===========================================================================

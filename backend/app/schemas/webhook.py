@@ -13,7 +13,7 @@ class WebhookConfigCreate(BaseModel):
 
 
 class WebhookConfigResponse(BaseModel):
-    id: int
+    id: str
     url: str
     secret: str = ""
     event_types: List[str] = Field(default_factory=list)

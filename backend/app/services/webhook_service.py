@@ -12,7 +12,7 @@ Key design decisions:
 import hashlib
 import hmac
 import json
-import logging
+import structlog
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -24,7 +24,7 @@ from app.core.settings import get_settings
 from app.models.webhook_config import WebhookConfig
 from app.schemas.webhook import WebhookPayload
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 # --- Constants ---
 WEBHOOK_TIMEOUT_SECONDS = 10

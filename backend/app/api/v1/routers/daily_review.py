@@ -124,7 +124,7 @@ async def get_daily_review(
 async def get_actionable_buy_list(
     days_back: int = Query(default=1, ge=1, le=7, description="Days of picks to analyze"),
     min_roi: float = Query(default=15.0, ge=0, description="Minimum ROI percentage"),
-    max_results: int = Query(default=10, ge=1, le=100, description="Maximum items to return"),
+    max_results: int = Query(default=10, ge=1, le=50, description="Maximum items to return"),
     db: AsyncSession = Depends(get_db_session),
     current_user: CurrentUser = Depends(get_current_user),
 ):

@@ -18,6 +18,7 @@ from app.services.autosourcing_validator import AutoSourcingValidator
 from app.models.autosourcing import JobStatus, ActionStatus
 from app.models.webhook_config import WebhookConfig
 from app.schemas.webhook import WebhookConfigCreate, WebhookConfigResponse
+from app.core.auth import get_current_user, CurrentUser
 from app.core.settings import get_settings
 from app.schemas.autosourcing_safeguards import (
     CostEstimateRequest,
@@ -565,6 +566,7 @@ async def get_job_products_by_tier(
 async def upsert_webhook_config(
     request: WebhookConfigCreate,
     db: AsyncSession = Depends(get_db_session),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """
     Upsert webhook configuration.
@@ -574,8 +576,7 @@ async def upsert_webhook_config(
     """
     from sqlalchemy import select
 
-    # For now, use a fixed placeholder user_id (single-tenant)
-    user_id = "00000000-0000-0000-0000-000000000000"
+    user_id = str(current_user.id)
 
     result = await db.execute(
         select(WebhookConfig).where(WebhookConfig.user_id == user_id)
@@ -604,22 +605,28 @@ async def upsert_webhook_config(
 
 @router.get(
     "/webhook",
-    response_model=Optional[WebhookConfigResponse],
+    response_model=WebhookConfigResponse,
     summary="Get webhook configuration",
     description="Retrieve the current webhook configuration.",
 )
 async def get_webhook_config(
     db: AsyncSession = Depends(get_db_session),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    """Retrieve the current webhook configuration, or null if not configured."""
+    """Retrieve the current webhook configuration, or 404 if not configured."""
     from sqlalchemy import select
 
-    user_id = "00000000-0000-0000-0000-000000000000"
+    user_id = str(current_user.id)
 
     result = await db.execute(
         select(WebhookConfig).where(WebhookConfig.user_id == user_id)
     )
     config = result.scalar_one_or_none()
+    if config is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No webhook configuration found for this user.",
+        )
     return config
 
 # ============================================================================

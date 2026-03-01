@@ -572,7 +572,7 @@ class AutoSourcingService:
             used_price = product_data.get("used_price")
             used_offer_count = product_data.get("used_offer_count", 0)
             used_roi_percentage = None
-            condition_signal = None
+            condition_signal = "UNKNOWN"
 
             if used_price is not None and used_price > 0:
                 used_fees = used_price * fba_fee_percentage
@@ -599,7 +599,7 @@ class AutoSourcingService:
             confidence_score = self._calculate_confidence_from_keepa(
                 raw_keepa,
                 condition_signal=condition_signal,
-                business_config=scoring_config
+                business_config=business_config.get("condition_signals", {})
             )
 
             # Overall rating based on scoring config
@@ -719,7 +719,7 @@ class AutoSourcingService:
             used_price = product_data.get("used_price")
             used_offer_count = product_data.get("used_offer_count", 0)
             used_roi_percentage = None
-            condition_signal = None
+            condition_signal = "UNKNOWN"
 
             if used_price is not None and used_price > 0:
                 used_fees = used_price * fba_fee_percentage
@@ -746,7 +746,7 @@ class AutoSourcingService:
             confidence_score = self._calculate_confidence_from_keepa(
                 raw_keepa,
                 condition_signal=condition_signal,
-                business_config=scoring_config
+                business_config=business_config.get("condition_signals", {})
             )
 
             # Overall rating based on scoring config

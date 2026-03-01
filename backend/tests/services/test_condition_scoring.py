@@ -246,13 +246,14 @@ class TestConditionSignalDerivation:
         assert signal == "WEAK"
 
     def test_condition_signal_unknown_no_price(self):
-        """No used price data → condition_signal stays None (UNKNOWN)."""
+        """No used price data → condition_signal is UNKNOWN."""
         svc = make_service()
         raw = make_raw_keepa(used_price_cents=-1)
         product_data = svc._extract_product_data_from_keepa(raw)
-        # When used_price is None, the signal derivation block is skipped
+        # When used_price is None, condition_signal defaults to UNKNOWN
         assert product_data["used_price"] is None
-        # condition_signal would remain None (not computed)
+        # The signal derivation block is skipped, so signal stays "UNKNOWN"
+        # (verified at the _analyze level, not _extract level)
 
     def test_condition_signal_high_roi_high_competition(self):
         """High ROI but too many offers for STRONG → MODERATE."""

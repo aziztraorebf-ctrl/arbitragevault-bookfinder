@@ -87,6 +87,12 @@ class AutoSourcingPickResponse(BaseModel):
     fba_seller_count: Optional[int] = None
     amazon_on_listing: Optional[bool] = None
 
+    # Condition-based scoring signals
+    used_price: Optional[float] = None
+    used_offer_count: Optional[int] = None
+    used_roi_percentage: Optional[float] = None
+    condition_signal: Optional[str] = None
+
     # Action tracking
     action_status: ActionStatus
     action_taken_at: Optional[datetime]

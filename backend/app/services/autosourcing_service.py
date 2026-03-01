@@ -596,7 +596,11 @@ class AutoSourcingService:
             # Calculate advanced scores from REAL Keepa data
             velocity_score = self._calculate_velocity_from_keepa(raw_keepa, bsr)
             stability_score = self._calculate_stability_from_keepa(raw_keepa)
-            confidence_score = self._calculate_confidence_from_keepa(raw_keepa)
+            confidence_score = self._calculate_confidence_from_keepa(
+                raw_keepa,
+                condition_signal=condition_signal,
+                business_config=scoring_config
+            )
 
             # Overall rating based on scoring config
             overall_rating = self._compute_rating(
@@ -739,7 +743,11 @@ class AutoSourcingService:
             # Calculate advanced scores from REAL Keepa data
             velocity_score = self._calculate_velocity_from_keepa(raw_keepa, bsr)
             stability_score = self._calculate_stability_from_keepa(raw_keepa)
-            confidence_score = self._calculate_confidence_from_keepa(raw_keepa)
+            confidence_score = self._calculate_confidence_from_keepa(
+                raw_keepa,
+                condition_signal=condition_signal,
+                business_config=scoring_config
+            )
 
             # Overall rating based on scoring config
             overall_rating = self._compute_rating(
@@ -914,8 +922,18 @@ class AutoSourcingService:
 
         return 70.0
 
-    def _calculate_confidence_from_keepa(self, raw_keepa: Dict[str, Any]) -> float:
-        """Calculate confidence score from real Keepa data completeness."""
+    def _calculate_confidence_from_keepa(
+        self, raw_keepa: Dict[str, Any],
+        condition_signal: Optional[str] = None,
+        business_config: Optional[Dict[str, Any]] = None
+    ) -> float:
+        """Calculate confidence score from real Keepa data completeness.
+
+        Args:
+            raw_keepa: Raw Keepa product data
+            condition_signal: Condition signal strength (STRONG, MODERATE, WEAK, UNKNOWN)
+            business_config: Optional business config with confidence boost settings
+        """
         confidence = 50.0  # Base confidence
 
         # Check data completeness
@@ -935,6 +953,15 @@ class AutoSourcingService:
         last_update = raw_keepa.get("lastUpdate", 0)
         if last_update > 0:
             confidence += 5
+
+        # Condition-based confidence boost
+        if condition_signal:
+            config = business_config or {}
+            if condition_signal == "STRONG":
+                confidence += config.get("confidence_boost_strong", 10)
+            elif condition_signal == "MODERATE":
+                confidence += config.get("confidence_boost_moderate", 5)
+            # WEAK and UNKNOWN add nothing
 
         return min(100, confidence)
 

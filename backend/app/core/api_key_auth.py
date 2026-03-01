@@ -62,41 +62,54 @@ def hash_api_key(raw_key: str) -> str:
 async def verify_api_key(
     api_key: str,
     db: AsyncSession,
-) -> Optional[CurrentUser]:
+    required_scopes: Optional[set] = None,
+) -> CurrentUser:
     """Verify an API key and return the associated user.
 
     Args:
         api_key: The raw API key from the request header.
         db: Database session.
+        required_scopes: Optional set of scopes required for this request.
 
     Returns:
-        CurrentUser if the key is valid, None otherwise.
+        CurrentUser if the key is valid.
+
+    Raises:
+        HTTPException: 401 for invalid/expired/inactive keys, 403 for wrong scopes.
     """
     from ..models.api_key import APIKey
     from datetime import datetime, timezone
 
     key_hash = hash_api_key(api_key)
 
+    # Look up key by hash (include inactive keys so we can give specific messages)
     result = await db.execute(
-        select(APIKey).where(
-            APIKey.key_hash == key_hash,
-            APIKey.is_active == True,  # noqa: E712
-        )
+        select(APIKey).where(APIKey.key_hash == key_hash)
     )
     api_key_record = result.scalar_one_or_none()
 
     if not api_key_record:
-        logger.warning("API key not found or inactive", key_prefix=api_key[:8])
-        return None
+        logger.warning("API key not found", key_prefix=api_key[:8])
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+        )
+
+    # Check if key is inactive
+    if not api_key_record.is_active:
+        logger.warning("API key inactive", key_prefix=api_key[:8])
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API key is inactive",
+        )
 
     # Check expiration
     if api_key_record.expires_at and api_key_record.expires_at < datetime.now(timezone.utc):
         logger.warning("API key expired", key_prefix=api_key[:8])
-        return None
-
-    # Update last used timestamp
-    api_key_record.last_used_at = datetime.now(timezone.utc)
-    await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API key has expired",
+        )
 
     # Load the associated user
     from ..models.user import User
@@ -108,10 +121,30 @@ async def verify_api_key(
 
     if not user or not user.is_active:
         logger.warning("API key owner not found or inactive", key_prefix=api_key[:8])
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API key owner is inactive",
+        )
 
     # Build scopes from the API key's scopes (not the user's role scopes)
     api_key_scopes = set(api_key_record.scopes) if api_key_record.scopes else set()
+
+    # Check required scopes
+    if required_scopes and not required_scopes.issubset(api_key_scopes):
+        missing = required_scopes - api_key_scopes
+        logger.warning(
+            "API key missing required scopes",
+            key_prefix=api_key[:8],
+            missing_scopes=list(missing),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Insufficient scopes. Required: {sorted(required_scopes)}",
+        )
+
+    # Update last used timestamp
+    api_key_record.last_used_at = datetime.now(timezone.utc)
+    await db.commit()
 
     set_user_context(user.id)
 
@@ -135,6 +168,7 @@ async def get_api_or_firebase_user(
     x_api_key: Optional[str] = Header(None),
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(http_bearer),
     db: AsyncSession = Depends(get_db_session),
+    required_scopes: Optional[set] = None,
 ) -> CurrentUser:
     """Dual-auth dependency: accepts X-API-Key header or Firebase Bearer token.
 
@@ -143,14 +177,7 @@ async def get_api_or_firebase_user(
     """
     # Try API key authentication first
     if x_api_key:
-        user = await verify_api_key(x_api_key, db)
-        if user:
-            return user
-
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired API key",
-        )
+        return await verify_api_key(x_api_key, db, required_scopes=required_scopes)
 
     # Fall back to Firebase Bearer token
     if credentials:
@@ -162,3 +189,30 @@ async def get_api_or_firebase_user(
         detail="Not authenticated. Provide X-API-Key header or Bearer token.",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+
+def require_api_scopes(*scopes: str):
+    """Factory that creates a dual-auth dependency requiring specific scopes for API keys.
+
+    Firebase-authenticated users bypass scope checks (they use role-based auth).
+    """
+    required = set(scopes)
+
+    async def dependency(
+        x_api_key: Optional[str] = Header(None),
+        credentials: Optional[HTTPAuthorizationCredentials] = Depends(http_bearer),
+        db: AsyncSession = Depends(get_db_session),
+    ) -> CurrentUser:
+        return await get_api_or_firebase_user(
+            x_api_key=x_api_key,
+            credentials=credentials,
+            db=db,
+            required_scopes=required,
+        )
+
+    return dependency
+
+
+# Pre-built scope dependencies for route use and test overrides
+require_daily_review_read = require_api_scopes("daily_review:read")
+require_autosourcing_read = require_api_scopes("autosourcing:read")

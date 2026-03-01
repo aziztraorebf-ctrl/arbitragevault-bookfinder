@@ -100,9 +100,9 @@ class TestCreateAPIKey:
         data = response.json()
 
         assert data["name"] == "Test Key"
-        assert data["raw_key"].startswith("avk_")
-        assert len(data["raw_key"]) == 36
-        assert data["key_prefix"] == data["raw_key"][:8]
+        assert data["key"].startswith("avk_")
+        assert len(data["key"]) == 36
+        assert data["key_prefix"] == data["key"][:8]
         assert data["scopes"] == ["daily_review:read"]
         assert data["is_active"] is True
         assert "id" in data
@@ -118,7 +118,7 @@ class TestCreateAPIKey:
 
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
-        assert data["scopes"] == ["read"]
+        assert data["scopes"] == ["daily_review:read", "autosourcing:read"]
 
     @pytest.mark.asyncio
     async def test_create_api_key_with_expiration(self, admin_client: AsyncClient):
@@ -182,7 +182,7 @@ class TestListAPIKeys:
 
         key = data[0]
         assert key["name"] == "Listed Key"
-        assert "raw_key" not in key
+        assert "key" not in key
         assert "key_prefix" in key
 
     @pytest.mark.asyncio
@@ -282,7 +282,8 @@ class TestDeleteAPIKey:
         response = await admin_client.delete(f"/api/v1/api-keys/{key_id}")
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["detail"] == "API key deleted successfully"
+        assert response.json()["message"] == "API key deactivated"
+        assert "id" in response.json()
 
         # Verify key is deactivated by listing
         list_resp = await admin_client.get("/api/v1/api-keys")
@@ -312,7 +313,7 @@ class TestDualAuthFlow:
     async def test_dual_auth_with_valid_api_key(self, admin_client: AsyncClient):
         """Test dual-auth endpoint accepts API key via dependency override."""
         from app.main import app
-        from app.core.api_key_auth import get_api_or_firebase_user
+        from app.core.api_key_auth import require_daily_review_read
 
         mock_user = CurrentUser(
             id=str(uuid.uuid4()),
@@ -322,7 +323,7 @@ class TestDualAuthFlow:
             is_active=True,
         )
 
-        app.dependency_overrides[get_api_or_firebase_user] = lambda: mock_user
+        app.dependency_overrides[require_daily_review_read] = lambda: mock_user
 
         response = await admin_client.get(
             "/api/v1/daily-review/today",
@@ -338,7 +339,7 @@ class TestDualAuthFlow:
     async def test_dual_auth_firebase_fallback(self, admin_client: AsyncClient):
         """Test dual-auth falls back to Firebase Bearer token."""
         from app.main import app
-        from app.core.api_key_auth import get_api_or_firebase_user
+        from app.core.api_key_auth import require_daily_review_read
 
         mock_user = CurrentUser(
             id=str(uuid.uuid4()),
@@ -348,7 +349,7 @@ class TestDualAuthFlow:
             is_active=True,
         )
 
-        app.dependency_overrides[get_api_or_firebase_user] = lambda: mock_user
+        app.dependency_overrides[require_daily_review_read] = lambda: mock_user
 
         response = await admin_client.get(
             "/api/v1/daily-review/today",

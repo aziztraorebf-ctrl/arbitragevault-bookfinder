@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 class CreateAPIKeyRequest(BaseModel):
     """Request to create a new API key."""
     name: str = Field(..., min_length=1, max_length=100)
-    scopes: List[str] = Field(default_factory=lambda: ["read"])
+    scopes: List[str] = Field(default_factory=lambda: ["daily_review:read", "autosourcing:read"])
     expires_at: Optional[datetime] = None
 
 
@@ -40,7 +40,7 @@ class APIKeyCreatedResponse(BaseModel):
     id: str
     name: str
     key_prefix: str
-    raw_key: str
+    key: str
     scopes: List[str]
     is_active: bool
     expires_at: Optional[datetime]
@@ -52,4 +52,5 @@ class APIKeyCreatedResponse(BaseModel):
 
 class APIKeyDeleteResponse(BaseModel):
     """Response after deleting an API key."""
-    detail: str = "API key deleted successfully"
+    message: str = "API key deactivated"
+    id: str

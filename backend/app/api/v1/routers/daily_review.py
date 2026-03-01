@@ -8,7 +8,7 @@ from sqlalchemy import select, and_, text
 
 from app.core.db import get_db_session
 from app.core.auth import CurrentUser
-from app.core.api_key_auth import get_api_or_firebase_user
+from app.core.api_key_auth import require_daily_review_read
 from app.models.autosourcing import AutoSourcingPick, AutoSourcingJob
 from app.schemas.daily_review import DailyReviewResponse
 from app.services.daily_review_service import generate_daily_review
@@ -39,7 +39,7 @@ async def _table_exists(db: AsyncSession, table_name: str) -> bool:
 async def get_daily_review(
     days_back: int = Query(default=1, ge=1, le=7, description="Days of picks to analyze"),
     db: AsyncSession = Depends(get_db_session),
-    current_user: CurrentUser = Depends(get_api_or_firebase_user),
+    current_user: CurrentUser = Depends(require_daily_review_read),
 ):
     """Generate today's daily review from recent AutoSourcing picks."""
     # Use naive UTC datetime - autosourcing_jobs.created_at is TIMESTAMP without timezone

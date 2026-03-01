@@ -56,7 +56,7 @@ async def create_api_key(
         last_used_at=api_key.last_used_at,
         expires_at=api_key.expires_at,
         created_at=api_key.created_at,
-        raw_key=raw_key,
+        key=raw_key,
     )
 
 
@@ -149,5 +149,6 @@ async def delete_api_key(
     logger.info("API key deleted", key_prefix=api_key.key_prefix, user_id=current_user.id)
 
     return APIKeyDeleteResponse(
-        detail="API key deleted successfully",
+        message="API key deactivated",
+        id=str(key_id),
     )

@@ -166,3 +166,6 @@ pr_body.json
 render_mcp_config.json
 migrate_to_neon.py
 mcp_migration.py
+
+# Auto Claude data directory
+.auto-claude/

@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "001-implement-api-key-authentication-system-for-n8n-au",
+  "state": "building",
+  "subtasks": {
+    "completed": 8,
+    "total": 9,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Testing & Verification",
+    "id": null,
+    "total": 3
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 106,
+    "started_at": "2026-02-28T22:44:39.076584"
+  },
+  "last_update": "2026-02-28T23:27:27.595806"
+}

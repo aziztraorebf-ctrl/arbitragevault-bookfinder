@@ -16,6 +16,8 @@ from app.services.keepa_service import KeepaService, get_keepa_service
 from app.services.autosourcing_cost_estimator import AutoSourcingCostEstimator
 from app.services.autosourcing_validator import AutoSourcingValidator
 from app.models.autosourcing import JobStatus, ActionStatus
+from app.models.webhook_config import WebhookConfig
+from app.schemas.webhook import WebhookConfigCreate, WebhookConfigResponse
 from app.core.settings import get_settings
 from app.schemas.autosourcing_safeguards import (
     CostEstimateRequest,
@@ -549,6 +551,76 @@ async def get_job_products_by_tier(
         "tier_stats": tier_stats,
         "generated_at": datetime.utcnow().isoformat()
     }
+
+# ============================================================================
+# WEBHOOK CONFIGURATION
+# ============================================================================
+
+@router.post(
+    "/webhook",
+    response_model=WebhookConfigResponse,
+    summary="Upsert webhook configuration",
+    description="Create or update the webhook configuration for job completion notifications.",
+)
+async def upsert_webhook_config(
+    request: WebhookConfigCreate,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Upsert webhook configuration.
+
+    If a webhook config already exists, it is updated in place.
+    Otherwise a new config is created.
+    """
+    from sqlalchemy import select
+
+    # For now, use a fixed placeholder user_id (single-tenant)
+    user_id = "00000000-0000-0000-0000-000000000000"
+
+    result = await db.execute(
+        select(WebhookConfig).where(WebhookConfig.user_id == user_id)
+    )
+    config = result.scalar_one_or_none()
+
+    if config:
+        config.url = str(request.url)
+        config.secret = request.secret
+        config.event_types = request.event_types
+        config.active = request.active
+    else:
+        config = WebhookConfig(
+            url=str(request.url),
+            secret=request.secret,
+            event_types=request.event_types,
+            active=request.active,
+            user_id=user_id,
+        )
+        db.add(config)
+
+    await db.commit()
+    await db.refresh(config)
+    return config
+
+
+@router.get(
+    "/webhook",
+    response_model=Optional[WebhookConfigResponse],
+    summary="Get webhook configuration",
+    description="Retrieve the current webhook configuration.",
+)
+async def get_webhook_config(
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Retrieve the current webhook configuration, or null if not configured."""
+    from sqlalchemy import select
+
+    user_id = "00000000-0000-0000-0000-000000000000"
+
+    result = await db.execute(
+        select(WebhookConfig).where(WebhookConfig.user_id == user_id)
+    )
+    config = result.scalar_one_or_none()
+    return config
 
 # ============================================================================
 # HEALTH & DEBUG

@@ -213,35 +213,37 @@ class TestConditionSignalDerivation:
         """Helper that mirrors the signal derivation logic from _analyze_product_from_batch."""
         if config is None:
             config = {
-                "used_roi_threshold": 30.0,
-                "used_offer_threshold": 5,
+                "strong_roi_min": 25.0,
+                "moderate_roi_min": 10.0,
+                "max_used_offers_strong": 10,
+                "max_used_offers_moderate": 25,
             }
-        threshold_roi = config.get("used_roi_threshold", 30.0)
-        threshold_offers = config.get("used_offer_threshold", 5)
+        strong_roi_min = config.get("strong_roi_min", 25.0)
+        moderate_roi_min = config.get("moderate_roi_min", 10.0)
+        max_offers_strong = config.get("max_used_offers_strong", 10)
+        max_offers_moderate = config.get("max_used_offers_moderate", 25)
 
-        if used_roi >= threshold_roi and used_offer_count >= threshold_offers:
-            return "STRONG_USED"
-        elif used_roi >= threshold_roi:
-            return "USED_ROI_OK"
-        elif used_offer_count >= threshold_offers:
-            return "USED_DEMAND"
+        if used_roi >= strong_roi_min and (used_offer_count or 0) <= max_offers_strong:
+            return "STRONG"
+        elif used_roi >= moderate_roi_min and (used_offer_count or 0) <= max_offers_moderate:
+            return "MODERATE"
         else:
-            return "WEAK_USED"
+            return "WEAK"
 
     def test_condition_signal_strong(self):
-        """High used ROI + sufficient offers → STRONG_USED."""
-        signal = self._derive_signal(used_roi=50.0, used_offer_count=10)
-        assert signal == "STRONG_USED"
+        """High used ROI + low competition → STRONG."""
+        signal = self._derive_signal(used_roi=50.0, used_offer_count=5)
+        assert signal == "STRONG"
 
-    def test_condition_signal_moderate_roi_ok(self):
-        """Good ROI but low offers → USED_ROI_OK."""
-        signal = self._derive_signal(used_roi=35.0, used_offer_count=2)
-        assert signal == "USED_ROI_OK"
+    def test_condition_signal_moderate(self):
+        """Moderate ROI with moderate competition → MODERATE."""
+        signal = self._derive_signal(used_roi=15.0, used_offer_count=15)
+        assert signal == "MODERATE"
 
     def test_condition_signal_weak(self):
-        """Low used ROI and low offers → WEAK_USED."""
-        signal = self._derive_signal(used_roi=10.0, used_offer_count=2)
-        assert signal == "WEAK_USED"
+        """Low used ROI → WEAK."""
+        signal = self._derive_signal(used_roi=5.0, used_offer_count=2)
+        assert signal == "WEAK"
 
     def test_condition_signal_unknown_no_price(self):
         """No used price data → condition_signal stays None (UNKNOWN)."""
@@ -252,18 +254,15 @@ class TestConditionSignalDerivation:
         assert product_data["used_price"] is None
         # condition_signal would remain None (not computed)
 
-    def test_condition_signal_missing_offer_count(self):
-        """Used price available but offer count None → still derives signal from ROI."""
-        # When used_offer_count is None/0, it won't meet offer threshold
-        # So caps at USED_ROI_OK (not STRONG_USED)
-        signal = self._derive_signal(used_roi=50.0, used_offer_count=0)
-        assert signal != "STRONG_USED"
-        assert signal == "USED_ROI_OK"
+    def test_condition_signal_high_roi_high_competition(self):
+        """High ROI but too many offers for STRONG → MODERATE."""
+        signal = self._derive_signal(used_roi=50.0, used_offer_count=15)
+        assert signal == "MODERATE"
 
-    def test_condition_signal_used_demand(self):
-        """Low ROI but enough offers → USED_DEMAND."""
-        signal = self._derive_signal(used_roi=10.0, used_offer_count=8)
-        assert signal == "USED_DEMAND"
+    def test_condition_signal_high_competition_weak(self):
+        """Low ROI and high competition → WEAK."""
+        signal = self._derive_signal(used_roi=5.0, used_offer_count=30)
+        assert signal == "WEAK"
 
 
 # =============================================================================
@@ -341,7 +340,7 @@ class TestCriteriaGating:
     def test_meets_criteria_reject_weak(self):
         """When reject_weak=true, WEAK picks are filtered out."""
         svc = make_service()
-        pick = make_pick(condition_signal="WEAK_USED")
+        pick = make_pick(condition_signal="WEAK")
         config = {
             "rating_required": "FAIR",
             "roi_min": 20,
@@ -353,7 +352,7 @@ class TestCriteriaGating:
     def test_meets_criteria_allow_weak_default(self):
         """Default config does NOT reject WEAK (backward-compatible)."""
         svc = make_service()
-        pick = make_pick(condition_signal="WEAK_USED")
+        pick = make_pick(condition_signal="WEAK")
         config = {
             "rating_required": "FAIR",
             "roi_min": 20,
@@ -365,7 +364,7 @@ class TestCriteriaGating:
     def test_meets_criteria_strong_signal_passes(self):
         """STRONG signal is never rejected by condition gating."""
         svc = make_service()
-        pick = make_pick(condition_signal="STRONG_USED")
+        pick = make_pick(condition_signal="STRONG")
         config = {
             "rating_required": "FAIR",
             "roi_min": 20,

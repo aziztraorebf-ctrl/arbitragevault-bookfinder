@@ -581,17 +581,17 @@ class AutoSourcingService:
 
                 # Derive condition_signal from thresholds
                 cs_config = business_config.get("condition_signals", {})
-                used_roi_threshold = cs_config.get("used_roi_threshold", 30.0)
-                used_offer_threshold = cs_config.get("used_offer_threshold", 5)
+                strong_roi_min = cs_config.get("strong_roi_min", 25.0)
+                moderate_roi_min = cs_config.get("moderate_roi_min", 10.0)
+                max_offers_strong = cs_config.get("max_used_offers_strong", 10)
+                max_offers_moderate = cs_config.get("max_used_offers_moderate", 25)
 
-                if used_roi_percentage >= used_roi_threshold and used_offer_count >= used_offer_threshold:
-                    condition_signal = "STRONG_USED"
-                elif used_roi_percentage >= used_roi_threshold:
-                    condition_signal = "USED_ROI_OK"
-                elif used_offer_count >= used_offer_threshold:
-                    condition_signal = "USED_DEMAND"
+                if used_roi_percentage >= strong_roi_min and (used_offer_count or 0) <= max_offers_strong:
+                    condition_signal = "STRONG"
+                elif used_roi_percentage >= moderate_roi_min and (used_offer_count or 0) <= max_offers_moderate:
+                    condition_signal = "MODERATE"
                 else:
-                    condition_signal = "WEAK_USED"
+                    condition_signal = "WEAK"
 
             # Calculate advanced scores from REAL Keepa data
             velocity_score = self._calculate_velocity_from_keepa(raw_keepa, bsr)
@@ -728,17 +728,17 @@ class AutoSourcingService:
 
                 # Derive condition_signal from thresholds
                 cs_config = business_config.get("condition_signals", {})
-                used_roi_threshold = cs_config.get("used_roi_threshold", 30.0)
-                used_offer_threshold = cs_config.get("used_offer_threshold", 5)
+                strong_roi_min = cs_config.get("strong_roi_min", 25.0)
+                moderate_roi_min = cs_config.get("moderate_roi_min", 10.0)
+                max_offers_strong = cs_config.get("max_used_offers_strong", 10)
+                max_offers_moderate = cs_config.get("max_used_offers_moderate", 25)
 
-                if used_roi_percentage >= used_roi_threshold and used_offer_count >= used_offer_threshold:
-                    condition_signal = "STRONG_USED"
-                elif used_roi_percentage >= used_roi_threshold:
-                    condition_signal = "USED_ROI_OK"
-                elif used_offer_count >= used_offer_threshold:
-                    condition_signal = "USED_DEMAND"
+                if used_roi_percentage >= strong_roi_min and (used_offer_count or 0) <= max_offers_strong:
+                    condition_signal = "STRONG"
+                elif used_roi_percentage >= moderate_roi_min and (used_offer_count or 0) <= max_offers_moderate:
+                    condition_signal = "MODERATE"
                 else:
-                    condition_signal = "WEAK_USED"
+                    condition_signal = "WEAK"
 
             # Calculate advanced scores from REAL Keepa data
             velocity_score = self._calculate_velocity_from_keepa(raw_keepa, bsr)
@@ -1006,7 +1006,7 @@ class AutoSourcingService:
         # Condition-based gating: reject weak condition signals when enabled
         condition_signals_config = scoring_config.get("condition_signals", {})
         if condition_signals_config.get("reject_weak", False):
-            if pick.condition_signal and pick.condition_signal.startswith("WEAK"):
+            if pick.condition_signal and pick.condition_signal == "WEAK":
                 return False
 
         return (pick_rating_level >= required_rating_level and

@@ -17,6 +17,8 @@ from app.services.autosourcing_cost_estimator import AutoSourcingCostEstimator
 from app.services.autosourcing_validator import AutoSourcingValidator
 from app.models.autosourcing import JobStatus, ActionStatus
 from app.core.settings import get_settings
+from app.core.auth import CurrentUser
+from app.core.api_key_auth import get_api_or_firebase_user
 from app.schemas.autosourcing_safeguards import (
     CostEstimateRequest,
     CostEstimateResponse,
@@ -418,7 +420,8 @@ async def get_picks_by_action(
 
 @router.get("/to-buy", response_model=List[AutoSourcingPickResponse])
 async def get_to_buy_list(
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    current_user: CurrentUser = Depends(get_api_or_firebase_user),
 ):
     """Get all products marked for purchase - convenience endpoint."""
     
@@ -427,7 +430,8 @@ async def get_to_buy_list(
 
 @router.get("/favorites", response_model=List[AutoSourcingPickResponse])
 async def get_favorites(
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    current_user: CurrentUser = Depends(get_api_or_firebase_user),
 ):
     """Get all favorite products - convenience endpoint."""
     

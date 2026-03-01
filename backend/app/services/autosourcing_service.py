@@ -791,6 +791,19 @@ class AutoSourcingService:
                 fba_count = None
         result["fba_seller_count"] = fba_count if fba_count and fba_count >= 0 else None
 
+        # Used price: stats.current[2] (USED price in cents)
+        if len(current) > 2 and current[2] is not None and current[2] not in (-1, 0):
+            result["used_price"] = current[2] / 100.0
+        else:
+            result["used_price"] = None
+
+        # Used offer count: stats.offerCountUsed
+        used_offer_count = stats.get("offerCountUsed", -2)
+        if used_offer_count is None or used_offer_count == -2:
+            result["used_offer_count"] = None
+        else:
+            result["used_offer_count"] = used_offer_count
+
         return result
 
     def _calculate_velocity_from_keepa(self, raw_keepa: Dict[str, Any], bsr: int) -> float:

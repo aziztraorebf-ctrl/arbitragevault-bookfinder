@@ -212,6 +212,15 @@
       }
     }
   },
+  "condition_signals": {
+    "strong_roi_min": 25.0,
+    "moderate_roi_min": 10.0,
+    "max_used_offers_strong": 10,
+    "max_used_offers_moderate": 25,
+    "confidence_boost_strong": 10,
+    "confidence_boost_moderate": 5,
+    "reject_weak": false
+  },
   "advanced_scoring": {
     "velocity": {
       "excellent_threshold": 80,

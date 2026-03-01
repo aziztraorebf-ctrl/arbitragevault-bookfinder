@@ -18,6 +18,7 @@ from app.models.autosourcing import (
     JobStatus, ActionStatus
 )
 from app.services.keepa_service import KeepaService
+from app.services.webhook_service import dispatch_webhook
 from app.services.business_config_service import BusinessConfigService
 from app.services.keepa_product_finder import KeepaProductFinderService
 from app.services.config_adapter import get_config_adapter
@@ -183,6 +184,12 @@ class AutoSourcingService:
                 job = result.scalar_one()
 
                 logger.info(f"AutoSourcing job completed successfully: {job.id}")
+
+                try:
+                    await dispatch_webhook(db=self.db, job=job)
+                except Exception:
+                    logger.warning("Webhook dispatch failed", exc_info=True)
+
                 return job
 
         except asyncio.TimeoutError:

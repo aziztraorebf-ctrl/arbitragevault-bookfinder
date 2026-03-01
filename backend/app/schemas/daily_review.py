@@ -28,6 +28,33 @@ class DailyReviewCounts(BaseModel):
     REJECT: int = 0
 
 
+class ActionableBuyItem(BaseModel):
+    asin: str
+    title: str = ""
+    current_price: Optional[float] = None
+    roi_percentage: float = 0.0
+    stability_score: float = 0.0
+    confidence_score: float = 0.0
+    velocity_score: float = 0.0
+    bsr: Optional[int] = None
+    overall_rating: float = 0.0
+    classification: str = "STABLE"
+    action_recommendation: str = "BUY"
+
+    class Config:
+        from_attributes = True
+
+
+class ActionableBuyList(BaseModel):
+    items: List[ActionableBuyItem] = Field(default_factory=list)
+    total_found: int = 0
+    filters_applied: dict = Field(default_factory=dict)
+    generated_at: str = ""
+
+    class Config:
+        from_attributes = True
+
+
 class DailyReviewResponse(BaseModel):
     review_date: str
     total: int = 0

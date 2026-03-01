@@ -5,7 +5,7 @@ Classifies AutoSourcing picks into actionable categories based on
 historical data, ROI metrics, and market conditions.
 
 Categories (priority order - first match wins):
-1. REJECT  - Amazon on listing, OR ROI < 0, OR BSR <= 0
+1. REJECT  - Amazon on listing, OR ROI < 0, OR BSR <= 0, OR WEAK condition + low ROI
 2. FLUKE   - No history (never seen before)
 3. JACKPOT - ROI > 80% with history
 4. REVENANT - Last seen 24h+ ago, reappears today
@@ -96,6 +96,15 @@ def classify_product(
         return Classification.REJECT
     if bsr <= 0:
         logger.debug("REJECT: Invalid BSR (%d) for %s", bsr, product.get("asin"))
+        return Classification.REJECT
+
+    # --- REJECT: Weak condition signal combined with low ROI ---
+    condition_signal = product.get("condition_signal")
+    if condition_signal == "WEAK" and roi < 5.0:
+        logger.debug(
+            "REJECT: Weak condition signal with low ROI (%.2f) for %s",
+            roi, product.get("asin"),
+        )
         return Classification.REJECT
 
     # --- FLUKE: No history at all (never seen before) ---

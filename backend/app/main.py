@@ -27,7 +27,7 @@ try:
 except ImportError:
     MCP_AVAILABLE = False
 
-from app.api.v1.routers import auth, health, keepa, config, autosourcing, autoscheduler, stock_estimate, textbook_analysis, daily_review
+from app.api.v1.routers import auth, health, keepa, config, autosourcing, autoscheduler, stock_estimate, textbook_analysis, daily_review, api_keys
 from app.api.v1.endpoints import products, asin_history
 from app.core.cors import configure_cors
 from app.core.db import lifespan
@@ -83,6 +83,7 @@ configure_cors(app)
 # Include routers
 app.include_router(health.router, prefix="/api/v1/health", tags=["Health"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(api_keys.router, prefix="/api/v1/api-keys", tags=["API Keys"])
 app.include_router(keepa.router, prefix="/api/v1/keepa", tags=["Keepa"])
 app.include_router(products.router, prefix="/api/v1/products", tags=["Product Discovery"])
 app.include_router(config.router, prefix="/api/v1", tags=["Configuration"])

@@ -1003,6 +1003,12 @@ class AutoSourcingService:
         if velocity_min > 0 and pick.velocity_score < velocity_min:
             return False
 
+        # Condition-based gating: reject weak condition signals when enabled
+        condition_signals_config = scoring_config.get("condition_signals", {})
+        if condition_signals_config.get("reject_weak", False):
+            if pick.condition_signal and pick.condition_signal.startswith("WEAK"):
+                return False
+
         return (pick_rating_level >= required_rating_level and
                 pick.roi_percentage >= roi_min)
 

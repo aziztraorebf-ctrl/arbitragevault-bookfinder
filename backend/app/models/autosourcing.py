@@ -121,6 +121,12 @@ class AutoSourcingPick(Base):
     fba_seller_count = Column(Integer, nullable=True)  # Number of FBA sellers
     amazon_on_listing = Column(Boolean, nullable=True)  # True if Amazon sells this product
 
+    # Condition-based scoring signals
+    used_price = Column(Float, nullable=True)              # Current used/lowest price
+    used_offer_count = Column(Integer, nullable=True)      # Number of used offers
+    used_roi_percentage = Column(Float, nullable=True)     # ROI based on used price
+    condition_signal = Column(String(20), nullable=True)   # USED_BETTER/NEW_ONLY/etc.
+
     # AI-generated summary
     readable_summary = Column(Text, nullable=True)
     

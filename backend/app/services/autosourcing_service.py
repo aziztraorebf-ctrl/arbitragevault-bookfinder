@@ -568,10 +568,39 @@ class AutoSourcingService:
             profit_net = current_price - estimated_cost - amazon_fees
             roi_percentage = (profit_net / estimated_cost) * 100 if estimated_cost > 0 else 0
 
+            # Condition-based scoring: used price ROI and signal
+            used_price = product_data.get("used_price")
+            used_offer_count = product_data.get("used_offer_count", 0)
+            used_roi_percentage = None
+            condition_signal = "UNKNOWN"
+
+            if used_price is not None and used_price > 0:
+                used_fees = used_price * fba_fee_percentage
+                used_profit = used_price - estimated_cost - used_fees
+                used_roi_percentage = (used_profit / estimated_cost) * 100 if estimated_cost > 0 else 0.0
+
+                # Derive condition_signal from thresholds
+                cs_config = business_config.get("condition_signals", {})
+                strong_roi_min = cs_config.get("strong_roi_min", 25.0)
+                moderate_roi_min = cs_config.get("moderate_roi_min", 10.0)
+                max_offers_strong = cs_config.get("max_used_offers_strong", 10)
+                max_offers_moderate = cs_config.get("max_used_offers_moderate", 25)
+
+                if used_roi_percentage >= strong_roi_min and (used_offer_count or 0) <= max_offers_strong:
+                    condition_signal = "STRONG"
+                elif used_roi_percentage >= moderate_roi_min and (used_offer_count or 0) <= max_offers_moderate:
+                    condition_signal = "MODERATE"
+                else:
+                    condition_signal = "WEAK"
+
             # Calculate advanced scores from REAL Keepa data
             velocity_score = self._calculate_velocity_from_keepa(raw_keepa, bsr)
             stability_score = self._calculate_stability_from_keepa(raw_keepa)
-            confidence_score = self._calculate_confidence_from_keepa(raw_keepa)
+            confidence_score = self._calculate_confidence_from_keepa(
+                raw_keepa,
+                condition_signal=condition_signal,
+                business_config=business_config.get("condition_signals", {})
+            )
 
             # Overall rating based on scoring config
             overall_rating = self._compute_rating(
@@ -613,12 +642,18 @@ class AutoSourcingService:
                 is_featured=(tier == "HOT"),
                 # Phase 7: Competition data
                 fba_seller_count=fba_seller_count,
-                amazon_on_listing=amazon_on_listing
+                amazon_on_listing=amazon_on_listing,
+                # Condition-based scoring signals
+                used_price=used_price,
+                used_offer_count=used_offer_count,
+                used_roi_percentage=used_roi_percentage,
+                condition_signal=condition_signal
             )
 
             logger.info(
                 f"Analyzed {asin}: {overall_rating}, ROI={roi_percentage:.1f}%, BSR={bsr}, "
-                f"FBA={fba_seller_count}, Amazon={amazon_on_listing}"
+                f"FBA={fba_seller_count}, Amazon={amazon_on_listing}, "
+                f"used_roi={used_roi_percentage}, condition={condition_signal}"
             )
             return pick
 
@@ -680,10 +715,39 @@ class AutoSourcingService:
             profit_net = current_price - estimated_cost - amazon_fees
             roi_percentage = (profit_net / estimated_cost) * 100 if estimated_cost > 0 else 0
 
+            # Condition-based scoring: used price ROI and signal
+            used_price = product_data.get("used_price")
+            used_offer_count = product_data.get("used_offer_count", 0)
+            used_roi_percentage = None
+            condition_signal = "UNKNOWN"
+
+            if used_price is not None and used_price > 0:
+                used_fees = used_price * fba_fee_percentage
+                used_profit = used_price - estimated_cost - used_fees
+                used_roi_percentage = (used_profit / estimated_cost) * 100 if estimated_cost > 0 else 0.0
+
+                # Derive condition_signal from thresholds
+                cs_config = business_config.get("condition_signals", {})
+                strong_roi_min = cs_config.get("strong_roi_min", 25.0)
+                moderate_roi_min = cs_config.get("moderate_roi_min", 10.0)
+                max_offers_strong = cs_config.get("max_used_offers_strong", 10)
+                max_offers_moderate = cs_config.get("max_used_offers_moderate", 25)
+
+                if used_roi_percentage >= strong_roi_min and (used_offer_count or 0) <= max_offers_strong:
+                    condition_signal = "STRONG"
+                elif used_roi_percentage >= moderate_roi_min and (used_offer_count or 0) <= max_offers_moderate:
+                    condition_signal = "MODERATE"
+                else:
+                    condition_signal = "WEAK"
+
             # Calculate advanced scores from REAL Keepa data
             velocity_score = self._calculate_velocity_from_keepa(raw_keepa, bsr)
             stability_score = self._calculate_stability_from_keepa(raw_keepa)
-            confidence_score = self._calculate_confidence_from_keepa(raw_keepa)
+            confidence_score = self._calculate_confidence_from_keepa(
+                raw_keepa,
+                condition_signal=condition_signal,
+                business_config=business_config.get("condition_signals", {})
+            )
 
             # Overall rating based on scoring config
             overall_rating = self._compute_rating(
@@ -725,12 +789,18 @@ class AutoSourcingService:
                 is_featured=(tier == "HOT"),
                 # Phase 7: Competition data
                 fba_seller_count=fba_seller_count,
-                amazon_on_listing=amazon_on_listing
+                amazon_on_listing=amazon_on_listing,
+                # Condition-based scoring signals
+                used_price=used_price,
+                used_offer_count=used_offer_count,
+                used_roi_percentage=used_roi_percentage,
+                condition_signal=condition_signal
             )
 
             logger.info(
                 f"Analyzed {asin}: {overall_rating}, ROI={roi_percentage:.1f}%, BSR={bsr}, "
-                f"FBA={fba_seller_count}, Amazon={amazon_on_listing}"
+                f"FBA={fba_seller_count}, Amazon={amazon_on_listing}, "
+                f"used_roi={used_roi_percentage}, condition={condition_signal}"
             )
             return pick
 
@@ -791,6 +861,19 @@ class AutoSourcingService:
                 fba_count = None
         result["fba_seller_count"] = fba_count if fba_count and fba_count >= 0 else None
 
+        # Used price: stats.current[2] (USED price in cents)
+        if len(current) > 2 and current[2] is not None and current[2] not in (-1, 0):
+            result["used_price"] = current[2] / 100.0
+        else:
+            result["used_price"] = None
+
+        # Used offer count: stats.offerCountUsed
+        used_offer_count = stats.get("offerCountUsed", -2)
+        if used_offer_count is None or used_offer_count == -2:
+            result["used_offer_count"] = None
+        else:
+            result["used_offer_count"] = used_offer_count
+
         return result
 
     def _calculate_velocity_from_keepa(self, raw_keepa: Dict[str, Any], bsr: int) -> float:
@@ -839,8 +922,18 @@ class AutoSourcingService:
 
         return 70.0
 
-    def _calculate_confidence_from_keepa(self, raw_keepa: Dict[str, Any]) -> float:
-        """Calculate confidence score from real Keepa data completeness."""
+    def _calculate_confidence_from_keepa(
+        self, raw_keepa: Dict[str, Any],
+        condition_signal: Optional[str] = None,
+        business_config: Optional[Dict[str, Any]] = None
+    ) -> float:
+        """Calculate confidence score from real Keepa data completeness.
+
+        Args:
+            raw_keepa: Raw Keepa product data
+            condition_signal: Condition signal strength (STRONG, MODERATE, WEAK, UNKNOWN)
+            business_config: Optional business config with confidence boost settings
+        """
         confidence = 50.0  # Base confidence
 
         # Check data completeness
@@ -860,6 +953,15 @@ class AutoSourcingService:
         last_update = raw_keepa.get("lastUpdate", 0)
         if last_update > 0:
             confidence += 5
+
+        # Condition-based confidence boost
+        if condition_signal:
+            config = business_config or {}
+            if condition_signal == "STRONG":
+                confidence += config.get("confidence_boost_strong", 10)
+            elif condition_signal == "MODERATE":
+                confidence += config.get("confidence_boost_moderate", 5)
+            # WEAK and UNKNOWN add nothing
 
         return min(100, confidence)
 
@@ -900,6 +1002,12 @@ class AutoSourcingService:
         # Direct velocity check - picks below threshold are filtered out
         if velocity_min > 0 and pick.velocity_score < velocity_min:
             return False
+
+        # Condition-based gating: reject weak condition signals when enabled
+        condition_signals_config = scoring_config.get("condition_signals", {})
+        if condition_signals_config.get("reject_weak", False):
+            if pick.condition_signal and pick.condition_signal == "WEAK":
+                return False
 
         return (pick_rating_level >= required_rating_level and
                 pick.roi_percentage >= roi_min)

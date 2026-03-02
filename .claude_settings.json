@@ -1,0 +1,39 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/worktrees/tasks/001-implement-api-key-authentication-system-for-n8n-au/**)",
+      "Write(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/worktrees/tasks/001-implement-api-key-authentication-system-for-n8n-au/**)",
+      "Edit(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/worktrees/tasks/001-implement-api-key-authentication-system-for-n8n-au/**)",
+      "Glob(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/worktrees/tasks/001-implement-api-key-authentication-system-for-n8n-au/**)",
+      "Grep(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/worktrees/tasks/001-implement-api-key-authentication-system-for-n8n-au/**)",
+      "Read(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/worktrees/tasks/001-implement-api-key-authentication-system-for-n8n-au/.auto-claude/specs/001-implement-api-key-authentication-system-for-n8n-au/**)",
+      "Write(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/worktrees/tasks/001-implement-api-key-authentication-system-for-n8n-au/.auto-claude/specs/001-implement-api-key-authentication-system-for-n8n-au/**)",
+      "Edit(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/worktrees/tasks/001-implement-api-key-authentication-system-for-n8n-au/.auto-claude/specs/001-implement-api-key-authentication-system-for-n8n-au/**)",
+      "Read(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/**)",
+      "Write(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/**)",
+      "Edit(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/**)",
+      "Glob(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/**)",
+      "Grep(/Users/clawdbot/Workspace/arbitragevault_bookfinder/.auto-claude/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__query-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}

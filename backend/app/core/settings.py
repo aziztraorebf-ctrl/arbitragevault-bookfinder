@@ -99,6 +99,9 @@ class Settings(BaseSettings):
         default=10, alias="KEEPA_RESULTS_PER_PAGE"
     )  # Product Finder returns 10 results per page
 
+    # Webhooks
+    webhook_secret: str = Field(default="", alias="WEBHOOK_SECRET")
+
     # Monitoring
     sentry_dsn: Optional[str] = Field(default=None, alias="SENTRY_DSN")
     environment: str = Field(default="development", alias="ENVIRONMENT")

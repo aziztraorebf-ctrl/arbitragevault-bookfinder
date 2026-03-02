@@ -219,3 +219,79 @@ def generate_daily_review(
         "top_opportunities": top_opportunities,
         "summary": summary,
     }
+
+
+def generate_actionable_review(
+    picks: List[Dict[str, Any]],
+    history_map: Dict[str, List[Dict[str, Any]]],
+    min_roi: float = STABLE_MIN_ROI,
+    max_results: int = 10,
+    now: Optional[datetime] = None,
+) -> Dict[str, Any]:
+    """
+    Generate a pre-filtered actionable buy list of STABLE picks only.
+
+    Pipeline: classify each pick -> filter STABLE only -> apply min_roi
+    -> sort by stability_score DESC then roi_percentage DESC -> truncate.
+
+    Args:
+        picks: List of product pick dicts (must contain 'asin' key).
+        history_map: Dict mapping ASIN -> list of history entries.
+        min_roi: Minimum ROI percentage to include (default 15.0).
+        max_results: Maximum number of items to return (default 10).
+        now: Optional datetime for classification.
+
+    Returns:
+        Dict with: items, total_found, filters_applied, generated_at.
+    """
+    now = now or datetime.now(timezone.utc)
+
+    stable_items: List[Dict[str, Any]] = []
+
+    for pick in picks:
+        asin = pick.get("asin", "")
+        history = history_map.get(asin, [])
+        classification = classify_product(pick, history, now=now)
+
+        if classification != Classification.STABLE:
+            continue
+
+        roi = pick.get("roi_percentage", 0.0) or 0.0
+        if roi < min_roi:
+            continue
+
+        meta = CLASSIFICATION_META[Classification.STABLE]
+        current_price = pick.get("current_price") or 0.0
+        item = {
+            **pick,
+            "estimated_buy_price": round(current_price * 0.50, 2),
+            "classification": Classification.STABLE.value,
+            "classification_label": meta["label"],
+            "classification_action": meta["action"],
+            "classification_color": meta["color"],
+            "action_recommendation": "BUY",
+        }
+        stable_items.append(item)
+
+    # Sort by stability_score DESC, then roi_percentage DESC
+    stable_items.sort(
+        key=lambda p: (
+            p.get("stability_score", 0.0) or 0.0,
+            p.get("roi_percentage", 0.0) or 0.0,
+        ),
+        reverse=True,
+    )
+
+    total_found = len(stable_items)
+    stable_items = stable_items[:max_results]
+
+    return {
+        "items": stable_items,
+        "total_found": total_found,
+        "filters_applied": {
+            "min_roi": min_roi,
+            "max_results": max_results,
+            "classification": Classification.STABLE.value,
+        },
+        "generated_at": now.isoformat(),
+    }

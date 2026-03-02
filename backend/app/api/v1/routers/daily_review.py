@@ -42,7 +42,7 @@ async def get_daily_review(
 ):
     """Generate today's daily review from recent AutoSourcing picks."""
     # Use naive UTC datetime - autosourcing_jobs.created_at is TIMESTAMP without timezone
-    cutoff = datetime.utcnow() - timedelta(days=days_back)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
 
     # Step 1: Fetch recent picks from AutoSourcing jobs
     try:
@@ -129,7 +129,7 @@ async def get_actionable_buy_list(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     """Return pre-filtered STABLE-only actionable buy list for N8N/agent consumption."""
-    cutoff = datetime.utcnow() - timedelta(days=days_back)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
 
     # Step 1: Fetch recent picks from AutoSourcing jobs
     try:

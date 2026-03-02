@@ -252,8 +252,10 @@ def generate_actionable_review(
             continue
 
         meta = CLASSIFICATION_META[Classification.STABLE]
+        current_price = pick.get("current_price") or 0.0
         item = {
             **pick,
+            "estimated_buy_price": round(current_price * 0.50, 2),
             "classification": Classification.STABLE.value,
             "classification_label": meta["label"],
             "classification_action": meta["action"],

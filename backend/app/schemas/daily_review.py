@@ -32,6 +32,7 @@ class ActionableBuyItem(BaseModel):
     asin: str
     title: str = ""
     current_price: Optional[float] = None
+    estimated_buy_price: Optional[float] = None
     roi_percentage: float = 0.0
     stability_score: float = 0.0
     confidence_score: float = 0.0

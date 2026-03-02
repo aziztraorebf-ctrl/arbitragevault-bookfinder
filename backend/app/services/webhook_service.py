@@ -47,12 +47,27 @@ def _build_payload(job: Any, event: str = EVENT_JOB_COMPLETED) -> WebhookPayload
     Extracts relevant job data into a standardised payload format.
     Gracefully handles missing attributes.
     """
-    data: Dict[str, Any] = {}
+    job_id = str(getattr(job, "id", ""))
+    user_id = str(getattr(job, "user_id", "")) if getattr(job, "user_id", None) else ""
 
-    for attr in ("id", "status", "query_name", "total_results", "user_id"):
-        val = getattr(job, attr, None)
-        if val is not None:
-            data[attr] = str(val) if attr in ("id", "user_id") else val
+    picks_count: int = getattr(job, "total_selected", 0) or 0
+
+    picks = getattr(job, "picks", None) or []
+    stable_count: int = sum(
+        1 for p in picks
+        if getattr(p, "overall_rating", None) in ("GOOD", "EXCELLENT")
+    )
+
+    duration_ms: Optional[int] = getattr(job, "duration_ms", None)
+    duration_seconds: float = round(duration_ms / 1000.0, 1) if duration_ms else 0.0
+
+    data: Dict[str, Any] = {
+        "job_id": job_id,
+        "user_id": user_id,
+        "picks_count": picks_count,
+        "stable_count": stable_count,
+        "duration_seconds": duration_seconds,
+    }
 
     return WebhookPayload(
         event=event,

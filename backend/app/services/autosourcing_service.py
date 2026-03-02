@@ -185,10 +185,7 @@ class AutoSourcingService:
 
                 logger.info(f"AutoSourcing job completed successfully: {job.id}")
 
-                try:
-                    await dispatch_webhook(db=self.db, job=job)
-                except Exception:
-                    logger.warning("Webhook dispatch failed", exc_info=True)
+                asyncio.create_task(dispatch_webhook(db=self.db, job=job))
 
                 return job
 

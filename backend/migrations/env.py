@@ -9,7 +9,11 @@ from alembic import context
 
 # Import your models here
 from app.models.base import Base
-from app.models import User, RefreshToken, Batch, Analysis
+from app.models import (
+    User, RefreshToken, APIKey, WebhookConfig,
+    KeepaProduct, KeepaSnapshot, CalcMetrics, IdentifierResolutionLog,
+    BusinessConfig, ConfigChange, StockEstimateCache,
+)
 from app.core.settings import get_settings
 
 # Alembic Config object

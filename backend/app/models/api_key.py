@@ -1,6 +1,6 @@
 """API Key model for external automation authentication."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
@@ -42,8 +42,8 @@ class APIKey(Base):
     )
 
     # Scopes this key is authorized for
-    scopes: Mapped[Optional[dict]] = mapped_column(
-        JSONType, nullable=True, default=list,
+    scopes: Mapped[Optional[list]] = mapped_column(
+        JSONType, nullable=True, default=lambda: [],
     )
 
     # Status
@@ -69,7 +69,7 @@ class APIKey(Base):
         """Check if key is expired."""
         if not self.expires_at:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
     @property
     def is_valid(self) -> bool:
@@ -82,7 +82,7 @@ class APIKey(Base):
 
     def update_last_used(self) -> None:
         """Update last used timestamp."""
-        self.last_used_at = datetime.utcnow()
+        self.last_used_at = datetime.now(timezone.utc)
 
     def __repr__(self) -> str:
         """String representation of the API key."""

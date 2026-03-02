@@ -6,6 +6,7 @@ dependency that accepts both X-API-Key headers and Firebase Bearer tokens.
 
 import hashlib
 import secrets
+from collections.abc import Callable
 from typing import Optional, Tuple
 
 import structlog
@@ -191,7 +192,7 @@ async def get_api_or_firebase_user(
     )
 
 
-def require_api_scopes(*scopes: str):
+def require_api_scopes(*scopes: str) -> Callable[..., CurrentUser]:
     """Factory that creates a dual-auth dependency requiring specific scopes for API keys.
 
     Firebase-authenticated users bypass scope checks (they use role-based auth).

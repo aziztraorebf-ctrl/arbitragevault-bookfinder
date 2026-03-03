@@ -31,6 +31,7 @@ class DailyReviewCounts(BaseModel):
 class ActionableBuyItem(BaseModel):
     asin: str
     title: str = ""
+    category: Optional[str] = None
     current_price: Optional[float] = None
     estimated_buy_price: Optional[float] = None
     roi_percentage: float = 0.0

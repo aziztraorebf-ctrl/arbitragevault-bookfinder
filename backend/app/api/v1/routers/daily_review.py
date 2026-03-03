@@ -9,6 +9,7 @@ from sqlalchemy import select, and_, text
 from app.core.db import get_db_session
 from app.core.auth import CurrentUser
 from app.core.api_key_auth import require_daily_review_read
+
 from app.models.autosourcing import AutoSourcingPick, AutoSourcingJob
 from app.schemas.daily_review import ActionableBuyList, DailyReviewResponse
 from app.services.daily_review_service import generate_actionable_review, generate_daily_review
@@ -127,7 +128,7 @@ async def get_actionable_buy_list(
     min_roi: float = Query(default=15.0, ge=0, description="Minimum ROI percentage"),
     max_results: int = Query(default=10, ge=1, le=50, description="Maximum items to return"),
     db: AsyncSession = Depends(get_db_session),
-    current_user: CurrentUser = Depends(get_current_user),
+    current_user: CurrentUser = Depends(require_daily_review_read),
 ):
     """Return pre-filtered STABLE-only actionable buy list for N8N/agent consumption."""
     cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
@@ -162,6 +163,7 @@ async def get_actionable_buy_list(
         picks.append({
             "asin": pick.asin,
             "title": pick.title or "",
+            "category": pick.category or None,
             "roi_percentage": float(pick.roi_percentage or 0),
             "bsr": int(pick.bsr or -1),
             "amazon_on_listing": bool(pick.amazon_on_listing),

@@ -21,7 +21,7 @@ from app.schemas.webhook import WebhookConfigCreate, WebhookConfigResponse
 from app.core.auth import get_current_user, CurrentUser
 from app.core.settings import get_settings
 from app.core.auth import CurrentUser
-from app.core.api_key_auth import require_autosourcing_read
+from app.core.api_key_auth import require_autosourcing_read, require_autosourcing_write, require_autosourcing_job_read
 from app.schemas.autosourcing_safeguards import (
     CostEstimateRequest,
     CostEstimateResponse,
@@ -229,7 +229,8 @@ async def estimate_job_cost(
 async def run_custom_search(
     request: RunCustomSearchRequest,
     service: AutoSourcingService = Depends(get_autosourcing_service),
-    keepa_service: KeepaService = Depends(get_keepa_service)
+    keepa_service: KeepaService = Depends(get_keepa_service),
+    current_user: CurrentUser = Depends(require_autosourcing_write),
 ):
     """
     Run custom AutoSourcing search with user-defined criteria.
@@ -338,7 +339,8 @@ async def get_recent_jobs(
 @router.get("/jobs/{job_id}", response_model=AutoSourcingJobResponse)
 async def get_job_details(
     job_id: UUID,
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    current_user: CurrentUser = Depends(require_autosourcing_job_read),
 ):
     """Get detailed results for a specific AutoSourcing job."""
     

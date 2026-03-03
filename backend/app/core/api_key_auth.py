@@ -217,3 +217,5 @@ def require_api_scopes(*scopes: str) -> Callable[..., CurrentUser]:
 # Pre-built scope dependencies for route use and test overrides
 require_daily_review_read = require_api_scopes("daily_review:read")
 require_autosourcing_read = require_api_scopes("autosourcing:read")
+require_autosourcing_write = require_api_scopes("autosourcing:write")
+require_autosourcing_job_read = require_api_scopes("autosourcing:job_read")

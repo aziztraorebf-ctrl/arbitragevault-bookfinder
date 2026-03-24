@@ -27,7 +27,7 @@ try:
 except ImportError:
     MCP_AVAILABLE = False
 
-from app.api.v1.routers import auth, health, keepa, config, autosourcing, autoscheduler, stock_estimate, textbook_analysis, daily_review, api_keys
+from app.api.v1.routers import auth, health, keepa, config, autosourcing, autoscheduler, stock_estimate, textbook_analysis, daily_review, api_keys, cowork
 from app.api.v1.endpoints import products, asin_history
 from app.core.cors import configure_cors
 from app.core.db import lifespan
@@ -93,6 +93,7 @@ app.include_router(stock_estimate.router, tags=["Stock Estimate"])
 app.include_router(asin_history.router, prefix="/api/v1", tags=["ASIN History"])
 app.include_router(textbook_analysis.router, prefix="/api/v1/textbook", tags=["Textbook Analysis"])
 app.include_router(daily_review.router, prefix="/api/v1", tags=["Daily Review"])
+app.include_router(cowork.router, prefix="/api/v1", tags=["Cowork"])
 
 # === MCP INTEGRATION ===
 # Mount FastAPI-MCP server if available (optional for production)

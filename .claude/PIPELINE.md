@@ -11,7 +11,7 @@
 **Phase** : Pre-Deploy (post Phase C + Bugfixes)
 **Démarrée** : 24 Mars 2026
 **Objectif** : Tests pre-deploy puis deploy production
-**Statut** : DEPLOYE - Smoke test en attente
+**Statut** : DEPLOYE - Tests production delegues a CoWork
 
 ---
 

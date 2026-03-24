@@ -87,6 +87,7 @@ class Settings(BaseSettings):
     
     # API Keys
     keepa_api_key: Optional[str] = Field(default=None, alias="KEEPA_API_KEY")
+    cowork_api_token: Optional[str] = Field(default=None, alias="COWORK_API_TOKEN")
 
     # Keepa API Cost Configuration
     keepa_product_finder_cost: int = Field(

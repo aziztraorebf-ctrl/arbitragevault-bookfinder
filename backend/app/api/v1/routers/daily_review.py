@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, text
 
 from app.core.db import get_db_session
-from app.core.auth import CurrentUser
+from app.core.auth import CurrentUser, get_current_user
 from app.core.api_key_auth import require_daily_review_read
 
 from app.models.autosourcing import AutoSourcingPick, AutoSourcingJob

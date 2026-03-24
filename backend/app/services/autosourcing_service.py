@@ -563,7 +563,7 @@ class AutoSourcingService:
 
             # Conservative sourcing cost estimate: default factor assumes buying at 50% of
             # Amazon sell price, typical for FBM->FBA online arbitrage. Override via
-            # business_config.source_price_factor or seed with scripts/seed_roi_defaults.py.
+            # business_config.source_price_factor or seed with scripts/seed_source_price_factor.py.
             # See ROI calibration guide in docs/roi-defaults.md for tuning guidance.
             # Calculate estimated buy cost using unified source_price_factor
             # Default 0.50 = buy at 50% of sell price (FBM->FBA arbitrage, aligned with guide)
@@ -714,7 +714,7 @@ class AutoSourcingService:
 
             # Conservative sourcing cost estimate: default factor assumes buying at 50% of
             # Amazon sell price, typical for FBM->FBA online arbitrage. Override via
-            # business_config.source_price_factor or seed with scripts/seed_roi_defaults.py.
+            # business_config.source_price_factor or seed with scripts/seed_source_price_factor.py.
             # See ROI calibration guide in docs/roi-defaults.md for tuning guidance.
             # Calculate estimated buy cost using unified source_price_factor
             # Default 0.50 = buy at 50% of sell price (FBM->FBA arbitrage, aligned with guide)

@@ -99,7 +99,7 @@ async def send_email(subject: str, html_body: str) -> None:
 async def notify_picks_found(
     stable_count: int,
     job_id: str,
-    picks_summary: Optional[str] = None,
+    picks_summary: Optional[list] = None,
 ) -> None:
     """
     Orchestrate SMS and email notifications for found picks.
@@ -110,19 +110,37 @@ async def notify_picks_found(
     Args:
         stable_count: Number of stable (GOOD/EXCELLENT) picks found.
         job_id: The AutoSourcing job ID.
-        picks_summary: Optional HTML summary of picks for the email body.
+        picks_summary: Optional list of pick dicts for the email body.
     """
     try:
+        if stable_count <= 0:
+            logger.debug("notify_picks_found skipped: stable_count=%d", stable_count)
+            return
+
         sms_message = (
             f"ArbitrageVault: {stable_count} stable pick(s) found in job {job_id}."
         )
         await send_sms(sms_message)
 
         subject = f"ArbitrageVault: {stable_count} stable pick(s) found"
-        html_body = picks_summary or (
-            f"<h2>{stable_count} stable pick(s) found</h2>"
-            f"<p>Job ID: <strong>{job_id}</strong></p>"
-        )
+        if picks_summary:
+            rows = "".join(
+                f"<tr><td>{p.get('title','')}</td><td>{p.get('asin','')}</td>"
+                f"<td>{p.get('bsr','')}</td><td>{p.get('roi_percentage','')}</td>"
+                f"<td>{p.get('classification','')}</td></tr>"
+                for p in picks_summary
+            )
+            html_body = (
+                f"<h2>{stable_count} stable pick(s) found</h2>"
+                f"<p>Job ID: <strong>{job_id}</strong></p>"
+                f"<table><tr><th>Title</th><th>ASIN</th><th>BSR</th>"
+                f"<th>ROI %</th><th>Classification</th></tr>{rows}</table>"
+            )
+        else:
+            html_body = (
+                f"<h2>{stable_count} stable pick(s) found</h2>"
+                f"<p>Job ID: <strong>{job_id}</strong></p>"
+            )
         await send_email(subject, html_body)
     except Exception:
         logger.exception("notify_picks_found failed")

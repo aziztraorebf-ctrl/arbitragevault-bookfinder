@@ -170,18 +170,18 @@ async def dispatch_webhook(
                 picks = getattr(job, "picks", None) or []
                 picks_data = [
                     {
-                        "isbn": getattr(p, "isbn", ""),
                         "title": getattr(p, "title", ""),
-                        "overall_rating": getattr(p, "overall_rating", ""),
-                        "roi": getattr(p, "roi", 0.0),
+                        "asin": getattr(p, "asin", ""),
+                        "bsr": getattr(p, "bsr", 0),
+                        "roi_percentage": getattr(p, "roi_percentage", 0.0),
+                        "classification": getattr(p, "classification", ""),
                     }
                     for p in picks
-                    if getattr(p, "overall_rating", None) in ("GOOD", "EXCELLENT")
-                ]
+                ][:10]
                 await notify_picks_found(
-                    user_id=str(getattr(job, "user_id", "")),
                     stable_count=stable_count,
-                    picks_data=picks_data,
+                    job_id=str(getattr(job, "id", "")),
+                    picks_summary=picks_data,
                 )
         except Exception:
             logger.exception("Push notification for stable picks failed")

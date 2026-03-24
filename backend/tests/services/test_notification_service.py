@@ -195,13 +195,12 @@ class TestNotifyPicksFound:
 
     @pytest.mark.asyncio
     async def test_notify_picks_found_zero_stable_skips(self):
-        """stable_count=0 still calls send_sms and send_email (orchestrator doesn't filter)."""
+        """stable_count=0 skips SMS and email (early return per spec)."""
         with patch("app.services.notification_service.send_sms", new_callable=AsyncMock) as mock_sms, \
              patch("app.services.notification_service.send_email", new_callable=AsyncMock) as mock_email:
             await notify_picks_found(stable_count=0, job_id="job-123")
-            # With 0 stable picks, the function still sends (no early return in implementation)
-            mock_sms.assert_called_once()
-            mock_email.assert_called_once()
+            mock_sms.assert_not_called()
+            mock_email.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_notify_picks_found_calls_both_with_correct_content(self):

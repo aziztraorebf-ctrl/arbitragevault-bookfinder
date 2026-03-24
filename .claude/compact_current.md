@@ -10,8 +10,8 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Phase C + Bugfixes COMPLETE - Pret pour deploy |
-| **Prochaine Action** | Tests pre-deploy puis deploy production |
+| **Phase Actuelle** | Phase C + Bugfixes COMPLETE - DEPLOYE |
+| **Prochaine Action** | Smoke test production (prochaine session) |
 | **CLAUDE.md** | v5.2 - Instructions globales + projet |
 | **Production** | Backend Render + Frontend Netlify LIVE |
 | **Authentification** | Firebase Auth (Email/Password) |
@@ -133,8 +133,9 @@
 1. [x] Phase 3 - Simplification Radicale - COMPLETE
 2. [x] Phase C - Condition Signals + Pydantic fix - COMPLETE (PR #19)
 3. [x] Bugfixes 35+ - COMPLETE (PR #14, #15, #17)
-4. [ ] Tests pre-deploy (smoke test API, frontend validation)
-5. [ ] Deploy en production (Render backend + Netlify frontend)
+4. [x] Tests pre-deploy (unit/build - PR #20)
+5. [x] Deploy en production (PR #19 + #20 mergees, auto-deploy 24 Mars 2026)
+6. [ ] Smoke test production (URLs live - prochaine session)
 6. [ ] Task 15 - Replenishable Watchlist (optionnel, post-deploy)
 7. [ ] Migration DB : drop tables inutilisees (quand stable)
 

@@ -11,7 +11,7 @@
 **Phase** : Pre-Deploy (post Phase C + Bugfixes)
 **Démarrée** : 24 Mars 2026
 **Objectif** : Tests pre-deploy puis deploy production
-**Statut** : EN ATTENTE DEPLOY
+**Statut** : DEPLOYE - Smoke test en attente
 
 ---
 
@@ -22,8 +22,9 @@
 | 1 | Claude | Phase C - Condition Signals | COMPLETE | 24 Mars 2026 |
 | 2 | Claude | Pydantic v2 fix | COMPLETE | 24 Mars 2026 |
 | 3 | Claude | Merge sur main (PR #19) | COMPLETE | 24 Mars 2026 |
-| 4 | — | Tests pre-deploy | A FAIRE | — |
-| 5 | — | Deploy production | A FAIRE | — |
+| 4 | Claude | Tests pre-deploy (unit/build) | COMPLETE | 24 Mars 2026 |
+| 5 | Claude | Deploy production (PR #19 + #20 merge) | COMPLETE | 24 Mars 2026 |
+| 6 | — | Smoke test production (URLs live) | A FAIRE | Prochaine session |
 
 ---
 

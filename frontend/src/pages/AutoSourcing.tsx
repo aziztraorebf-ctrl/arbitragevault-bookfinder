@@ -59,11 +59,8 @@ export default function AutoSourcing() {
 
   const fetchRecentJobs = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/autosourcing/jobs?limit=10`)
-      if (response.ok) {
-        const data = await response.json()
-        setJobs(data)
-      }
+      const response = await api.get('/api/v1/autosourcing/jobs?limit=10')
+      setJobs(response.data)
     } catch (err) {
       console.error('Error fetching jobs:', err)
     }

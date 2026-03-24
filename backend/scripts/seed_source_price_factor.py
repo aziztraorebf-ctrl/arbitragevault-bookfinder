@@ -7,10 +7,12 @@ in the global BusinessConfig (id=1, scope='global').
 
 import asyncio
 
-import structlog
+import logging
+
 from sqlalchemy import select
 
-logger = structlog.get_logger()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 async def seed_source_price_factor() -> None:
@@ -49,8 +51,8 @@ async def seed_source_price_factor() -> None:
                 config.data = data
                 config.increment_version()
                 logger.info(
-                    "Updated global BusinessConfig with source_price_factor=0.35",
-                    version=config.version,
+                    "Updated global BusinessConfig with source_price_factor=0.35 (version=%s)",
+                    config.version,
                 )
 
             await session.commit()

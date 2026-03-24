@@ -9,8 +9,12 @@ from sqlalchemy import select, and_, func
 
 from app.core.db import get_db_session, db_manager
 from app.core.settings import get_settings
+from app.core.exceptions import InsufficientTokensError
 from app.models.autosourcing import AutoSourcingPick, AutoSourcingJob
+from app.services.autosourcing_service import AutoSourcingService
+from app.services.keepa_service import get_keepa_service
 from app.services.daily_review_service import generate_daily_review
+from app.schemas.cowork import CoworkFetchAndScoreRequest, CoworkFetchAndScoreResponse
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +39,21 @@ async def require_cowork_token(
 
 
 router = APIRouter(prefix="/cowork", tags=["Cowork"])
+
+DEFAULT_PROFILE = {
+    "profile_name": "cowork-on-demand",
+    "categories": ["Books"],
+    "max_results": 30,
+    "roi_min": 30.0,
+}
+
+
+async def get_autosourcing_service(
+    db: AsyncSession = Depends(get_db_session),
+) -> AutoSourcingService:
+    """Dependency to get AutoSourcing service."""
+    keepa_service = await get_keepa_service()
+    return AutoSourcingService(db, keepa_service)
 
 
 @router.get("/dashboard-summary", dependencies=[Depends(require_cowork_token)])
@@ -173,3 +192,67 @@ async def get_dashboard_summary(
             "reject": reject,
         },
     }
+
+
+@router.post(
+    "/fetch-and-score",
+    response_model=CoworkFetchAndScoreResponse,
+    dependencies=[Depends(require_cowork_token)],
+)
+async def fetch_and_score(
+    request: CoworkFetchAndScoreRequest,
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+):
+    """Trigger an on-demand AutoSourcing search, merging request with DEFAULT_PROFILE."""
+    settings = get_settings()
+    if not settings.keepa_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Keepa API not configured",
+        )
+
+    merged = {**DEFAULT_PROFILE}
+    if request.profile_name is not None:
+        merged["profile_name"] = request.profile_name
+    if request.categories is not None:
+        merged["categories"] = request.categories
+    if request.max_results is not None:
+        merged["max_results"] = request.max_results
+    if request.roi_min is not None:
+        merged["roi_min"] = request.roi_min
+
+    discovery_config = {
+        "categories": merged["categories"],
+        "max_results": merged["max_results"],
+    }
+    scoring_config = {
+        "roi_min": merged["roi_min"],
+    }
+
+    try:
+        job = await service.run_custom_search(
+            discovery_config=discovery_config,
+            scoring_config=scoring_config,
+            profile_name=merged["profile_name"],
+        )
+        return CoworkFetchAndScoreResponse(
+            job_id=str(job.id),
+            status=job.status.value if job.status else "unknown",
+            picks_count=job.total_selected or 0,
+            message="Search completed successfully",
+        )
+    except InsufficientTokensError:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="Insufficient Keepa tokens to run search",
+        )
+    except Exception as e:
+        logger.error(
+            "cowork fetch-and-score failed",
+            exc_info=True,
+            extra={"error": str(e), "error_type": type(e).__name__},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Fetch-and-score failed unexpectedly",
+        )

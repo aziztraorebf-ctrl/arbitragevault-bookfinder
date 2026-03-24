@@ -122,7 +122,13 @@ def classify_product(
 
     # --- REVENANT: Last seen 24h+ ago, reappears today ---
     most_recent = max(history, key=lambda h: h["tracked_at"])
-    gap = now - most_recent["tracked_at"]
+    most_recent_at = most_recent["tracked_at"]
+    # Handle naive/aware datetime mismatch
+    if most_recent_at.tzinfo is None and now.tzinfo is not None:
+        most_recent_at = most_recent_at.replace(tzinfo=timezone.utc)
+    elif most_recent_at.tzinfo is not None and now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    gap = now - most_recent_at
     if gap > timedelta(hours=REVENANT_GAP_HOURS):
         logger.debug(
             "REVENANT: Gap of %s for %s (threshold: %dh)",

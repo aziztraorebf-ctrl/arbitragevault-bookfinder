@@ -261,29 +261,26 @@ async def run_custom_search(
         scoring_config=request.scoring_config.dict()
     )
 
-    # === TIMEOUT PROTECTION (Phase 7.0 Task 6) ===
+    # Timeout protection is handled inside AutoSourcingService.run_custom_search()
+    # Do NOT wrap with a second asyncio.timeout here (causes double-timeout conflicts)
     try:
-        async with asyncio.timeout(TIMEOUT_PER_JOB):
-            logger.info(f"[DEBUG] run-custom called with profile_name={request.profile_name}")
-            logger.info(f"[DEBUG] discovery_config: {request.discovery_config.dict()}")
-            logger.info(f"[DEBUG] scoring_config: {request.scoring_config.dict()}")
+        logger.info(f"[DEBUG] run-custom called with profile_name={request.profile_name}")
+        logger.info(f"[DEBUG] discovery_config: {request.discovery_config.dict()}")
+        logger.info(f"[DEBUG] scoring_config: {request.scoring_config.dict()}")
 
-            job = await service.run_custom_search(
-                discovery_config=request.discovery_config.dict(),
-                scoring_config=request.scoring_config.dict(),
-                profile_name=request.profile_name,
-                profile_id=request.profile_id
-            )
-
-            logger.info(f"[DEBUG] Job created successfully: {job.id}")
-            return job
-
-    except asyncio.TimeoutError:
-        # Job exceeded timeout limit
-        raise HTTPException(
-            status_code=408,
-            detail=f"Job exceeded timeout limit ({TIMEOUT_PER_JOB} seconds). Reduce search scope or narrow filters."
+        job = await service.run_custom_search(
+            discovery_config=request.discovery_config.dict(),
+            scoring_config=request.scoring_config.dict(),
+            profile_name=request.profile_name,
+            profile_id=request.profile_id
         )
+
+        logger.info(f"[DEBUG] Job created successfully: {job.id}")
+        return job
+
+    except HTTPException:
+        # Re-raise HTTP exceptions (408 timeout, etc.) from service
+        raise
 
     except Exception as e:
         logger.error(f"[ERROR] AutoSourcing search failed - Exception type: {type(e).__name__}")

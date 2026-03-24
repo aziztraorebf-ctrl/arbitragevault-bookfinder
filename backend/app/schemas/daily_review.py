@@ -39,7 +39,7 @@ class ActionableBuyItem(BaseModel):
     confidence_score: float = 0.0
     velocity_score: float = 0.0
     bsr: Optional[int] = None
-    overall_rating: float = 0.0
+    overall_rating: Optional[str] = None
     classification: str = "STABLE"
     action_recommendation: str = "BUY"
 
@@ -61,6 +61,7 @@ class DailyReviewResponse(BaseModel):
     review_date: str
     total: int = 0
     counts: DailyReviewCounts
+    classified_products: List[ClassifiedProductResponse] = Field(default_factory=list)
     top_opportunities: List[ClassifiedProductResponse] = Field(default_factory=list)
     summary: str = ""
 

@@ -56,7 +56,7 @@ class SalesVelocityService:
             # Base estimation from sales drops
             base_estimate = sales_drops_30 * self._get_category_multiplier(category)
             
-            # BSR adjustments (contextual)
+            # BSR adjustments (contextual) - order matters: check highest first
             if bsr > 0:
                 if bsr < 10000:
                     # Best-sellers: boost estimation
@@ -64,12 +64,12 @@ class SalesVelocityService:
                 elif bsr < 50000:
                     # Good performers: slight boost
                     base_estimate *= 1.2
-                elif bsr > 500000:
-                    # Long-tail: penalty
-                    base_estimate *= 0.7
                 elif bsr > 1000000:
                     # Very long-tail: significant penalty
                     base_estimate *= 0.4
+                elif bsr > 500000:
+                    # Long-tail: penalty
+                    base_estimate *= 0.7
             
             # Ensure reasonable bounds
             monthly_estimate = max(0, int(base_estimate))
@@ -88,12 +88,12 @@ class SalesVelocityService:
             # Similar logic but for 90-day period
             base_estimate = sales_drops_90 * self._get_category_multiplier(category) * 0.9  # Slight discount for longer period
             
-            # BSR adjustments
+            # BSR adjustments - order matters: check highest first
             if bsr > 0:
                 if bsr < 10000: base_estimate *= 1.4
-                elif bsr < 50000: base_estimate *= 1.1  
-                elif bsr > 500000: base_estimate *= 0.8
+                elif bsr < 50000: base_estimate *= 1.1
                 elif bsr > 1000000: base_estimate *= 0.5
+                elif bsr > 500000: base_estimate *= 0.8
             
             quarterly_estimate = max(0, int(base_estimate))
             quarterly_estimate = min(quarterly_estimate, 3000)  # Cap at 3000/quarter
@@ -278,8 +278,10 @@ class SalesVelocityService:
         try:
             # Extract relevant data
             sales_drops_30 = keepa_data.get('salesRankDrops30', 0)
-            current_bsr = keepa_data.get('current', {}).get('BUY_BOX', [0])
-            bsr_value = current_bsr[0] if current_bsr else 999999
+            # BSR is in stats.current[3] (SALES rank), NOT BUY_BOX (which is price)
+            stats = keepa_data.get('stats', {})
+            current = stats.get('current', [])
+            bsr_value = current[3] if len(current) > 3 and current[3] and current[3] > 0 else 999999
             
             # Estimate monthly sales
             monthly_sales = self.estimate_monthly_sales(sales_drops_30, bsr_value, 'Books')

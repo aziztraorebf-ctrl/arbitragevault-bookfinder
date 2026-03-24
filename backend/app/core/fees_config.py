@@ -168,8 +168,8 @@ def calculate_profit_metrics(
     target_profit_needed = buy_cost * (target_roi / Decimal("100"))
     target_buy_price = sell_price - total_fees - target_profit_needed - buffer_amount
     
-    # Breakeven analysis
-    breakeven_price = total_fees + buffer_amount  # Buy cost that results in $0 profit
+    # Breakeven analysis: max buy cost that results in $0 profit
+    breakeven_price = sell_price - total_fees - buffer_amount
     
     return {
         # Input parameters

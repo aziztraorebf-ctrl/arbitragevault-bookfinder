@@ -13,8 +13,13 @@ from app.core.exceptions import InsufficientTokensError
 from app.models.autosourcing import AutoSourcingPick, AutoSourcingJob
 from app.services.autosourcing_service import AutoSourcingService
 from app.services.keepa_service import get_keepa_service
-from app.services.daily_review_service import generate_daily_review
-from app.schemas.cowork import CoworkFetchAndScoreRequest, CoworkFetchAndScoreResponse
+from app.services.daily_review_service import generate_daily_review, generate_actionable_review
+from app.schemas.cowork import (
+    CoworkBuyListItem,
+    CoworkBuyListResponse,
+    CoworkFetchAndScoreRequest,
+    CoworkFetchAndScoreResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -255,4 +260,91 @@ async def fetch_and_score(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Fetch-and-score failed unexpectedly",
+        )
+
+
+@router.get(
+    "/daily-buy-list",
+    response_model=CoworkBuyListResponse,
+    dependencies=[Depends(require_cowork_token)],
+)
+async def get_daily_buy_list(
+    days_back: int = Query(default=1, ge=1, le=7, description="Days of picks to analyze"),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Return actionable daily buy list for external agent consumption."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+
+    # Fetch recent picks from AutoSourcing jobs (copied from daily_review.py)
+    try:
+        picks_query = (
+            select(AutoSourcingPick)
+            .join(AutoSourcingJob)
+            .where(
+                and_(
+                    AutoSourcingJob.created_at >= cutoff,
+                    AutoSourcingPick.is_ignored == False,
+                )
+            )
+        )
+        result = await db.execute(picks_query)
+        picks_rows = result.scalars().all()
+    except Exception as e:
+        logger.error(
+            "cowork daily-buy-list: picks query failed",
+            exc_info=True,
+            extra={"error": str(e), "error_type": type(e).__name__},
+        )
+        return CoworkBuyListResponse(
+            generated_at=datetime.now(timezone.utc).isoformat(),
+            days_back=days_back,
+            total_actionable=0,
+            items=[],
+        )
+
+    # Convert to dicts for classification
+    picks = []
+    for pick in picks_rows:
+        picks.append({
+            "asin": pick.asin,
+            "title": pick.title or "",
+            "roi_percentage": float(pick.roi_percentage or 0),
+            "bsr": int(pick.bsr or -1),
+            "amazon_on_listing": bool(pick.amazon_on_listing),
+            "current_price": float(pick.current_price) if pick.current_price else None,
+            "buy_price": float(pick.estimated_buy_cost) if pick.estimated_buy_cost else None,
+        })
+
+    # Generate actionable review
+    try:
+        review = generate_actionable_review(picks=picks, history_map={})
+        items = [
+            CoworkBuyListItem(
+                asin=item.get("asin", ""),
+                title=item.get("title"),
+                classification=item.get("classification", ""),
+                roi=item.get("roi_percentage"),
+                bsr=item.get("bsr"),
+                action=item.get("action_recommendation", ""),
+                first_seen_at=None,
+            )
+            for item in review.get("items", [])
+        ]
+        return CoworkBuyListResponse(
+            generated_at=review.get("generated_at", datetime.now(timezone.utc).isoformat()),
+            days_back=days_back,
+            total_actionable=len(items),
+            items=items,
+        )
+    except Exception as e:
+        logger.error(
+            "cowork daily-buy-list: generate_actionable_review failed",
+            exc_info=True,
+            extra={"error": str(e), "error_type": type(e).__name__},
+        )
+        return CoworkBuyListResponse(
+            generated_at=datetime.now(timezone.utc).isoformat(),
+            days_back=days_back,
+            total_actionable=0,
+            items=[],
         )

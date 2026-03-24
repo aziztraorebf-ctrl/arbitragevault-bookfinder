@@ -1,8 +1,6 @@
 {
   "edits": {
-    "/home/user/arbitragevault-bookfinder/backend/app/services/unified_analysis.py": 1,
-    "/home/user/arbitragevault-bookfinder/backend/tests/services/test_phase_c_enhancements.py": 1,
-    "/home/user/arbitragevault-bookfinder/backend/app/schemas/analytics.py": 1
+    "/home/user/arbitragevault-bookfinder/.claude/circuit-breaker-state.json": 1
   },
   "last_reset": ""
 }

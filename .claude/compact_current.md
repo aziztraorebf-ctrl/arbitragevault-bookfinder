@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Active Session
 
-**Derniere mise a jour** : 21 Fevrier 2026
-**Phase Actuelle** : Phase 3 - Simplification Radicale COMPLETE
-**Statut Global** : Phases 1-13 + Refactoring 1A-2D + Phase 3 completes, Production LIVE
+**Derniere mise a jour** : 24 Mars 2026
+**Phase Actuelle** : Phase C - Condition Signals COMPLETE + Bugfixes 35+ COMPLETE
+**Statut Global** : Phases 1-13 + Refactoring 1A-2D + Phase 3 + Phase C + Bugfixes completes, Production LIVE
 
 ---
 
@@ -10,54 +10,56 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Phase 3 - Simplification Radicale COMPLETE |
-| **Prochaine Phase** | Phase C (Condition Bump, Replenishable, Offer Count) ou deploy |
+| **Phase Actuelle** | Phase C + Bugfixes COMPLETE - Pret pour deploy |
+| **Prochaine Action** | Tests pre-deploy puis deploy production |
 | **CLAUDE.md** | v5.2 - Instructions globales + projet |
 | **Production** | Backend Render + Frontend Netlify LIVE |
 | **Authentification** | Firebase Auth (Email/Password) |
-| **Tests Total** | 785 passants (apres archivage 32 test files) |
+| **Tests Total** | 289 service tests passent (+ 24 nouveaux Phase C) |
 | **Bloqueurs** | Aucun |
 | **Environnement** | macOS (migration depuis Windows jan 2026) |
 
 ---
 
-## CHANGELOG - 21 Fevrier 2026
+## CHANGELOG - 24 Mars 2026
 
-### Phase 3 - Simplification Radicale COMPLETE
+### Phase C - Condition Signals + Pydantic v2 Fix COMPLETE
 
-**Objectif** : Simplifier l'application selon la methodologie BookMine.
-Focus sur le workflow core : AutoSourcing -> Daily Review -> Decision d'achat.
-Archivage (pas suppression) des features inutilisees dans `_archive/`.
+**Objectif** : Integrer les condition signals dans le pipeline unifie et corriger les deprecations Pydantic.
 
-**Methode** : Analyse de 43 videos BookMine (Crash Course + recents Nov 2025 - Fev 2026).
-5 signaux Keepa core identifies : lowest used price, sales rank drops, Amazon price, used offer count, stock quantity.
+**Condition Signals (unified_analysis.py)** :
+- Step 5.5 : Derivation `condition_signal` (STRONG/MODERATE/WEAK) basee sur ROI + total used offer count
+- Confidence boost : +10 points (STRONG), +5 (MODERATE) applique au confidence_normalized
+- `condition_signal` et `total_used_offers` exposes dans la reponse API
+- Logique alignee avec autosourcing_service (meme config `condition_signals` de business_rules.json)
 
-**Frontend archive (45 fichiers)** :
-- 6 pages : AnalyseManuelle, NicheDiscovery, MesNiches, MesRecherches, RechercheDetail, docs/ (11 fichiers)
-- 16 composants : Analysis/, bookmarks/, niche-discovery/, recherches/, ViewResultsRow
-- 5 hooks : useNicheDiscovery, useBookmarks, useRecherches, useBatches, useStrategicViews
-- 4 services : bookmarksService, nicheDiscoveryService, recherchesService, viewsService
-- 1 type, 1 util : bookmarks.ts, analysisAdapter.ts
+**Condition Breakdown (buying guidance enrichi)** :
+- `condition_breakdown` : liste triee par ROI desc avec labels FR (Neuf, Tres bon, Bon, Acceptable)
+- `recommended_condition` et `condition_signal` ajoutes au buying_guidance dict
+- Helper `_build_condition_breakdown()` avec market_price, roi_pct, seller_count, fba_count par condition
 
-**Navigation simplifiee** : Dashboard -> Sourcing -> Scheduler -> Settings (4 items)
+**Pydantic v2 Fix (analytics.py)** :
+- `decimal_places=2` deprecie remplace par `field_validator` avec `round(v, 2)`
+- Defaults migres vers `Decimal("...")` au lieu de float/int literals
+- Compatibilite Pydantic 2.7.3 validee
 
-**Backend archive (30 fichiers)** :
-- 7 routers : analyses, batches, views, bookmarks, strategic_views, niche_discovery, recherches
-- 2 endpoints : analytics, niches
-- 11 services : niche_discovery, bookmark, scoring_v2, strategic_views, advanced_analytics, risk_scoring, reserve_calculator, recommendation_engine, category_analyzer, niche_scoring, search_result
-- 4 models : analysis, batch, bookmark, search_result
-- 2 repositories : analysis_repository, batch_repository
-- 4 schemas : analysis, batch, bookmark, search_result
+**Tests** : 24 nouveaux dans `test_phase_c_enhancements.py` (98/98 lies passent)
+**Commit** : `469453a` feat: Phase C + Pydantic v2 fix
+**PR** : #19 mergee sur main (squash)
 
-**main.py** : 11 routers (de 20), 60 routes (de ~100+)
-**Dependance resolue** : unified_analysis.py VIEW_WEIGHTS inlined (scoring_v2 archivee)
+### Bugfixes 35+ (Mars 2026)
 
-**Tests archives** : 32 fichiers. conftest.py nettoye. test_router_imports.py et test_routes_regression.py mis a jour.
-**Resultat** : 785 tests passent, 0 regression introduite.
+**25 bugs critiques** (PR #14) :
+- Pipeline AutoSourcing : deduplication ASIN, scoring formulas, classification
+- Frontend : responsive, composants, hooks
 
-**Commits** :
-- `a99ae37` : Phase A Frontend (45 fichiers archives)
-- `cb3b512` : Phase B Backend (30 fichiers + 32 tests archives)
+**12 bugs MEDIUM** (PR #15) :
+- Dedup, scoring, formulas, frontend
+
+**3 bugs LOW** (PR #17) :
+- Keepa CSV indices (RATING=16, COUNT_REVIEWS=17 corrige)
+- Webhook session isolation (propre session DB)
+- Documentation KNOWN_ISSUES
 
 ---
 
@@ -90,7 +92,9 @@ Archivage (pas suppression) des features inutilisees dans `_archive/`.
 | 1A-1D | Architecture Refactoring | 144+ | 17 Jan 2026 |
 | 2A-2C | Validation + Simplification + Fees | 144 | 18 Jan 2026 |
 | 2D | Daily Review Dashboard | 31 | 6 Fev 2026 |
-| **3** | **Simplification Radicale** | **785** | **21 Fev 2026** |
+| 3 | Simplification Radicale | 785 | 21 Fev 2026 |
+| **C** | **Condition Signals + Pydantic fix** | **24 nouveaux (289 service)** | **24 Mars 2026** |
+| **Bugfixes** | **35+ bugs (critiques + medium + low)** | **289 service** | **Mars 2026** |
 
 ---
 
@@ -127,14 +131,13 @@ Archivage (pas suppression) des features inutilisees dans `_archive/`.
 ## PROCHAINES ACTIONS
 
 1. [x] Phase 3 - Simplification Radicale - COMPLETE
-2. [ ] Deploy Phase 3 en production
-3. [ ] Phase C - Ajustements strategiques (optionnel) :
-   - Task 14 : Condition Bump dans buying guidance
-   - Task 15 : Replenishable Watchlist
-   - Task 16 : Offer Count dans intrinsic value
-4. [ ] Migration DB : drop tables inutilisees (quand stable)
-5. [ ] Phase 14 - Integration N8N (si necessaire)
+2. [x] Phase C - Condition Signals + Pydantic fix - COMPLETE (PR #19)
+3. [x] Bugfixes 35+ - COMPLETE (PR #14, #15, #17)
+4. [ ] Tests pre-deploy (smoke test API, frontend validation)
+5. [ ] Deploy en production (Render backend + Netlify frontend)
+6. [ ] Task 15 - Replenishable Watchlist (optionnel, post-deploy)
+7. [ ] Migration DB : drop tables inutilisees (quand stable)
 
 ---
 
-**Derniere mise a jour** : 21 Fevrier 2026
+**Derniere mise a jour** : 24 Mars 2026

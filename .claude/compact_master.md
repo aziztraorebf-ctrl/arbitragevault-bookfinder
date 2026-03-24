@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Globale Projet
 
-**Derniere mise a jour** : 10 Janvier 2026
-**Version** : 7.0
-**Statut** : Phases 1-13 completes, Production LIVE avec Firebase Auth
+**Derniere mise a jour** : 24 Mars 2026
+**Version** : 9.0
+**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes 35+ completes, Production LIVE
 
 ---
 
@@ -209,15 +209,38 @@ Focus workflow core : AutoSourcing -> Daily Review -> Decision d'achat.
 - Intrinsic Value = seul pricing model qui compte
 - 5 signaux Keepa : lowest used price, sales rank drops, Amazon price, offer count, stock qty
 
+### Phase C : Condition Signals + Pydantic v2 Fix (24 Mars 2026)
+
+**Objectif** : Integrer condition signals dans le pipeline unifie, corriger deprecations Pydantic.
+
+**Condition Signals (unified_analysis.py)** :
+- Step 5.5 : Derivation `condition_signal` (STRONG/MODERATE/WEAK) depuis ROI + total used offer count
+- Confidence boost : +10 (STRONG), +5 (MODERATE) via config `condition_signals`
+- `condition_breakdown` dans buying_guidance (labels FR, trie par ROI)
+- Alignement avec logique autosourcing_service existante
+
+**Pydantic v2 Fix (analytics.py)** :
+- `decimal_places=2` deprecie -> `field_validator` + `round(v, 2)`
+- Defaults `Decimal("...")` au lieu de float literals
+
+**Bugfixes 35+ (Mars 2026)** :
+- 25 critiques : pipeline AutoSourcing, dedup ASIN, scoring, classification, frontend
+- 12 MEDIUM : dedup, scoring formulas, frontend composants
+- 3 LOW : Keepa indices (RATING=16, COUNT_REVIEWS=17), webhook session, docs
+- PRs : #14, #15, #17, #19
+
+**Tests** : 24 nouveaux (test_phase_c_enhancements.py), 289/290 service tests passent
+
 ---
 
 ## Prochaines Etapes
 
 | Priorite | Phase | Description | Status |
 |----------|-------|-------------|--------|
-| 1 | 3C | Condition Bump + Replenishable + Offer Count | OPTIONNEL |
-| 2 | - | Migration DB drop tables archivees | QUAND STABLE |
-| 3 | 14 | Integration N8N | FUTUR |
+| 1 | - | Tests pre-deploy + Deploy production | A FAIRE |
+| 2 | 15 | Replenishable Watchlist | OPTIONNEL |
+| 3 | - | Migration DB drop tables archivees | QUAND STABLE |
+| 4 | 14 | Integration N8N | FUTUR |
 
 ---
 
@@ -228,10 +251,11 @@ Focus workflow core : AutoSourcing -> Daily Review -> Decision d'achat.
 | CLAUDE.md | Instructions v5.2 + Senior Review Gate |
 | compact_current.md | Memoire session active |
 | compact_master.md | Memoire globale (ce fichier) |
+| errors.md | Registre bugs catalogues avec codes domaine |
 | `_archive/` | Code archive (frontend + backend) |
 
 ---
 
-**Version** : 8.0
-**Derniere revision** : 21 Fevrier 2026
-**Statut** : Phases 1-13 + Phase 3 (Simplification) completes
+**Version** : 9.0
+**Derniere revision** : 24 Mars 2026
+**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes completes

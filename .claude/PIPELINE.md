@@ -8,10 +8,10 @@
 
 ## Phase Actuelle
 
-**Phase** : Aucune en cours (post-Phase 2D)
-**Démarrée** : —
-**Objectif** : —
-**Statut** : IDLE
+**Phase** : Pre-Deploy (post Phase C + Bugfixes)
+**Démarrée** : 24 Mars 2026
+**Objectif** : Tests pre-deploy puis deploy production
+**Statut** : EN ATTENTE DEPLOY
 
 ---
 
@@ -19,19 +19,27 @@
 
 | Stage | Responsable | Action | Statut | Date |
 |-------|------------|--------|--------|------|
-| — | — | — | — | — |
+| 1 | Claude | Phase C - Condition Signals | COMPLETE | 24 Mars 2026 |
+| 2 | Claude | Pydantic v2 fix | COMPLETE | 24 Mars 2026 |
+| 3 | Claude | Merge sur main (PR #19) | COMPLETE | 24 Mars 2026 |
+| 4 | — | Tests pre-deploy | A FAIRE | — |
+| 5 | — | Deploy production | A FAIRE | — |
 
 ---
 
 ## Décisions Prises
 
-*(Documenter ici chaque décision architecturale ou de design prise pendant la phase)*
+- Condition signals integres dans unified_analysis (pas seulement autosourcing)
+- Confidence boost via config business_rules.json (pas hardcode)
+- Pydantic v2 : field_validator au lieu de decimal_places deprecie
+- Replenishable Watchlist (Task 15) reporte post-deploy
+- Migration DB (drop tables) reporte apres stabilisation
 
 ---
 
 ## Blockers Actifs
 
-*(Lister ici tout ce qui bloque la progression)*
+Aucun
 
 ---
 
@@ -39,6 +47,9 @@
 
 | Phase | Dates | Statut | Commit Final |
 |-------|-------|--------|--------------|
+| Phase C - Condition Signals + Pydantic fix | 24 Mars 2026 | COMPLETE | 469453a (PR #19) |
+| Bugfixes 35+ (critiques + medium + low) | Mars 2026 | COMPLETE | PR #14, #15, #17 |
+| Phase 3 - Simplification Radicale | 21 Fév 2026 | COMPLETE | a99ae37, cb3b512 |
 | Phase 2D - Daily Review Dashboard | 06 Fév 2026 | COMPLETE | f2e0f8b |
 | Refactoring 2C - Fees centralization | Déc 2025 | COMPLETE | — |
 | Refactoring 2B - SQLAlchemy 2.0 | Déc 2025 | COMPLETE | — |

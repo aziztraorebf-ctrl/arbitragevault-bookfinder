@@ -133,6 +133,46 @@ class UnifiedProductSchema(BaseModel):
 
 
 # ============================================================================
+# Phase C: Condition Breakdown Helper
+# ============================================================================
+
+CONDITION_LABELS_FR = {
+    'new': 'Neuf',
+    'very_good': 'Tres bon',
+    'good': 'Bon',
+    'acceptable': 'Acceptable',
+}
+
+
+def _build_condition_breakdown(
+    pricing_metrics: Dict[str, Any],
+    source_price: float,
+) -> list:
+    """
+    Build a sorted list of conditions with ROI and offer count for buying guidance.
+
+    Returns a list of dicts sorted by ROI descending:
+    [{'condition': 'good', 'label': 'Bon', 'market_price': 15.0, 'roi_pct': 80.0,
+      'seller_count': 5, 'fba_count': 2, 'is_recommended': True}]
+    """
+    breakdown = []
+    for condition_key, data in pricing_metrics.items():
+        breakdown.append({
+            'condition': condition_key,
+            'label': CONDITION_LABELS_FR.get(condition_key, condition_key),
+            'market_price': round(data.get('market_price', 0), 2),
+            'roi_pct': round(data.get('roi_pct', 0) * 100, 1),
+            'roi_value': round(data.get('roi_value', 0), 2),
+            'seller_count': data.get('seller_count', 0),
+            'fba_count': data.get('fba_count', 0),
+            'is_recommended': data.get('is_recommended', False),
+        })
+
+    breakdown.sort(key=lambda x: x['roi_pct'], reverse=True)
+    return breakdown
+
+
+# ============================================================================
 # Main Unified Analysis Function
 # ============================================================================
 
@@ -570,6 +610,29 @@ async def build_unified_product_v2(
             'good'  # Fallback
         )
 
+        # ====== STEP 5.5: Derive condition signal (Phase C) ======
+        # Classify the opportunity as STRONG/MODERATE/WEAK based on ROI + offer count
+        cs_config = config.get("condition_signals", {})
+        strong_roi_min = cs_config.get("strong_roi_min", 25.0)
+        moderate_roi_min = cs_config.get("moderate_roi_min", 10.0)
+        max_offers_strong = cs_config.get("max_used_offers_strong", 10)
+        max_offers_moderate = cs_config.get("max_used_offers_moderate", 25)
+
+        best_condition_data = pricing_metrics.get(recommended_condition, {})
+        best_roi_pct_for_signal = best_condition_data.get('roi_pct', 0.0) * 100
+        total_used_offers = sum(
+            v.get('seller_count', 0)
+            for k, v in pricing_metrics.items()
+            if k != 'new'
+        )
+
+        if best_roi_pct_for_signal >= strong_roi_min and total_used_offers <= max_offers_strong:
+            condition_signal = "STRONG"
+        elif best_roi_pct_for_signal >= moderate_roi_min and total_used_offers <= max_offers_moderate:
+            condition_signal = "MODERATE"
+        else:
+            condition_signal = "WEAK"
+
         # ====== STEP 6: Calculate velocity metrics ======
         velocity_metrics = calculate_velocity_score(parsed, config)
 
@@ -596,6 +659,18 @@ async def build_unified_product_v2(
         confidence_raw, confidence_normalized, confidence_level, confidence_notes = compute_advanced_confidence_score(
             price_history, bsr_history, data_age_days, config
         )
+
+        # Apply condition-based confidence boost (Phase C)
+        confidence_boost = 0
+        if condition_signal == "STRONG":
+            confidence_boost = cs_config.get("confidence_boost_strong", 10)
+        elif condition_signal == "MODERATE":
+            confidence_boost = cs_config.get("confidence_boost_moderate", 5)
+
+        if confidence_boost > 0:
+            confidence_normalized = min(100, confidence_normalized + confidence_boost)
+            confidence_raw = min(1.0, confidence_raw + confidence_boost / 100)
+            confidence_notes += f", condition_boost=+{confidence_boost} ({condition_signal})"
 
         # Calculate ROI percentage from best condition
         best_roi_condition = pricing_metrics.get(
@@ -693,6 +768,10 @@ async def build_unified_product_v2(
             'recommendation_reason': guidance_result.recommendation_reason,
             'confidence_label': guidance_result.confidence_label,
             'explanations': guidance_result.explanations,
+            # Phase C: Condition-aware buying guidance
+            'recommended_condition': recommended_condition,
+            'condition_signal': condition_signal,
+            'condition_breakdown': _build_condition_breakdown(pricing_metrics, effective_source_price),
         }
 
         # ====== STEP 7: Build core response ======
@@ -715,6 +794,10 @@ async def build_unified_product_v2(
             # Amazon presence
             'amazon_on_listing': amazon_on_listing,
             'amazon_buybox': amazon_buybox,
+
+            # Condition signals (Phase C)
+            'condition_signal': condition_signal,
+            'total_used_offers': total_used_offers,
 
             # Advanced scoring fields (0-100 scale) - NEW
             'velocity_score': velocity_normalized,

@@ -3,7 +3,7 @@ Pydantic schemas for Phase 8.0 Analytics API
 """
 from typing import Optional, List, Dict, Any
 from decimal import Decimal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class AnalyticsRequestSchema(BaseModel):
@@ -20,19 +20,33 @@ class AnalyticsRequestSchema(BaseModel):
     sales_drops_90: Optional[int] = None  # From Keepa salesRankDrops90
 
     price_history: Optional[List[Dict[str, Any]]] = None
-    estimated_buy_price: Decimal = Field(..., decimal_places=2)
-    estimated_sell_price: Decimal = Field(..., decimal_places=2)
+    estimated_buy_price: Decimal = Field(...)
+    estimated_sell_price: Decimal = Field(...)
 
     seller_count: Optional[int] = None
     fba_seller_count: Optional[int] = None
     amazon_on_listing: Optional[bool] = False
     amazon_has_buybox: Optional[bool] = False
 
-    referral_fee_percent: Optional[Decimal] = Field(default=15, decimal_places=2)
-    fba_fee: Optional[Decimal] = Field(default=2.50, decimal_places=2)
+    referral_fee_percent: Optional[Decimal] = Field(default=Decimal("15"))
+    fba_fee: Optional[Decimal] = Field(default=Decimal("2.50"))
     prep_fee: Optional[Decimal] = None
-    return_rate_percent: Optional[Decimal] = Field(default=2, decimal_places=2)
-    storage_cost_monthly: Optional[Decimal] = Field(default=0.87, decimal_places=2)
+    return_rate_percent: Optional[Decimal] = Field(default=Decimal("2"))
+    storage_cost_monthly: Optional[Decimal] = Field(default=Decimal("0.87"))
+
+    @field_validator(
+        'estimated_buy_price', 'estimated_sell_price',
+        'referral_fee_percent', 'fba_fee',
+        'return_rate_percent', 'storage_cost_monthly',
+        mode='before',
+    )
+    @classmethod
+    def round_to_two_decimals(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, (int, float, str)):
+            v = Decimal(str(v))
+        return round(v, 2)
     estimated_sale_cycle_days: Optional[int] = 30
 
     class Config:

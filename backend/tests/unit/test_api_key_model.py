@@ -42,12 +42,12 @@ class TestAPIKeyIsExpired:
 
     def test_not_expired_when_future_expiry(self):
         """Key with future expiration is not expired."""
-        key = _make_api_key(expires_at=datetime.utcnow() + timedelta(days=30))
+        key = _make_api_key(expires_at=datetime.now(timezone.utc) + timedelta(days=30))
         assert key.is_expired is False
 
     def test_expired_when_past_expiry(self):
         """Key with past expiration is expired."""
-        key = _make_api_key(expires_at=datetime.utcnow() - timedelta(days=1))
+        key = _make_api_key(expires_at=datetime.now(timezone.utc) - timedelta(days=1))
         assert key.is_expired is True
 
 
@@ -68,7 +68,7 @@ class TestAPIKeyIsValid:
         """Expired key is not valid."""
         key = _make_api_key(
             is_active=True,
-            expires_at=datetime.utcnow() - timedelta(hours=1),
+            expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
         )
         assert key.is_valid is False
 
@@ -76,7 +76,7 @@ class TestAPIKeyIsValid:
         """Inactive and expired key is not valid."""
         key = _make_api_key(
             is_active=False,
-            expires_at=datetime.utcnow() - timedelta(hours=1),
+            expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
         )
         assert key.is_valid is False
 
@@ -103,9 +103,9 @@ class TestAPIKeyUpdateLastUsed:
     def test_update_last_used_sets_timestamp(self):
         """update_last_used sets last_used_at to current time."""
         key = _make_api_key(last_used_at=None)
-        before = datetime.utcnow()
+        before = datetime.now(timezone.utc)
         key.update_last_used()
-        after = datetime.utcnow()
+        after = datetime.now(timezone.utc)
 
         assert key.last_used_at is not None
         assert before <= key.last_used_at <= after

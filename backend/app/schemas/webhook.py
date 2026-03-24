@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class WebhookConfigCreate(BaseModel):
@@ -13,6 +13,8 @@ class WebhookConfigCreate(BaseModel):
 
 
 class WebhookConfigResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     url: str
     secret: str = ""
@@ -20,9 +22,6 @@ class WebhookConfigResponse(BaseModel):
     active: bool = True
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
 
 
 class WebhookPayload(BaseModel):

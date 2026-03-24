@@ -85,7 +85,9 @@ def _calculate_combined_score(
 ) -> Dict[str, Any]:
     """Calculate weighted combined score from ROI and velocity."""
     try:
-        roi_score = min(max(float(roi_metrics.get("roi_percentage", 0)), 0), 100)
+        # Normalize ROI to 0-100 scale: cap at 200% ROI for differentiation
+        raw_roi = max(float(roi_metrics.get("roi_percentage", 0)), 0)
+        roi_score = min(raw_roi / 2.0, 100) if raw_roi > 100 else raw_roi
         velocity_score = float(velocity_metrics.get("velocity_score", 0))
 
         # Get weights from config or use defaults

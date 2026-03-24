@@ -81,35 +81,35 @@ async def get_daily_review(
             "amazon_on_listing": bool(pick.amazon_on_listing),
             "current_price": float(pick.current_price) if pick.current_price else None,
             "buy_price": float(pick.estimated_buy_cost) if pick.estimated_buy_cost else None,
+            "condition_signal": getattr(pick, "condition_signal", None),
+            "stability_score": float(pick.stability_score) if getattr(pick, "stability_score", None) else 0.0,
         })
 
-    # Step 3: Fetch ASIN history (graceful if table missing)
-    history_map = {}
+    # Step 3: Fetch ASIN history from AutoSourcingPick sightings (30 days)
+    history_map: dict = {}
     if asin_set:
+        asin_list = list(asin_set)
+        history_cutoff = datetime.now(timezone.utc) - timedelta(days=30)
         try:
-            has_history_table = await _table_exists(db, "asin_history")
-            if has_history_table:
-                from app.models.analytics import ASINHistory
-
-                history_cutoff = datetime.now(timezone.utc) - timedelta(days=30)
-                history_query = (
-                    select(ASINHistory)
-                    .where(
-                        and_(
-                            ASINHistory.asin.in_(asin_set),
-                            ASINHistory.tracked_at >= history_cutoff,
-                        )
+            history_query = (
+                select(AutoSourcingPick)
+                .join(AutoSourcingJob)
+                .where(
+                    and_(
+                        AutoSourcingPick.asin.in_(asin_list),
+                        AutoSourcingJob.created_at >= history_cutoff,
+                        AutoSourcingPick.is_ignored == False,
                     )
                 )
-                hist_result = await db.execute(history_query)
-                for row in hist_result.scalars().all():
-                    history_map.setdefault(row.asin, []).append({
-                        "tracked_at": row.tracked_at,
-                        "bsr": row.bsr,
-                        "price": float(row.price) if row.price else None,
-                    })
-            else:
-                logger.warning("daily_review: asin_history table does not exist, skipping history")
+                .order_by(AutoSourcingPick.created_at.asc())
+            )
+            hist_result = await db.execute(history_query)
+            for row in hist_result.scalars().all():
+                history_map.setdefault(row.asin, []).append({
+                    "tracked_at": row.created_at,
+                    "bsr": int(row.bsr or -1),
+                    "price": float(row.current_price) if row.current_price else None,
+                })
         except Exception as e:
             logger.error(
                 "daily_review: history query failed, continuing without history",
@@ -169,35 +169,35 @@ async def get_actionable_buy_list(
             "amazon_on_listing": bool(pick.amazon_on_listing),
             "current_price": float(pick.current_price) if pick.current_price else None,
             "buy_price": float(pick.estimated_buy_cost) if pick.estimated_buy_cost else None,
+            "condition_signal": getattr(pick, "condition_signal", None),
+            "stability_score": float(pick.stability_score) if getattr(pick, "stability_score", None) else 0.0,
         })
 
-    # Step 3: Fetch ASIN history (graceful if table missing)
-    history_map = {}
+    # Step 3: Fetch ASIN history from AutoSourcingPick sightings (30 days)
+    history_map: dict = {}
     if asin_set:
+        asin_list = list(asin_set)
+        history_cutoff = datetime.now(timezone.utc) - timedelta(days=30)
         try:
-            has_history_table = await _table_exists(db, "asin_history")
-            if has_history_table:
-                from app.models.analytics import ASINHistory
-
-                history_cutoff = datetime.now(timezone.utc) - timedelta(days=30)
-                history_query = (
-                    select(ASINHistory)
-                    .where(
-                        and_(
-                            ASINHistory.asin.in_(asin_set),
-                            ASINHistory.tracked_at >= history_cutoff,
-                        )
+            history_query = (
+                select(AutoSourcingPick)
+                .join(AutoSourcingJob)
+                .where(
+                    and_(
+                        AutoSourcingPick.asin.in_(asin_list),
+                        AutoSourcingJob.created_at >= history_cutoff,
+                        AutoSourcingPick.is_ignored == False,
                     )
                 )
-                hist_result = await db.execute(history_query)
-                for row in hist_result.scalars().all():
-                    history_map.setdefault(row.asin, []).append({
-                        "tracked_at": row.tracked_at,
-                        "bsr": row.bsr,
-                        "price": float(row.price) if row.price else None,
-                    })
-            else:
-                logger.warning("actionable_buy_list: asin_history table does not exist, skipping history")
+                .order_by(AutoSourcingPick.created_at.asc())
+            )
+            hist_result = await db.execute(history_query)
+            for row in hist_result.scalars().all():
+                history_map.setdefault(row.asin, []).append({
+                    "tracked_at": row.created_at,
+                    "bsr": int(row.bsr or -1),
+                    "price": float(row.current_price) if row.current_price else None,
+                })
         except Exception as e:
             logger.error(
                 "actionable_buy_list: history query failed, continuing without history",

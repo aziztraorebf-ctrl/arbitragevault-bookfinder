@@ -159,10 +159,42 @@ async def get_dashboard_summary(
                 "buy_price": float(pick.estimated_buy_cost) if pick.estimated_buy_cost else None,
             })
 
+        # Build history_map for proper classification (not empty!)
+        history_map: dict = defaultdict(list)
         if picks_dicts:
-            review = generate_daily_review(picks=picks_dicts, history_map={})
-            total_picks = review.get("total_picks", 0)
-            for item in review.get("picks", []):
+            asin_set = list({p["asin"] for p in picks_dicts})
+            history_cutoff = _utcnow_naive() - timedelta(days=30)
+            try:
+                history_query = (
+                    select(AutoSourcingPick)
+                    .join(AutoSourcingJob)
+                    .where(
+                        and_(
+                            AutoSourcingPick.asin.in_(asin_set),
+                            AutoSourcingJob.created_at >= history_cutoff,
+                            AutoSourcingPick.is_ignored == False,
+                        )
+                    )
+                    .order_by(AutoSourcingPick.created_at.asc())
+                )
+                history_result = await db.execute(history_query)
+                for h in history_result.scalars().all():
+                    history_map[h.asin].append({
+                        "tracked_at": h.created_at,
+                        "bsr": int(h.bsr or -1),
+                        "price": float(h.current_price) if h.current_price else None,
+                    })
+            except Exception as exc:
+                logger.warning(
+                    "cowork dashboard: history_map query failed, falling back to empty",
+                    exc_info=True,
+                    extra={"error": str(exc)},
+                )
+
+        if picks_dicts:
+            review = generate_daily_review(picks=picks_dicts, history_map=dict(history_map))
+            total_picks = review.get("total", 0)
+            for item in review.get("classified_products", []):
                 classification = item.get("classification", "").upper()
                 if classification == "JACKPOT":
                     jackpot += 1

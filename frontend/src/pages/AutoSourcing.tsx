@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import AutoSourcingJobModal from '../components/AutoSourcingJobModal'
 import { TokenErrorAlert } from '../components/TokenErrorAlert'
 import { parseTokenError } from '../utils/tokenErrorHandler'
+import { api } from '../services/api'
 
 interface JobConfigFormData {
   profile_name: string;
@@ -42,7 +43,8 @@ interface Job {
   picks: JobPick[];
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://arbitragevault-backend-v2.onrender.com';
+// Removed: was using a different env var (VITE_API_BASE_URL) and raw fetch without auth.
+// Now uses the shared `api` axios instance which handles Firebase auth tokens automatically.
 
 export default function AutoSourcing() {
   const [error, setError] = useState<string | null>(null)
@@ -72,57 +74,25 @@ export default function AutoSourcing() {
     setTokenError(null)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/autosourcing/run-custom`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
+      const response = await api.post('/api/v1/autosourcing/run-custom', data)
 
-      // Handle HTTP 429 - Token insuffisants
-      if (response.status === 429) {
-        const tokenErrorInfo = parseTokenError(response)
-        setTokenError(tokenErrorInfo)
-        const errorData = await response.json()
-        const detail = errorData.detail
-        if (typeof detail === 'object') {
-          throw { response: { status: 429, data: errorData } }
-        }
-        throw new Error('Tokens Keepa insuffisants')
-      }
-
-      // Handle HTTP 400 - JOB_TOO_EXPENSIVE
-      if (response.status === 400) {
-        const errorData = await response.json()
-        throw { response: { status: 400, data: errorData } }
-      }
-
-      // Handle HTTP 408 - Timeout
-      if (response.status === 408) {
-        const errorData = await response.json()
-        throw { response: { status: 408, data: errorData } }
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${await response.text()}`)
-      }
-
-      const newJob = await response.json()
+      const newJob = response.data
       setJobs([newJob, ...jobs])
       setSelectedJob(newJob)
-      setIsModalOpen(false) // Close modal on success
-    } catch (err) {
-      // Re-throw the error to be handled by the modal
+      setIsModalOpen(false)
+    } catch (err: any) {
+      if (err?.response?.status === 429) {
+        const tokenErrorInfo = parseTokenError(err.response)
+        setTokenError(tokenErrorInfo)
+      }
       throw err
     }
   }
 
   const handleViewJobResults = async (jobId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/autosourcing/jobs/${jobId}`)
-      if (response.ok) {
-        const job = await response.json()
-        setSelectedJob(job)
-      }
+      const response = await api.get(`/api/v1/autosourcing/jobs/${jobId}`)
+      setSelectedJob(response.data)
     } catch (err) {
       console.error('Error fetching job details:', err)
     }

@@ -191,29 +191,32 @@ class AutoSourcingService:
 
         except asyncio.TimeoutError:
             # Update job status BEFORE raising exception
-            job.status = JobStatus.FAILED
+            job.status = JobStatus.ERROR
             job.error_message = f"Job exceeded timeout limit ({TIMEOUT_PER_JOB} seconds)"
-            job.completed_at = datetime.now(timezone.utc)
-            job.duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
+            job.completed_at = datetime.utcnow()
+            job.duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
             await self.db.commit()
 
             logger.warning(f"Job {job.id} exceeded timeout ({TIMEOUT_PER_JOB}s)")
 
-            # Re-raise for router to handle HTTP 408
             raise HTTPException(
                 status_code=408,
                 detail=f"Job exceeded timeout limit ({TIMEOUT_PER_JOB} seconds)"
             )
 
+        except HTTPException:
+            # Re-raise HTTP exceptions (e.g. from timeout above) without wrapping
+            raise
+
         except Exception as e:
             logger.error(f"AutoSourcing job failed: {str(e)}")
-            
+
             # Update job with error
             job.status = JobStatus.ERROR
             job.error_message = str(e)
             job.completed_at = datetime.utcnow()
             job.duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
-            
+
             await self.db.commit()
             raise AppException(f"AutoSourcing job failed: {str(e)}")
 
@@ -871,7 +874,7 @@ class AutoSourcingService:
                 fba_count = current[11]
             else:
                 fba_count = None
-        result["fba_seller_count"] = fba_count if fba_count and fba_count >= 0 else None
+        result["fba_seller_count"] = fba_count if fba_count is not None and fba_count >= 0 else None
 
         # Used price: stats.current[2] (USED price in cents)
         if len(current) > 2 and current[2] is not None and current[2] not in (-1, 0):

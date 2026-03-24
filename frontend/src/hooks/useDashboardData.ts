@@ -141,9 +141,14 @@ async function fetchOpportunityOfDay(): Promise<OpportunityOfDay | null> {
 }
 
 async function fetchRecherchesStats(): Promise<RecherchesStats | null> {
+  // Note: /recherches/stats endpoint does not exist on the backend.
+  // Derive search count from autosourcing jobs instead.
   try {
-    const response = await api.get('/api/v1/recherches/stats')
-    return response.data
+    const response = await api.get('/api/v1/autosourcing/jobs', {
+      params: { limit: 50 }
+    })
+    const jobs = response.data || []
+    return { total: jobs.length }
   } catch (error) {
     console.warn('[Dashboard] Recherches stats not available:', error)
     return null

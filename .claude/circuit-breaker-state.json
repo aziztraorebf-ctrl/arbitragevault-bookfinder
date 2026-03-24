@@ -1,1 +1,7 @@
-{"edits":{},"last_reset":""}
+{
+  "edits": {
+    "/home/user/arbitragevault-bookfinder/backend/app/api/v1/routers/daily_review.py": 1,
+    "/home/user/arbitragevault-bookfinder/backend/app/core/calculations.py": 1
+  },
+  "last_reset": ""
+}

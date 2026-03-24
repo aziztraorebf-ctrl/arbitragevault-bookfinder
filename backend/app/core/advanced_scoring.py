@@ -48,7 +48,9 @@ def compute_advanced_velocity_score(
         # Simple BSR trend calculation
         bsr_values = [bsr for _, bsr in sorted_bsr]
         recent_avg = statistics.mean(bsr_values[-7:]) if len(bsr_values) >= 7 else statistics.mean(bsr_values)
-        older_avg = statistics.mean(bsr_values[:7]) if len(bsr_values) >= 14 else statistics.mean(bsr_values)
+        # Use first half for older avg (not full list, which would include recent data)
+        half = max(1, len(bsr_values) // 2)
+        older_avg = statistics.mean(bsr_values[:half]) if len(bsr_values) >= 14 else statistics.mean(bsr_values[:half])
 
         if older_avg > 0:
             # Improvement = lower BSR is better

@@ -1,7 +1,8 @@
 {
   "edits": {
     "/home/user/arbitragevault-bookfinder/backend/app/core/security_headers.py": 1,
-    "/home/user/arbitragevault-bookfinder/backend/app/main.py": 2
+    "/home/user/arbitragevault-bookfinder/backend/app/main.py": 2,
+    "/home/user/arbitragevault-bookfinder/backend/scripts/create_api_key.py": 1
   },
   "last_reset": ""
 }

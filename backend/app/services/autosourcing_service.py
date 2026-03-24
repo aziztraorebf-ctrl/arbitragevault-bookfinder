@@ -185,7 +185,7 @@ class AutoSourcingService:
 
                 logger.info(f"AutoSourcing job completed successfully: {job.id}")
 
-                asyncio.create_task(dispatch_webhook(db=self.db, job=job))
+                asyncio.create_task(dispatch_webhook(job=job))
 
                 return job
 

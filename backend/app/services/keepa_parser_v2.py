@@ -596,11 +596,14 @@ def _extract_integer(array: List, index: int) -> Optional[int]:
 
 
 def _extract_rating(array: List) -> Optional[float]:
-    """Extract rating from array index 15 (Keepa stores as 0-50, we convert to 0-5)."""
-    if len(array) <= 15:
+    """Extract rating from array index 16 (Keepa stores as 0-50, we convert to 0-5).
+
+    Official Keepa API: index 15 = EXTRA_INFO_UPDATES, index 16 = RATING.
+    """
+    if len(array) <= 16:
         return None
 
-    value = array[15]
+    value = array[16]
     if value is None or value == KEEPA_NULL_VALUE or value == -1:
         return None
 

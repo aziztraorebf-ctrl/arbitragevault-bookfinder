@@ -98,9 +98,9 @@ async def _deliver(
 
 
 async def dispatch_webhook(
-    db: AsyncSession,
     job: Any,
     event: str = EVENT_JOB_COMPLETED,
+    db: Optional[AsyncSession] = None,
 ) -> None:
     """
     Dispatch webhook notifications for a completed AutoSourcing job.
@@ -108,10 +108,13 @@ async def dispatch_webhook(
     Fire-and-forget: this function NEVER raises. All errors are caught
     and logged so that webhook failures never block job completion.
 
+    Creates its own DB session to avoid using a potentially expired
+    caller session (since this runs as an asyncio.create_task).
+
     Args:
-        db: Async database session for querying webhook configs.
         job: AutoSourcing job object with id, status, query_name, etc.
         event: Event type string (default: autosourcing.job.completed).
+        db: Optional DB session (ignored, kept for backwards compat).
     """
     try:
         # --- Global kill switch: empty secret means webhooks disabled ---
@@ -120,14 +123,18 @@ async def dispatch_webhook(
             logger.debug("Webhook dispatch skipped: WEBHOOK_SECRET is empty")
             return
 
-        # --- Query active webhook configs for this user ---
-        user_id = getattr(job, "user_id", None)
-        stmt = select(WebhookConfig).where(WebhookConfig.active.is_(True))
-        if user_id is not None:
-            stmt = stmt.where(WebhookConfig.user_id == str(user_id))
+        # --- Create a fresh DB session to avoid expired caller session ---
+        from app.core.db import db_manager
 
-        result = await db.execute(stmt)
-        configs: List[WebhookConfig] = list(result.scalars().all())
+        async with db_manager.session() as fresh_db:
+            # --- Query active webhook configs for this user ---
+            user_id = getattr(job, "user_id", None)
+            stmt = select(WebhookConfig).where(WebhookConfig.active.is_(True))
+            if user_id is not None:
+                stmt = stmt.where(WebhookConfig.user_id == str(user_id))
+
+            result = await fresh_db.execute(stmt)
+            configs: List[WebhookConfig] = list(result.scalars().all())
 
         if not configs:
             logger.debug("No active webhook configs found")

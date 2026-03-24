@@ -162,8 +162,30 @@ def test_daily_buy_list_empty():
         p.stop()
 
 
-def test_daily_buy_list_smoke():
-    """GET buy-list returns 200 with valid schema."""
+def test_daily_buy_list_smoke(_override_db_session):
+    """GET buy-list returns 200 with valid schema when picks exist."""
+    mock_pick = MagicMock()
+    mock_pick.asin = "B00TEST123"
+    mock_pick.title = "Test Book"
+    mock_pick.roi_percentage = 45.0
+    mock_pick.bsr = 50000
+    mock_pick.amazon_on_listing = False
+    mock_pick.current_price = 20.0
+    mock_pick.estimated_buy_cost = 7.0
+    mock_pick.condition_signal = None
+    mock_pick.stability_score = 0.8
+    mock_pick.is_ignored = False
+    mock_pick.created_at = None
+
+    # First execute call returns picks, subsequent calls return empty (history + config)
+    mock_result_with_pick = MagicMock()
+    mock_result_with_pick.scalars.return_value.all.return_value = [mock_pick]
+    mock_result_empty = _mock_db_execute_result()
+
+    _override_db_session.execute = AsyncMock(
+        side_effect=[mock_result_with_pick, mock_result_empty, mock_result_empty]
+    )
+
     mock_items = [
         {
             "asin": "B00TEST123",

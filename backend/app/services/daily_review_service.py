@@ -227,6 +227,7 @@ def generate_actionable_review(
     min_roi: float = STABLE_MIN_ROI,
     max_results: int = 10,
     now: Optional[datetime] = None,
+    source_price_factor: float = 0.50,
 ) -> Dict[str, Any]:
     """
     Generate a pre-filtered actionable buy list of STABLE picks only.
@@ -264,7 +265,7 @@ def generate_actionable_review(
         current_price = pick.get("current_price") or 0.0
         item = {
             **pick,
-            "estimated_buy_price": round(current_price * 0.50, 2),
+            "estimated_buy_price": round(current_price * source_price_factor, 2),
             "classification": Classification.STABLE.value,
             "classification_label": meta["label"],
             "classification_action": meta["action"],

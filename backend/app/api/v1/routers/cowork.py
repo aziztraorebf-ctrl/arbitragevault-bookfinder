@@ -1,5 +1,6 @@
 """Cowork API - External agent endpoints for dashboard, fetch-and-score, and buy list."""
 import logging
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status, Security, Query
@@ -20,6 +21,10 @@ from app.schemas.cowork import (
     CoworkFetchAndScoreRequest,
     CoworkFetchAndScoreResponse,
 )
+
+# DB stores naive datetimes (datetime.utcnow) — comparisons must use naive UTC too
+def _utcnow_naive() -> datetime:
+    return datetime.utcnow()
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +72,7 @@ async def get_dashboard_summary(
 ) -> dict:
     """Return system health, Keepa status, and 24h job/pick statistics."""
     settings = get_settings()
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    cutoff = _utcnow_naive() - timedelta(hours=24)
 
     # DB health
     db_healthy = False
@@ -273,9 +278,10 @@ async def get_daily_buy_list(
     db: AsyncSession = Depends(get_db_session),
 ) -> CoworkBuyListResponse:
     """Return actionable daily buy list for external agent consumption."""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+    cutoff = _utcnow_naive() - timedelta(days=days_back)
+    now_naive = _utcnow_naive()
 
-    # Fetch recent picks from AutoSourcing jobs (copied from daily_review.py)
+    # Fetch picks from the requested window
     try:
         picks_query = (
             select(AutoSourcingPick)
@@ -296,11 +302,63 @@ async def get_daily_buy_list(
             extra={"error": str(e), "error_type": type(e).__name__},
         )
         return CoworkBuyListResponse(
-            generated_at=datetime.now(timezone.utc).isoformat(),
+            generated_at=now_naive.isoformat(),
             days_back=days_back,
             total_actionable=0,
             items=[],
         )
+
+    if not picks_rows:
+        return CoworkBuyListResponse(
+            generated_at=now_naive.isoformat(),
+            days_back=days_back,
+            total_actionable=0,
+            items=[],
+        )
+
+    # Build history_map: all past sightings for these ASINs over 30 days
+    asins = list({pick.asin for pick in picks_rows})
+    history_cutoff = _utcnow_naive() - timedelta(days=30)
+    history_map: dict = defaultdict(list)
+    try:
+        history_query = (
+            select(AutoSourcingPick)
+            .join(AutoSourcingJob)
+            .where(
+                and_(
+                    AutoSourcingPick.asin.in_(asins),
+                    AutoSourcingJob.created_at >= history_cutoff,
+                    AutoSourcingPick.is_ignored == False,
+                )
+            )
+            .order_by(AutoSourcingPick.created_at.asc())
+        )
+        history_result = await db.execute(history_query)
+        for h in history_result.scalars().all():
+            history_map[h.asin].append({
+                "tracked_at": h.created_at,
+                "bsr": int(h.bsr or -1),
+                "price": float(h.current_price) if h.current_price else None,
+            })
+    except Exception as e:
+        logger.warning(
+            "cowork daily-buy-list: history_map query failed, falling back to empty",
+            exc_info=True,
+            extra={"error": str(e), "error_type": type(e).__name__},
+        )
+
+    # Get source_price_factor from business config (seeded at 0.35)
+    source_price_factor = 0.35
+    try:
+        from app.models.business_config import BusinessConfig
+        config_result = await db.execute(
+            select(BusinessConfig).where(BusinessConfig.scope == "global")
+        )
+        config = config_result.scalar_one_or_none()
+        if config and config.data:
+            source_price_factor = config.data.get("roi", {}).get("source_price_factor", 0.35)
+    except Exception:
+        pass
 
     # Convert to dicts for classification
     picks = []
@@ -313,11 +371,17 @@ async def get_daily_buy_list(
             "amazon_on_listing": bool(pick.amazon_on_listing),
             "current_price": float(pick.current_price) if pick.current_price else None,
             "buy_price": float(pick.estimated_buy_cost) if pick.estimated_buy_cost else None,
+            "condition_signal": getattr(pick, "condition_signal", None),
+            "stability_score": float(pick.stability_score) if getattr(pick, "stability_score", None) else 0.0,
         })
 
-    # Generate actionable review
+    # Generate actionable review with real history and correct source_price_factor
     try:
-        review = generate_actionable_review(picks=picks, history_map={})
+        review = generate_actionable_review(
+            picks=picks,
+            history_map=dict(history_map),
+            source_price_factor=source_price_factor,
+        )
         items = [
             CoworkBuyListItem(
                 asin=item.get("asin", ""),
@@ -331,7 +395,7 @@ async def get_daily_buy_list(
             for item in review.get("items", [])
         ]
         return CoworkBuyListResponse(
-            generated_at=review.get("generated_at", datetime.now(timezone.utc).isoformat()),
+            generated_at=review.get("generated_at", now_naive.isoformat()),
             days_back=days_back,
             total_actionable=len(items),
             items=items,
@@ -343,7 +407,7 @@ async def get_daily_buy_list(
             extra={"error": str(e), "error_type": type(e).__name__},
         )
         return CoworkBuyListResponse(
-            generated_at=datetime.now(timezone.utc).isoformat(),
+            generated_at=now_naive.isoformat(),
             days_back=days_back,
             total_actionable=0,
             items=[],

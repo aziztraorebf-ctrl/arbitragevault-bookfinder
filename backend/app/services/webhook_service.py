@@ -161,5 +161,30 @@ async def dispatch_webhook(
                     config.url,
                 )
 
+        # --- Send push notification for stable picks ---
+        try:
+            stable_count = payload.data.get("stable_count", 0) if hasattr(payload, "data") else 0
+            if stable_count > 0:
+                from app.services.notification_service import notify_picks_found
+
+                picks = getattr(job, "picks", None) or []
+                picks_data = [
+                    {
+                        "title": getattr(p, "title", ""),
+                        "asin": getattr(p, "asin", ""),
+                        "bsr": getattr(p, "bsr", 0),
+                        "roi_percentage": getattr(p, "roi_percentage", 0.0),
+                        "classification": getattr(p, "classification", ""),
+                    }
+                    for p in picks
+                ][:10]
+                await notify_picks_found(
+                    stable_count=stable_count,
+                    job_id=str(getattr(job, "id", "")),
+                    picks_summary=picks_data,
+                )
+        except Exception:
+            logger.exception("Push notification for stable picks failed")
+
     except Exception:
         logger.exception("Webhook dispatch failed")

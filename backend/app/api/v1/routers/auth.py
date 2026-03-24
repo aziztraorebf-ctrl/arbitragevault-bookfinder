@@ -19,8 +19,14 @@ logger = structlog.get_logger()
 router = APIRouter()
 
 
-async def get_firebase_token(authorization: str = Header(...)) -> str:
+async def get_firebase_token(authorization: str = Header(default=None)) -> str:
     """Extract Firebase ID token from Authorization header."""
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     if not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

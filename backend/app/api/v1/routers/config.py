@@ -23,6 +23,7 @@ from app.schemas.business_config_schemas import (
 )
 from app.services.business_config_service import get_business_config_service, BusinessConfigService
 from app.services.config_preview_service import ConfigPreviewService
+from app.core.auth import get_current_user, CurrentUser
 import logging
 
 router = APIRouter(prefix="/config", tags=["Configuration"])
@@ -39,7 +40,8 @@ async def get_effective_config(
     domain_id: int = Query(1, description="Keepa domain ID (1=US, 2=UK, etc.)"),
     category: str = Query("books", description="Product category for config context"),
     force_refresh: bool = Query(False, description="Force refresh from database"),
-    config_service: BusinessConfigService = Depends(get_config_service)
+    config_service: BusinessConfigService = Depends(get_config_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """
     Get effective business configuration with hierarchical merging.
@@ -80,7 +82,8 @@ async def update_config(
     scope: str = Query("global", description="Configuration scope to update"),
     changed_by: str = Query("api_user", description="User making the change"),
     if_match: Optional[str] = Header(None, description="Expected version for optimistic locking"),
-    config_service: BusinessConfigService = Depends(get_config_service)
+    config_service: BusinessConfigService = Depends(get_config_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """
     Update business configuration with optimistic concurrency control.
@@ -146,7 +149,8 @@ async def update_config(
 @router.post("/preview", response_model=ConfigPreviewResponse)
 async def preview_config(
     request: ConfigPreviewRequest,
-    config_service: BusinessConfigService = Depends(get_config_service)
+    config_service: BusinessConfigService = Depends(get_config_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """
     Preview configuration changes without applying them.
@@ -210,7 +214,8 @@ async def get_config_changes(
     scope: Optional[str] = Query(None, description="Filter by configuration scope"),
     changed_by: Optional[str] = Query(None, description="Filter by user who made changes"),
     limit: int = Query(20, ge=1, le=100, description="Maximum number of changes to return"),
-    config_service: BusinessConfigService = Depends(get_config_service)
+    config_service: BusinessConfigService = Depends(get_config_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """
     Get configuration change history (audit trail).
@@ -254,7 +259,8 @@ async def get_config_changes(
 @router.get("/stats", response_model=ConfigStatsResponse)
 async def get_config_stats(
     config_service: BusinessConfigService = Depends(get_config_service),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """
     Get configuration service statistics and health info.

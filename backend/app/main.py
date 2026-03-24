@@ -31,6 +31,7 @@ from app.api.v1.routers import auth, health, keepa, config, autosourcing, autosc
 from app.api.v1.endpoints import products, asin_history
 from app.core.cors import configure_cors
 from app.core.db import lifespan
+from app.core.security_headers import SecurityHeadersMiddleware
 from app.core.logging import configure_logging, get_logger, log_request_middleware
 from app.core.settings import get_settings
 
@@ -76,6 +77,9 @@ app = FastAPI(
 
 # Configure CORS
 configure_cors(app)
+
+# Add security headers middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Add request logging middleware - DISABLED FOR PHASE 1
 # app.middleware("http")(log_request_middleware)

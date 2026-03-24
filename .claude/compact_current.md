@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Active Session
 
 **Derniere mise a jour** : 24 Mars 2026
-**Phase Actuelle** : Phase C - Condition Signals COMPLETE + Bugfixes 35+ COMPLETE
-**Statut Global** : Phases 1-13 + Refactoring 1A-2D + Phase 3 + Phase C + Bugfixes completes, Production LIVE
+**Phase Actuelle** : Security Audit + API Key Agent Integration COMPLETE
+**Statut Global** : Phases 1-13 + Refactoring 1A-2D + Phase 3 + Phase C + Bugfixes + Security + Agent API completes, Production LIVE
 
 ---
 
@@ -10,9 +10,9 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Phase C + Bugfixes COMPLETE - Pret pour deploy |
-| **Prochaine Action** | Tests pre-deploy puis deploy production |
-| **CLAUDE.md** | v5.2 - Instructions globales + projet |
+| **Phase Actuelle** | Security Audit + Agent API COMPLETE |
+| **Prochaine Action** | Integration CoWork/N8N avec cle API |
+| **CLAUDE.md** | v3.3 - Zero-Tolerance Engineering |
 | **Production** | Backend Render + Frontend Netlify LIVE |
 | **Authentification** | Firebase Auth (Email/Password) |
 | **Tests Total** | 289 service tests passent (+ 24 nouveaux Phase C) |
@@ -22,6 +22,30 @@
 ---
 
 ## CHANGELOG - 24 Mars 2026
+
+### Security Audit + API Key Agent Integration
+
+**Security Audit (PR pending)** :
+- Protection endpoints non-authentifies (`/health`, `/autosourcing/latest`, etc.)
+- Rate limiting : 30 req/min endpoints publics, 10 req/min health
+- Security headers : X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy
+- Middleware `SecurityHeadersMiddleware` ajoute a la stack FastAPI
+- Tests : `test_security_audit.py` (12 tests)
+
+**Script creation cle API (`backend/scripts/create_api_key.py`)** :
+- Script CLI standalone pour creer des cles API agents (CoWork, N8N)
+- Connexion directe Neon DB, bypass Firebase admin auth
+- Scopes : `autosourcing:read/write`, `autosourcing:job_read`, `daily_review:read`
+- Cle `avk_...` generee et inseree en base avec succes
+
+**Integration Agent CoWork** :
+- Cle API creee et validee (prefix `avk_`, 36 chars)
+- Endpoints accessibles via `X-API-Key` header :
+  - `GET /daily-review/actionable` : Buy list STABLE, ROI > 15%
+  - `GET /daily-review/today` : Review quotidienne
+  - `GET /autosourcing/to-buy` et `/favorites` : Listes produits
+  - `POST /autosourcing/run-custom` : Lancer scan (tokens Keepa)
+  - `GET /autosourcing/jobs/{id}` : Details job
 
 ### Phase C - Condition Signals + Pydantic v2 Fix COMPLETE
 
@@ -95,6 +119,8 @@
 | 3 | Simplification Radicale | 785 | 21 Fev 2026 |
 | **C** | **Condition Signals + Pydantic fix** | **24 nouveaux (289 service)** | **24 Mars 2026** |
 | **Bugfixes** | **35+ bugs (critiques + medium + low)** | **289 service** | **Mars 2026** |
+| **Security** | **Audit securite + headers + rate limiting** | **12 tests** | **24 Mars 2026** |
+| **Agent API** | **Script cle API + integration CoWork** | **N/A (utilitaire)** | **24 Mars 2026** |
 
 ---
 
@@ -133,10 +159,14 @@
 1. [x] Phase 3 - Simplification Radicale - COMPLETE
 2. [x] Phase C - Condition Signals + Pydantic fix - COMPLETE (PR #19)
 3. [x] Bugfixes 35+ - COMPLETE (PR #14, #15, #17)
-4. [ ] Tests pre-deploy (smoke test API, frontend validation)
-5. [ ] Deploy en production (Render backend + Netlify frontend)
-6. [ ] Task 15 - Replenishable Watchlist (optionnel, post-deploy)
-7. [ ] Migration DB : drop tables inutilisees (quand stable)
+4. [x] Security Audit - COMPLETE (rate limiting, headers, endpoint protection)
+5. [x] Script cle API agents - COMPLETE (backend/scripts/create_api_key.py)
+6. [x] Cle API CoWork creee et validee
+7. [ ] Integration complete CoWork/N8N (configurer workflows avec la cle)
+8. [ ] Tests pre-deploy (smoke test API, frontend validation)
+9. [ ] Deploy en production (Render backend + Netlify frontend)
+10. [ ] Task 15 - Replenishable Watchlist (optionnel, post-deploy)
+11. [ ] Migration DB : drop tables inutilisees (quand stable)
 
 ---
 

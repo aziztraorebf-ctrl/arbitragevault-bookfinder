@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Globale Projet
 
 **Derniere mise a jour** : 24 Mars 2026
-**Version** : 9.0
-**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes 35+ completes, Production LIVE
+**Version** : 10.0
+**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security Audit + Agent API completes, Production LIVE
 
 ---
 
@@ -231,16 +231,33 @@ Focus workflow core : AutoSourcing -> Daily Review -> Decision d'achat.
 
 **Tests** : 24 nouveaux (test_phase_c_enhancements.py), 289/290 service tests passent
 
+### Security Audit + Agent API Integration (24 Mars 2026)
+
+**Security Audit** :
+- Protection endpoints publics avec rate limiting (30 req/min publics, 10 req/min health)
+- Security headers middleware (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy)
+- Tests : 12 dans `test_security_audit.py`
+
+**Script creation cle API (`backend/scripts/create_api_key.py`)** :
+- Script CLI standalone pour creer cles API agents (CoWork, N8N)
+- Connexion directe Neon DB, generation `avk_...` avec scopes configurables
+- Scopes par defaut : `autosourcing:read/write`, `autosourcing:job_read`, `daily_review:read`
+
+**Integration Agent CoWork/N8N** :
+- Cle API creee via script et validee en base
+- Authentification via header `X-API-Key`
+- Endpoints proteges : `/daily-review/actionable`, `/daily-review/today`, `/autosourcing/to-buy`, `/autosourcing/favorites`, `/autosourcing/run-custom`, `/autosourcing/jobs/{id}`
+
 ---
 
 ## Prochaines Etapes
 
 | Priorite | Phase | Description | Status |
 |----------|-------|-------------|--------|
-| 1 | - | Tests pre-deploy + Deploy production | A FAIRE |
-| 2 | 15 | Replenishable Watchlist | OPTIONNEL |
-| 3 | - | Migration DB drop tables archivees | QUAND STABLE |
-| 4 | 14 | Integration N8N | FUTUR |
+| 1 | - | Integration CoWork/N8N workflows | EN COURS |
+| 2 | - | Tests pre-deploy + Deploy production | A FAIRE |
+| 3 | 15 | Replenishable Watchlist | OPTIONNEL |
+| 4 | - | Migration DB drop tables archivees | QUAND STABLE |
 
 ---
 
@@ -256,6 +273,6 @@ Focus workflow core : AutoSourcing -> Daily Review -> Decision d'achat.
 
 ---
 
-**Version** : 9.0
+**Version** : 10.0
 **Derniere revision** : 24 Mars 2026
-**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes completes
+**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API completes

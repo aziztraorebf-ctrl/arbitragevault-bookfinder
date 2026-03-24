@@ -8,10 +8,10 @@
 
 ## Phase Actuelle
 
-**Phase** : Pre-Deploy (post Phase C + Bugfixes)
+**Phase** : Security + Agent API Integration (post Phase C + Bugfixes)
 **Démarrée** : 24 Mars 2026
-**Objectif** : Tests pre-deploy puis deploy production
-**Statut** : EN ATTENTE DEPLOY
+**Objectif** : Securiser endpoints + Integrer agents CoWork/N8N via API key
+**Statut** : SECURITY COMPLETE, AGENT API EN COURS
 
 ---
 
@@ -22,8 +22,12 @@
 | 1 | Claude | Phase C - Condition Signals | COMPLETE | 24 Mars 2026 |
 | 2 | Claude | Pydantic v2 fix | COMPLETE | 24 Mars 2026 |
 | 3 | Claude | Merge sur main (PR #19) | COMPLETE | 24 Mars 2026 |
-| 4 | — | Tests pre-deploy | A FAIRE | — |
-| 5 | — | Deploy production | A FAIRE | — |
+| 4 | Claude | Security audit (rate limiting + headers) | COMPLETE | 24 Mars 2026 |
+| 5 | Claude | Script creation cle API agents | COMPLETE | 24 Mars 2026 |
+| 6 | Aziz/OpenClaw | Cle API CoWork creee en base | COMPLETE | 24 Mars 2026 |
+| 7 | Aziz | Integration workflows CoWork/N8N | EN COURS | — |
+| 8 | — | Tests pre-deploy | A FAIRE | — |
+| 9 | — | Deploy production | A FAIRE | — |
 
 ---
 
@@ -34,6 +38,9 @@
 - Pydantic v2 : field_validator au lieu de decimal_places deprecie
 - Replenishable Watchlist (Task 15) reporte post-deploy
 - Migration DB (drop tables) reporte apres stabilisation
+- Cle API agent via script standalone (pas via admin UI) pour simplicite
+- Scopes agent : read/write autosourcing + job_read + daily_review:read
+- OpenClaw utilise pour executer le script a distance (DATABASE_URL fourni manuellement)
 
 ---
 

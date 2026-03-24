@@ -294,7 +294,8 @@ async def run_custom_search(
 
 @router.get("/latest", response_model=Optional[AutoSourcingJobResponse])
 async def get_latest_results(
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """Get results from the most recent successful AutoSourcing job."""
     
@@ -303,7 +304,8 @@ async def get_latest_results(
 
 @router.get("/opportunity-of-day", response_model=Optional[OpportunityOfDayResponse])
 async def get_opportunity_of_day(
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """Get the best opportunity discovered today across all jobs."""
     
@@ -326,7 +328,8 @@ async def get_opportunity_of_day(
 @router.get("/jobs", response_model=List[AutoSourcingJobResponse])
 async def get_recent_jobs(
     limit: int = Query(10, ge=1, le=50, description="Number of jobs to return"),
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """Get list of recent AutoSourcing jobs with summary info."""
     
@@ -358,7 +361,8 @@ async def get_job_details(
 @router.get("/profiles", response_model=List[SavedProfileResponse])
 async def get_saved_profiles(
     active_only: bool = Query(True, description="Return only active profiles"),
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """Get all saved AutoSourcing profiles."""
     
@@ -368,7 +372,8 @@ async def get_saved_profiles(
 @router.post("/profiles", response_model=SavedProfileResponse, status_code=status.HTTP_201_CREATED)
 async def create_profile(
     request: CreateProfileRequest,
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """Create a new AutoSourcing profile for reuse."""
     
@@ -397,7 +402,8 @@ async def create_profile(
 async def update_pick_action(
     pick_id: UUID,
     request: UpdateActionRequest,
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """Update user action on a discovered product pick."""
     
@@ -419,7 +425,8 @@ async def update_pick_action(
 @router.get("/my-actions/{action}", response_model=List[AutoSourcingPickResponse])
 async def get_picks_by_action(
     action: ActionStatus,
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """Get all picks filtered by user action (to_buy, favorite, ignored, etc)."""
     
@@ -452,7 +459,8 @@ async def get_favorites(
 
 @router.get("/stats")
 async def get_action_stats(
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """Get user action statistics and insights."""
     
@@ -482,7 +490,8 @@ async def get_action_stats(
 @router.get("/jobs/{job_id}/tiers")
 async def get_job_products_by_tier(
     job_id: UUID,
-    service: AutoSourcingService = Depends(get_autosourcing_service)
+    service: AutoSourcingService = Depends(get_autosourcing_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     """
     Retourne les produits d'un job organisés par tiers de priorité.

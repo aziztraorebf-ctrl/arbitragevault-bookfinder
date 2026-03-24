@@ -207,7 +207,7 @@ async def get_dashboard_summary(
 async def fetch_and_score(
     request: CoworkFetchAndScoreRequest,
     service: AutoSourcingService = Depends(get_autosourcing_service),
-):
+) -> CoworkFetchAndScoreResponse:
     """Trigger an on-demand AutoSourcing search, merging request with DEFAULT_PROFILE."""
     settings = get_settings()
     if not settings.keepa_api_key:
@@ -271,7 +271,7 @@ async def fetch_and_score(
 async def get_daily_buy_list(
     days_back: int = Query(default=1, ge=1, le=7, description="Days of picks to analyze"),
     db: AsyncSession = Depends(get_db_session),
-):
+) -> CoworkBuyListResponse:
     """Return actionable daily buy list for external agent consumption."""
     cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
 

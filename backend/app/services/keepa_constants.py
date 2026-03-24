@@ -29,8 +29,9 @@ class KeepaCSVType(IntEnum):
     COUNT_USED = 12         # Used offer count
     COUNT_REFURBISHED = 13  # Refurbished count
     COUNT_COLLECTIBLE = 14  # Collectible count
-    RATING = 15             # Product rating (0-50, e.g., 45 = 4.5 stars)
-    COUNT_REVIEWS = 16      # Review count
+    EXTRA_INFO_UPDATES = 15 # Extra info updates (not rating!)
+    RATING = 16             # Product rating (0-50, e.g., 45 = 4.5 stars)
+    COUNT_REVIEWS = 17      # Review count
     BUY_BOX_SHIPPING = 18   # Buy Box price with shipping
 
 

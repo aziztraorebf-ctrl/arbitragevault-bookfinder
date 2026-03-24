@@ -62,6 +62,22 @@
 
 ---
 
+## BE — Keepa Integration
+
+**BE-03** — Indices Keepa CSV decales pour RATING et COUNT_REVIEWS
+- **Cause** : Code utilisait RATING=15 et COUNT_REVIEWS=16, mais l'API officielle Keepa (Product.java) definit EXTRA_INFO_UPDATES=15, RATING=16, COUNT_REVIEWS=17
+- **Fix** : Corrige keepa_constants.py (ajout EXTRA_INFO_UPDATES=15, RATING=16, COUNT_REVIEWS=17) et keepa_parser_v2.py (_extract_rating lit array[16])
+- **Fichiers** : keepa_constants.py, keepa_parser_v2.py
+- **Detecte** : Mars 2026
+
+**BE-04** — dispatch_webhook utilise session DB potentiellement expiree
+- **Cause** : asyncio.create_task(dispatch_webhook(db=self.db)) - la session du caller peut etre fermee quand le task s'execute
+- **Fix** : dispatch_webhook cree sa propre session via db_manager.session()
+- **Fichiers** : webhook_service.py, autosourcing_service.py
+- **Detecte** : Mars 2026
+
+---
+
 ## Ajouter un nouveau bug
 
 Pour ajouter une entrée :

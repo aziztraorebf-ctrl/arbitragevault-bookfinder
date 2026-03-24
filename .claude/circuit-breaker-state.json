@@ -1,12 +1,6 @@
 {
   "edits": {
-    "/home/user/arbitragevault-bookfinder/frontend/src/hooks/useDashboardData.ts": 1,
-    "/home/user/arbitragevault-bookfinder/backend/app/services/keepa_constants.py": 1,
-    "/home/user/arbitragevault-bookfinder/backend/app/services/keepa_parser_v2.py": 1,
-    "/home/user/arbitragevault-bookfinder/backend/app/services/webhook_service.py": 1,
-    "/home/user/arbitragevault-bookfinder/backend/app/services/autosourcing_service.py": 1,
-    "/home/user/arbitragevault-bookfinder/KNOWN_ISSUES.md": 1,
-    "/home/user/arbitragevault-bookfinder/.claude/errors.md": 1
+    "/home/user/arbitragevault-bookfinder/.claude/circuit-breaker-state.json": 1
   },
   "last_reset": ""
 }

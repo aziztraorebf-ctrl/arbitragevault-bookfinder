@@ -1,7 +1,6 @@
 {
   "edits": {
-    "/home/user/arbitragevault-bookfinder/backend/app/api/v1/routers/daily_review.py": 1,
-    "/home/user/arbitragevault-bookfinder/backend/app/core/calculations.py": 1
+    "/home/user/arbitragevault-bookfinder/frontend/src/hooks/useDashboardData.ts": 1
   },
   "last_reset": ""
 }

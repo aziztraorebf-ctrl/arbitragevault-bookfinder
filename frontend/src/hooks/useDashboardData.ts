@@ -171,13 +171,30 @@ async function fetchDailyReview(): Promise<DailyReviewData | null> {
 
 async function fetchDashboardData(): Promise<Omit<DashboardData, 'isLoading' | 'isError' | 'errorMessage'>> {
   // Fetch all data in parallel for performance
+  // Track failures to surface errors to the user
+  let failureCount = 0
+  const tracked = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
+    try {
+      return await fn()
+    } catch (error) {
+      failureCount++
+      console.warn('[Dashboard] Fetch failed:', error)
+      return fallback
+    }
+  }
+
   const [autoStats, jobs, opportunity, rechercheStats, dailyReview] = await Promise.all([
-    fetchAutoSourcingStats(),
-    fetchRecentJobs(5),
-    fetchOpportunityOfDay(),
-    fetchRecherchesStats(),
-    fetchDailyReview()
+    tracked(fetchAutoSourcingStats, null),
+    tracked(() => fetchRecentJobs(5), []),
+    tracked(fetchOpportunityOfDay, null),
+    tracked(fetchRecherchesStats, null),
+    tracked(fetchDailyReview, null),
   ])
+
+  // If most fetches failed, throw to surface error in React Query
+  if (failureCount >= 4) {
+    throw new Error(`Dashboard: ${failureCount}/5 data sources failed`)
+  }
 
   return {
     // KPIs - with fallbacks

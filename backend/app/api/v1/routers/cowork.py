@@ -147,16 +147,24 @@ async def get_dashboard_summary(
         result = await db.execute(picks_query)
         picks_rows = result.scalars().all()
 
-        picks_dicts = []
+        # Deduplicate by ASIN: keep the most recent pick per ASIN
+        seen_asins: dict = {}
         for pick in picks_rows:
+            if pick.asin not in seen_asins or (pick.created_at and pick.created_at > seen_asins[pick.asin].created_at):
+                seen_asins[pick.asin] = pick
+
+        picks_dicts = []
+        for pick in seen_asins.values():
             picks_dicts.append({
                 "asin": pick.asin,
                 "title": pick.title or "",
                 "roi_percentage": float(pick.roi_percentage or 0),
-                "bsr": int(pick.bsr or -1),
-                "amazon_on_listing": bool(pick.amazon_on_listing),
+                "bsr": int(pick.bsr or 0),
+                "amazon_on_listing": bool(pick.amazon_on_listing) if pick.amazon_on_listing is not None else False,
                 "current_price": float(pick.current_price) if pick.current_price else None,
                 "buy_price": float(pick.estimated_buy_cost) if pick.estimated_buy_cost else None,
+                "condition_signal": getattr(pick, "condition_signal", None),
+                "stability_score": float(pick.stability_score) if getattr(pick, "stability_score", None) else 0.0,
             })
 
         # Build history_map for proper classification (not empty!)

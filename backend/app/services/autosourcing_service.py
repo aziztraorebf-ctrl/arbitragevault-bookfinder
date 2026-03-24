@@ -301,54 +301,6 @@ class AutoSourcingService:
         logger.info(f"ProductFinder REST API returned {len(discovered_asins)} ASINs")
         return discovered_asins
 
-    async def _build_keepa_search_params(self, discovery_config: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Convert user discovery config to Keepa Product Finder parameters.
-        
-        Args:
-            discovery_config: User-defined search criteria
-            
-        Returns:
-            Dictionary with Keepa API parameters
-        """
-        keepa_params = {}
-        
-        # Handle categories using CENTRALIZED CONFIG
-        categories = discovery_config.get("categories", [])
-        if categories:
-            category_ids = []
-            for cat in categories:
-                try:
-                    cat_id = get_category_id(cat)
-                    category_ids.append(cat_id)
-                except KeyError:
-                    logger.warning(f"Unknown category '{cat}' in search params, skipping")
-
-            if category_ids:
-                keepa_params["categories_include"] = category_ids[0]  # Use first category
-        
-        # Handle BSR range
-        bsr_range = discovery_config.get("bsr_range", {})
-        if bsr_range:
-            if "min" in bsr_range:
-                keepa_params["avg30_SALES_gte"] = bsr_range["min"]
-            if "max" in bsr_range:  
-                keepa_params["avg30_SALES_lte"] = bsr_range["max"]
-        
-        # Handle price range
-        price_range = discovery_config.get("price_range", {})
-        if price_range:
-            if "min" in price_range:
-                keepa_params["current_NEW_gte"] = int(price_range["min"] * 100)  # Keepa uses cents
-            if "max" in price_range:
-                keepa_params["current_NEW_lte"] = int(price_range["max"] * 100)  # Keepa uses cents
-        
-        # Default sorting by current sales rank
-        keepa_params["sort"] = ["current_SALES", "asc"]
-        
-        logger.info(f"Built Keepa search params: {keepa_params}")
-        return keepa_params
-
     async def process_asins_with_deduplication(
         self,
         asins: List[str],
@@ -854,10 +806,10 @@ class AutoSourcingService:
         if len(current) > 3 and current[3] is not None and current[3] > 0:
             result["bsr"] = current[3]
 
-        # Category name
+        # Category name: use the most specific (last) category in the tree
         category_tree = raw_keepa.get("categoryTree", [])
         if category_tree and len(category_tree) > 0:
-            result["category"] = category_tree[0].get("name", "Unknown")
+            result["category"] = category_tree[-1].get("name", "Unknown")
         else:
             result["category"] = "Unknown"
 
@@ -1200,8 +1152,7 @@ class AutoSourcingService:
         pick.action_taken_at = datetime.utcnow()
         pick.action_notes = notes
         
-        # Update flags
-        pick.is_purchased = (action == ActionStatus.TO_BUY)
+        # Update flags (is_purchased only set when explicitly purchased, not just "to_buy")
         pick.is_favorite = (action == ActionStatus.FAVORITE)
         pick.is_ignored = (action == ActionStatus.IGNORED)
         pick.analysis_requested = (action == ActionStatus.ANALYZING)

@@ -458,20 +458,21 @@ async def get_action_stats(
     
     # Get counts for each action type
     stats = {}
-    
+
     for action in ActionStatus:
         picks = await service.get_picks_by_action(action)
         stats[action.value] = len(picks)
-    
+
     # Calculate some basic insights
     total_actions = sum(v for k, v in stats.items() if k != "pending")
     to_buy_count = stats.get("to_buy", 0)
-    
+    total_picks = total_actions + stats.get("pending", 0)
+
     return {
         "action_counts": stats,
         "total_actions_taken": total_actions,
         "purchase_pipeline": to_buy_count,
-        "engagement_rate": f"{(total_actions / max(stats.get('pending', 1), 1)) * 100:.1f}%"
+        "engagement_rate": f"{(total_actions / max(total_picks, 1)) * 100:.1f}%"
     }
 
 # ============================================================================  
@@ -480,7 +481,7 @@ async def get_action_stats(
 
 @router.get("/jobs/{job_id}/tiers")
 async def get_job_products_by_tier(
-    job_id: str,
+    job_id: UUID,
     service: AutoSourcingService = Depends(get_autosourcing_service)
 ):
     """

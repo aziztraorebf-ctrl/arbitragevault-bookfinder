@@ -68,21 +68,28 @@ async def get_daily_review(
         )
         picks_rows = []
 
-    # Step 2: Convert to dicts for classification
+    # Step 2: Deduplicate by ASIN (keep most recent pick per ASIN) and convert to dicts
+    seen_asins: dict = {}
+    for pick in picks_rows:
+        if pick.asin not in seen_asins or (pick.created_at and pick.created_at > seen_asins[pick.asin].created_at):
+            seen_asins[pick.asin] = pick
+
     picks = []
     asin_set = set()
-    for pick in picks_rows:
+    for pick in seen_asins.values():
         asin_set.add(pick.asin)
         picks.append({
             "asin": pick.asin,
             "title": pick.title or "",
             "roi_percentage": float(pick.roi_percentage or 0),
-            "bsr": int(pick.bsr or -1),
-            "amazon_on_listing": bool(pick.amazon_on_listing),
+            "bsr": int(pick.bsr or 0),
+            "amazon_on_listing": bool(pick.amazon_on_listing) if pick.amazon_on_listing is not None else False,
             "current_price": float(pick.current_price) if pick.current_price else None,
             "buy_price": float(pick.estimated_buy_cost) if pick.estimated_buy_cost else None,
             "condition_signal": getattr(pick, "condition_signal", None),
             "stability_score": float(pick.stability_score) if getattr(pick, "stability_score", None) else 0.0,
+            "velocity_score": float(pick.velocity_score) if getattr(pick, "velocity_score", None) else 0.0,
+            "confidence_score": float(pick.confidence_score) if getattr(pick, "confidence_score", None) else 0.0,
         })
 
     # Step 3: Fetch ASIN history from AutoSourcingPick sightings (30 days)
@@ -155,22 +162,29 @@ async def get_actionable_buy_list(
         )
         picks_rows = []
 
-    # Step 2: Convert to dicts for classification
+    # Step 2: Deduplicate by ASIN (keep most recent pick per ASIN) and convert to dicts
+    seen_asins: dict = {}
+    for pick in picks_rows:
+        if pick.asin not in seen_asins or (pick.created_at and pick.created_at > seen_asins[pick.asin].created_at):
+            seen_asins[pick.asin] = pick
+
     picks = []
     asin_set = set()
-    for pick in picks_rows:
+    for pick in seen_asins.values():
         asin_set.add(pick.asin)
         picks.append({
             "asin": pick.asin,
             "title": pick.title or "",
             "category": pick.category or None,
             "roi_percentage": float(pick.roi_percentage or 0),
-            "bsr": int(pick.bsr or -1),
-            "amazon_on_listing": bool(pick.amazon_on_listing),
+            "bsr": int(pick.bsr or 0),
+            "amazon_on_listing": bool(pick.amazon_on_listing) if pick.amazon_on_listing is not None else False,
             "current_price": float(pick.current_price) if pick.current_price else None,
             "buy_price": float(pick.estimated_buy_cost) if pick.estimated_buy_cost else None,
             "condition_signal": getattr(pick, "condition_signal", None),
             "stability_score": float(pick.stability_score) if getattr(pick, "stability_score", None) else 0.0,
+            "velocity_score": float(pick.velocity_score) if getattr(pick, "velocity_score", None) else 0.0,
+            "confidence_score": float(pick.confidence_score) if getattr(pick, "confidence_score", None) else 0.0,
         })
 
     # Step 3: Fetch ASIN history from AutoSourcingPick sightings (30 days)

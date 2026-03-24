@@ -102,6 +102,12 @@ class Settings(BaseSettings):
     # Webhooks
     webhook_secret: str = Field(default="", alias="WEBHOOK_SECRET")
 
+    # Notifications
+    textbelt_api_key: Optional[str] = Field(default=None, alias="TEXTBELT_API_KEY")
+    notification_phone: Optional[str] = Field(default=None, alias="NOTIFICATION_PHONE")
+    resend_api_key: Optional[str] = Field(default=None, alias="RESEND_API_KEY")
+    notification_email: Optional[str] = Field(default=None, alias="NOTIFICATION_EMAIL")
+
     # Monitoring
     sentry_dsn: Optional[str] = Field(default=None, alias="SENTRY_DSN")
     environment: str = Field(default="development", alias="ENVIRONMENT")

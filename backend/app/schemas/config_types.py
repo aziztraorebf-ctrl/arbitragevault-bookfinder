@@ -36,8 +36,8 @@ class ROIConfigUnified(BaseModel):
     good_threshold: Decimal = Field(default=Decimal("30.0"), description="Good ROI threshold")
     fair_threshold: Decimal = Field(default=Decimal("15.0"), description="Fair ROI threshold")
     source_price_factor: Decimal = Field(
-        default=Decimal("0.50"),
-        description="Factor to estimate source price from Buy Box (0.50 = 50%)"
+        default=Decimal("0.35"),
+        description="Conservative factor to estimate source price from Buy Box (0.35 = 35%)"
     )
 
     @field_validator('target_pct', 'min_acceptable', 'excellent_threshold',
@@ -134,7 +134,7 @@ def roi_schema_to_unified(legacy: Dict[str, Any]) -> ROIConfigUnified:
         excellent_threshold=legacy.get("excellent_threshold", 50.0),
         good_threshold=legacy.get("good_threshold", 30.0),
         fair_threshold=legacy.get("fair_threshold", 15.0),
-        source_price_factor=legacy.get("source_price_factor", 0.50),
+        source_price_factor=legacy.get("source_price_factor", 0.35),
     )
 
 

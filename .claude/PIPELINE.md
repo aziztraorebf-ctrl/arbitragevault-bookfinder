@@ -8,10 +8,10 @@
 
 ## Phase Actuelle
 
-**Phase** : Security + Agent API Integration (post Phase C + Bugfixes)
-**Démarrée** : 24 Mars 2026
-**Objectif** : Securiser endpoints + Integrer agents CoWork/N8N via API key
-**Statut** : SECURITY COMPLETE, AGENT API EN COURS
+**Phase** : Codebase Health Audit (post PR #25-26)
+**Démarrée** : 25 Mars 2026
+**Objectif** : Auditer coherence modeles/endpoints/services, detecter bugs silencieux type BE-05
+**Statut** : A DEMARRER
 
 ---
 
@@ -19,34 +19,40 @@
 
 | Stage | Responsable | Action | Statut | Date |
 |-------|------------|--------|--------|------|
-| 1 | Claude | Phase C - Condition Signals | COMPLETE | 24 Mars 2026 |
-| 2 | Claude | Pydantic v2 fix | COMPLETE | 24 Mars 2026 |
-| 3 | Claude | Merge sur main (PR #19) | COMPLETE | 24 Mars 2026 |
-| 4 | Claude | Security audit (rate limiting + headers) | COMPLETE | 24 Mars 2026 |
-| 5 | Claude | Script creation cle API agents | COMPLETE | 24 Mars 2026 |
-| 6 | Aziz/OpenClaw | Cle API CoWork creee en base | COMPLETE | 24 Mars 2026 |
-| 7 | Aziz | Integration workflows CoWork/N8N | EN COURS | — |
-| 8 | — | Tests pre-deploy | A FAIRE | — |
-| 9 | — | Deploy production | A FAIRE | — |
+| 1 | Claude | PR #25 - Multi-Issue Cleanup (5 features) | COMPLETE | 25 Mars 2026 |
+| 2 | Claude | PR #26 - Hotfix last-job-stats | COMPLETE | 25 Mars 2026 |
+| 3 | Claude | Circuit breaker hook supprime | COMPLETE | 25 Mars 2026 |
+| 4 | Agent distant | Tests manuels backend (A, B) | COMPLETE | 25 Mars 2026 |
+| 5 | — | Tests manuels frontend (D, E, F, G) | A FAIRE | — |
+| 6 | Claude | Audit modeles vs endpoints (attributs fantomes) | A FAIRE | — |
+| 7 | Claude | Audit except Exception trop larges | A FAIRE | — |
+| 8 | Claude | Tests unitaires nouveaux endpoints | A FAIRE | — |
+| 9 | — | Integration CoWork/N8N workflows | EN COURS | — |
 
 ---
 
 ## Décisions Prises
 
-- Condition signals integres dans unified_analysis (pas seulement autosourcing)
-- Confidence boost via config business_rules.json (pas hardcode)
-- Pydantic v2 : field_validator au lieu de decimal_places deprecie
-- Replenishable Watchlist (Task 15) reporte post-deploy
-- Migration DB (drop tables) reporte apres stabilisation
-- Cle API agent via script standalone (pas via admin UI) pour simplicite
-- Scopes agent : read/write autosourcing + job_read + daily_review:read
-- OpenClaw utilise pour executer le script a distance (DATABASE_URL fourni manuellement)
+- Circuit breaker hook supprime (friction > valeur)
+- config.py legacy supprime, migration complete vers settings.py/get_settings()
+- roi_min abaisse a 20.0, MAX_PRODUCTS_PER_SEARCH a 25
+- total_discovered retire du endpoint (attribut inexistant sur modele)
+- Double toast corrige par delegation complete au hook useUpdateConfig
+- Tests manuels delegues a agent distant via brief structure
 
 ---
 
 ## Blockers Actifs
 
 Aucun
+
+---
+
+## Signaux d'Alerte (a investiguer prochaine session)
+
+1. **except Exception trop larges** : Bug BE-05 masque par except generique. Pattern probablement present ailleurs.
+2. **Coherence modele/endpoint** : Aucune validation automatique que les attributs accedes existent sur les modeles SQLAlchemy.
+3. **picks_count: 0** : Pipeline fonctionne mais 0 picks avec ROI >= 20%. Normal (marche) ou probleme discovery a investiguer.
 
 ---
 

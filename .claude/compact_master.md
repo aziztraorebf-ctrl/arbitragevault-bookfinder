@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Globale Projet
 
-**Derniere mise a jour** : 24 Mars 2026
-**Version** : 10.0
-**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security Audit + Agent API completes, Production LIVE
+**Derniere mise a jour** : 25 Mars 2026
+**Version** : 11.0
+**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API + PR#25-26 completes, Production LIVE
 
 ---
 
@@ -250,14 +250,34 @@ Focus workflow core : AutoSourcing -> Daily Review -> Decision d'achat.
 
 ---
 
+### PR #25-26 : Multi-Issue Cleanup + Hotfix (25 Mars 2026)
+
+**PR #25 (5 features)** :
+- Security : fail-fast SECRET_KEY, .env.autoscheduler retire, SECURITY.md, pre-commit detect-secrets
+- Cleanup : 50+ fichiers archives, config.py supprime, products.py migre vers get_settings()
+- Picks tuning : MAX_PRODUCTS 10->25, roi_min 30->20, 4 log lines pipeline, endpoint last-job-stats
+- Config save : fix double toast, onError extrait error.data?.detail
+- Logout : dropdown avatar avec email + "Se deconnecter"
+
+**PR #26 (hotfix)** :
+- Bug BE-05 : `last-job-stats` referencait `job.total_discovered` (inexistant sur modele)
+- `AttributeError` masquee par `except Exception` generique
+- Fix : supprime total_discovered, garde total_tested + total_selected
+
+**Autres** : Circuit breaker hook supprime, TEST_BRIEF_PR25.md cree
+
+---
+
 ## Prochaines Etapes
 
 | Priorite | Phase | Description | Status |
 |----------|-------|-------------|--------|
-| 1 | - | Integration CoWork/N8N workflows | EN COURS |
-| 2 | - | Tests pre-deploy + Deploy production | A FAIRE |
-| 3 | 15 | Replenishable Watchlist | OPTIONNEL |
-| 4 | - | Migration DB drop tables archivees | QUAND STABLE |
+| 1 | - | **Audit codebase : modeles vs endpoints (bugs silencieux)** | A FAIRE |
+| 2 | - | **Audit except Exception trop larges** | A FAIRE |
+| 3 | - | Tests frontend manuels (Config toast, Logout) | A FAIRE |
+| 4 | - | Integration CoWork/N8N workflows | EN COURS |
+| 5 | 15 | Replenishable Watchlist | OPTIONNEL |
+| 6 | - | Migration DB drop tables archivees | QUAND STABLE |
 
 ---
 
@@ -273,6 +293,6 @@ Focus workflow core : AutoSourcing -> Daily Review -> Decision d'achat.
 
 ---
 
-**Version** : 10.0
-**Derniere revision** : 24 Mars 2026
-**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API completes
+**Version** : 11.0
+**Derniere revision** : 25 Mars 2026
+**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API + PR#25-26 completes

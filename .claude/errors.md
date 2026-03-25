@@ -76,6 +76,25 @@
 - **Fichiers** : webhook_service.py, autosourcing_service.py
 - **Detecte** : Mars 2026
 
+**BE-05** — Endpoint last-job-stats referencait attribut inexistant sur modele
+- **Cause** : `get_last_job_stats` accedait `job.total_discovered` mais `AutoSourcingJob` n'a que `total_tested` et `total_selected`. `AttributeError` avalee par `except Exception` generique, retournant silencieusement une reponse vide ({job_id: null, ...})
+- **Fix** : Supprime `total_discovered` du endpoint, garde uniquement les champs existants du modele
+- **Fichiers** : backend/app/api/v1/routers/cowork.py
+- **Signal** : Les `except Exception` trop larges masquent les erreurs d'attribut. Pattern a auditer dans tout le codebase.
+- **Detecte** : 25 Mars 2026
+
+**BE-06** — Double toast sur save Configuration
+- **Cause** : `Configuration.tsx` avait ses propres `toast.success/toast.error` dans handleSave ET `useConfig.ts` en avait aussi dans onSuccess/onError. Deux notifications affichees au lieu d'une.
+- **Fix** : Supprime les toasts de Configuration.tsx, delegation complete au hook useUpdateConfig
+- **Fichiers** : frontend/src/pages/Configuration.tsx, frontend/src/hooks/useConfig.ts
+- **Detecte** : 25 Mars 2026
+
+**CFG-03** — Legacy config.py encore importe apres creation de settings.py
+- **Cause** : `products.py` importait encore `from app.core.config import settings` (uppercase KEEPA_API_KEY) au lieu de `from app.core.settings import get_settings` (lowercase keepa_api_key). Deux fichiers de config coexistaient.
+- **Fix** : Migration des 3 usages dans products.py, suppression de config.py
+- **Fichiers** : backend/app/api/v1/endpoints/products.py, backend/app/core/config.py (supprime)
+- **Detecte** : 25 Mars 2026
+
 ---
 
 ## Ajouter un nouveau bug

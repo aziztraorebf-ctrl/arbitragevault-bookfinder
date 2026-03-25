@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Active Session
 
-**Derniere mise a jour** : 24 Mars 2026
-**Phase Actuelle** : Security Audit + API Key Agent Integration COMPLETE
-**Statut Global** : Phases 1-13 + Refactoring 1A-2D + Phase 3 + Phase C + Bugfixes + Security + Agent API completes, Production LIVE
+**Derniere mise a jour** : 25 Mars 2026
+**Phase Actuelle** : Multi-Issue Cleanup + Codebase Health Review
+**Statut Global** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API + PR#25-26 completes, Production LIVE
 
 ---
 
@@ -10,14 +10,65 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Security Audit + Agent API COMPLETE |
-| **Prochaine Action** | Integration CoWork/N8N avec cle API |
+| **Phase Actuelle** | Post-PR#25/26 — Codebase Health Review necessaire |
+| **Prochaine Action** | Audit approfondi modeles vs endpoints (detecter bugs type total_discovered) |
 | **CLAUDE.md** | v3.3 - Zero-Tolerance Engineering |
 | **Production** | Backend Render + Frontend Netlify LIVE |
 | **Authentification** | Firebase Auth (Email/Password) |
-| **Tests Total** | 289 service tests passent (+ 24 nouveaux Phase C) |
+| **Tests Total** | 289 service tests (+ 24 Phase C) |
 | **Bloqueurs** | Aucun |
 | **Environnement** | macOS (migration depuis Windows jan 2026) |
+
+---
+
+## CHANGELOG - 25 Mars 2026
+
+### PR #25 — Multi-Issue Cleanup (5 features, squash merge)
+
+**Feature 1 — Security Hardening** :
+- `config.py` : fail-fast RuntimeError si SECRET_KEY absent en production (remplace logger.error)
+- `.env.autoscheduler` retire du git tracking
+- `SECURITY.md` cree (rotation log, fichiers sensibles)
+- `.pre-commit-config.yaml` cree (detect-secrets hook)
+
+**Feature 2 — Codebase Cleanup** :
+- 50+ fichiers debug/audit/test archives dans `backend/_debug_archive/`
+- `backend/app/core/config.py` supprime (legacy Settings class uppercase)
+- `products.py` migre de `from app.core.config import settings` vers `from app.core.settings import get_settings`
+- 3 usages remplaces : `settings.KEEPA_API_KEY` -> `get_settings().keepa_api_key`
+
+**Feature 3 — Picks Tuning** :
+- `MAX_PRODUCTS_PER_SEARCH` : 10 -> 25
+- `roi_min` dans DEFAULT_PROFILE Cowork : 30.0 -> 20.0
+- 4 log lines pipeline ajoutes dans `autosourcing_service.py` (discover, dedup, score, final)
+- Nouvel endpoint `GET /cowork/last-job-stats`
+
+**Feature 4 — Config Save Error** :
+- `useConfig.ts` onError : extrait `error.data?.detail` (FastAPI detail) au lieu de `error.message` generique
+- `Configuration.tsx` : supprime double toast (success + error) — delegation complete a useUpdateConfig
+
+**Feature 5 — Logout Button** :
+- `Layout.tsx` : import useAuth, dropdown avatar avec email + bouton "Se deconnecter"
+- Fermeture dropdown sur changement de route
+- Design vault tokens (bg-vault-card, border-vault-border, etc.)
+
+### PR #26 — Hotfix last-job-stats (squash merge)
+
+**Bug** : `last-job-stats` referencait `job.total_discovered` qui n'existe pas sur le modele `AutoSourcingJob`
+- `AttributeError` catchee silencieusement par le `except`, retournait toujours `{job_id: null, ...}`
+- Fix : supprime `total_discovered`, garde `total_tested` et `total_selected` (champs reels du modele)
+
+### Autres changements session :
+- Circuit breaker hook supprime (`.claude/hooks/circuit-breaker.sh`) — plus de friction sur edits multiples
+- `TEST_BRIEF_PR25.md` cree pour tests manuels par agent distant
+
+### Bug decouvert et corrige en session :
+
+**BE-05** : Endpoint `last-job-stats` referencait `job.total_discovered` — attribut inexistant sur `AutoSourcingJob` model.
+Le modele a `total_tested` et `total_selected` uniquement. L'`AttributeError` etait avalee par le `except Exception`
+generique, retournant silencieusement une reponse vide.
+**Cause racine** : Le task description specifiait `total_discovered` sans verifier le schema DB.
+**Signal d'alerte** : D'autres endpoints ou services pourraient referencer des attributs inexistants avec des except trop larges.
 
 ---
 
@@ -162,11 +213,13 @@
 4. [x] Security Audit - COMPLETE (rate limiting, headers, endpoint protection)
 5. [x] Script cle API agents - COMPLETE (backend/scripts/create_api_key.py)
 6. [x] Cle API CoWork creee et validee
-7. [ ] Integration complete CoWork/N8N (configurer workflows avec la cle)
-8. [ ] Tests pre-deploy (smoke test API, frontend validation)
-9. [ ] Deploy en production (Render backend + Netlify frontend)
-10. [ ] Task 15 - Replenishable Watchlist (optionnel, post-deploy)
-11. [ ] Migration DB : drop tables inutilisees (quand stable)
+7. [x] PR #25 - Multi-Issue Cleanup (5 features) - COMPLETE
+8. [x] PR #26 - Hotfix last-job-stats - COMPLETE
+9. [ ] **PRIORITAIRE : Audit codebase — modeles vs endpoints vs services (detecter bugs silencieux)**
+10. [ ] Tests frontend manuels (Config save toast, Logout button desktop+mobile)
+11. [ ] Integration complete CoWork/N8N (configurer workflows avec la cle)
+12. [ ] Task 15 - Replenishable Watchlist (optionnel, post-deploy)
+13. [ ] Migration DB : drop tables inutilisees (quand stable)
 
 ---
 

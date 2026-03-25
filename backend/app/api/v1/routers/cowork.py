@@ -397,8 +397,12 @@ async def get_daily_buy_list(
         config = config_result.scalar_one_or_none()
         if config and config.data:
             source_price_factor = config.data.get("roi", {}).get("source_price_factor", 0.35)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(
+            "cowork daily-buy-list: failed to load source_price_factor from config, using default",
+            exc_info=True,
+            extra={"error": str(e), "error_type": type(e).__name__},
+        )
 
     # Convert to dicts for classification
     picks = []
@@ -482,11 +486,12 @@ async def get_last_job_stats(
             "created_at": job.created_at.isoformat() if job.created_at else None,
         }
     except Exception as e:
-        logger.error("cowork last-job-stats failed", exc_info=True, extra={"error": str(e)})
-        return {
-            "job_id": None,
-            "status": None,
-            "total_tested": 0,
-            "total_selected": 0,
-            "created_at": None,
-        }
+        logger.error(
+            "cowork last-job-stats failed",
+            exc_info=True,
+            extra={"error": str(e), "error_type": type(e).__name__},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve last job stats",
+        )

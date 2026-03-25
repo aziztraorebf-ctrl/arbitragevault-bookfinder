@@ -6,11 +6,14 @@ Core ROI and profitability calculations for arbitrage analysis.
 Separated from calculations.py for SRP compliance.
 """
 
+import logging
 from decimal import Decimal
 from datetime import datetime
 from typing import Dict, Optional, Any
 
 from .fees_config import calculate_profit_metrics, calculate_total_fees
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_purchase_cost_from_strategy(
@@ -161,6 +164,7 @@ def calculate_roi_metrics(
         return metrics
 
     except Exception as e:
+        logger.error("ROI calculation failed", exc_info=True)
         return {
             "error": f"ROI calculation failed: {str(e)}",
             "calculation_type": "roi_analysis",

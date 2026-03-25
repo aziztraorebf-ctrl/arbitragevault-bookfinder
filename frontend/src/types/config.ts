@@ -4,25 +4,43 @@
  */
 import { z } from 'zod'
 
-// Business config schema - matches backend BusinessConfigSchema
+// Business config schema - matches backend BusinessConfigSchema (unified field names)
+export const RoiConfigSchema = z.object({
+  target_pct: z.number(),
+  min_acceptable: z.number(),
+  excellent_threshold: z.number(),
+  good_threshold: z.number().optional(),
+  fair_threshold: z.number().optional(),
+  source_price_factor: z.number().optional(),
+})
+
+export const CombinedScoreConfigSchema = z.object({
+  roi_weight: z.number(),
+  velocity_weight: z.number(),
+})
+
+export const FeesConfigSchema = z.object({
+  buffer_pct_default: z.number(),
+  books: z.record(z.number()).optional(),
+  media: z.record(z.number()).optional(),
+  default: z.record(z.number()).optional(),
+})
+
+export const VelocityConfigSchema = z.object({
+  fast_threshold: z.number(),
+  medium_threshold: z.number(),
+  slow_threshold: z.number(),
+  benchmarks: z.record(z.number()).optional(),
+})
+
 export const BusinessConfigSchema = z.object({
-  roi_thresholds: z.object({
-    minimum: z.number(),
-    target: z.number(),
-    excellent: z.number(),
-  }),
-  bsr_limits: z.object({
-    max_acceptable: z.number(),
-    ideal_max: z.number(),
-  }),
-  pricing: z.object({
-    min_profit_margin: z.number(),
-    fee_estimate_percent: z.number(),
-  }),
-  velocity: z.object({
-    min_score: z.number(),
-    weight_in_scoring: z.number(),
-  }),
+  roi: RoiConfigSchema.optional(),
+  combined_score: CombinedScoreConfigSchema.optional(),
+  fees: FeesConfigSchema.optional(),
+  velocity: VelocityConfigSchema.optional(),
+  recommendation_rules: z.array(z.record(z.unknown())).optional(),
+  demo_asins: z.array(z.string()).optional(),
+  meta: z.record(z.unknown()).optional(),
 })
 
 export type BusinessConfig = z.infer<typeof BusinessConfigSchema>
@@ -31,8 +49,8 @@ export const ConfigResponseSchema = z.object({
   scope: z.string(),
   config: BusinessConfigSchema,
   version: z.number(),
-  effective_config: BusinessConfigSchema,
-  sources: z.record(z.string(), z.string()).optional(),
+  effective_config: BusinessConfigSchema.optional(),
+  sources: z.record(z.string(), z.boolean()).optional(),
   updated_at: z.string(),
 })
 
@@ -48,6 +66,6 @@ export const ConfigStatsSchema = z.object({
 export type ConfigStats = z.infer<typeof ConfigStatsSchema>
 
 export interface ConfigUpdateRequest {
-  config: Partial<BusinessConfig>
-  description?: string
+  config_patch: Partial<BusinessConfig>
+  change_reason?: string
 }

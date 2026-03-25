@@ -236,7 +236,7 @@ class ConfigPreviewService:
             "recommendation": recommendation,
             
             "config_audit": {
-                "roi_target_pct": config.get("roi", {}).get("target_pct_default", 30.0),
+                "roi_target_pct": config.get("roi", {}).get("target_pct", config.get("roi", {}).get("target_pct_default", 30.0)),
                 "roi_weight": config.get("combined_score", {}).get("roi_weight", 0.6),
                 "velocity_weight": config.get("combined_score", {}).get("velocity_weight", 0.4),
                 "buffer_pct": config.get("fees", {}).get("buffer_pct_default", 5.0)
@@ -257,7 +257,7 @@ class ConfigPreviewService:
         roi_config = config.get("roi", {})
         fees_config = config.get("fees", {})
         
-        target_roi = roi_config.get("target_pct_default", 30.0)
+        target_roi = roi_config.get("target_pct", roi_config.get("target_pct_default", 30.0))
         buffer_pct = fees_config.get("buffer_pct_default", 5.0)
         
         # Use standard ROI calculation but apply config parameters

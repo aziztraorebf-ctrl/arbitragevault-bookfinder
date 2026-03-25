@@ -370,8 +370,8 @@ class BusinessConfigService:
             
             # Check ROI thresholds
             roi_config = config.get("roi", {})
-            target_pct = roi_config.get("target_pct_default", 30.0)
-            min_for_buy = roi_config.get("min_for_buy", 15.0)
+            target_pct = roi_config.get("target_pct", roi_config.get("target_pct_default", 30.0))
+            min_for_buy = roi_config.get("min_acceptable", roi_config.get("min_for_buy", 15.0))
             
             if not (0 <= target_pct <= 200):
                 errors.append(f"ROI target must be between 0% and 200% (got {target_pct}%)")

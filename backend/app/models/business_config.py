@@ -152,8 +152,8 @@ class ConfigChange(Base):
 # Default configuration structure for seeding
 DEFAULT_BUSINESS_CONFIG = {
     "roi": {
-        "target_pct_default": 30.0,        # Default ROI target (30%)
-        "min_for_buy": 15.0,               # Minimum ROI for BUY recommendation
+        "target_pct": 30.0,                # Default ROI target (30%)
+        "min_acceptable": 15.0,            # Minimum ROI for BUY recommendation
         "excellent_threshold": 50.0,        # ROI for "excellent" tier
         "good_threshold": 30.0,            # ROI for "good" tier  
         "fair_threshold": 15.0             # ROI for "fair" tier

@@ -31,6 +31,10 @@ class CoworkDashboardResponse(BaseModel):
     keepa_configured: bool
     autosourcing: CoworkAutoSourcingStats
     daily_review: CoworkDailyReviewStats
+    data_quality: str = Field(
+        default="full",
+        description="full = all data loaded, degraded = partial DB failure, unavailable = total failure",
+    )
 
 
 class CoworkFetchAndScoreRequest(BaseModel):
@@ -70,3 +74,7 @@ class CoworkBuyListResponse(BaseModel):
     days_back: int
     total_actionable: int
     items: List[CoworkBuyListItem]
+    data_quality: str = Field(
+        default="full",
+        description="full = all data loaded, degraded = partial failure, unavailable = query failed",
+    )

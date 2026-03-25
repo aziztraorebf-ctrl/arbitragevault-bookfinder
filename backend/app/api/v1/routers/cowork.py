@@ -80,11 +80,15 @@ async def get_dashboard_summary(
     settings = get_settings()
     cutoff = _utcnow_naive() - timedelta(hours=24)
 
+    # Track data quality across sections
+    data_quality = "full"
+
     # DB health
     db_healthy = False
     try:
         db_healthy = await db_manager.health_check()
     except Exception as e:
+        data_quality = "degraded"
         logger.error(
             "cowork dashboard: health_check failed",
             exc_info=True,
@@ -126,6 +130,7 @@ async def get_dashboard_summary(
             last_run_at = latest_job.created_at.isoformat() if latest_job.created_at else None
             last_run_status = latest_job.status.value if latest_job.status else None
     except Exception as e:
+        data_quality = "degraded"
         logger.error(
             "cowork dashboard: autosourcing stats query failed",
             exc_info=True,
@@ -221,6 +226,7 @@ async def get_dashboard_summary(
                 elif classification == "REJECT":
                     reject += 1
     except Exception as e:
+        data_quality = "degraded"
         logger.error(
             "cowork dashboard: daily review stats failed",
             exc_info=True,
@@ -247,6 +253,7 @@ async def get_dashboard_summary(
             "fluke": fluke,
             "reject": reject,
         },
+        "data_quality": data_quality,
     }
 
 
@@ -352,6 +359,7 @@ async def get_daily_buy_list(
             days_back=days_back,
             total_actionable=0,
             items=[],
+            data_quality="unavailable",
         )
 
     if not picks_rows:
@@ -461,6 +469,7 @@ async def get_daily_buy_list(
             days_back=days_back,
             total_actionable=0,
             items=[],
+            data_quality="degraded",
         )
 
 

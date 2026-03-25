@@ -127,6 +127,28 @@ def test_dashboard_summary_smoke():
         assert "daily_review" in data
         assert isinstance(data["autosourcing"]["jobs_last_24h"], int)
         assert isinstance(data["autosourcing"]["picks_last_24h"], int)
+        assert data.get("data_quality") == "full"
+    finally:
+        p.stop()
+
+
+def test_dashboard_summary_degraded_on_db_error(_override_db_session):
+    """GET dashboard with DB error returns 200 with data_quality=degraded."""
+    _override_db_session.execute = AsyncMock(
+        side_effect=RuntimeError("DB connection lost")
+    )
+
+    client, p = _client_with_settings()
+    try:
+        response = client.get(
+            "/api/v1/cowork/dashboard-summary",
+            headers=_auth_header(),
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["data_quality"] == "degraded"
+        # Stats should be zeros (fallback) but response is honest about quality
+        assert data["autosourcing"]["jobs_last_24h"] == 0
     finally:
         p.stop()
 
@@ -162,6 +184,27 @@ def test_daily_buy_list_empty():
         data = response.json()
         assert data["total_actionable"] == 0
         assert data["items"] == []
+        assert data.get("data_quality") == "full"
+    finally:
+        p.stop()
+
+
+def test_daily_buy_list_db_error_quality(_override_db_session):
+    """GET buy-list with DB error returns data_quality=unavailable."""
+    _override_db_session.execute = AsyncMock(
+        side_effect=RuntimeError("DB connection lost")
+    )
+
+    client, p = _client_with_settings()
+    try:
+        response = client.get(
+            "/api/v1/cowork/daily-buy-list",
+            headers=_auth_header(),
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["data_quality"] == "unavailable"
+        assert data["total_actionable"] == 0
     finally:
         p.stop()
 

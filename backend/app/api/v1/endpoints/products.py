@@ -16,7 +16,7 @@ from app.services.config_adapter import get_config_adapter
 from app.services.keepa_product_finder import KeepaProductFinderService
 from app.services.verification_service import VerificationService
 from app.schemas.verification import VerificationRequest, VerificationResponse
-from app.core.config import settings
+from app.core.settings import get_settings
 from app.core.guards import require_tokens
 
 router = APIRouter()
@@ -114,7 +114,7 @@ async def discover_products(
     - Get bestsellers for category
     """
     # Check API key
-    if not settings.KEEPA_API_KEY:
+    if not get_settings().keepa_api_key:
         raise HTTPException(status_code=503, detail="Keepa API key not configured")
 
     try:
@@ -169,7 +169,7 @@ async def discover_with_scoring(
     - Recommendation: STRONG_BUY, BUY, CONSIDER, SKIP
     """
     # Check API key
-    if not settings.KEEPA_API_KEY:
+    if not get_settings().keepa_api_key:
         raise HTTPException(status_code=503, detail="Keepa API key not configured")
 
     try:

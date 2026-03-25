@@ -128,6 +128,7 @@ class AutoSourcingService:
                 # Phase 1: Discover products via Keepa
                 logger.info("Phase 1: Product discovery via Keepa")
                 discovered_asins = await self._discover_products(discovery_config)
+                logger.info("pipeline discover: %d ASINs found", len(discovered_asins))
 
                 logger.info(f"Discovered {len(discovered_asins)} products (may include duplicates)")
 
@@ -137,6 +138,7 @@ class AutoSourcingService:
                     discovered_asins,
                     max_to_analyze=discovery_config.get("max_results", 50)
                 )
+                logger.info("pipeline dedup: %d ASINs after deduplication", len(unique_asins))
 
                 job.total_tested = len(unique_asins)
                 logger.info(f"After deduplication: {len(unique_asins)} unique products to analyze")
@@ -146,6 +148,7 @@ class AutoSourcingService:
                 scored_picks = await self._score_and_filter_products(
                     unique_asins, scoring_config, job.id
                 )
+                logger.info("pipeline score: %d products scored", len(scored_picks))
 
                 job.total_selected = len(scored_picks)
                 logger.info(f"Selected {len(scored_picks)} top opportunities")
@@ -153,6 +156,7 @@ class AutoSourcingService:
                 # Phase 3: Remove duplicates from recent jobs
                 logger.info("Phase 3: Duplicate detection")
                 unique_picks = await self._remove_recent_duplicates(scored_picks)
+                logger.info("pipeline final: %d picks selected (roi_min=%.1f)", len(unique_picks), scoring_config.get("roi_min", 0))
 
                 final_count = len(unique_picks)
                 logger.info(f"Final results: {final_count} unique opportunities")

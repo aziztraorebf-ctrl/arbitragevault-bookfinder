@@ -652,7 +652,7 @@ async def get_webhook_config(
 # HEALTH & DEBUG
 # ============================================================================
 
-@router.get("/health")
+@router.api_route("/health", methods=["GET", "HEAD"])
 async def autosourcing_health():
     """Health check for AutoSourcing module."""
     

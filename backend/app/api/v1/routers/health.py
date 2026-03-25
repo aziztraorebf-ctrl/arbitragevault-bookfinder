@@ -12,7 +12,7 @@ logger = structlog.get_logger()
 router = APIRouter()
 
 
-@router.get("/live")
+@router.api_route("/live", methods=["GET", "HEAD"])
 async def liveness_check():
     """
     Liveness probe - check if application is running.
@@ -30,7 +30,7 @@ async def liveness_check():
     }
 
 
-@router.get("/ready")
+@router.api_route("/ready", methods=["GET", "HEAD"])
 async def readiness_check():
     """
     Readiness probe - check if application is ready to serve traffic.

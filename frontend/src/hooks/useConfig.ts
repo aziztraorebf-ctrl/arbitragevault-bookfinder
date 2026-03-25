@@ -80,9 +80,12 @@ export function useUpdateConfig() {
       toast.success('Configuration mise a jour')
     },
     onError: (error) => {
-      const message = error instanceof ApiError
-        ? error.message
-        : 'Erreur lors de la mise a jour'
+      let message = 'Erreur lors de la mise a jour'
+      if (error instanceof ApiError) {
+        message = error.data?.detail || error.message || message
+      } else if (error instanceof Error) {
+        message = error.message
+      }
       toast.error(message)
     },
   })

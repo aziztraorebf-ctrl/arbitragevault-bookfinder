@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 # Protection Constants
 MAX_TOKENS_PER_JOB = 200
-MAX_PRODUCTS_PER_SEARCH = 10
+MAX_PRODUCTS_PER_SEARCH = 25
 TIMEOUT_PER_JOB = 120
 MIN_TOKEN_BALANCE_REQUIRED = 50
 

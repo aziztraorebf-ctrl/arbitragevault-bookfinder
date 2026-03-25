@@ -54,7 +54,7 @@ DEFAULT_PROFILE = {
     "profile_name": "cowork-on-demand",
     "categories": ["Books"],
     "max_results": 30,
-    "roi_min": 30.0,
+    "roi_min": 20.0,
 }
 
 
@@ -452,3 +452,44 @@ async def get_daily_buy_list(
             total_actionable=0,
             items=[],
         )
+
+
+@router.get("/last-job-stats", dependencies=[Depends(require_cowork_token)])
+async def get_last_job_stats(
+    db: AsyncSession = Depends(get_db_session),
+) -> dict:
+    """Return pipeline stats for the most recent AutoSourcing job."""
+    try:
+        result = await db.execute(
+            select(AutoSourcingJob)
+            .order_by(AutoSourcingJob.created_at.desc())
+            .limit(1)
+        )
+        job = result.scalars().first()
+        if not job:
+            return {
+                "job_id": None,
+                "status": None,
+                "total_discovered": 0,
+                "total_tested": 0,
+                "total_selected": 0,
+                "created_at": None,
+            }
+        return {
+            "job_id": str(job.id),
+            "status": job.status.value if job.status else None,
+            "total_discovered": job.total_discovered or 0,
+            "total_tested": job.total_tested or 0,
+            "total_selected": job.total_selected or 0,
+            "created_at": job.created_at.isoformat() if job.created_at else None,
+        }
+    except Exception as e:
+        logger.error("cowork last-job-stats failed", exc_info=True, extra={"error": str(e)})
+        return {
+            "job_id": None,
+            "status": None,
+            "total_discovered": 0,
+            "total_tested": 0,
+            "total_selected": 0,
+            "created_at": None,
+        }

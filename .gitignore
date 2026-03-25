@@ -79,6 +79,7 @@ logs/
 # Backend
 backend/.env
 backend/.env.*
+backend/.env.autoscheduler
 !backend/.env.example
 # Frontend
 frontend/.env

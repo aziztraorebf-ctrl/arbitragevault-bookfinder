@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { ThemeToggle, SearchBar } from '../vault'
 import { USER_CONFIG } from '../../config/user'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface LayoutProps {
   children: ReactNode
@@ -32,10 +33,13 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSidebarHovered, setIsSidebarHovered] = useState(false)
+  const { logout, user } = useAuth()
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false)
+    setIsUserMenuOpen(false)
   }, [location.pathname])
 
   // Prevent body scroll when mobile menu is open
@@ -79,9 +83,37 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center gap-2">
             <ThemeToggle />
 
-            {/* Avatar */}
-            <div className="w-10 h-10 rounded-full bg-vault-accent/10 border-2 border-vault-accent flex items-center justify-center overflow-hidden">
-              <span className="text-sm font-semibold text-vault-accent">{USER_CONFIG.initials}</span>
+            {/* Avatar + Logout dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="w-10 h-10 rounded-full bg-vault-accent/10 border-2 border-vault-accent flex items-center justify-center hover:bg-vault-accent/20 transition-colors duration-150"
+                aria-label="User menu"
+              >
+                <span className="text-sm font-semibold text-vault-accent">{USER_CONFIG.initials}</span>
+              </button>
+
+              {isUserMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-12 z-50 w-48 bg-vault-card border border-vault-border rounded-xl shadow-vault-md py-1">
+                    {user?.email && (
+                      <div className="px-4 py-2 text-xs text-vault-text-secondary truncate border-b border-vault-border">
+                        {user.email}
+                      </div>
+                    )}
+                    <button
+                      onClick={async () => { setIsUserMenuOpen(false); await logout() }}
+                      className="w-full text-left px-4 py-2 text-sm text-vault-text hover:bg-vault-hover transition-colors duration-150"
+                    >
+                      Se deconnecter
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Mobile menu button */}

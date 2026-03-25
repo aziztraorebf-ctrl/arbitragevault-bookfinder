@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useEffectiveConfig, useConfigStats, useUpdateConfig } from '../hooks/useConfig'
-import toast from 'react-hot-toast'
 
 export default function Configuration() {
   const [domainId, setDomainId] = useState(1)
@@ -41,10 +40,9 @@ export default function Configuration() {
         scope: 'global',
         request: { config_patch: { [sectionKey]: newValues }, change_reason: 'Update from UI' }
       })
-      toast.success('Configuration sauvegardee')
       setEditMode(false)
     } catch {
-      toast.error('Erreur lors de la sauvegarde')
+      // error handled by useUpdateConfig onError
     }
   }
 

@@ -33,8 +33,10 @@ const createWrapper = () => {
 const mockConfig = {
   scope: 'global',
   effective_config: {
-    roi_thresholds: { minimum: 15, target: 30, excellent: 50 },
-    bsr_limits: { max_acceptable: 500000, ideal_max: 100000 },
+    roi: { min_acceptable: 15, target_pct: 30, excellent_threshold: 50 },
+    combined_score: { roi_weight: 0.6, velocity_weight: 0.4 },
+    fees: { buffer_pct_default: 5 },
+    velocity: { fast_threshold: 80, medium_threshold: 60, slow_threshold: 40 },
   },
   version: 1,
   updated_at: '2025-01-01T00:00:00Z',
@@ -125,11 +127,11 @@ describe('useUpdateConfig', () => {
 
     await result.current.mutateAsync({
       scope: 'global',
-      request: { config: { roi_thresholds: { minimum: 20 } } }
+      request: { config_patch: { roi: { min_acceptable: 20 } }, change_reason: 'Test update' }
     })
 
     expect(apiService.updateConfig).toHaveBeenCalledWith('global', {
-      config: { roi_thresholds: { minimum: 20 } }
+      config_patch: { roi: { min_acceptable: 20 } }, change_reason: 'Test update'
     })
   })
 })

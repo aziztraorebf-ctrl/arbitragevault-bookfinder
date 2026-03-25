@@ -39,7 +39,7 @@ export default function Configuration() {
     try {
       await updateMutation.mutateAsync({
         scope: 'global',
-        request: { config: { [sectionKey]: newValues }, description: 'Update from UI' }
+        request: { config_patch: { [sectionKey]: newValues }, change_reason: 'Update from UI' }
       })
       toast.success('Configuration sauvegardee')
       setEditMode(false)
@@ -131,8 +131,8 @@ export default function Configuration() {
             sectionKey="roi"
             config={config.effective_config.roi || {}}
             fields={[
-              { key: 'min_for_buy', label: 'Minimum pour achat (%)', type: 'number' },
-              { key: 'target_pct_default', label: 'Cible par defaut (%)', type: 'number' },
+              { key: 'min_acceptable', label: 'Minimum pour achat (%)', type: 'number' },
+              { key: 'target_pct', label: 'Cible par defaut (%)', type: 'number' },
               { key: 'excellent_threshold', label: 'Seuil excellent (%)', type: 'number' },
             ]}
             editMode={editMode}
@@ -220,13 +220,13 @@ function ConfigSection({ title, sectionKey, config, fields, editMode, isSaving, 
       }
     }
 
-    // ROI: min_for_buy < target_pct_default < excellent_threshold
+    // ROI: min_acceptable < target_pct < excellent_threshold
     if (sectionKey === 'roi') {
-      const { min_for_buy, target_pct_default, excellent_threshold } = values
-      if (min_for_buy !== undefined && target_pct_default !== undefined && min_for_buy >= target_pct_default) {
+      const { min_acceptable, target_pct, excellent_threshold } = values
+      if (min_acceptable !== undefined && target_pct !== undefined && min_acceptable >= target_pct) {
         return 'Minimum pour achat doit etre inferieur a Cible'
       }
-      if (target_pct_default !== undefined && excellent_threshold !== undefined && target_pct_default >= excellent_threshold) {
+      if (target_pct !== undefined && excellent_threshold !== undefined && target_pct >= excellent_threshold) {
         return 'Cible doit etre inferieur a Seuil excellent'
       }
     }

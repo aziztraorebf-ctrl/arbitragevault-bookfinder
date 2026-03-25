@@ -1,9 +1,8 @@
 {
   "edits": {
-    "/home/user/arbitragevault-bookfinder/.claude/PIPELINE.md": 2,
-    "/home/user/arbitragevault-bookfinder/backend/app/api/v1/routers/auth.py": 1,
-    "/home/user/arbitragevault-bookfinder/backend/app/api/v1/routers/autosourcing.py": 1,
-    "/home/user/arbitragevault-bookfinder/backend/app/api/v1/routers/health.py": 2
+    "/home/user/arbitragevault-bookfinder/frontend/src/types/config.ts": 1,
+    "/home/user/arbitragevault-bookfinder/frontend/src/pages/__tests__/Configuration.test.tsx": 2,
+    "/home/user/arbitragevault-bookfinder/frontend/src/hooks/__tests__/useConfig.test.tsx": 2
   },
   "last_reset": ""
 }

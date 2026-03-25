@@ -35,7 +35,7 @@ const createWrapper = () => {
 
 const mockConfig = {
   effective_config: {
-    roi: { min_for_buy: 15, target_pct_default: 30, excellent_threshold: 50 },
+    roi: { min_acceptable: 15, target_pct: 30, excellent_threshold: 50 },
     combined_score: { roi_weight: 0.6, velocity_weight: 0.4 },
     fees: { buffer_pct_default: 5 },
     velocity: { fast_threshold: 80, medium_threshold: 60, slow_threshold: 40 },
@@ -128,7 +128,7 @@ describe('Configuration', () => {
     // Enter edit mode
     fireEvent.click(screen.getByText('Modifier'))
 
-    // Find min_for_buy input and set invalid value (higher than target_pct_default which is 30)
+    // Find min_acceptable input and set invalid value (higher than target_pct which is 30)
     const inputs = document.querySelectorAll('input[type="number"]')
     const minForBuyInput = inputs[0] as HTMLInputElement
 

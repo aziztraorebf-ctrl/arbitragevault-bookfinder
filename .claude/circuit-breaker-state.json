@@ -2,7 +2,12 @@
   "edits": {
     "/home/user/arbitragevault-bookfinder/frontend/src/types/config.ts": 1,
     "/home/user/arbitragevault-bookfinder/frontend/src/pages/__tests__/Configuration.test.tsx": 2,
-    "/home/user/arbitragevault-bookfinder/frontend/src/hooks/__tests__/useConfig.test.tsx": 2
+    "/home/user/arbitragevault-bookfinder/frontend/src/hooks/__tests__/useConfig.test.tsx": 2,
+    "/home/user/arbitragevault-bookfinder/backend/config/business_rules.json": 1,
+    "/home/user/arbitragevault-bookfinder/backend/app/models/business_config.py": 1,
+    "/home/user/arbitragevault-bookfinder/backend/app/core/fees_config.py": 1,
+    "/home/user/arbitragevault-bookfinder/backend/app/services/business_config_service.py": 1,
+    "/home/user/arbitragevault-bookfinder/backend/app/services/config_preview_service.py": 2
   },
   "last_reset": ""
 }

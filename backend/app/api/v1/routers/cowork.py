@@ -18,8 +18,10 @@ from app.services.daily_review_service import generate_daily_review, generate_ac
 from app.schemas.cowork import (
     CoworkBuyListItem,
     CoworkBuyListResponse,
+    CoworkDashboardResponse,
     CoworkFetchAndScoreRequest,
     CoworkFetchAndScoreResponse,
+    CoworkLastJobStatsResponse,
 )
 
 # DB stores naive datetimes (datetime.utcnow) — comparisons must use naive UTC too
@@ -66,7 +68,11 @@ async def get_autosourcing_service(
     return AutoSourcingService(db, keepa_service)
 
 
-@router.get("/dashboard-summary", dependencies=[Depends(require_cowork_token)])
+@router.get(
+    "/dashboard-summary",
+    response_model=CoworkDashboardResponse,
+    dependencies=[Depends(require_cowork_token)],
+)
 async def get_dashboard_summary(
     db: AsyncSession = Depends(get_db_session),
 ) -> dict:
@@ -159,7 +165,7 @@ async def get_dashboard_summary(
                 "asin": pick.asin,
                 "title": pick.title or "",
                 "roi_percentage": float(pick.roi_percentage or 0),
-                "bsr": int(pick.bsr or 0),
+                "bsr": int(pick.bsr) if pick.bsr is not None else -1,
                 "amazon_on_listing": bool(pick.amazon_on_listing) if pick.amazon_on_listing is not None else False,
                 "current_price": float(pick.current_price) if pick.current_price else None,
                 "buy_price": float(pick.estimated_buy_cost) if pick.estimated_buy_cost else None,
@@ -458,7 +464,11 @@ async def get_daily_buy_list(
         )
 
 
-@router.get("/last-job-stats", dependencies=[Depends(require_cowork_token)])
+@router.get(
+    "/last-job-stats",
+    response_model=CoworkLastJobStatsResponse,
+    dependencies=[Depends(require_cowork_token)],
+)
 async def get_last_job_stats(
     db: AsyncSession = Depends(get_db_session),
 ) -> dict:

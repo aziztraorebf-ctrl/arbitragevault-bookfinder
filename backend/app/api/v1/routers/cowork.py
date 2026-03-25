@@ -75,8 +75,7 @@ async def get_autosourcing_service(
 )
 async def get_dashboard_summary(
     db: AsyncSession = Depends(get_db_session),
-) -> dict:
-    """Return system health, Keepa status, and 24h job/pick statistics."""
+) -> CoworkDashboardResponse:
     settings = get_settings()
     cutoff = _utcnow_naive() - timedelta(hours=24)
 
@@ -204,6 +203,7 @@ async def get_dashboard_summary(
                         "price": float(h.current_price) if h.current_price else None,
                     })
             except Exception as exc:
+                data_quality = "degraded"
                 logger.warning(
                     "cowork dashboard: history_map query failed, falling back to empty",
                     exc_info=True,
@@ -374,6 +374,7 @@ async def get_daily_buy_list(
     asins = list({pick.asin for pick in picks_rows})
     history_cutoff = _utcnow_naive() - timedelta(days=30)
     history_map: dict = defaultdict(list)
+    buy_list_quality = "full"
     try:
         history_query = (
             select(AutoSourcingPick)
@@ -395,6 +396,7 @@ async def get_daily_buy_list(
                 "price": float(h.current_price) if h.current_price else None,
             })
     except Exception as e:
+        buy_list_quality = "degraded"
         logger.warning(
             "cowork daily-buy-list: history_map query failed, falling back to empty",
             exc_info=True,
@@ -425,8 +427,8 @@ async def get_daily_buy_list(
             "asin": pick.asin,
             "title": pick.title or "",
             "roi_percentage": float(pick.roi_percentage or 0),
-            "bsr": int(pick.bsr or -1),
-            "amazon_on_listing": bool(pick.amazon_on_listing),
+            "bsr": int(pick.bsr) if pick.bsr is not None else -1,
+            "amazon_on_listing": bool(pick.amazon_on_listing) if pick.amazon_on_listing is not None else False,
             "current_price": float(pick.current_price) if pick.current_price else None,
             "buy_price": float(pick.estimated_buy_cost) if pick.estimated_buy_cost else None,
             "condition_signal": getattr(pick, "condition_signal", None),
@@ -457,6 +459,7 @@ async def get_daily_buy_list(
             days_back=days_back,
             total_actionable=len(items),
             items=items,
+            data_quality=buy_list_quality,
         )
     except Exception as e:
         logger.error(
@@ -480,7 +483,7 @@ async def get_daily_buy_list(
 )
 async def get_last_job_stats(
     db: AsyncSession = Depends(get_db_session),
-) -> dict:
+) -> CoworkLastJobStatsResponse:
     """Return pipeline stats for the most recent AutoSourcing job."""
     try:
         result = await db.execute(

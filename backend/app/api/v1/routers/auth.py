@@ -24,7 +24,7 @@ async def get_firebase_token(authorization: str = Header(default=None)) -> str:
     if not authorization:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authorization header required",
+            detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
     if not authorization.startswith("Bearer "):

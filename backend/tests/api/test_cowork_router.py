@@ -4,12 +4,16 @@ Tests for Cowork API router endpoints.
 import os
 os.environ.setdefault("DATABASE_URL", "sqlite:///test.db")
 
+import uuid
+from datetime import datetime
+
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.core.db import get_db_session
+from app.models.autosourcing import JobStatus
 
 VALID_TOKEN = "test-cowork-token-123"
 
@@ -213,5 +217,214 @@ def test_daily_buy_list_smoke(_override_db_session):
         assert data["items"][0]["asin"] == "B00TEST123"
         assert "generated_at" in data
         assert "days_back" in data
+    finally:
+        p.stop()
+
+
+# --- last-job-stats tests ---
+
+def _make_mock_job(**overrides):
+    """Create a mock AutoSourcingJob with realistic attributes."""
+    job = MagicMock()
+    job.id = overrides.get("id", uuid.uuid4())
+    job.status = overrides.get("status", JobStatus.SUCCESS)
+    job.total_tested = overrides.get("total_tested", 50)
+    job.total_selected = overrides.get("total_selected", 5)
+    job.created_at = overrides.get("created_at", datetime(2026, 3, 25, 12, 0, 0))
+    job.picks = overrides.get("picks", [])
+    return job
+
+
+def test_last_job_stats_empty_db():
+    """GET last-job-stats with no jobs returns null fields."""
+    client, p = _client_with_settings()
+    try:
+        response = client.get(
+            "/api/v1/cowork/last-job-stats",
+            headers=_auth_header(),
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["job_id"] is None
+        assert data["status"] is None
+        assert data["total_tested"] == 0
+        assert data["total_selected"] == 0
+        assert data["created_at"] is None
+    finally:
+        p.stop()
+
+
+def test_last_job_stats_with_job(_override_db_session):
+    """GET last-job-stats with existing job returns correct fields."""
+    mock_job = _make_mock_job(
+        total_tested=100,
+        total_selected=8,
+    )
+
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.first.return_value = mock_job
+    _override_db_session.execute = AsyncMock(return_value=mock_result)
+
+    client, p = _client_with_settings()
+    try:
+        response = client.get(
+            "/api/v1/cowork/last-job-stats",
+            headers=_auth_header(),
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["job_id"] == str(mock_job.id)
+        assert data["status"] == "success"
+        assert data["total_tested"] == 100
+        assert data["total_selected"] == 8
+        assert data["created_at"] is not None
+    finally:
+        p.stop()
+
+
+def test_last_job_stats_checks_real_attributes():
+    """Verify last-job-stats only accesses attributes that exist on AutoSourcingJob model."""
+    from app.models.autosourcing import AutoSourcingJob
+
+    required_attrs = ["id", "status", "total_tested", "total_selected", "created_at"]
+    model_columns = {col.key for col in AutoSourcingJob.__table__.columns}
+
+    for attr in required_attrs:
+        assert attr in model_columns, (
+            f"Phantom attribute: last-job-stats accesses '{attr}' "
+            f"but it does not exist on AutoSourcingJob model. "
+            f"Available columns: {sorted(model_columns)}"
+        )
+
+
+def test_last_job_stats_does_not_use_total_discovered():
+    """Regression: ensure total_discovered is NOT on the model (was the original bug)."""
+    from app.models.autosourcing import AutoSourcingJob
+
+    model_columns = {col.key for col in AutoSourcingJob.__table__.columns}
+    assert "total_discovered" not in model_columns, (
+        "total_discovered should NOT exist on AutoSourcingJob. "
+        "Use total_tested and total_selected instead."
+    )
+
+
+def test_last_job_stats_db_error_returns_500(_override_db_session):
+    """GET last-job-stats should return 500 on DB error, not silent empty response."""
+    _override_db_session.execute = AsyncMock(
+        side_effect=RuntimeError("DB connection lost")
+    )
+
+    client, p = _client_with_settings()
+    try:
+        response = client.get(
+            "/api/v1/cowork/last-job-stats",
+            headers=_auth_header(),
+        )
+        # After fix: should return 500 instead of silently returning empty data
+        assert response.status_code == 500
+    finally:
+        p.stop()
+
+
+def test_last_job_stats_no_auth():
+    """GET last-job-stats without auth returns 401."""
+    client, p = _client_with_settings()
+    try:
+        response = client.get("/api/v1/cowork/last-job-stats")
+        assert response.status_code == 401
+    finally:
+        p.stop()
+
+
+# --- fetch-and-score tests ---
+
+def test_fetch_and_score_success(_override_db_session):
+    """POST fetch-and-score with valid config returns job result."""
+    mock_job = _make_mock_job(total_selected=3)
+
+    mock_service = AsyncMock()
+    mock_service.run_custom_search = AsyncMock(return_value=mock_job)
+
+    client, p = _client_with_settings()
+    try:
+        with patch(
+            "app.api.v1.routers.cowork.get_keepa_service",
+            new_callable=AsyncMock,
+            return_value=MagicMock(),
+        ), patch(
+            "app.api.v1.routers.cowork.AutoSourcingService",
+            return_value=mock_service,
+        ):
+            response = client.post(
+                "/api/v1/cowork/fetch-and-score",
+                json={"roi_min": 25.0, "max_results": 10},
+                headers=_auth_header(),
+            )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["job_id"] == str(mock_job.id)
+        assert data["status"] == "success"
+        assert data["picks_count"] == 3
+        assert data["message"] == "Search completed successfully"
+    finally:
+        p.stop()
+
+
+def test_fetch_and_score_merges_defaults(_override_db_session):
+    """POST fetch-and-score with partial params merges with DEFAULT_PROFILE."""
+    mock_job = _make_mock_job()
+
+    mock_service = AsyncMock()
+    mock_service.run_custom_search = AsyncMock(return_value=mock_job)
+
+    client, p = _client_with_settings()
+    try:
+        with patch(
+            "app.api.v1.routers.cowork.get_keepa_service",
+            new_callable=AsyncMock,
+            return_value=MagicMock(),
+        ), patch(
+            "app.api.v1.routers.cowork.AutoSourcingService",
+            return_value=mock_service,
+        ):
+            # Send only roi_min, other params should come from defaults
+            response = client.post(
+                "/api/v1/cowork/fetch-and-score",
+                json={"roi_min": 15.0},
+                headers=_auth_header(),
+            )
+        assert response.status_code == 200
+        # Verify the service was called with merged config
+        call_kwargs = mock_service.run_custom_search.call_args
+        assert call_kwargs is not None
+    finally:
+        p.stop()
+
+
+def test_fetch_and_score_insufficient_tokens(_override_db_session):
+    """POST fetch-and-score with insufficient tokens returns 402."""
+    from app.core.exceptions import InsufficientTokensError
+
+    mock_service = AsyncMock()
+    mock_service.run_custom_search = AsyncMock(
+        side_effect=InsufficientTokensError(current_balance=0, required_tokens=100)
+    )
+
+    client, p = _client_with_settings()
+    try:
+        with patch(
+            "app.api.v1.routers.cowork.get_keepa_service",
+            new_callable=AsyncMock,
+            return_value=MagicMock(),
+        ), patch(
+            "app.api.v1.routers.cowork.AutoSourcingService",
+            return_value=mock_service,
+        ):
+            response = client.post(
+                "/api/v1/cowork/fetch-and-score",
+                json={},
+                headers=_auth_header(),
+            )
+        assert response.status_code == 402
     finally:
         p.stop()

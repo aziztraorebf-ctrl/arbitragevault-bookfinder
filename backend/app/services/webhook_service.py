@@ -48,6 +48,8 @@ def _build_payload(job: Any, event: str = EVENT_JOB_COMPLETED) -> WebhookPayload
     Gracefully handles missing attributes.
     """
     job_id = str(getattr(job, "id", ""))
+    # NOTE: AutoSourcingJob has no user_id column. This will always return "".
+    # Kept for forward compatibility if user_id is added to the model later.
     user_id = str(getattr(job, "user_id", "")) if getattr(job, "user_id", None) else ""
 
     picks_count: int = getattr(job, "total_selected", 0) or 0
@@ -181,7 +183,9 @@ async def dispatch_webhook(
                         "asin": getattr(p, "asin", ""),
                         "bsr": getattr(p, "bsr", 0),
                         "roi_percentage": getattr(p, "roi_percentage", 0.0),
-                        "classification": getattr(p, "classification", ""),
+                        # NOTE: classification is computed dynamically by daily_review_service,
+                    # not stored on AutoSourcingPick. Will always return "" here.
+                    "classification": getattr(p, "classification", ""),
                     }
                     for p in picks
                 ][:10]

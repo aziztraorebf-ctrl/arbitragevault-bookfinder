@@ -6,9 +6,12 @@ Config-driven scoring system for velocity, stability, confidence, and overall ra
 Separated from calculations.py for SRP compliance.
 """
 
+import logging
 import statistics
 from datetime import datetime
 from typing import Dict, List, Any, Tuple
+
+logger = logging.getLogger(__name__)
 
 
 def compute_advanced_velocity_score(
@@ -71,6 +74,7 @@ def compute_advanced_velocity_score(
         return (velocity_raw, velocity_normalized, level, notes)
 
     except Exception as e:
+        logger.error("Velocity score calculation failed", exc_info=True)
         return (0.5, 50, "error", f"Calculation error: {str(e)}")
 
 
@@ -127,6 +131,7 @@ def compute_advanced_stability_score(
         return (stability_raw, stability_normalized, level, notes)
 
     except Exception as e:
+        logger.error("Stability score calculation failed", exc_info=True)
         return (0.5, 50, "error", f"Calculation error: {str(e)}")
 
 
@@ -195,6 +200,7 @@ def compute_advanced_confidence_score(
         return (confidence_raw, confidence_normalized, level, notes)
 
     except Exception as e:
+        logger.error("Confidence score calculation failed", exc_info=True)
         return (0.5, 50, "error", f"Calculation error: {str(e)}")
 
 
@@ -237,6 +243,7 @@ def compute_overall_rating(
         return "PASS"  # Falls below all thresholds
 
     except Exception as e:
+        logger.error("Overall rating calculation failed", exc_info=True)
         return "ERROR"
 
 
@@ -286,6 +293,7 @@ def generate_readable_summary(
         )
 
     except Exception as e:
+        logger.error("Summary generation failed", exc_info=True)
         return f"Summary generation failed: {roi}% ROI"
 
 
@@ -362,7 +370,8 @@ def _determine_primary_issue(roi: float, scores: Dict[str, int], config: Dict[st
 
         return "multiple factors"
 
-    except Exception:
+    except Exception as e:
+        logger.error("Primary issue determination failed", exc_info=True)
         return "insufficient metrics"
 
 

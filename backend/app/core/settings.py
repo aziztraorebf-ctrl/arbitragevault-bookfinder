@@ -1,11 +1,14 @@
 """Application settings and configuration."""
 
+import logging
 from functools import lru_cache
 from typing import List, Optional
 
 import keyring
 from pydantic import Field, field_validator, ConfigDict
 from pydantic_settings import BaseSettings
+
+_settings_logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -173,8 +176,11 @@ class Settings(BaseSettings):
                 secret = keyring.get_password("memex", "JWT_SECRET")
                 if secret:
                     return secret
-            except Exception:
-                pass  # Fallback to env variable
+            except Exception as e:
+                _settings_logger.warning(
+                    "Keyring access failed for JWT_SECRET, falling back to env variable: %s",
+                    type(e).__name__,
+                )
 
         if self.jwt_secret:
             return self.jwt_secret
@@ -188,8 +194,11 @@ class Settings(BaseSettings):
                 pepper = keyring.get_password("memex", "PEPPER")
                 if pepper:
                     return pepper
-            except Exception:
-                pass  # Fallback to env variable
+            except Exception as e:
+                _settings_logger.warning(
+                    "Keyring access failed for PEPPER, falling back to env variable: %s",
+                    type(e).__name__,
+                )
 
         if self.pepper:
             return self.pepper

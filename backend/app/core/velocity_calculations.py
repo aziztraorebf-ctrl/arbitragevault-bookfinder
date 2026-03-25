@@ -6,10 +6,13 @@ Sales velocity and market activity calculations for arbitrage analysis.
 Separated from calculations.py for SRP compliance.
 """
 
+import logging
 import statistics
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Any, Tuple
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -98,6 +101,7 @@ def calculate_velocity_score(
         }
 
     except Exception as e:
+        logger.error("Velocity calculation failed", exc_info=True)
         return {
             "error": f"Velocity calculation failed: {str(e)}",
             "velocity_score": 0,

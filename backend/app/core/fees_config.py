@@ -147,7 +147,7 @@ def calculate_profit_metrics(
         buffer_from_config = config.get("fees", {}).get("buffer_pct_default", float(buffer_pct))
         buffer_pct = Decimal(str(buffer_from_config))
         
-        target_roi_from_config = config.get("roi", {}).get("target_pct_default", 30.0)
+        target_roi_from_config = config.get("roi", {}).get("target_pct", config.get("roi", {}).get("target_pct_default", 30.0))
         target_roi = Decimal(str(target_roi_from_config))
     else:
         target_roi = Decimal("30.0")  # Default fallback

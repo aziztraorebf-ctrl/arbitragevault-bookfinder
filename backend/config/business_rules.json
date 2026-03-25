@@ -1,7 +1,7 @@
 {
   "roi": {
-    "target_pct_default": 30.0,
-    "min_for_buy": 15.0,
+    "target_pct": 30.0,
+    "min_acceptable": 15.0,
     "excellent_threshold": 50.0,
     "good_threshold": 30.0,
     "fair_threshold": 15.0
@@ -190,14 +190,14 @@
   "overrides": {
     "domain:2": {
       "roi": {
-        "target_pct_default": 25.0,
+        "target_pct": 25.0,
         "comment": "UK marketplace - lower ROI target"
       }
     },
     "category:textbooks": {
       "roi": {
-        "target_pct_default": 40.0,
-        "min_for_buy": 25.0,
+        "target_pct": 40.0,
+        "min_acceptable": 25.0,
         "comment": "Textbooks - higher profit margins expected"
       },
       "fees": {

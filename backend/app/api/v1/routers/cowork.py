@@ -470,7 +470,6 @@ async def get_last_job_stats(
             return {
                 "job_id": None,
                 "status": None,
-                "total_discovered": 0,
                 "total_tested": 0,
                 "total_selected": 0,
                 "created_at": None,
@@ -478,7 +477,6 @@ async def get_last_job_stats(
         return {
             "job_id": str(job.id),
             "status": job.status.value if job.status else None,
-            "total_discovered": job.total_discovered or 0,
             "total_tested": job.total_tested or 0,
             "total_selected": job.total_selected or 0,
             "created_at": job.created_at.isoformat() if job.created_at else None,
@@ -488,7 +486,6 @@ async def get_last_job_stats(
         return {
             "job_id": None,
             "status": None,
-            "total_discovered": 0,
             "total_tested": 0,
             "total_selected": 0,
             "created_at": None,

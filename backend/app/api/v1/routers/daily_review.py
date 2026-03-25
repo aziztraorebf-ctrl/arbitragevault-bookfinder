@@ -1,6 +1,6 @@
 """Daily Review API - Serves classified product reviews."""
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,7 +44,7 @@ async def get_daily_review(
 ):
     """Generate today's daily review from recent AutoSourcing picks."""
     # Use naive UTC datetime - autosourcing_jobs.created_at is TIMESTAMP without timezone
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+    cutoff = datetime.utcnow() - timedelta(days=days_back)
 
     # Step 1: Fetch recent picks from AutoSourcing jobs
     try:
@@ -82,7 +82,7 @@ async def get_daily_review(
             "asin": pick.asin,
             "title": pick.title or "",
             "roi_percentage": float(pick.roi_percentage or 0),
-            "bsr": int(pick.bsr or 0),
+            "bsr": int(pick.bsr) if pick.bsr is not None else -1,
             "amazon_on_listing": bool(pick.amazon_on_listing) if pick.amazon_on_listing is not None else False,
             "current_price": float(pick.current_price) if pick.current_price else None,
             "buy_price": float(pick.estimated_buy_cost) if pick.estimated_buy_cost else None,
@@ -96,7 +96,7 @@ async def get_daily_review(
     history_map: dict = {}
     if asin_set:
         asin_list = list(asin_set)
-        history_cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+        history_cutoff = datetime.utcnow() - timedelta(days=30)
         try:
             history_query = (
                 select(AutoSourcingPick)
@@ -138,7 +138,7 @@ async def get_actionable_buy_list(
     current_user: CurrentUser = Depends(require_daily_review_read),
 ):
     """Return pre-filtered STABLE-only actionable buy list for N8N/agent consumption."""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+    cutoff = datetime.utcnow() - timedelta(days=days_back)
 
     # Step 1: Fetch recent picks from AutoSourcing jobs
     try:
@@ -177,7 +177,7 @@ async def get_actionable_buy_list(
             "title": pick.title or "",
             "category": pick.category or None,
             "roi_percentage": float(pick.roi_percentage or 0),
-            "bsr": int(pick.bsr or 0),
+            "bsr": int(pick.bsr) if pick.bsr is not None else -1,
             "amazon_on_listing": bool(pick.amazon_on_listing) if pick.amazon_on_listing is not None else False,
             "current_price": float(pick.current_price) if pick.current_price else None,
             "buy_price": float(pick.estimated_buy_cost) if pick.estimated_buy_cost else None,
@@ -191,7 +191,7 @@ async def get_actionable_buy_list(
     history_map: dict = {}
     if asin_set:
         asin_list = list(asin_set)
-        history_cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+        history_cutoff = datetime.utcnow() - timedelta(days=30)
         try:
             history_query = (
                 select(AutoSourcingPick)

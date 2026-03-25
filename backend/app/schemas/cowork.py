@@ -47,6 +47,14 @@ class CoworkFetchAndScoreResponse(BaseModel):
     message: str
 
 
+class CoworkLastJobStatsResponse(BaseModel):
+    job_id: Optional[str]
+    status: Optional[str]
+    total_tested: int
+    total_selected: int
+    created_at: Optional[str]
+
+
 class CoworkBuyListItem(BaseModel):
     asin: str
     title: Optional[str]

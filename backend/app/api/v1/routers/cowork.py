@@ -11,6 +11,7 @@ from sqlalchemy import select, and_, func
 from app.core.db import get_db_session, db_manager
 from app.core.settings import get_settings
 from app.core.exceptions import InsufficientTokensError
+from app.core.rate_limiter import rate_limit_reads, rate_limit_writes
 from app.models.autosourcing import AutoSourcingPick, AutoSourcingJob
 from app.services.autosourcing_service import AutoSourcingService
 from app.services.keepa_service import get_keepa_service
@@ -74,7 +75,7 @@ async def get_autosourcing_service(
 @router.get(
     "/dashboard-summary",
     response_model=CoworkDashboardResponse,
-    dependencies=[Depends(require_cowork_token)],
+    dependencies=[Depends(require_cowork_token), Depends(rate_limit_reads)],
 )
 async def get_dashboard_summary(
     db: AsyncSession = Depends(get_db_session),
@@ -263,7 +264,7 @@ async def get_dashboard_summary(
 @router.post(
     "/fetch-and-score",
     response_model=CoworkFetchAndScoreResponse,
-    dependencies=[Depends(require_cowork_token)],
+    dependencies=[Depends(require_cowork_token), Depends(rate_limit_writes)],
 )
 async def fetch_and_score(
     request: CoworkFetchAndScoreRequest,
@@ -327,7 +328,7 @@ async def fetch_and_score(
 @router.get(
     "/daily-buy-list",
     response_model=CoworkBuyListResponse,
-    dependencies=[Depends(require_cowork_token)],
+    dependencies=[Depends(require_cowork_token), Depends(rate_limit_reads)],
 )
 async def get_daily_buy_list(
     days_back: int = Query(default=1, ge=1, le=7, description="Days of picks to analyze"),
@@ -482,7 +483,7 @@ async def get_daily_buy_list(
 @router.get(
     "/last-job-stats",
     response_model=CoworkLastJobStatsResponse,
-    dependencies=[Depends(require_cowork_token)],
+    dependencies=[Depends(require_cowork_token), Depends(rate_limit_reads)],
 )
 async def get_last_job_stats(
     db: AsyncSession = Depends(get_db_session),
@@ -525,7 +526,7 @@ async def get_last_job_stats(
 @router.get(
     "/keepa-balance",
     response_model=CoworkKeepaBalanceResponse,
-    dependencies=[Depends(require_cowork_token)],
+    dependencies=[Depends(require_cowork_token), Depends(rate_limit_reads)],
 )
 async def get_keepa_balance() -> CoworkKeepaBalanceResponse:
     """Return current Keepa token balance. Uses 60s cache when available (0 token cost)."""
@@ -592,7 +593,7 @@ async def get_keepa_balance() -> CoworkKeepaBalanceResponse:
 @router.get(
     "/jobs",
     response_model=CoworkJobsResponse,
-    dependencies=[Depends(require_cowork_token)],
+    dependencies=[Depends(require_cowork_token), Depends(rate_limit_reads)],
 )
 async def get_jobs(
     limit: int = Query(default=10, ge=1, le=50, description="Max jobs to return"),

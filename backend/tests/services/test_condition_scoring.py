@@ -8,6 +8,7 @@ import pytest
 from unittest.mock import MagicMock
 
 from app.services.autosourcing_service import AutoSourcingService
+from app.services.autosourcing_scoring import calculate_confidence_from_keepa, meets_criteria
 
 
 # =============================================================================
@@ -280,8 +281,8 @@ class TestConfidenceBoost:
         raw = make_raw_keepa()
         config = {"confidence_boost_strong": 10, "confidence_boost_moderate": 5}
 
-        base = svc._calculate_confidence_from_keepa(raw, condition_signal=None)
-        boosted = svc._calculate_confidence_from_keepa(
+        base = calculate_confidence_from_keepa(raw, condition_signal=None)
+        boosted = calculate_confidence_from_keepa(
             raw, condition_signal="STRONG", business_config=config
         )
         assert boosted == min(100, base + 10)
@@ -292,8 +293,8 @@ class TestConfidenceBoost:
         raw = make_raw_keepa()
         config = {"confidence_boost_strong": 10, "confidence_boost_moderate": 5}
 
-        base = svc._calculate_confidence_from_keepa(raw, condition_signal=None)
-        boosted = svc._calculate_confidence_from_keepa(
+        base = calculate_confidence_from_keepa(raw, condition_signal=None)
+        boosted = calculate_confidence_from_keepa(
             raw, condition_signal="MODERATE", business_config=config
         )
         assert boosted == min(100, base + 5)
@@ -308,7 +309,7 @@ class TestConfidenceBoost:
         raw["stats"]["avg30"] = [None, 1500]
         config = {"confidence_boost_strong": 50}  # Large boost
 
-        result = svc._calculate_confidence_from_keepa(
+        result = calculate_confidence_from_keepa(
             raw, condition_signal="STRONG", business_config=config
         )
         assert result <= 100
@@ -317,16 +318,16 @@ class TestConfidenceBoost:
         """WEAK signal adds nothing."""
         svc = make_service()
         raw = make_raw_keepa()
-        base = svc._calculate_confidence_from_keepa(raw, condition_signal=None)
-        weak = svc._calculate_confidence_from_keepa(raw, condition_signal="WEAK")
+        base = calculate_confidence_from_keepa(raw, condition_signal=None)
+        weak = calculate_confidence_from_keepa(raw, condition_signal="WEAK")
         assert weak == base
 
     def test_confidence_no_boost_for_unknown(self):
         """UNKNOWN signal adds nothing."""
         svc = make_service()
         raw = make_raw_keepa()
-        base = svc._calculate_confidence_from_keepa(raw, condition_signal=None)
-        unknown = svc._calculate_confidence_from_keepa(raw, condition_signal="UNKNOWN")
+        base = calculate_confidence_from_keepa(raw, condition_signal=None)
+        unknown = calculate_confidence_from_keepa(raw, condition_signal="UNKNOWN")
         assert unknown == base
 
 
@@ -348,7 +349,7 @@ class TestCriteriaGating:
             "velocity_min": 0,
             "condition_signals": {"reject_weak": True},
         }
-        assert svc._meets_criteria(pick, config) is False
+        assert meets_criteria(pick, config) is False
 
     def test_meets_criteria_allow_weak_default(self):
         """Default config does NOT reject WEAK (backward-compatible)."""
@@ -360,7 +361,7 @@ class TestCriteriaGating:
             "velocity_min": 0,
             # No condition_signals section → default
         }
-        assert svc._meets_criteria(pick, config) is True
+        assert meets_criteria(pick, config) is True
 
     def test_meets_criteria_strong_signal_passes(self):
         """STRONG signal is never rejected by condition gating."""
@@ -372,7 +373,7 @@ class TestCriteriaGating:
             "velocity_min": 0,
             "condition_signals": {"reject_weak": True},
         }
-        assert svc._meets_criteria(pick, config) is True
+        assert meets_criteria(pick, config) is True
 
     def test_meets_criteria_none_signal_passes(self):
         """None condition_signal (legacy pick) is never rejected."""
@@ -384,4 +385,4 @@ class TestCriteriaGating:
             "velocity_min": 0,
             "condition_signals": {"reject_weak": True},
         }
-        assert svc._meets_criteria(pick, config) is True
+        assert meets_criteria(pick, config) is True

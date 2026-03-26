@@ -1,7 +1,7 @@
 # ArbitrageVault BookFinder — Agent Context
 
-**Version**: 1.0 — March 2026
-**Purpose**: Context file for AI agents (OpenClaw, N8N, etc.) consuming this API.
+**Version**: 2.0 — March 2026
+**Purpose**: Context file for AI agents (CoWork, N8N, OpenClaw, etc.) consuming this API.
 Load this file at session start to understand the business logic before querying endpoints.
 
 ---
@@ -76,17 +76,21 @@ Every pick returned by the API has these fields:
 | `condition_signal` | string | STRONG / MODERATE / WEAK / UNKNOWN |
 | `fba_seller_count` | int | Competing FBA sellers |
 | `amazon_on_listing` | bool | True = Amazon is a direct competitor |
-| `bsr` | int | Best Sellers Rank at scan time |
+| `bsr` | int | Best Sellers Rank at scan time (-1 = unknown) |
 | `category` | string | Keepa category (e.g. "Medical Books") |
-| `estimated_buy_price` | float | current_price × 0.50 (sourcing estimate) |
+| `estimated_buy_price` | float | current_price x source_price_factor (default 0.35) |
+| `data_quality` | string | full / degraded / unavailable |
 
-### condition_signal rules (Phase C, shipped March 2026)
-- **STRONG**: used ROI >= 25% AND <= 10 competing used sellers
-- **MODERATE**: used ROI >= 10% AND <= 25 competing used sellers
+### condition_signal rules (Phase C, March 2026)
+- **STRONG**: used ROI >= 25% AND <= 10 competing used sellers → confidence +10
+- **MODERATE**: used ROI >= 10% AND <= 25 competing used sellers → confidence +5
 - **WEAK**: low used ROI or too much competition
 - **UNKNOWN**: no used price data available
 
-Confidence score is boosted +10 (STRONG) or +5 (MODERATE).
+### data_quality flag (P2, March 2026)
+- **full**: all data sources available, results reliable
+- **degraded**: partial data (e.g. price history unavailable), results approximate
+- **unavailable**: no data could be retrieved (DB error or empty scan)
 
 ---
 
@@ -107,25 +111,58 @@ often signals a data anomaly, a price spike, or a condition error. Human eyes re
 
 ---
 
-## API Endpoints for Agents
+## API Authentication
 
-### Authentication
-- Human users: Firebase Bearer token (`Authorization: Bearer <token>`)
-- Agents/N8N: API Key header (`X-API-Key: avk_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`)
+### CoWork Agent (you)
+Use Bearer token authentication with `COWORK_API_TOKEN`:
+```
+Authorization: Bearer <COWORK_API_TOKEN>
+```
 
-API keys are scoped. Request only the scopes you need.
+### Other Agents / N8N
+Use API Key header:
+```
+X-API-Key: avk_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+Keys are scoped. Common scopes: `autosourcing:read`, `autosourcing:write`, `autosourcing:job_read`, `daily_review:read`.
 
-### Key Endpoints
+---
+
+## Rate Limiting (CoWork Endpoints)
+
+- `GET /api/v1/cowork/*`: 30 requests/min per token
+- `POST /api/v1/cowork/fetch-and-score`: 5 requests/min per token
+- On limit: HTTP 429 + `Retry-After` header (seconds to wait)
+
+---
+
+## CoWork Agent Endpoints (6 total)
+
+| Endpoint | Method | Rate Limit | Description |
+|----------|--------|------------|-------------|
+| `/api/v1/cowork/dashboard-summary` | GET | 30/min | System health + 24h stats + top picks + data_quality |
+| `/api/v1/cowork/daily-buy-list` | GET | 30/min | STABLE picks filtered by confidence + data_quality |
+| `/api/v1/cowork/fetch-and-score` | POST | 5/min | On-demand ASIN/ISBN scoring |
+| `/api/v1/cowork/last-job-stats` | GET | 30/min | Stats from most recent AutoSourcing job |
+| `/api/v1/cowork/keepa-balance` | GET | 30/min | Keepa token balance (cached 60s) |
+| `/api/v1/cowork/jobs` | GET | 30/min | Paginated job list with status filter |
+
+---
+
+## Key Endpoints for N8N / Other Agents
 
 | Endpoint | Method | Scope | Description |
 |----------|--------|-------|-------------|
-| `/api/v1/daily-review/actionable` | GET | `daily_review:read` | STABLE-only pre-filtered buy list, sorted by stability then ROI |
-| `/api/v1/daily-review/today` | GET | `daily_review:read` | Full classified review with all 5 categories and counts |
+| `/api/v1/daily-review/actionable` | GET | `daily_review:read` | STABLE-only buy list, sorted by stability then ROI |
+| `/api/v1/daily-review/today` | GET | `daily_review:read` | Full classified review with all 5 categories |
 | `/api/v1/autosourcing/run-custom` | POST | `autosourcing:write` | Trigger a new sourcing scan |
-| `/api/v1/autosourcing/jobs/{id}` | GET | `autosourcing:read` | Poll job status and results |
+| `/api/v1/autosourcing/jobs/{id}` | GET | `autosourcing:job_read` | Poll job status and results |
 
-### Actionable Buy List — Example Response
+---
 
+## Example Responses
+
+### Daily Buy List
 ```json
 {
   "items": [
@@ -134,34 +171,57 @@ API keys are scoped. Request only the scopes you need.
       "title": "The Pragmatic Programmer",
       "category": "Computers & Technology",
       "current_price": 45.00,
-      "estimated_buy_price": 22.50,
+      "estimated_buy_price": 15.75,
       "roi_percentage": 28.5,
       "stability_score": 74,
       "confidence_score": 81,
       "velocity_score": 62,
+      "condition_signal": "STRONG",
       "bsr": 12450,
-      "overall_rating": "GOOD",
       "classification": "STABLE",
       "action_recommendation": "BUY"
     }
   ],
   "total_found": 3,
-  "filters_applied": {"min_roi": 15.0, "max_results": 10, "classification": "STABLE"},
-  "generated_at": "2026-03-03T07:00:00+00:00"
+  "data_quality": "full",
+  "generated_at": "2026-03-26T07:00:00+00:00"
 }
 ```
 
-### Webhook — Job Completion Notification
+### Dashboard Summary
+```json
+{
+  "system_health": "ok",
+  "last_job": {
+    "id": "uuid",
+    "status": "success",
+    "picks_count": 18,
+    "stable_count": 4,
+    "duration_seconds": 47.2
+  },
+  "stats_24h": {"total_jobs": 3, "total_picks": 52, "stable_picks": 11},
+  "top_picks": [...],
+  "data_quality": "full"
+}
+```
+
+### Keepa Balance
+```json
+{"tokens_remaining": 1250, "cached": true, "cache_age_seconds": 23}
+```
+
+---
+
+## Webhook — Job Completion Notification
 
 When a scan completes, the backend POSTs to configured webhook URLs:
 
 ```json
 {
   "event": "autosourcing.job.completed",
-  "timestamp": "2026-03-03T07:04:32+00:00",
+  "timestamp": "2026-03-26T07:04:32+00:00",
   "data": {
     "job_id": "uuid",
-    "user_id": "uuid",
     "picks_count": 18,
     "stable_count": 4,
     "duration_seconds": 47.2
@@ -170,6 +230,9 @@ When a scan completes, the backend POSTs to configured webhook URLs:
 ```
 
 Header `X-Webhook-Signature: sha256=<hmac>` for payload verification.
+
+**Note**: If `stable_count > 0`, SMS (Textbelt) and email (Resend) notifications are also
+sent automatically after webhook delivery. These are parallel channels, not webhook payloads.
 
 ---
 
@@ -182,6 +245,8 @@ Header `X-Webhook-Signature: sha256=<hmac>` for payload verification.
 - Alert the human if a JACKPOT appears and explain why manual verification is needed
 - Trigger a sourcing scan and poll for results
 - Receive webhook notifications when scans complete
+- Check Keepa token balance before triggering expensive scans
+- Browse job history with status filters
 
 ### Cannot do
 - Verify the physical condition of a book
@@ -196,16 +261,27 @@ Header `X-Webhook-Signature: sha256=<hmac>` for payload verification.
 
 ```
 [Schedule 7am]
-    → POST /autosourcing/run-custom  (trigger scan)
-    → Wait for webhook: autosourcing.job.completed
-    → GET /daily-review/actionable   (fetch STABLE picks)
-    → Send Telegram/Slack with top 5
+    -> POST /autosourcing/run-custom         (trigger scan)
+    -> Wait for webhook: autosourcing.job.completed
+    -> GET /api/v1/cowork/daily-buy-list     (fetch STABLE picks)
+    -> Send Telegram/Slack with top 5
+```
+
+Alternative (polling instead of webhook):
+```
+[Schedule 7am]
+    -> POST /autosourcing/run-custom         (trigger scan, get job_id)
+    -> Poll GET /autosourcing/jobs/{job_id}  (every 30s, max 20 min)
+    -> When status=success: GET /daily-review/actionable
+    -> Send morning briefing
 ```
 
 Failure modes to handle:
 - Scan timeout: configure N8N timeout to 20 min
 - API down: retry policy 3 attempts with backoff
 - Empty list: send "No STABLE picks this morning" message rather than silence
+- Rate limit (429): respect `Retry-After` header before retry
+- `data_quality: degraded`: mention in briefing that data may be incomplete
 
 ---
 
@@ -215,7 +291,7 @@ Failure modes to handle:
 |---------|-----|
 | Backend API | https://arbitragevault-backend-v2.onrender.com |
 | Frontend | https://arbitragevault.netlify.app |
-| API Docs | https://arbitragevault-backend-v2.onrender.com/docs |
+| API Docs (Swagger) | https://arbitragevault-backend-v2.onrender.com/docs |
 
 ---
 

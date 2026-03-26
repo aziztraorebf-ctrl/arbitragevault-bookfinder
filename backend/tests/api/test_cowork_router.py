@@ -471,3 +471,178 @@ def test_fetch_and_score_insufficient_tokens(_override_db_session):
         assert response.status_code == 402
     finally:
         p.stop()
+
+
+# --- keepa-balance tests ---
+
+def test_keepa_balance_no_keepa():
+    """GET keepa-balance with no Keepa configured returns 503."""
+    client, p = _client_with_settings(keepa_api_key=None)
+    try:
+        response = client.get(
+            "/api/v1/cowork/keepa-balance",
+            headers=_auth_header(),
+        )
+        assert response.status_code == 503
+    finally:
+        p.stop()
+
+
+def test_keepa_balance_cached():
+    """GET keepa-balance returns cached balance with correct schema."""
+    import time
+
+    mock_keepa = AsyncMock()
+    mock_keepa.api_balance_cache = 4500
+    mock_keepa.last_api_balance_check = time.time() - 10
+    mock_keepa.check_api_balance = AsyncMock(return_value=4500)
+
+    client, p = _client_with_settings()
+    try:
+        with patch(
+            "app.api.v1.routers.cowork.get_keepa_service",
+            new_callable=AsyncMock,
+            return_value=mock_keepa,
+        ):
+            response = client.get(
+                "/api/v1/cowork/keepa-balance",
+                headers=_auth_header(),
+            )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["tokens_left"] == 4500
+        assert data["is_cached"] is True
+        assert "thresholds" in data
+        assert data["can_run_autosourcing"] is True
+        assert data["can_run_manual_search"] is True
+    finally:
+        p.stop()
+
+
+def test_keepa_balance_low_tokens():
+    """GET keepa-balance with low tokens shows correct flags."""
+    import time
+
+    mock_keepa = AsyncMock()
+    mock_keepa.api_balance_cache = 5
+    mock_keepa.last_api_balance_check = time.time() - 10
+    mock_keepa.check_api_balance = AsyncMock(return_value=5)
+
+    client, p = _client_with_settings()
+    try:
+        with patch(
+            "app.api.v1.routers.cowork.get_keepa_service",
+            new_callable=AsyncMock,
+            return_value=mock_keepa,
+        ):
+            response = client.get(
+                "/api/v1/cowork/keepa-balance",
+                headers=_auth_header(),
+            )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["tokens_left"] == 5
+        assert data["can_run_autosourcing"] is False
+        assert data["can_run_manual_search"] is False
+    finally:
+        p.stop()
+
+
+def test_keepa_balance_no_auth():
+    """GET keepa-balance without auth returns 401."""
+    client, p = _client_with_settings()
+    try:
+        response = client.get("/api/v1/cowork/keepa-balance")
+        assert response.status_code == 401
+    finally:
+        p.stop()
+
+
+# --- jobs listing tests ---
+
+def test_jobs_empty_db():
+    """GET jobs with no jobs returns empty list."""
+    client, p = _client_with_settings()
+    try:
+        response = client.get(
+            "/api/v1/cowork/jobs",
+            headers=_auth_header(),
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["jobs"] == []
+        assert data["total"] == 0
+        assert data["limit"] == 10
+        assert data["offset"] == 0
+    finally:
+        p.stop()
+
+
+def test_jobs_with_data(_override_db_session):
+    """GET jobs returns paginated job list."""
+    mock_job = _make_mock_job(
+        total_tested=40,
+        total_selected=6,
+    )
+    mock_job.profile_name = "test-profile"
+    mock_job.launched_at = datetime(2026, 3, 25, 10, 0, 0)
+    mock_job.completed_at = datetime(2026, 3, 25, 10, 2, 0)
+    mock_job.duration_ms = 120000
+    mock_job.error_message = None
+
+    # First call = count query, second = jobs query
+    mock_count_result = MagicMock()
+    mock_count_result.scalar.return_value = 1
+
+    mock_jobs_result = MagicMock()
+    mock_jobs_result.scalars.return_value.all.return_value = [mock_job]
+
+    _override_db_session.execute = AsyncMock(
+        side_effect=[mock_count_result, mock_jobs_result]
+    )
+
+    client, p = _client_with_settings()
+    try:
+        response = client.get(
+            "/api/v1/cowork/jobs?limit=5&offset=0",
+            headers=_auth_header(),
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] == 1
+        assert data["limit"] == 5
+        assert len(data["jobs"]) == 1
+        job = data["jobs"][0]
+        assert job["job_id"] == str(mock_job.id)
+        assert job["profile_name"] == "test-profile"
+        assert job["total_tested"] == 40
+        assert job["total_selected"] == 6
+        assert job["duration_ms"] == 120000
+    finally:
+        p.stop()
+
+
+def test_jobs_pagination_params():
+    """GET jobs respects limit and offset query params."""
+    client, p = _client_with_settings()
+    try:
+        response = client.get(
+            "/api/v1/cowork/jobs?limit=3&offset=10",
+            headers=_auth_header(),
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["limit"] == 3
+        assert data["offset"] == 10
+    finally:
+        p.stop()
+
+
+def test_jobs_no_auth():
+    """GET jobs without auth returns 401."""
+    client, p = _client_with_settings()
+    try:
+        response = client.get("/api/v1/cowork/jobs")
+        assert response.status_code == 401
+    finally:
+        p.stop()

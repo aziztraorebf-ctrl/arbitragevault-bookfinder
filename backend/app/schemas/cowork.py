@@ -59,6 +59,34 @@ class CoworkLastJobStatsResponse(BaseModel):
     created_at: Optional[str]
 
 
+class CoworkKeepaBalanceResponse(BaseModel):
+    tokens_left: int
+    is_cached: bool
+    cache_age_seconds: int
+    thresholds: dict
+    can_run_autosourcing: bool
+    can_run_manual_search: bool
+
+
+class CoworkJobItem(BaseModel):
+    job_id: str
+    profile_name: Optional[str]
+    status: Optional[str]
+    total_tested: int
+    total_selected: int
+    launched_at: Optional[str]
+    completed_at: Optional[str]
+    duration_ms: Optional[int]
+    error_message: Optional[str]
+
+
+class CoworkJobsResponse(BaseModel):
+    jobs: List[CoworkJobItem]
+    total: int
+    limit: int
+    offset: int
+
+
 class CoworkBuyListItem(BaseModel):
     asin: str
     title: Optional[str]

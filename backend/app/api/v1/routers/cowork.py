@@ -21,6 +21,9 @@ from app.schemas.cowork import (
     CoworkDashboardResponse,
     CoworkFetchAndScoreRequest,
     CoworkFetchAndScoreResponse,
+    CoworkJobItem,
+    CoworkJobsResponse,
+    CoworkKeepaBalanceResponse,
     CoworkLastJobStatsResponse,
 )
 
@@ -516,4 +519,137 @@ async def get_last_job_stats(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve last job stats",
+        )
+
+
+@router.get(
+    "/keepa-balance",
+    response_model=CoworkKeepaBalanceResponse,
+    dependencies=[Depends(require_cowork_token)],
+)
+async def get_keepa_balance() -> CoworkKeepaBalanceResponse:
+    """Return current Keepa token balance. Uses 60s cache when available (0 token cost)."""
+    import time
+    from app.core.token_costs import CRITICAL_THRESHOLD, WARNING_THRESHOLD, SAFE_THRESHOLD, TOKEN_COSTS
+
+    settings = get_settings()
+    if not settings.keepa_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Keepa API not configured",
+        )
+
+    try:
+        keepa_service = await get_keepa_service()
+
+        # Check if cached balance is fresh (< 60s)
+        now = time.time()
+        is_cached = (
+            keepa_service.api_balance_cache is not None
+            and (now - keepa_service.last_api_balance_check) < 60
+        )
+        cache_age = int(now - keepa_service.last_api_balance_check) if keepa_service.last_api_balance_check else 0
+
+        tokens_left = await keepa_service.check_api_balance()
+
+        return CoworkKeepaBalanceResponse(
+            tokens_left=tokens_left,
+            is_cached=is_cached,
+            cache_age_seconds=min(cache_age, 60) if is_cached else 0,
+            thresholds={
+                "critical": CRITICAL_THRESHOLD,
+                "warning": WARNING_THRESHOLD,
+                "safe": SAFE_THRESHOLD,
+            },
+            can_run_autosourcing=tokens_left >= TOKEN_COSTS["auto_sourcing_job"]["cost"],
+            can_run_manual_search=tokens_left >= TOKEN_COSTS["manual_search"]["cost"],
+        )
+    except InsufficientTokensError:
+        return CoworkKeepaBalanceResponse(
+            tokens_left=0,
+            is_cached=False,
+            cache_age_seconds=0,
+            thresholds={
+                "critical": CRITICAL_THRESHOLD,
+                "warning": WARNING_THRESHOLD,
+                "safe": SAFE_THRESHOLD,
+            },
+            can_run_autosourcing=False,
+            can_run_manual_search=False,
+        )
+    except Exception as e:
+        logger.error(
+            "cowork keepa-balance failed",
+            exc_info=True,
+            extra={"error": str(e), "error_type": type(e).__name__},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to check Keepa balance",
+        )
+
+
+@router.get(
+    "/jobs",
+    response_model=CoworkJobsResponse,
+    dependencies=[Depends(require_cowork_token)],
+)
+async def get_jobs(
+    limit: int = Query(default=10, ge=1, le=50, description="Max jobs to return"),
+    offset: int = Query(default=0, ge=0, description="Offset for pagination"),
+    status_filter: str = Query(default=None, alias="status", description="Filter by job status"),
+    db: AsyncSession = Depends(get_db_session),
+) -> CoworkJobsResponse:
+    """Return paginated list of recent AutoSourcing jobs."""
+    try:
+        # Count total
+        count_query = select(func.count(AutoSourcingJob.id))
+        if status_filter:
+            count_query = count_query.where(AutoSourcingJob.status == status_filter)
+        count_result = await db.execute(count_query)
+        total = count_result.scalar() or 0
+
+        # Fetch jobs
+        jobs_query = (
+            select(AutoSourcingJob)
+            .order_by(AutoSourcingJob.launched_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        if status_filter:
+            jobs_query = jobs_query.where(AutoSourcingJob.status == status_filter)
+
+        result = await db.execute(jobs_query)
+        jobs = result.scalars().all()
+
+        items = [
+            CoworkJobItem(
+                job_id=str(job.id),
+                profile_name=job.profile_name,
+                status=job.status.value if job.status else None,
+                total_tested=job.total_tested or 0,
+                total_selected=job.total_selected or 0,
+                launched_at=job.launched_at.isoformat() if job.launched_at else None,
+                completed_at=job.completed_at.isoformat() if job.completed_at else None,
+                duration_ms=job.duration_ms,
+                error_message=job.error_message,
+            )
+            for job in jobs
+        ]
+
+        return CoworkJobsResponse(
+            jobs=items,
+            total=total,
+            limit=limit,
+            offset=offset,
+        )
+    except Exception as e:
+        logger.error(
+            "cowork jobs listing failed",
+            exc_info=True,
+            extra={"error": str(e), "error_type": type(e).__name__},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to list jobs",
         )

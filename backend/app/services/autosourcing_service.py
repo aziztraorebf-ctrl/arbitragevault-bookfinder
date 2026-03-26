@@ -288,8 +288,10 @@ class AutoSourcingService:
         if isinstance(price_range, list) and len(price_range) >= 2:
             price_min, price_max = price_range[0], price_range[1]
 
-        # Extract competition filters (Phase 7: Same fix as Phase 6 Niche Discovery)
-        max_fba_sellers = discovery_config.get("max_fba_sellers", 5)  # Default: max 5 FBA sellers
+        # Extract competition filters
+        # max_fba_sellers intentionally None at discovery stage — let scoring handle competition filtering.
+        # Applying a strict FBA cap (e.g. 5) here reduces the candidate pool to near-zero on bestsellers.
+        max_fba_sellers = discovery_config.get("max_fba_sellers", None)
         exclude_amazon = discovery_config.get("exclude_amazon_seller", True)  # Default: exclude Amazon
 
         logger.info(

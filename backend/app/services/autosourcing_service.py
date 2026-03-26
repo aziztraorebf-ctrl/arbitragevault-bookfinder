@@ -8,6 +8,16 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional, Tuple
 from uuid import UUID, uuid4
 from fastapi import HTTPException
+from app.services.autosourcing_scoring import (
+    calculate_product_roi,
+    evaluate_condition_signal,
+    calculate_velocity_from_keepa,
+    calculate_stability_from_keepa,
+    calculate_confidence_from_keepa,
+    compute_rating,
+    meets_criteria,
+    classify_product_tier,
+)
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, desc, func
@@ -470,7 +480,7 @@ class AutoSourcingService:
                     asin, raw_keepa, scoring_config, job_id, config
                 )
 
-                if pick and self._meets_criteria(pick, scoring_config):
+                if pick and meets_criteria(pick, scoring_config):
                     picks.append(pick)
                     logger.debug(f"PASS {asin}: {pick.overall_rating} (ROI: {pick.roi_percentage}%)")
                 else:
@@ -527,50 +537,27 @@ class AutoSourcingService:
             # Calculate estimated buy cost using unified source_price_factor
             # Default 0.50 = buy at 50% of sell price (FBM->FBA arbitrage, aligned with guide)
             source_price_factor = business_config.get("source_price_factor", 0.50)
-            estimated_cost = current_price * source_price_factor
-
-            # Calculate ROI metrics
             fba_fee_percentage = business_config.get("fba_fee_percentage", 0.15)
-            amazon_fees = current_price * fba_fee_percentage
-            profit_net = current_price - estimated_cost - amazon_fees
-            roi_percentage = (profit_net / estimated_cost) * 100 if estimated_cost > 0 else 0
+            estimated_cost, profit_net, roi_percentage = calculate_product_roi(
+                current_price, source_price_factor, fba_fee_percentage
+            )
 
-            # Condition-based scoring: used price ROI and signal
-            used_price = product_data.get("used_price")
-            used_offer_count = product_data.get("used_offer_count", 0)
-            used_roi_percentage = None
-            condition_signal = "UNKNOWN"
-
-            if used_price is not None and used_price > 0:
-                used_fees = used_price * fba_fee_percentage
-                used_profit = used_price - estimated_cost - used_fees
-                used_roi_percentage = (used_profit / estimated_cost) * 100 if estimated_cost > 0 else 0.0
-
-                # Derive condition_signal from thresholds
-                cs_config = business_config.get("condition_signals", {})
-                strong_roi_min = cs_config.get("strong_roi_min", 25.0)
-                moderate_roi_min = cs_config.get("moderate_roi_min", 10.0)
-                max_offers_strong = cs_config.get("max_used_offers_strong", 10)
-                max_offers_moderate = cs_config.get("max_used_offers_moderate", 25)
-
-                if used_roi_percentage >= strong_roi_min and (used_offer_count or 0) <= max_offers_strong:
-                    condition_signal = "STRONG"
-                elif used_roi_percentage >= moderate_roi_min and (used_offer_count or 0) <= max_offers_moderate:
-                    condition_signal = "MODERATE"
-                else:
-                    condition_signal = "WEAK"
+            used_roi_percentage, condition_signal = evaluate_condition_signal(
+                product_data, estimated_cost, fba_fee_percentage,
+                business_config.get("condition_signals", {}),
+            )
 
             # Calculate advanced scores from REAL Keepa data
-            velocity_score = self._calculate_velocity_from_keepa(raw_keepa, bsr)
-            stability_score = self._calculate_stability_from_keepa(raw_keepa)
-            confidence_score = self._calculate_confidence_from_keepa(
+            velocity_score = calculate_velocity_from_keepa(raw_keepa, bsr)
+            stability_score = calculate_stability_from_keepa(raw_keepa)
+            confidence_score = calculate_confidence_from_keepa(
                 raw_keepa,
                 condition_signal=condition_signal,
                 business_config=business_config.get("condition_signals", {})
             )
 
             # Overall rating based on scoring config
-            overall_rating = self._compute_rating(
+            overall_rating = compute_rating(
                 roi_percentage, velocity_score, stability_score,
                 confidence_score, scoring_config
             )
@@ -579,7 +566,7 @@ class AutoSourcingService:
             readable_summary = f"{overall_rating}: {roi_percentage:.1f}% ROI, BSR {bsr:,}, {velocity_score:.0f} velocity"
 
             # Classify product tier (v1.7.0 AutoScheduler)
-            tier, tier_reason = self._classify_product_tier({
+            tier, tier_reason = classify_product_tier({
                 'roi_percentage': roi_percentage,
                 'profit_net': profit_net,
                 'velocity_score': velocity_score,
@@ -678,50 +665,27 @@ class AutoSourcingService:
             # Calculate estimated buy cost using unified source_price_factor
             # Default 0.50 = buy at 50% of sell price (FBM->FBA arbitrage, aligned with guide)
             source_price_factor = business_config.get("source_price_factor", 0.50)
-            estimated_cost = current_price * source_price_factor
-
-            # Calculate ROI metrics
             fba_fee_percentage = business_config.get("fba_fee_percentage", 0.15)
-            amazon_fees = current_price * fba_fee_percentage
-            profit_net = current_price - estimated_cost - amazon_fees
-            roi_percentage = (profit_net / estimated_cost) * 100 if estimated_cost > 0 else 0
+            estimated_cost, profit_net, roi_percentage = calculate_product_roi(
+                current_price, source_price_factor, fba_fee_percentage
+            )
 
-            # Condition-based scoring: used price ROI and signal
-            used_price = product_data.get("used_price")
-            used_offer_count = product_data.get("used_offer_count", 0)
-            used_roi_percentage = None
-            condition_signal = "UNKNOWN"
-
-            if used_price is not None and used_price > 0:
-                used_fees = used_price * fba_fee_percentage
-                used_profit = used_price - estimated_cost - used_fees
-                used_roi_percentage = (used_profit / estimated_cost) * 100 if estimated_cost > 0 else 0.0
-
-                # Derive condition_signal from thresholds
-                cs_config = business_config.get("condition_signals", {})
-                strong_roi_min = cs_config.get("strong_roi_min", 25.0)
-                moderate_roi_min = cs_config.get("moderate_roi_min", 10.0)
-                max_offers_strong = cs_config.get("max_used_offers_strong", 10)
-                max_offers_moderate = cs_config.get("max_used_offers_moderate", 25)
-
-                if used_roi_percentage >= strong_roi_min and (used_offer_count or 0) <= max_offers_strong:
-                    condition_signal = "STRONG"
-                elif used_roi_percentage >= moderate_roi_min and (used_offer_count or 0) <= max_offers_moderate:
-                    condition_signal = "MODERATE"
-                else:
-                    condition_signal = "WEAK"
+            used_roi_percentage, condition_signal = evaluate_condition_signal(
+                product_data, estimated_cost, fba_fee_percentage,
+                business_config.get("condition_signals", {}),
+            )
 
             # Calculate advanced scores from REAL Keepa data
-            velocity_score = self._calculate_velocity_from_keepa(raw_keepa, bsr)
-            stability_score = self._calculate_stability_from_keepa(raw_keepa)
-            confidence_score = self._calculate_confidence_from_keepa(
+            velocity_score = calculate_velocity_from_keepa(raw_keepa, bsr)
+            stability_score = calculate_stability_from_keepa(raw_keepa)
+            confidence_score = calculate_confidence_from_keepa(
                 raw_keepa,
                 condition_signal=condition_signal,
                 business_config=business_config.get("condition_signals", {})
             )
 
             # Overall rating based on scoring config
-            overall_rating = self._compute_rating(
+            overall_rating = compute_rating(
                 roi_percentage, velocity_score, stability_score,
                 confidence_score, scoring_config
             )
@@ -730,7 +694,7 @@ class AutoSourcingService:
             readable_summary = f"{overall_rating}: {roi_percentage:.1f}% ROI, BSR {bsr:,}, {velocity_score:.0f} velocity"
 
             # Classify product tier (v1.7.0 AutoScheduler)
-            tier, tier_reason = self._classify_product_tier({
+            tier, tier_reason = classify_product_tier({
                 'roi_percentage': roi_percentage,
                 'profit_net': profit_net,
                 'velocity_score': velocity_score,
@@ -846,177 +810,6 @@ class AutoSourcingService:
             result["used_offer_count"] = used_offer_count
 
         return result
-
-    def _calculate_velocity_from_keepa(self, raw_keepa: Dict[str, Any], bsr: int) -> float:
-        """Calculate velocity score from real Keepa data."""
-        # Base velocity from BSR (lower BSR = higher velocity)
-        if bsr <= 0:
-            return 50.0
-
-        # Logarithmic scale: BSR 1K = 100, BSR 100K = 50, BSR 1M = 10
-        import math
-        velocity = max(10, min(100, 130 - (math.log10(bsr) * 20)))
-
-        # Boost from sales drops (stats.current[18] or salesRanks history)
-        stats = raw_keepa.get("stats", {})
-        current_stats = stats.get("current", [])
-
-        # Check for recent sales activity
-        if current_stats and len(current_stats) > 18 and current_stats[18]:
-            # Sales drops indicate recent sales
-            velocity = min(100, velocity + 10)
-
-        return velocity
-
-    def _calculate_stability_from_keepa(self, raw_keepa: Dict[str, Any]) -> float:
-        """Calculate price stability score from real Keepa data."""
-        stats = raw_keepa.get("stats", {})
-
-        # Compare current vs avg30 prices
-        current_stats = stats.get("current", [])
-        avg30_stats = stats.get("avg30", [])
-
-        if not current_stats or not avg30_stats:
-            return 70.0  # Default
-
-        # Check price stability (index 1 = NEW price)
-        if len(current_stats) > 1 and len(avg30_stats) > 1:
-            current_price = current_stats[1]
-            avg30_price = avg30_stats[1]
-
-            if current_price and avg30_price and avg30_price > 0:
-                # Calculate price variance ratio
-                variance = abs(current_price - avg30_price) / avg30_price
-                # Lower variance = higher stability (0% variance = 100, 50% variance = 50)
-                stability = max(30, min(100, 100 - (variance * 100)))
-                return stability
-
-        return 70.0
-
-    def _calculate_confidence_from_keepa(
-        self, raw_keepa: Dict[str, Any],
-        condition_signal: Optional[str] = None,
-        business_config: Optional[Dict[str, Any]] = None
-    ) -> float:
-        """Calculate confidence score from real Keepa data completeness.
-
-        Args:
-            raw_keepa: Raw Keepa product data
-            condition_signal: Condition signal strength (STRONG, MODERATE, WEAK, UNKNOWN)
-            business_config: Optional business config with confidence boost settings
-        """
-        confidence = 50.0  # Base confidence
-
-        # Check data completeness
-        if raw_keepa.get("title"):
-            confidence += 10
-
-        stats = raw_keepa.get("stats", {})
-        if stats.get("current"):
-            confidence += 15
-        if stats.get("avg30"):
-            confidence += 10
-
-        if raw_keepa.get("salesRanks"):
-            confidence += 10
-
-        # Last update freshness
-        last_update = raw_keepa.get("lastUpdate", 0)
-        if last_update > 0:
-            confidence += 5
-
-        # Condition-based confidence boost
-        if condition_signal:
-            config = business_config or {}
-            if condition_signal == "STRONG":
-                confidence += config.get("confidence_boost_strong", 10)
-            elif condition_signal == "MODERATE":
-                confidence += config.get("confidence_boost_moderate", 5)
-            # WEAK and UNKNOWN add nothing
-
-        return min(100, confidence)
-
-    def _compute_rating(
-        self, roi: float, velocity: float, stability: float, 
-        confidence: float, config: Dict[str, Any]
-    ) -> str:
-        """Compute overall rating based on thresholds."""
-        
-        roi_min = config.get("roi_min", 30)
-        velocity_min = config.get("velocity_min", 70)
-        stability_min = config.get("stability_min", 70)
-        confidence_min = config.get("confidence_min", 70)
-        
-        if (roi >= roi_min and velocity >= velocity_min and 
-            stability >= stability_min and confidence >= confidence_min):
-            return "EXCELLENT"
-        elif (roi >= roi_min * 0.8 and velocity >= velocity_min * 0.85 and
-              stability >= stability_min * 0.85 and confidence >= confidence_min * 0.85):
-            return "GOOD"  
-        elif roi >= roi_min * 0.7:
-            return "FAIR"
-        else:
-            return "PASS"
-
-    def _meets_criteria(self, pick: AutoSourcingPick, scoring_config: Dict[str, Any]) -> bool:
-        """Check if pick meets minimum criteria including velocity threshold."""
-
-        rating_required = scoring_config.get("rating_required", "FAIR")
-        roi_min = scoring_config.get("roi_min", 20)
-        velocity_min = scoring_config.get("velocity_min", 0)
-
-        rating_hierarchy = {"PASS": 0, "FAIR": 1, "GOOD": 2, "EXCELLENT": 3}
-
-        pick_rating_level = rating_hierarchy.get(pick.overall_rating, 0)
-        required_rating_level = rating_hierarchy.get(rating_required, 1)
-
-        # Direct velocity check - picks below threshold are filtered out
-        if velocity_min > 0 and pick.velocity_score < velocity_min:
-            return False
-
-        # Condition-based gating: reject weak condition signals when enabled
-        condition_signals_config = scoring_config.get("condition_signals", {})
-        if condition_signals_config.get("reject_weak", False):
-            if pick.condition_signal and pick.condition_signal == "WEAK":
-                return False
-
-        return (pick_rating_level >= required_rating_level and
-                pick.roi_percentage >= roi_min)
-
-    def _classify_product_tier(self, product_data: Dict[str, Any]) -> tuple[str, str]:
-        """
-        Classifie automatiquement un produit selon score/ROI pour AutoScheduler.
-        
-        Args:
-            product_data: Données du produit (ROI, profit, scores, etc.)
-            
-        Returns:
-            Tuple (tier, reason) - tier: HOT/TOP/WATCH/OTHER, reason: explication
-        """
-        roi = product_data.get('roi_percentage', 0)
-        profit = product_data.get('profit_net', 0)
-        velocity = product_data.get('velocity_score', 0)
-        confidence = product_data.get('confidence_score', 0)
-        rating = product_data.get('overall_rating', 'PASS')
-        
-        # [HOT] HOT DEALS - Critères stricts pour action immédiate
-        if (roi >= 50 and profit >= 15 and velocity >= 80 and
-            confidence >= 85 and rating in ["EXCELLENT"]):
-            return "HOT", f"[HOT] {roi:.0f}% ROI, ${profit:.0f} profit, {velocity:.0f} velocity - Action immédiate!"
-
-        # [TOP] TOP PICKS - Équilibrés et solides
-        elif (roi >= 35 and profit >= 10 and velocity >= 70 and
-              confidence >= 75 and rating in ["EXCELLENT", "GOOD"]):
-            return "TOP", f"[TOP] {roi:.0f}% ROI, ${profit:.0f} profit - Opportunité solide"
-
-        # [WATCH] WATCH LIST - Potentiel à surveiller
-        elif (roi >= 25 and profit >= 5 and velocity >= 60 and
-              confidence >= 65 and rating in ["EXCELLENT", "GOOD", "FAIR"]):
-            return "WATCH", f"[WATCH] {roi:.0f}% ROI, potentiel à surveiller"
-
-        # [INFO] OTHER - Analyse approfondie nécessaire
-        else:
-            return "OTHER", f"[INFO] {roi:.0f}% ROI - Analyse détaillée recommandée"
 
     def get_diversified_search_criteria(self, hour: int) -> Dict[str, Any]:
         """

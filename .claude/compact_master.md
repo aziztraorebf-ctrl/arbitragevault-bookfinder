@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Globale Projet
 
-**Derniere mise a jour** : 24 Mars 2026
-**Version** : 10.0
-**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security Audit + Agent API completes, Production LIVE
+**Derniere mise a jour** : 26 Mars 2026
+**Version** : 11.0
+**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API + Codebase Audit + P2 completes, Production LIVE
 
 ---
 
@@ -19,19 +19,21 @@
 - Dashboard decisionnel temps reel
 - AutoSourcing automation avec safeguards
 - Authentification securisee Firebase
+- Integration agents externes (CoWork/N8N) avec API dedicee
 
 ---
 
 ## Architecture Technique
 
 ### Stack Backend
-- **Framework** : FastAPI 0.115.0 (Python 3.11+)
+- **Framework** : FastAPI 0.111.0 (Python 3.11+)
 - **Base de donnees** : PostgreSQL 17 (Neon serverless)
 - **ORM** : SQLAlchemy 2.0 (async)
 - **Migrations** : Alembic
 - **API externe** : Keepa API (Product + Product Finder)
-- **Authentification** : Firebase Admin SDK
+- **Authentification** : Firebase Admin SDK + API Keys + CoWork Bearer
 - **Logging** : structlog + Sentry
+- **Rate Limiting** : SlidingWindowLimiter in-memory (app/core/rate_limiter.py)
 - **Deploiement** : Render (Docker, auto-deploy)
 
 ### Stack Frontend
@@ -71,87 +73,91 @@
 | 8 | Advanced Analytics | 50+ | COMPLETE |
 | 9 | UI Completion | 70+ | COMPLETE |
 
-### Phase 10 : Unified Product Table (1 Jan 2026)
+### Phases 10-13 : Polish + Auth (Jan 2026)
+- Phase 10 : Unified Product Table
+- Phase 11 : Page Centrale Recherches
+- Phase 12 : UX Audit + Mobile-First
+- Phase 13 : Firebase Authentication
 
-**Objectif** : Unifier composants ViewResultsTable + ProductsTable
+### Refactoring 1A-2D (Jan-Fev 2026)
+- 1A-1D : Architecture, dead code, SQLAlchemy 2.0
+- 2A-2C : Validation, simplification, fees centralization
+- 2D : Daily Review Dashboard
 
-**Livrables** :
-- Type `DisplayableProduct` unifie
-- `UnifiedProductTable.tsx` reutilisable
-- Suppression pages redundantes
-- 7 tests E2E Playwright
+### Phase 3 : Simplification Radicale (21 Fev 2026)
+- 45 fichiers frontend archives, 30 backend archives
+- Navigation de 10 items a 4
+- 785 tests restants passent
 
-### Phase 11 : Page Centrale Recherches (1 Jan 2026)
+### Phase C : Condition Signals + Pydantic v2 Fix (24 Mars 2026)
+- Condition signals dans pipeline unifie (STRONG/MODERATE/WEAK)
+- Confidence boost +10/+5 via config
+- Pydantic v2 field_validator
 
-**Objectif** : Centraliser tous les resultats de recherches
+### Bugfixes 35+ (Mars 2026)
+- 25 critiques + 12 MEDIUM + 3 LOW
+- PRs #14, #15, #17, #19
 
-**Livrables** :
-- Table `search_results` PostgreSQL (retention 30 jours)
-- Page `/recherches` ("Mes Recherches")
-- `SaveSearchButton` integre dans modules
-- Service + Hooks React Query
+### Security Audit + Agent API (24 Mars 2026)
+- Rate limiting + security headers
+- Script creation cle API agents
+- Integration CoWork/N8N
 
-### Phase 12 : UX Audit + Mobile-First (3 Jan 2026)
+### Codebase Audit + P2 Simplification (26 Mars 2026)
 
-**Objectif** : Optimiser UX mobile et onboarding
+**Declencheur** : Bug `total_discovered` (attribut fantome avale par except Exception).
 
-**Livrables** :
-- Sidebar responsive hamburger menu
-- Tables scroll horizontal + sticky headers
-- Touch targets 44px minimum
-- Wizard onboarding 3 etapes
+**Audit (PRs #27-30)** :
+- 12 `except Exception` dangereux corriges (logging ajoute)
+- 2 fichiers morts supprimes (-511 LOC)
+- Pydantic response_model sur endpoints CoWork
+- Timezone fix daily_review.py (aware -> naive)
+- BSR standardise a -1 pour "unknown"
+- `data_quality` flag (full/degraded/unavailable)
+- /simplify : BSR bug, return types, data_quality gaps corriges
 
-### Phase 13 : Firebase Authentication (10 Jan 2026)
+**P2 Endpoints** :
+- `GET /cowork/keepa-balance` : balance tokens avec cache 60s
+- `GET /cowork/jobs` : liste paginee avec filtre status
 
-**Objectif** : Remplacer JWT interne par Firebase Auth
+**P2 Rate Limiting** :
+- `app/core/rate_limiter.py` : SlidingWindowLimiter in-memory
+- GET 30 req/min, POST 5 req/min, HTTP 429 + Retry-After
 
-**Fichiers crees Frontend** :
-- `config/firebase.ts` - Configuration resiliente
-- `contexts/AuthContext.tsx` - Context + hooks
-- `components/auth/*` - Login, Register, PasswordReset, ProtectedRoute
-- `pages/Login.tsx`, `Register.tsx`
-
-**Fichiers crees Backend** :
-- `core/firebase.py` - Firebase Admin SDK init
-- `services/firebase_auth_service.py` - Token verification
-- `repositories/user_repository.py` - CRUD avec firebase_uid
-
-**Fichiers modifies** :
-- `core/auth.py` - JWT -> Firebase token verification
-- `models/user.py` - Ajout `firebase_uid`
-- `pyproject.toml` - firebase-admin, email-validator
-
-**Bugs fixes production** :
-1. White screen Netlify (Firebase init resilient)
-2. ModuleNotFoundError firebase_admin
-3. ImportError email-validator
-4. Network Error (VITE_API_URL mauvaise URL)
+**P2 ROI Consolidation** :
+- `app/services/autosourcing_scoring.py` (212 LOC) : 8 fonctions extraites
+- autosourcing_service.py reduit de 1244 a 1037 LOC
+- Duplication ROI eliminee (etait copie-collee dans 2 methodes)
 
 ---
 
 ## Modules Cles
 
 ### Authentication (`core/auth.py`)
-
-```python
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
-    db: AsyncSession = Depends(get_db_session),
-) -> CurrentUser:
-    auth_service = FirebaseAuthService(db)
-    user, _ = await auth_service.verify_token_and_get_user(token)
-    return CurrentUser(id=user.id, email=user.email, role=user.role, ...)
-```
+- Firebase token verification
+- API Key auth pour agents (CoWork, N8N)
+- CoWork Bearer token
 
 ### Keepa Service (`keepa_service.py`)
 - Cache intelligent 24h production
 - Throttling 20 req/min + budget check
-- Retry avec exponential backoff
+- Circuit breaker + retry
 
-### AutoSourcing Service (`autosourcing_service.py`)
+### AutoSourcing Service (`autosourcing_service.py`, 1037 LOC)
 - Cost estimation avant execution
 - Timeout 120s avec DB propagation
 - ASIN deduplication
+- Scoring via `autosourcing_scoring.py` (module extrait)
+
+### Rate Limiter (`core/rate_limiter.py`)
+- Sliding window counter, zero dep externe
+- Per-key tracking (token hash ou IP)
+- Cleanup automatique des entrees perimees
+
+### CoWork Router (`api/v1/routers/cowork.py`)
+- 6 endpoints avec auth Bearer + rate limiting
+- data_quality flag sur dashboard et buy-list
+- Pydantic response models sur tous les endpoints
 
 ---
 
@@ -166,6 +172,7 @@ FIREBASE_PROJECT_ID=<project>
 FIREBASE_PRIVATE_KEY=<key>
 FIREBASE_CLIENT_EMAIL=<email>
 SENTRY_DSN=<dsn>
+COWORK_API_TOKEN=<token>
 ```
 
 ### Frontend (Netlify)
@@ -190,74 +197,24 @@ VITE_FIREBASE_APP_ID=<app_id>
 | Mauvaise URL backend | Network Error | VITE_API_URL -> -v2 |
 | BSR extraction obsolete | 67% erreur | `rank_data[-1]` |
 | Throttle budget | Balance negative | `_ensure_sufficient_balance()` |
-
-### Phase 3 : Simplification Radicale (21 Fev 2026)
-
-**Objectif** : Simplifier selon methodologie BookMine (43 videos analysees).
-Focus workflow core : AutoSourcing -> Daily Review -> Decision d'achat.
-
-**Methode** : Archivage dans `_archive/` (pas suppression) pour recovery facile.
-
-**Frontend** : 45 fichiers archives, navigation de 10 items a 4 (Dashboard, Sourcing, Scheduler, Settings)
-**Backend** : 30 fichiers archives, main.py de 20 routers a 11, ~60 routes
-**Tests** : 32 fichiers archives, 785 tests restants passent
-**Dependance resolue** : VIEW_WEIGHTS inlined dans unified_analysis.py
-
-**Decisions strategiques (BookMine Feb 2026)** :
-- Prime Bump mort depuis Nov 3 2025 (Buy Box change)
-- Condition Bump : Amazon priorise condition > prix > shipping
-- Intrinsic Value = seul pricing model qui compte
-- 5 signaux Keepa : lowest used price, sales rank drops, Amazon price, offer count, stock qty
-
-### Phase C : Condition Signals + Pydantic v2 Fix (24 Mars 2026)
-
-**Objectif** : Integrer condition signals dans le pipeline unifie, corriger deprecations Pydantic.
-
-**Condition Signals (unified_analysis.py)** :
-- Step 5.5 : Derivation `condition_signal` (STRONG/MODERATE/WEAK) depuis ROI + total used offer count
-- Confidence boost : +10 (STRONG), +5 (MODERATE) via config `condition_signals`
-- `condition_breakdown` dans buying_guidance (labels FR, trie par ROI)
-- Alignement avec logique autosourcing_service existante
-
-**Pydantic v2 Fix (analytics.py)** :
-- `decimal_places=2` deprecie -> `field_validator` + `round(v, 2)`
-- Defaults `Decimal("...")` au lieu de float literals
-
-**Bugfixes 35+ (Mars 2026)** :
-- 25 critiques : pipeline AutoSourcing, dedup ASIN, scoring, classification, frontend
-- 12 MEDIUM : dedup, scoring formulas, frontend composants
-- 3 LOW : Keepa indices (RATING=16, COUNT_REVIEWS=17), webhook session, docs
-- PRs : #14, #15, #17, #19
-
-**Tests** : 24 nouveaux (test_phase_c_enhancements.py), 289/290 service tests passent
-
-### Security Audit + Agent API Integration (24 Mars 2026)
-
-**Security Audit** :
-- Protection endpoints publics avec rate limiting (30 req/min publics, 10 req/min health)
-- Security headers middleware (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy)
-- Tests : 12 dans `test_security_audit.py`
-
-**Script creation cle API (`backend/scripts/create_api_key.py`)** :
-- Script CLI standalone pour creer cles API agents (CoWork, N8N)
-- Connexion directe Neon DB, generation `avk_...` avec scopes configurables
-- Scopes par defaut : `autosourcing:read/write`, `autosourcing:job_read`, `daily_review:read`
-
-**Integration Agent CoWork/N8N** :
-- Cle API creee via script et validee en base
-- Authentification via header `X-API-Key`
-- Endpoints proteges : `/daily-review/actionable`, `/daily-review/today`, `/autosourcing/to-buy`, `/autosourcing/favorites`, `/autosourcing/run-custom`, `/autosourcing/jobs/{id}`
+| `total_discovered` fantome | Donnees vides silencieuses | Attribut corrige + logging + test regression |
+| `except Exception: pass` | Erreurs avalees | 12 cas corriges avec logging |
+| `bsr or -1` avec bsr=0 | BSR valide converti en -1 | `if bsr is not None else -1` |
+| datetime aware vs naive | Queries DB incorrectes | `datetime.utcnow()` partout |
 
 ---
 
 ## Prochaines Etapes
 
-| Priorite | Phase | Description | Status |
-|----------|-------|-------------|--------|
-| 1 | - | Integration CoWork/N8N workflows | EN COURS |
-| 2 | - | Tests pre-deploy + Deploy production | A FAIRE |
-| 3 | 15 | Replenishable Watchlist | OPTIONNEL |
-| 4 | - | Migration DB drop tables archivees | QUAND STABLE |
+| Priorite | Description | Status |
+|----------|-------------|--------|
+| 1 | **P3 Refactoring** : Split keepa_product_finder.py (1413 LOC) | A FAIRE |
+| 2 | **P3 Refactoring** : Extraire pick_to_dict() helper (4 duplications) | A FAIRE |
+| 3 | **P3 Refactoring** : asyncio.gather pour dashboard queries | A FAIRE |
+| 4 | Integration CoWork/N8N workflows | EN COURS |
+| 5 | Tests pre-deploy + Deploy production | A FAIRE |
+| 6 | Task 15 - Replenishable Watchlist | OPTIONNEL |
+| 7 | Migration DB drop tables archivees | QUAND STABLE |
 
 ---
 
@@ -265,7 +222,7 @@ Focus workflow core : AutoSourcing -> Daily Review -> Decision d'achat.
 
 | Document | Description |
 |----------|-------------|
-| CLAUDE.md | Instructions v5.2 + Senior Review Gate |
+| CLAUDE.md | Instructions v3.3 + Senior Review Gate |
 | compact_current.md | Memoire session active |
 | compact_master.md | Memoire globale (ce fichier) |
 | errors.md | Registre bugs catalogues avec codes domaine |
@@ -273,6 +230,6 @@ Focus workflow core : AutoSourcing -> Daily Review -> Decision d'achat.
 
 ---
 
-**Version** : 10.0
-**Derniere revision** : 24 Mars 2026
-**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API completes
+**Version** : 11.0
+**Derniere revision** : 26 Mars 2026
+**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API + Codebase Audit + P2 completes

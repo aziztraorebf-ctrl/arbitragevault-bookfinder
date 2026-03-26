@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Active Session
 
-**Derniere mise a jour** : 24 Mars 2026
-**Phase Actuelle** : Security Audit + API Key Agent Integration COMPLETE
-**Statut Global** : Phases 1-13 + Refactoring 1A-2D + Phase 3 + Phase C + Bugfixes + Security + Agent API completes, Production LIVE
+**Derniere mise a jour** : 26 Mars 2026
+**Phase Actuelle** : Audit Codebase Health + P2 Simplification COMPLETE
+**Statut Global** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API + Codebase Audit completes, Production LIVE
 
 ---
 
@@ -10,97 +10,68 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Security Audit + Agent API COMPLETE |
-| **Prochaine Action** | Integration CoWork/N8N avec cle API |
+| **Phase Actuelle** | Codebase Audit + P2 Simplification COMPLETE |
+| **Prochaine Action** | P3 Refactoring (voir section PROCHAINES ACTIONS) |
 | **CLAUDE.md** | v3.3 - Zero-Tolerance Engineering |
 | **Production** | Backend Render + Frontend Netlify LIVE |
 | **Authentification** | Firebase Auth (Email/Password) |
-| **Tests Total** | 289 service tests passent (+ 24 nouveaux Phase C) |
+| **Tests Total** | 769+ service tests + 33 cowork + 7 rate limiter |
 | **Bloqueurs** | Aucun |
 | **Environnement** | macOS (migration depuis Windows jan 2026) |
 
 ---
 
-## CHANGELOG - 24 Mars 2026
+## CHANGELOG - 26 Mars 2026
 
-### Security Audit + API Key Agent Integration
+### Audit Codebase Health (Session 26 Mars)
 
-**Security Audit (PR pending)** :
-- Protection endpoints non-authentifies (`/health`, `/autosourcing/latest`, etc.)
-- Rate limiting : 30 req/min endpoints publics, 10 req/min health
-- Security headers : X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy
-- Middleware `SecurityHeadersMiddleware` ajoute a la stack FastAPI
-- Tests : `test_security_audit.py` (12 tests)
+Audit complet declenche par le bug `total_discovered` (attribut fantome avale par
+`except Exception` generique). 4 agents Explore en parallele + agent Plan + /simplify.
 
-**Script creation cle API (`backend/scripts/create_api_key.py`)** :
-- Script CLI standalone pour creer des cles API agents (CoWork, N8N)
-- Connexion directe Neon DB, bypass Firebase admin auth
-- Scopes : `autosourcing:read/write`, `autosourcing:job_read`, `daily_review:read`
-- Cle `avk_...` generee et inseree en base avec succes
+#### PRs Mergees
 
-**Integration Agent CoWork** :
-- Cle API creee et validee (prefix `avk_`, 36 chars)
-- Endpoints accessibles via `X-API-Key` header :
-  - `GET /daily-review/actionable` : Buy list STABLE, ROI > 15%
-  - `GET /daily-review/today` : Review quotidienne
-  - `GET /autosourcing/to-buy` et `/favorites` : Listes produits
-  - `POST /autosourcing/run-custom` : Lancer scan (tokens Keepa)
-  - `GET /autosourcing/jobs/{id}` : Details job
+| PR | Titre | Contenu | LOC |
+|----|-------|---------|-----|
+| #27 | Fix silent exceptions + tests | 12 except Exception dangereux corriges, 9 tests cowork | +264 -16 |
+| #28 | Dead code + CoWork hardening | 2 fichiers morts supprimes, Pydantic models, timezone fix, BSR standardise | +28 -511 |
+| #29 | data_quality flag | Nouveau champ pour distinguer "pas de donnees" vs "DB cassee" | +60 |
+| #30 | /simplify fixes | BSR bug (bsr=0->-1), return types, data_quality gaps | +8 -5 |
+| P2-A | keepa-balance + jobs endpoints | 2 nouveaux endpoints CoWork | +339 |
+| P2-B | Rate limiting | SlidingWindowLimiter in-memory, 30 GET/min, 5 POST/min | +232 -6 |
+| P2-C | ROI consolidation | autosourcing_scoring.py extrait, -207 LOC duplication | +288 -289 |
 
-### Phase C - Condition Signals + Pydantic v2 Fix COMPLETE
+#### Phase 1 - Attributs Fantomes (2 trouves)
+- `job.user_id` dans webhook_service.py:51,131 (getattr safe, documente)
+- `pick.classification` dans webhook_service.py:184 (getattr safe, documente)
+- `total_discovered` deja corrige dans PR #26 (commit b131cbd)
 
-**Objectif** : Integrer les condition signals dans le pipeline unifie et corriger les deprecations Pydantic.
+#### Phase 2 - except Exception (12 DANGEROUS corriges)
+- cowork.py:400 bare `except: pass` -> logging
+- cowork.py last-job-stats -> raise HTTP 500 au lieu de reponse vide
+- advanced_scoring.py 6 fallbacks -> logging ajoute
+- settings.py 2 keyring fallbacks -> warning logs
+- roi_calculations.py, velocity_calculations.py -> logging ajoute
 
-**Condition Signals (unified_analysis.py)** :
-- Step 5.5 : Derivation `condition_signal` (STRONG/MODERATE/WEAK) basee sur ROI + total used offer count
-- Confidence boost : +10 points (STRONG), +5 (MODERATE) applique au confidence_normalized
-- `condition_signal` et `total_used_offers` exposes dans la reponse API
-- Logique alignee avec autosourcing_service (meme config `condition_signals` de business_rules.json)
+#### P2 Batch A - Nouveaux endpoints CoWork
+- `GET /cowork/keepa-balance` : balance tokens Keepa avec cache 60s
+- `GET /cowork/jobs?limit=10&offset=0&status=success` : liste paginee des jobs
 
-**Condition Breakdown (buying guidance enrichi)** :
-- `condition_breakdown` : liste triee par ROI desc avec labels FR (Neuf, Tres bon, Bon, Acceptable)
-- `recommended_condition` et `condition_signal` ajoutes au buying_guidance dict
-- Helper `_build_condition_breakdown()` avec market_price, roi_pct, seller_count, fba_count par condition
+#### P2 Batch B - Rate Limiting
+- `app/core/rate_limiter.py` : SlidingWindowLimiter (zero dep externe)
+- GET /cowork/* : 30 req/min
+- POST /cowork/fetch-and-score : 5 req/min
+- HTTP 429 + Retry-After sur depassement
 
-**Pydantic v2 Fix (analytics.py)** :
-- `decimal_places=2` deprecie remplace par `field_validator` avec `round(v, 2)`
-- Defaults migres vers `Decimal("...")` au lieu de float/int literals
-- Compatibilite Pydantic 2.7.3 validee
+#### P2 Batch C - ROI Consolidation
+- `app/services/autosourcing_scoring.py` (212 LOC) : 8 fonctions extraites
+- `calculate_product_roi()` + `evaluate_condition_signal()` : elimine duplication
+- `autosourcing_service.py` : 1244 -> 1037 LOC (-207)
+- Tests mis a jour : test_autosourcing_meets_criteria.py, test_condition_scoring.py
 
-**Tests** : 24 nouveaux dans `test_phase_c_enhancements.py` (98/98 lies passent)
-**Commit** : `469453a` feat: Phase C + Pydantic v2 fix
-**PR** : #19 mergee sur main (squash)
-
-### Bugfixes 35+ (Mars 2026)
-
-**25 bugs critiques** (PR #14) :
-- Pipeline AutoSourcing : deduplication ASIN, scoring formulas, classification
-- Frontend : responsive, composants, hooks
-
-**12 bugs MEDIUM** (PR #15) :
-- Dedup, scoring, formulas, frontend
-
-**3 bugs LOW** (PR #17) :
-- Keepa CSV indices (RATING=16, COUNT_REVIEWS=17 corrige)
-- Webhook session isolation (propre session DB)
-- Documentation KNOWN_ISSUES
-
----
-
-## CHANGELOG - 6 Fevrier 2026
-
-### Phase 2D - Daily Review Dashboard COMPLETE
-
-**Objectif** : Carte Daily Review sur le dashboard classifiant les picks AutoSourcing en 5 categories
-
-**Fichiers crees** :
-- `backend/app/services/daily_review_service.py` - Classification engine (STABLE, JACKPOT, REVENANT, FLUKE, REJECT)
-- `backend/app/schemas/daily_review.py` - Schemas Pydantic
-- `backend/app/api/v1/routers/daily_review.py` - Endpoint GET /daily-review/today
-- `backend/tests/services/test_daily_review_service.py` - 31 tests unitaires
-- `frontend/src/components/vault/DailyReviewCard.tsx` - Composant dashboard
-
-**Resultat** : 31 tests passent, build frontend OK
+#### /simplify Review (3 agents paralleles)
+- Bug BSR corrige : `bsr or -1` traitait bsr=0 valide comme -1
+- Return types corriges : `-> dict` -> `-> CoworkDashboardResponse`
+- data_quality propagee quand history_map echoue
 
 ---
 
@@ -117,10 +88,25 @@
 | 2A-2C | Validation + Simplification + Fees | 144 | 18 Jan 2026 |
 | 2D | Daily Review Dashboard | 31 | 6 Fev 2026 |
 | 3 | Simplification Radicale | 785 | 21 Fev 2026 |
-| **C** | **Condition Signals + Pydantic fix** | **24 nouveaux (289 service)** | **24 Mars 2026** |
-| **Bugfixes** | **35+ bugs (critiques + medium + low)** | **289 service** | **Mars 2026** |
-| **Security** | **Audit securite + headers + rate limiting** | **12 tests** | **24 Mars 2026** |
-| **Agent API** | **Script cle API + integration CoWork** | **N/A (utilitaire)** | **24 Mars 2026** |
+| C | Condition Signals + Pydantic fix | 24 nouveaux | 24 Mars 2026 |
+| Bugfixes | 35+ bugs | 289 service | Mars 2026 |
+| Security | Audit securite + headers + rate limiting | 12 tests | 24 Mars 2026 |
+| Agent API | Script cle API + integration CoWork | N/A | 24 Mars 2026 |
+| **Codebase Audit** | **Silent exceptions + dead code + hardening** | **33 cowork + 7 rate limiter** | **26 Mars 2026** |
+| **P2 Simplification** | **Endpoints + rate limiting + ROI consolidation** | **Inclus ci-dessus** | **26 Mars 2026** |
+
+---
+
+## COWORK AGENT ENDPOINTS (6 endpoints)
+
+| Endpoint | Methode | Limite | Description |
+|----------|---------|--------|-------------|
+| `/cowork/dashboard-summary` | GET | 30/min | Sante systeme + stats 24h + data_quality |
+| `/cowork/fetch-and-score` | POST | 5/min | Lancer scan on-demand |
+| `/cowork/daily-buy-list` | GET | 30/min | Liste achats STABLE + data_quality |
+| `/cowork/last-job-stats` | GET | 30/min | Stats dernier job |
+| `/cowork/keepa-balance` | GET | 30/min | Balance tokens Keepa (cache 60s) |
+| `/cowork/jobs` | GET | 30/min | Liste paginee des jobs |
 
 ---
 
@@ -131,43 +117,39 @@
 | Backend | https://arbitragevault-backend-v2.onrender.com |
 | Frontend | https://arbitragevault.netlify.app |
 
-**Authentification** : Firebase (Email/Password)
-
 ---
 
-## ARCHITECTURE POST-SIMPLIFICATION
+## ARCHITECTURE POST-AUDIT
 
-### Frontend (4 pages)
-- Dashboard (DailyReviewCard, stats, activity)
-- AutoSourcing (jobs, picks, profiles)
-- AutoScheduler (scheduling)
-- Configuration (business rules)
-
-### Backend (11 routers)
+### Backend (12 routers)
 - health, auth, keepa, products, config
 - autosourcing, autoscheduler, stock_estimate
-- asin_history, textbook_analysis, daily_review
+- asin_history, textbook_analysis, daily_review, **cowork**
 
-### Archive
-- `_archive/frontend/` : 45 fichiers (pages, composants, hooks, services)
-- `_archive/backend/` : 62 fichiers (routers, services, models, schemas, tests)
+### Nouveaux Modules
+- `app/core/rate_limiter.py` : Rate limiting HTTP in-memory
+- `app/services/autosourcing_scoring.py` : Scoring helpers extraits
+
+### Fichiers Supprimes
+- `app/services/amazon_filter_service.py` (dead code)
+- `app/services/async_job_service.py` (dead code)
 
 ---
 
 ## PROCHAINES ACTIONS
 
-1. [x] Phase 3 - Simplification Radicale - COMPLETE
-2. [x] Phase C - Condition Signals + Pydantic fix - COMPLETE (PR #19)
-3. [x] Bugfixes 35+ - COMPLETE (PR #14, #15, #17)
-4. [x] Security Audit - COMPLETE (rate limiting, headers, endpoint protection)
-5. [x] Script cle API agents - COMPLETE (backend/scripts/create_api_key.py)
-6. [x] Cle API CoWork creee et validee
-7. [ ] Integration complete CoWork/N8N (configurer workflows avec la cle)
-8. [ ] Tests pre-deploy (smoke test API, frontend validation)
-9. [ ] Deploy en production (Render backend + Netlify frontend)
-10. [ ] Task 15 - Replenishable Watchlist (optionnel, post-deploy)
-11. [ ] Migration DB : drop tables inutilisees (quand stable)
+### P3 - Refactoring (prochaine session)
+1. [ ] Split `keepa_product_finder.py` (1413 LOC) en `keepa_discovery.py` + finder
+2. [ ] Extraire `pick_to_dict()` helper partage (4 duplications dans cowork.py + daily_review.py)
+3. [ ] `asyncio.gather` pour queries paralleles dans dashboard-summary (6 round trips -> 2-3)
+
+### Apres P3
+4. [ ] Integration complete CoWork/N8N (configurer workflows avec la cle)
+5. [ ] Tests pre-deploy (smoke test API, frontend validation)
+6. [ ] Deploy en production (Render backend + Netlify frontend)
+7. [ ] Task 15 - Replenishable Watchlist (optionnel, post-deploy)
+8. [ ] Migration DB : drop tables inutilisees (quand stable)
 
 ---
 
-**Derniere mise a jour** : 24 Mars 2026
+**Derniere mise a jour** : 26 Mars 2026

@@ -204,17 +204,35 @@ VITE_FIREBASE_APP_ID=<app_id>
 
 ---
 
+## Sourcing Strategy Calibration (26 Mars 2026 - session 3)
+
+**Contexte** : Recherche approfondie (Perplexity Deep Research + Reddit/X) a revele que les seuils de sourcing etaient calibres pour des thrift sellers ($1-2/livre), pas pour du online Amazon-to-Amazon ($8-20/livre). Prime Bump FBA elimine en nov 2025 (85% -> 13% Buy Box FBA).
+
+**Plan** : `docs/plans/2026-03-26-sourcing-strategy-calibration.md` | Branche : `fix/sourcing-strategy-calibration`
+
+| Changement | Avant | Apres | Raison |
+|------------|-------|-------|--------|
+| source_price_factor | 0.50/0.35/0.40 (3 valeurs!) | 0.40 unifie | ROI calcule correctement |
+| BSR max velocity | 100,000 | 75,000 | >100K = 0.5-1.5 ventes/mois online |
+| BSR max textbook | 300,000 | 250,000 | Saisonnier, avec check historique peak |
+| ROI min textbook | 50% | 35% | 50% trop rare online |
+| max_fba_sellers | Non actif | 5-8 par strategie | Filtre competition critique pour petit vendeur |
+| min_profit_dollars | Non existant | $8-12 par strategie | ROI % seul insuffisant |
+| condition_signal WEAK | Boost confiance seulement | Disqualificateur pour STABLE | Buy Box 2026 = condition-first |
+
+---
+
 ## Prochaines Etapes
 
 | Priorite | Description | Status |
 |----------|-------------|--------|
-| 1 | **P3 Refactoring** : Split keepa_product_finder.py (1413 LOC) | A FAIRE |
-| 2 | **P3 Refactoring** : Extraire pick_to_dict() helper (4 duplications) | A FAIRE |
-| 3 | **P3 Refactoring** : asyncio.gather pour dashboard queries | A FAIRE |
-| 4 | Integration CoWork/N8N workflows | EN COURS |
-| 5 | Tests pre-deploy + Deploy production | A FAIRE |
-| 6 | Task 15 - Replenishable Watchlist | OPTIONNEL |
-| 7 | Migration DB drop tables archivees | QUAND STABLE |
+| **0** | **Sourcing Strategy Calibration** (7 taches + 50 tests fixes) | COMPLETE (PR #30, commit b6d6aae, 27 mars) |
+| 1 | **Configurer CoWork** dans Claude Desktop (automatisation 3-4x/jour) | A FAIRE |
+| 2 | **P3 Refactoring** : Split keepa_product_finder.py (1413 LOC) | A FAIRE |
+| 3 | **P3 Refactoring** : Extraire pick_to_dict() helper (4 duplications) | A FAIRE |
+| 4 | **P3 Refactoring** : asyncio.gather pour dashboard queries | A FAIRE |
+| 5 | **Niche Watchlist Sniping** : Connecter ASIN tracking a SMS/email | FUTURE PHASE |
+| 6 | Migration DB drop tables archivees | QUAND STABLE |
 
 ---
 
@@ -226,10 +244,11 @@ VITE_FIREBASE_APP_ID=<app_id>
 | compact_current.md | Memoire session active |
 | compact_master.md | Memoire globale (ce fichier) |
 | errors.md | Registre bugs catalogues avec codes domaine |
+| AGENT_CONTEXT.md | Context file pour agents CoWork/N8N (v2.1, calibre mars 2026) |
 | `_archive/` | Code archive (frontend + backend) |
 
 ---
 
-**Version** : 11.0
-**Derniere revision** : 26 Mars 2026
-**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API + Codebase Audit + P2 completes
+**Version** : 13.0
+**Derniere revision** : 27 Mars 2026 (session 3 — fin)
+**Statut** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API + Codebase Audit + P2 + Sourcing Calibration completes

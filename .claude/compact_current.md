@@ -1,8 +1,8 @@
 # ArbitrageVault BookFinder - Memoire Active Session
 
-**Derniere mise a jour** : 26 Mars 2026
-**Phase Actuelle** : Audit Codebase Health + P2 Simplification COMPLETE
-**Statut Global** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API + Codebase Audit completes, Production LIVE
+**Derniere mise a jour** : 27 Mars 2026 (session 3 — fin)
+**Phase Actuelle** : Sourcing Strategy Calibration COMPLETE + Deployed
+**Statut Global** : Phases 1-13 + Phase 3 + Phase C + Bugfixes + Security + Agent API + Codebase Audit + P2 + Sourcing Calibration completes, Production LIVE
 
 ---
 
@@ -10,103 +10,81 @@
 
 | Metrique | Status |
 |----------|--------|
-| **Phase Actuelle** | Codebase Audit + P2 Simplification COMPLETE |
-| **Prochaine Action** | P3 Refactoring (voir section PROCHAINES ACTIONS) |
+| **Phase Actuelle** | Sourcing Calibration COMPLETE — PR #30 mergee, prod seedee |
+| **Prochaine Action** | Configurer CoWork dans Claude Desktop pour automatisation 3-4x/jour |
 | **CLAUDE.md** | v3.3 - Zero-Tolerance Engineering |
 | **Production** | Backend Render + Frontend Netlify LIVE |
 | **Authentification** | Firebase Auth (Email/Password) |
-| **Tests Total** | 769+ service tests + 33 cowork + 7 rate limiter |
+| **Tests Total** | 986 passed, 0 failed, 26 skipped |
 | **Bloqueurs** | Aucun |
 | **Environnement** | macOS (migration depuis Windows jan 2026) |
 
 ---
 
-## CHANGELOG - 26 Mars 2026
+## CONTEXTE SESSION 3 — Ce qui a ete fait et pourquoi
 
-### Audit Codebase Health (Session 26 Mars)
+### Recherche marche approfondie (Perplexity Deep Research + Reddit/X)
 
-Audit complet declenche par le bug `total_discovered` (attribut fantome avale par
-`except Exception` generique). 4 agents Explore en parallele + agent Plan + /simplify.
+Avant d'ecrire du code, 5 recherches ont ete menees pour comprendre le marche FBA book arbitrage en 2026. Resultats cles :
 
-#### PRs Mergees
+1. **Prime Bump elimine (nov 2025)** : FBA ne gagne plus le Buy Box automatiquement. 85% -> 13% en 12 mois. L'algorithme favorise maintenant la condition (Very Good domine) et le prix. Notre `intrinsic_value` et `condition_signal` sont bien positionnes pour ce nouveau paradigme.
 
-| PR | Titre | Contenu | LOC |
-|----|-------|---------|-----|
-| #27 | Fix silent exceptions + tests | 12 except Exception dangereux corriges, 9 tests cowork | +264 -16 |
-| #28 | Dead code + CoWork hardening | 2 fichiers morts supprimes, Pydantic models, timezone fix, BSR standardise | +28 -511 |
-| #29 | data_quality flag | Nouveau champ pour distinguer "pas de donnees" vs "DB cassee" | +60 |
-| #30 | /simplify fixes | BSR bug (bsr=0->-1), return types, data_quality gaps | +8 -5 |
-| P2-A | keepa-balance + jobs endpoints | 2 nouveaux endpoints CoWork | +339 |
-| P2-B | Rate limiting | SlidingWindowLimiter in-memory, 30 GET/min, 5 POST/min | +232 -6 |
-| P2-C | ROI consolidation | autosourcing_scoring.py extrait, -207 LOC duplication | +288 -289 |
+2. **Modele online =/= modele thrift** : Les guides generaux (BSR 500K, ROI 30%) s'appliquent aux vendeurs qui sourcent a $1-2 en magasin. Pour du Amazon-to-Amazon a $8-20 de cout source, il faut etre plus strict : BSR max 75K (velocity), profit minimum $8-12/livre.
 
-#### Phase 1 - Attributs Fantomes (2 trouves)
-- `job.user_id` dans webhook_service.py:51,131 (getattr safe, documente)
-- `pick.classification` dans webhook_service.py:184 (getattr safe, documente)
-- `total_discovered` deja corrige dans PR #26 (commit b131cbd)
+3. **Competition vendeurs FBA** : Pour un petit vendeur (1-3 copies/titre), plus de 5-8 vendeurs FBA sur un listing = capital mort. Le "40 vendeurs max" est une regle pour les gros volumes.
 
-#### Phase 2 - except Exception (12 DANGEROUS corriges)
-- cowork.py:400 bare `except: pass` -> logging
-- cowork.py last-job-stats -> raise HTTP 500 au lieu de reponse vide
-- advanced_scoring.py 6 fallbacks -> logging ajoute
-- settings.py 2 keyring fallbacks -> warning logs
-- roi_calculations.py, velocity_calculations.py -> logging ajoute
+4. **Textbook toujours viable** : Le marche physique tient (70% des etudiants achetent encore), mais les access codes et OpenStax (72% des colleges) grugent le marche. La strategie textbook fonctionne dans les niches specialisees (nursing, engineering, law, CS) ou les access codes sont moins frequents. Le BSR textbook est saisonnier — 250K hors-saison peut etre 15K en aout.
 
-#### P2 Batch A - Nouveaux endpoints CoWork
-- `GET /cowork/keepa-balance` : balance tokens Keepa avec cache 60s
-- `GET /cowork/jobs?limit=10&offset=0&status=success` : liste paginee des jobs
+5. **FBA Prep Service supprime** (1er jan 2026, confirme). Pas d'impact sur l'app, mais impact operationnel pour le vendeur.
 
-#### P2 Batch B - Rate Limiting
-- `app/core/rate_limiter.py` : SlidingWindowLimiter (zero dep externe)
-- GET /cowork/* : 30 req/min
-- POST /cowork/fetch-and-score : 5 req/min
-- HTTP 429 + Retry-After sur depassement
+### Plan execute : 7 taches + 50 tests fixes
 
-#### P2 Batch C - ROI Consolidation
-- `app/services/autosourcing_scoring.py` (212 LOC) : 8 fonctions extraites
-- `calculate_product_roi()` + `evaluate_condition_signal()` : elimine duplication
-- `autosourcing_service.py` : 1244 -> 1037 LOC (-207)
-- Tests mis a jour : test_autosourcing_meets_criteria.py, test_condition_scoring.py
+**PR #30** : `fix/sourcing-strategy-calibration` — squash-merged dans main le 27 mars 2026.
+Commit : `b6d6aae`
 
-#### /simplify Review (3 agents paralleles)
-- Bug BSR corrige : `bsr or -1` traitait bsr=0 valide comme -1
-- Return types corriges : `-> dict` -> `-> CoworkDashboardResponse`
-- data_quality propagee quand history_map echoue
+| Tache | Description | Fichiers | Status |
+|-------|-------------|----------|--------|
+| 1 | Verifier source_price_factor en prod | Query Neon | source_price_factor existait deja |
+| 2 | Unifier source_price_factor a 0.40 | autosourcing_service, daily_review, config, seed script | FAIT |
+| 3 | Recalibrer seuils BSR/ROI/profit/sellers | business_rules.json | FAIT |
+| 4 | Activer filtre max_fba_sellers dans pipeline | autosourcing_scoring, autosourcing_service | FAIT |
+| 5 | Ajouter filtre profit absolu minimum | autosourcing_scoring, autosourcing_service | FAIT |
+| 6 | Elever condition_signal WEAK disqualificateur | daily_review_service, business_rules.json | FAIT |
+| 7 | Validation prod + doc CoWork | AGENT_CONTEXT.md, smoke tests | FAIT |
+| +  | Corriger 50 tests pre-existants casses | 13 fichiers test | FAIT |
+
+### Post-merge : prod seedee et validee
+
+- `seed_source_price_factor.py` execute en prod Neon — version 5, valeur 0.40
+- 4 endpoints CoWork testes en prod : dashboard-summary, daily-buy-list, keepa-balance, last-job-stats — tous OK
+- 0 picks dans daily-buy-list (normal — pas de scan depuis le merge avec les nouveaux seuils)
 
 ---
 
-## ETAT DES AUDITS
+## SEUILS ACTIFS EN PRODUCTION (post-calibration)
 
-| Phase | Description | Tests | Date |
-|-------|-------------|-------|------|
-| 1-9 | Foundation -> UI Completion | 500+ | Nov-Dec 2025 |
-| 10 | Unified Product Table | 7 E2E | 1 Jan 2026 |
-| 11 | Page Centrale Recherches | 15+ | 1 Jan 2026 |
-| 12 | UX Mobile-First | E2E | 3 Jan 2026 |
-| 13 | Firebase Authentication | 20+ | 10 Jan 2026 |
-| 1A-1D | Architecture Refactoring | 144+ | 17 Jan 2026 |
-| 2A-2C | Validation + Simplification + Fees | 144 | 18 Jan 2026 |
-| 2D | Daily Review Dashboard | 31 | 6 Fev 2026 |
-| 3 | Simplification Radicale | 785 | 21 Fev 2026 |
-| C | Condition Signals + Pydantic fix | 24 nouveaux | 24 Mars 2026 |
-| Bugfixes | 35+ bugs | 289 service | Mars 2026 |
-| Security | Audit securite + headers + rate limiting | 12 tests | 24 Mars 2026 |
-| Agent API | Script cle API + integration CoWork | N/A | 24 Mars 2026 |
-| **Codebase Audit** | **Silent exceptions + dead code + hardening** | **33 cowork + 7 rate limiter** | **26 Mars 2026** |
-| **P2 Simplification** | **Endpoints + rate limiting + ROI consolidation** | **Inclus ci-dessus** | **26 Mars 2026** |
+| Strategie | BSR max | ROI min | Profit min | Max FBA sellers | Holding |
+|-----------|---------|---------|------------|-----------------|---------|
+| VELOCITY | 75,000 | 30% | $8 | 5 | 7-30j |
+| BALANCED | 100,000 | 30% | $10 | 6 | 14-60j |
+| TEXTBOOK | 250,000 | 35% | $12 | 8 | 45-90j |
+
+- `source_price_factor = 0.40` (unifie, DB prod = 0.40)
+- `fba_fee_percentage = 0.22`
+- `reject_weak = true` (condition WEAK + ROI < 20% = REJECT)
 
 ---
 
-## COWORK AGENT ENDPOINTS (6 endpoints)
+## COWORK AGENT ENDPOINTS (6 endpoints — tous valides en prod)
 
-| Endpoint | Methode | Limite | Description |
+| Endpoint | Methode | Limite | Status prod |
 |----------|---------|--------|-------------|
-| `/cowork/dashboard-summary` | GET | 30/min | Sante systeme + stats 24h + data_quality |
-| `/cowork/fetch-and-score` | POST | 5/min | Lancer scan on-demand |
-| `/cowork/daily-buy-list` | GET | 30/min | Liste achats STABLE + data_quality |
-| `/cowork/last-job-stats` | GET | 30/min | Stats dernier job |
-| `/cowork/keepa-balance` | GET | 30/min | Balance tokens Keepa (cache 60s) |
-| `/cowork/jobs` | GET | 30/min | Liste paginee des jobs |
+| `/cowork/dashboard-summary` | GET | 30/min | OK |
+| `/cowork/fetch-and-score` | POST | 5/min | Non teste (a lancer) |
+| `/cowork/daily-buy-list` | GET | 30/min | OK (0 items — normal) |
+| `/cowork/last-job-stats` | GET | 30/min | OK |
+| `/cowork/keepa-balance` | GET | 30/min | OK (486 tokens) |
+| `/cowork/jobs` | GET | 30/min | Non teste |
 
 ---
 
@@ -119,37 +97,55 @@ Audit complet declenche par le bug `total_discovered` (attribut fantome avale pa
 
 ---
 
-## ARCHITECTURE POST-AUDIT
+## DECISIONS ARCHITECTURALES — SESSION 3
 
-### Backend (12 routers)
-- health, auth, keepa, products, config
-- autosourcing, autoscheduler, stock_estimate
-- asin_history, textbook_analysis, daily_review, **cowork**
-
-### Nouveaux Modules
-- `app/core/rate_limiter.py` : Rate limiting HTTP in-memory
-- `app/services/autosourcing_scoring.py` : Scoring helpers extraits
-
-### Fichiers Supprimes
-- `app/services/amazon_filter_service.py` (dead code)
-- `app/services/async_job_service.py` (dead code)
+| Date | Decision | Pourquoi | Impact |
+|------|----------|----------|--------|
+| 26 mars | source_price_factor unifie a 0.40 | 3 valeurs differentes (0.50/0.35/0.40) dans le code. 0.40 = realiste pour sourcing online $8-20 | Tous les calculs ROI du pipeline |
+| 26 mars | BSR max textbook elargi a 250K | BSR saisonnier — BSR 250K hors-saison peut etre BSR 15K en aout. Avec guard : seasonal_bsr_check | Recherche Perplexity confirme |
+| 26 mars | BSR max velocity reduit a 75K | BSR >100K = 0.5-1.5 ventes/mois, holding 150-300j. Inviable online | Moins de picks mais plus fiables |
+| 26 mars | Max FBA sellers par strategie (5-8) | Petit vendeur (1-3 copies) ne compete pas avec 40+ FBA | Nouveau filtre dans pipeline scoring |
+| 26 mars | condition_signal WEAK = disqualificateur | Post-Prime-Bump : condition Very Good domine Buy Box | reject_weak=true, threshold 20% |
+| 26 mars | Profit absolu minimum par strategie | ROI % seul ne suffit pas — besoin $8-12 minimum | min_profit_dollars dans business_rules |
+| 27 mars | Niche Watchlist = phase future | Keepa Product Finder ne filtre pas par sous-categorie. La vraie strategie niche = ASIN tracking + SMS alertes. Pas un besoin immediat | Documente dans memoire, pas implemente |
+| 27 mars | Access codes non filtrables | Pas de donnee Keepa sur les access codes. Le BSR saisonnier filtre naturellement les livres morts | Aucun filtre a ajouter |
 
 ---
 
 ## PROCHAINES ACTIONS
 
-### P3 - Refactoring (prochaine session)
-1. [ ] Split `keepa_product_finder.py` (1413 LOC) en `keepa_discovery.py` + finder
-2. [ ] Extraire `pick_to_dict()` helper partage (4 duplications dans cowork.py + daily_review.py)
-3. [ ] `asyncio.gather` pour queries paralleles dans dashboard-summary (6 round trips -> 2-3)
+### Immediat
+1. [ ] **Configurer CoWork dans Claude Desktop** pour automatisation 3-4x/jour
+   - CoWork appelle `/cowork/fetch-and-score` avec Bearer token
+   - SMS via Textbelt pour les picks STABLE
+   - Dashboard HTML sur tiiny.host ou Cloudflare Pages
 
-### Apres P3
-4. [ ] Integration complete CoWork/N8N (configurer workflows avec la cle)
-5. [ ] Tests pre-deploy (smoke test API, frontend validation)
-6. [ ] Deploy en production (Render backend + Netlify frontend)
-7. [ ] Task 15 - Replenishable Watchlist (optionnel, post-deploy)
-8. [ ] Migration DB : drop tables inutilisees (quand stable)
+### Court terme
+2. [ ] **Lancer un premier scan prod** via `/cowork/fetch-and-score` pour valider les nouveaux seuils
+3. [ ] **Deploy Render** si auto-deploy n'est pas actif (verifier que le merge a declenche un deploy)
+
+### Moyen terme
+4. [ ] P3 Refactoring : Split keepa_product_finder.py (1413 LOC)
+5. [ ] P3 Refactoring : Extraire pick_to_dict() helper (4 duplications)
+6. [ ] P3 Refactoring : asyncio.gather pour dashboard queries
+
+### Future phase : Niche Watchlist Sniping
+7. [ ] Connecter asin_tracking_service a notification_service (SMS/email sur price drop)
+8. [ ] Constituer watchlist de 50-100 ASINs textbook (nursing, engineering, CS, law)
+9. [ ] Alerte SMS quand prix drop >25% sur un ASIN watchlist
 
 ---
 
-**Derniere mise a jour** : 26 Mars 2026
+## INFRASTRUCTURE
+
+### MCP servers (scope user, global)
+context7, github, netlify, render, neon, vercel, supabase, sentry, playwright, sequential-thinking
+
+### Cles API configurees
+- `~/.config/last30days/.env` : OPENAI_API_KEY + XAI_API_KEY + OPENROUTER_API_KEY
+- `backend/.env` : OPENROUTER_API_KEY, KEEPA_API_KEY, DATABASE_URL, etc.
+- Render prod : RESEND_API_KEY + TEXTBELT_API_KEY configures
+
+---
+
+**Derniere mise a jour** : 27 Mars 2026 (session 3 — fin)

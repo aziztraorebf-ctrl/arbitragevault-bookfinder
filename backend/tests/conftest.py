@@ -95,13 +95,24 @@ async def async_db_session(async_test_engine) -> AsyncGenerator[AsyncSession, No
 
 
 @pytest_asyncio.fixture
-async def client() -> AsyncGenerator[AsyncClient, None]:
-    """Create async HTTP client for testing FastAPI app."""
+async def client(async_db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Create async HTTP client for testing FastAPI app.
+
+    Overrides DB dependency to use test SQLite session instead of production DB.
+    """
     from app.main import app
+    from app.core.db import get_db_session
+
+    async def _override_get_db():
+        yield async_db_session
+
+    app.dependency_overrides[get_db_session] = _override_get_db
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
+
+    app.dependency_overrides.pop(get_db_session, None)
 
 
 @pytest_asyncio.fixture
@@ -156,6 +167,17 @@ def user_data():
         "first_name": "Test",
         "last_name": "User"
     }
+
+
+@pytest.fixture(autouse=True)
+def _reset_app_dependency_overrides():
+    """Reset FastAPI dependency overrides between tests.
+
+    Prevents cross-test pollution from stale overrides.
+    """
+    from app.main import app
+    yield
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture

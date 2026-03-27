@@ -67,9 +67,11 @@ class DatabaseManager:
         )
 
     async def close(self) -> None:
-        """Close database engine."""
+        """Close database engine and reset state for re-initialization."""
         if self._engine:
             await self._engine.dispose()
+            self._engine = None
+            self._session_maker = None
             logger.info("Database engine closed")
 
     async def get_session(self) -> AsyncSession:

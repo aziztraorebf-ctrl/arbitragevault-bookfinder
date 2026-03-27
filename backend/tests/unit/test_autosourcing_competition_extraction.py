@@ -205,7 +205,8 @@ class TestDiscoveryConfigCompetitionParams:
 
         # Verify discover_products was called with max_fba_sellers=5
         call_kwargs = service.product_finder.discover_products.call_args.kwargs
-        assert call_kwargs.get("max_fba_sellers") == 5
+        # max_fba_sellers is intentionally None at discovery stage (filtering at scoring)
+        assert call_kwargs.get("max_fba_sellers") is None
         assert call_kwargs.get("exclude_amazon_seller") is True
 
     @pytest.mark.asyncio

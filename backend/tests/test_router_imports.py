@@ -32,20 +32,31 @@ class TestRouterImportIntegrity:
                 pytest.fail(f"Failed to import {module_name}: {e}")
 
     def test_no_circular_import_on_fresh_interpreter(self):
-        """Fresh import should not cause circular import error."""
-        # Clear cached imports
+        """Fresh import should not cause circular import error.
+
+        NOTE: We save and restore sys.modules state to avoid polluting
+        other tests that rely on cached module references (e.g., Depends).
+        """
+        # Save current modules state
+        saved_modules = {}
         for module_name in self.ROUTERS:
             if module_name in sys.modules:
+                saved_modules[module_name] = sys.modules[module_name]
                 del sys.modules[module_name]
 
-        # Re-import all
-        for module_name in self.ROUTERS:
-            try:
-                importlib.import_module(module_name)
-            except ImportError as e:
-                if "circular" in str(e).lower():
-                    pytest.fail(f"Circular import detected in {module_name}")
-                raise
+        try:
+            # Re-import all
+            for module_name in self.ROUTERS:
+                try:
+                    importlib.import_module(module_name)
+                except ImportError as e:
+                    if "circular" in str(e).lower():
+                        pytest.fail(f"Circular import detected in {module_name}")
+                    raise
+        finally:
+            # Restore original modules to prevent cross-test pollution
+            for module_name, module in saved_modules.items():
+                sys.modules[module_name] = module
 
     def test_main_app_imports_all_routers(self):
         """Main app should successfully register all routers."""

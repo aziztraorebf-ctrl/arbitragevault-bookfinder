@@ -17,7 +17,7 @@ from app.schemas.autosourcing_safeguards import (
 def test_constants_have_correct_values():
     """Verify safeguard constants are set to production values."""
     assert MAX_TOKENS_PER_JOB == 200
-    assert MAX_PRODUCTS_PER_SEARCH == 10
+    assert MAX_PRODUCTS_PER_SEARCH == 25
     assert TIMEOUT_PER_JOB == 120
     assert MIN_TOKEN_BALANCE_REQUIRED == 50
 

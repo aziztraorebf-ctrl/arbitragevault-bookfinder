@@ -229,7 +229,8 @@
     "max_used_offers_moderate": 25,
     "confidence_boost_strong": 10,
     "confidence_boost_moderate": 5,
-    "reject_weak": false
+    "reject_weak": true,
+    "reject_weak_roi_threshold": 20.0
   },
   "advanced_scoring": {
     "velocity": {

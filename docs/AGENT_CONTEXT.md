@@ -1,6 +1,6 @@
 # ArbitrageVault BookFinder — Agent Context
 
-**Version**: 2.0 — March 2026
+**Version**: 2.1 — March 2026
 **Purpose**: Context file for AI agents (CoWork, N8N, OpenClaw, etc.) consuming this API.
 Load this file at session start to understand the business logic before querying endpoints.
 
@@ -78,7 +78,7 @@ Every pick returned by the API has these fields:
 | `amazon_on_listing` | bool | True = Amazon is a direct competitor |
 | `bsr` | int | Best Sellers Rank at scan time (-1 = unknown) |
 | `category` | string | Keepa category (e.g. "Medical Books") |
-| `estimated_buy_price` | float | current_price x source_price_factor (default 0.35) |
+| `estimated_buy_price` | float | current_price x source_price_factor (default 0.40) |
 | `data_quality` | string | full / degraded / unavailable |
 
 ### condition_signal rules (Phase C, March 2026)
@@ -100,7 +100,7 @@ Picks are classified into 5 categories. Priority order: first match wins.
 
 | Category | Criteria | Action |
 |----------|----------|--------|
-| **REJECT** | Amazon on listing, OR ROI < 0, OR BSR <= 0, OR WEAK condition + ROI < 5% | Do not buy |
+| **REJECT** | Amazon on listing, OR ROI < 0, OR BSR <= 0, OR WEAK condition + ROI < 20% | Do not buy |
 | **FLUKE** | No history (first time seen) | Ignore — not enough data |
 | **JACKPOT** | ROI > 80% with history | Manual verification required — check for data errors |
 | **REVENANT** | Last seen 24h+ ago, reappears today | Monitor — recurring pattern |
@@ -295,6 +295,23 @@ Failure modes to handle:
 
 ---
 
+## Sourcing Strategies (Calibrated March 2026)
+
+| Strategy | BSR max | ROI min | Profit min | Max FBA sellers |
+|----------|---------|---------|------------|-----------------|
+| textbook | 250,000 | 35% | $12 | 8 |
+| velocity | 75,000 | 30% | $8 | 5 |
+| balanced | 100,000 | 30% | $10 | 6 |
+
+**Key parameters:**
+- `source_price_factor = 0.40` (buy at 40% of sell price — online arbitrage model)
+- `fba_fee_percentage = 0.22` (Amazon referral + closing + FBA fees for books)
+- `reject_weak = true` with threshold 20% (WEAK condition + ROI < 20% = REJECT)
+
+**Post-Prime-Bump 2026:** The FBA Prime advantage for Buy Box was eliminated Nov 2025.
+Pricing is now based on intrinsic_median (Keepa historical median).
+condition_signal STRONG = priority signal for Buy Box competitiveness.
+
 ## Multi-Niche Strategy (March 2026)
 
 The system is not textbook-only. The AutoSourcing engine supports any Keepa category.
@@ -302,4 +319,4 @@ Current validated categories: Books, Programming, Computer Science, Medical, Eng
 Business, Accounting, Education, Science.
 
 The scoring logic (velocity, stability, condition) is category-agnostic.
-Target profile: ROI >= 20%, rotation <= 30 days, <= 8 FBA competitors, Amazon not on listing.
+Target profile: ROI >= 30%, min profit $8-12, rotation <= 30 days, <= 5-8 FBA competitors, Amazon not on listing.

@@ -67,6 +67,7 @@ def classify_product(
     product: Dict[str, Any],
     history: List[Dict[str, Any]],
     now: Optional[datetime] = None,
+    config: Optional[Dict[str, Any]] = None,
 ) -> Classification:
     """
     Classify a product based on its metrics and sighting history.
@@ -77,11 +78,13 @@ def classify_product(
     Args:
         product: Dict with keys: roi_percentage, bsr, amazon_on_listing, etc.
         history: List of past sightings with tracked_at, bsr, price.
+        config: Optional condition_signals config from business_rules.json.
 
     Returns:
         Classification enum value.
     """
     now = now or datetime.now(timezone.utc)
+    config = config or {}
 
     roi = product.get("roi_percentage", 0.0) or 0.0
     bsr = product.get("bsr", -1) or -1
@@ -99,13 +102,19 @@ def classify_product(
         return Classification.REJECT
 
     # --- REJECT: Weak condition signal combined with low ROI ---
+    # When reject_weak=True, use configurable threshold (default 20.0)
+    # instead of hardcoded 5.0. Post-Prime-Bump 2026: WEAK condition
+    # means too many used sellers or low used ROI — unlikely to win Buy Box.
     condition_signal = product.get("condition_signal")
-    if condition_signal == "WEAK" and roi < 5.0:
-        logger.debug(
-            "REJECT: Weak condition signal with low ROI (%.2f) for %s",
-            roi, product.get("asin"),
-        )
-        return Classification.REJECT
+    reject_weak = config.get("reject_weak", False)
+    if condition_signal == "WEAK":
+        threshold = config.get("reject_weak_roi_threshold", 5.0) if reject_weak else 5.0
+        if roi < threshold:
+            logger.debug(
+                "REJECT: Weak condition signal with ROI %.2f%% < %.2f%% for %s",
+                roi, threshold, product.get("asin"),
+            )
+            return Classification.REJECT
 
     # --- FLUKE: No history at all (never seen before) ---
     if not history:
@@ -153,6 +162,7 @@ def generate_daily_review(
     picks: List[Dict[str, Any]],
     history_map: Dict[str, List[Dict[str, Any]]],
     now: Optional[datetime] = None,
+    condition_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Aggregate product picks into a daily review with classifications.
@@ -164,6 +174,7 @@ def generate_daily_review(
         picks: List of product pick dicts (must contain 'asin' key).
         history_map: Dict mapping ASIN -> list of history entries.
         now: Optional datetime for classification (passed to classify_product).
+        condition_config: Optional condition_signals config from business_rules.
 
     Returns:
         Dict with: review_date, total, counts, classified_products,
@@ -179,7 +190,7 @@ def generate_daily_review(
     for pick in picks:
         asin = pick.get("asin", "")
         history = history_map.get(asin, [])
-        classification = classify_product(pick, history, now=now)
+        classification = classify_product(pick, history, now=now, config=condition_config)
 
         counts[classification.value] += 1
 
@@ -233,7 +244,8 @@ def generate_actionable_review(
     min_roi: float = STABLE_MIN_ROI,
     max_results: int = 10,
     now: Optional[datetime] = None,
-    source_price_factor: float = 0.35,
+    source_price_factor: float = 0.40,
+    condition_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Generate a pre-filtered actionable buy list of STABLE picks only.
@@ -247,6 +259,7 @@ def generate_actionable_review(
         min_roi: Minimum ROI percentage to include (default 15.0).
         max_results: Maximum number of items to return (default 10).
         now: Optional datetime for classification.
+        condition_config: Optional condition_signals config from business_rules.
 
     Returns:
         Dict with: items, total_found, filters_applied, generated_at.
@@ -258,7 +271,7 @@ def generate_actionable_review(
     for pick in picks:
         asin = pick.get("asin", "")
         history = history_map.get(asin, [])
-        classification = classify_product(pick, history, now=now)
+        classification = classify_product(pick, history, now=now, config=condition_config)
 
         if classification != Classification.STABLE:
             continue

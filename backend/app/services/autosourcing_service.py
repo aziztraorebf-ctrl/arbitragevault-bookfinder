@@ -17,6 +17,8 @@ from app.services.autosourcing_scoring import (
     compute_rating,
     meets_criteria,
     classify_product_tier,
+    should_reject_by_competition,
+    should_reject_by_profit_floor,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -532,17 +534,34 @@ class AutoSourcingService:
             fba_seller_count = product_data.get("fba_seller_count")
             amazon_on_listing = product_data.get("amazon_on_listing", False)
 
-            # Conservative sourcing cost estimate: default factor assumes buying at 50% of
-            # Amazon sell price, typical for FBM->FBA online arbitrage. Override via
-            # business_config.source_price_factor or seed with scripts/seed_source_price_factor.py.
-            # See ROI calibration guide in docs/roi-defaults.md for tuning guidance.
-            # Calculate estimated buy cost using unified source_price_factor
-            # Default 0.50 = buy at 50% of sell price (FBM->FBA arbitrage, aligned with guide)
-            source_price_factor = business_config.get("source_price_factor", 0.50)
-            fba_fee_percentage = business_config.get("fba_fee_percentage", 0.15)
+            # Unified source_price_factor: 0.40 = buy at 40% of sell price
+            # (online arbitrage model 2026, calibrated from market data).
+            # Override via business_config or DB seed.
+            source_price_factor = business_config.get("source_price_factor", 0.40)
+            fba_fee_percentage = business_config.get("fba_fee_percentage", 0.22)
             estimated_cost, profit_net, roi_percentage = calculate_product_roi(
                 current_price, source_price_factor, fba_fee_percentage
             )
+
+            # --- Competition & profit floor filters (read from active strategy) ---
+            strategy_config = business_config.get("strategies", {}).get(
+                business_config.get("active_strategy", "balanced"), {}
+            )
+            max_fba_sellers = strategy_config.get("max_fba_sellers")
+            if should_reject_by_competition(fba_seller_count, max_fba_sellers):
+                logger.info(
+                    "Skipping %s: too many FBA sellers (%s > %s)",
+                    asin, fba_seller_count, max_fba_sellers,
+                )
+                return None
+
+            min_profit_dollars = strategy_config.get("min_profit_dollars")
+            if should_reject_by_profit_floor(profit_net, min_profit_dollars):
+                logger.info(
+                    "Skipping %s: profit $%.2f below floor $%.2f",
+                    asin, profit_net, min_profit_dollars,
+                )
+                return None
 
             used_roi_percentage, condition_signal = evaluate_condition_signal(
                 product_data, estimated_cost, fba_fee_percentage,
@@ -600,8 +619,8 @@ class AutoSourcingService:
                 fba_seller_count=fba_seller_count,
                 amazon_on_listing=amazon_on_listing,
                 # Condition-based scoring signals
-                used_price=used_price,
-                used_offer_count=used_offer_count,
+                used_price=product_data.get("used_price"),
+                used_offer_count=product_data.get("used_offer_count"),
                 used_roi_percentage=used_roi_percentage,
                 condition_signal=condition_signal
             )
@@ -660,17 +679,33 @@ class AutoSourcingService:
             fba_seller_count = product_data.get("fba_seller_count")
             amazon_on_listing = product_data.get("amazon_on_listing", False)
 
-            # Conservative sourcing cost estimate: default factor assumes buying at 50% of
-            # Amazon sell price, typical for FBM->FBA online arbitrage. Override via
-            # business_config.source_price_factor or seed with scripts/seed_source_price_factor.py.
-            # See ROI calibration guide in docs/roi-defaults.md for tuning guidance.
-            # Calculate estimated buy cost using unified source_price_factor
-            # Default 0.50 = buy at 50% of sell price (FBM->FBA arbitrage, aligned with guide)
-            source_price_factor = business_config.get("source_price_factor", 0.50)
-            fba_fee_percentage = business_config.get("fba_fee_percentage", 0.15)
+            # Unified source_price_factor: 0.40 = buy at 40% of sell price
+            # (online arbitrage model 2026, calibrated from market data).
+            source_price_factor = business_config.get("source_price_factor", 0.40)
+            fba_fee_percentage = business_config.get("fba_fee_percentage", 0.22)
             estimated_cost, profit_net, roi_percentage = calculate_product_roi(
                 current_price, source_price_factor, fba_fee_percentage
             )
+
+            # --- Competition & profit floor filters (read from active strategy) ---
+            strategy_config = business_config.get("strategies", {}).get(
+                business_config.get("active_strategy", "balanced"), {}
+            )
+            max_fba_sellers = strategy_config.get("max_fba_sellers")
+            if should_reject_by_competition(fba_seller_count, max_fba_sellers):
+                logger.info(
+                    "Skipping %s: too many FBA sellers (%s > %s)",
+                    asin, fba_seller_count, max_fba_sellers,
+                )
+                return None
+
+            min_profit_dollars = strategy_config.get("min_profit_dollars")
+            if should_reject_by_profit_floor(profit_net, min_profit_dollars):
+                logger.info(
+                    "Skipping %s: profit $%.2f below floor $%.2f",
+                    asin, profit_net, min_profit_dollars,
+                )
+                return None
 
             used_roi_percentage, condition_signal = evaluate_condition_signal(
                 product_data, estimated_cost, fba_fee_percentage,
@@ -728,8 +763,8 @@ class AutoSourcingService:
                 fba_seller_count=fba_seller_count,
                 amazon_on_listing=amazon_on_listing,
                 # Condition-based scoring signals
-                used_price=used_price,
-                used_offer_count=used_offer_count,
+                used_price=product_data.get("used_price"),
+                used_offer_count=product_data.get("used_offer_count"),
                 used_roi_percentage=used_roi_percentage,
                 condition_signal=condition_signal
             )

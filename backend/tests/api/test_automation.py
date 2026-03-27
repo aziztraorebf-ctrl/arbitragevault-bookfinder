@@ -45,7 +45,7 @@ def _make_pick(
         "stability_score": stability_score,
         "confidence_score": 0.7,
         "velocity_score": 0.6,
-        "overall_rating": 4.2,
+        "overall_rating": "GOOD",
         **kwargs,
     }
 
@@ -267,11 +267,9 @@ class TestWebhookDispatch:
         with patch("app.services.webhook_service.get_settings", return_value=mock_settings):
             from app.services.webhook_service import dispatch_webhook
 
-            mock_db = AsyncMock()
             mock_job = MagicMock()
-            await dispatch_webhook(mock_db, mock_job)
-            # db.execute should never be called when secret is empty
-            mock_db.execute.assert_not_called()
+            # dispatch_webhook(job) -- db is no longer a required arg
+            await dispatch_webhook(mock_job)
 
     @pytest.mark.asyncio
     async def test_dispatch_fire_and_forget(self):
@@ -279,15 +277,19 @@ class TestWebhookDispatch:
         mock_settings = MagicMock()
         mock_settings.webhook_secret = "test-secret"
 
-        with patch("app.services.webhook_service.get_settings", return_value=mock_settings):
+        mock_db_manager = MagicMock()
+        mock_db_manager.session.side_effect = Exception("DB exploded")
+
+        with (
+            patch("app.services.webhook_service.get_settings", return_value=mock_settings),
+            patch("app.core.db.db_manager", mock_db_manager),
+        ):
             from app.services.webhook_service import dispatch_webhook
 
-            mock_db = AsyncMock()
-            mock_db.execute.side_effect = Exception("DB exploded")
             mock_job = MagicMock()
             mock_job.user_id = "user-123"
             # Should NOT raise
-            await dispatch_webhook(mock_db, mock_job)
+            await dispatch_webhook(mock_job)
 
     @pytest.mark.asyncio
     async def test_dispatch_no_configs(self):
@@ -298,15 +300,27 @@ class TestWebhookDispatch:
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = []
 
-        mock_db = AsyncMock()
-        mock_db.execute.return_value = mock_result
+        mock_fresh_db = AsyncMock()
+        mock_fresh_db.execute.return_value = mock_result
 
-        with patch("app.services.webhook_service.get_settings", return_value=mock_settings):
+        mock_db_manager = MagicMock()
+        mock_session_ctx = AsyncMock()
+        mock_session_ctx.__aenter__ = AsyncMock(return_value=mock_fresh_db)
+        mock_session_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_db_manager.session.return_value = mock_session_ctx
+
+        with (
+            patch("app.services.webhook_service.get_settings", return_value=mock_settings),
+            patch("app.core.db.db_manager", mock_db_manager),
+        ):
             from app.services.webhook_service import dispatch_webhook
 
             mock_job = MagicMock()
             mock_job.user_id = "user-123"
-            await dispatch_webhook(mock_db, mock_job)
+            mock_job.total_selected = 0
+            mock_job.picks = []
+            mock_job.duration_ms = None
+            await dispatch_webhook(mock_job)
 
     @pytest.mark.asyncio
     async def test_dispatch_delivers_to_config(self):
@@ -323,8 +337,8 @@ class TestWebhookDispatch:
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [mock_config]
 
-        mock_db = AsyncMock()
-        mock_db.execute.return_value = mock_result
+        mock_fresh_db = AsyncMock()
+        mock_fresh_db.execute.return_value = mock_result
 
         mock_job = MagicMock()
         mock_job.user_id = "user-123"
@@ -332,14 +346,24 @@ class TestWebhookDispatch:
         mock_job.status = "completed"
         mock_job.query_name = "test-query"
         mock_job.total_results = 10
+        mock_job.total_selected = 10
+        mock_job.picks = []
+        mock_job.duration_ms = None
+
+        mock_db_manager = MagicMock()
+        mock_session_ctx = AsyncMock()
+        mock_session_ctx.__aenter__ = AsyncMock(return_value=mock_fresh_db)
+        mock_session_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_db_manager.session.return_value = mock_session_ctx
 
         with (
             patch("app.services.webhook_service.get_settings", return_value=mock_settings),
             patch("app.services.webhook_service._deliver", new_callable=AsyncMock) as mock_deliver,
+            patch("app.core.db.db_manager", mock_db_manager),
         ):
             from app.services.webhook_service import dispatch_webhook
 
-            await dispatch_webhook(mock_db, mock_job)
+            await dispatch_webhook(mock_job)
             mock_deliver.assert_called_once()
             call_args = mock_deliver.call_args
             assert call_args[0][0] == "https://example.com/hook"
@@ -359,19 +383,29 @@ class TestWebhookDispatch:
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [mock_config]
 
-        mock_db = AsyncMock()
-        mock_db.execute.return_value = mock_result
+        mock_fresh_db = AsyncMock()
+        mock_fresh_db.execute.return_value = mock_result
+
+        mock_db_manager = MagicMock()
+        mock_session_ctx = AsyncMock()
+        mock_session_ctx.__aenter__ = AsyncMock(return_value=mock_fresh_db)
+        mock_session_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_db_manager.session.return_value = mock_session_ctx
 
         mock_job = MagicMock()
         mock_job.user_id = "user-123"
+        mock_job.total_selected = 0
+        mock_job.picks = []
+        mock_job.duration_ms = None
 
         with (
             patch("app.services.webhook_service.get_settings", return_value=mock_settings),
             patch("app.services.webhook_service._deliver", new_callable=AsyncMock) as mock_deliver,
+            patch("app.core.db.db_manager", mock_db_manager),
         ):
             from app.services.webhook_service import dispatch_webhook
 
-            await dispatch_webhook(mock_db, mock_job)
+            await dispatch_webhook(mock_job)
             mock_deliver.assert_not_called()
 
 
@@ -397,12 +431,15 @@ class TestWebhookHelpers:
         mock_job.status = "completed"
         mock_job.query_name = "test"
         mock_job.total_results = 5
+        mock_job.total_selected = 5
         mock_job.user_id = "user-456"
+        mock_job.picks = []
+        mock_job.duration_ms = None
 
         payload = _build_payload(mock_job)
         assert payload.event == "autosourcing.job.completed"
-        assert payload.data["id"] == "job-123"
-        assert payload.data["status"] == "completed"
+        assert payload.data["job_id"] == "job-123"
+        assert payload.data["user_id"] == "user-456"
 
 
 # ===========================================================================
@@ -422,7 +459,7 @@ class TestActionableBuyListSchema:
             confidence_score=0.7,
             velocity_score=0.6,
             bsr=5000,
-            overall_rating=4.2,
+            overall_rating="GOOD",
         )
         assert item.classification == "STABLE"
         assert item.action_recommendation == "BUY"

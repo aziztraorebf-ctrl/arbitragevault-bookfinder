@@ -16,7 +16,7 @@ from typing import Dict, Any
 
 from app.services.keepa_service import KeepaService
 from app.services.keepa_parser_v2 import KeepaRawParser, KeepaBSRExtractor
-from app.core.config import settings
+from app.core.settings import get_settings
 
 
 # Pool ASINs valides (reutilise pool E2E Phase 4)
@@ -46,10 +46,11 @@ ALL_TEST_ASINS = (
 @pytest.fixture
 async def keepa_service():
     """Fixture: Real Keepa service instance"""
-    if not settings.KEEPA_API_KEY:
+    settings = get_settings()
+    if not settings.keepa_api_key:
         pytest.skip("KEEPA_API_KEY not configured")
 
-    service = KeepaService(api_key=settings.KEEPA_API_KEY)
+    service = KeepaService(api_key=settings.keepa_api_key)
     yield service
     await service.close()
 

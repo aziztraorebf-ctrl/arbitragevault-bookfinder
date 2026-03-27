@@ -188,6 +188,32 @@ def meets_criteria(pick: AutoSourcingPick, scoring_config: Dict[str, Any]) -> bo
             pick.roi_percentage >= roi_min)
 
 
+def should_reject_by_competition(
+    fba_seller_count: int | None,
+    max_fba_sellers: int | None,
+) -> bool:
+    """Return True if product should be rejected due to too many FBA sellers.
+
+    If either value is None, do not reject (incomplete data or no max configured).
+    """
+    if fba_seller_count is None or max_fba_sellers is None:
+        return False
+    return fba_seller_count > max_fba_sellers
+
+
+def should_reject_by_profit_floor(
+    profit_net: float | None,
+    min_profit_dollars: float | None,
+) -> bool:
+    """Return True if net profit is below the configured minimum.
+
+    If either value is None, do not reject.
+    """
+    if profit_net is None or min_profit_dollars is None:
+        return False
+    return profit_net < min_profit_dollars
+
+
 def classify_product_tier(product_data: Dict[str, Any]) -> Tuple[str, str]:
     """Classify product tier for AutoScheduler (HOT/TOP/WATCH/OTHER)."""
     roi = product_data.get("roi_percentage", 0)

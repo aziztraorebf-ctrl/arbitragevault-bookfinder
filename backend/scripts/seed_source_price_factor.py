@@ -1,7 +1,7 @@
 """
 Seed script: Upsert source_price_factor into BusinessConfig global config.
 
-Idempotent - safe to re-run. Sets data.roi.source_price_factor = 0.35
+Idempotent - safe to re-run. Sets data.roi.source_price_factor = 0.40
 in the global BusinessConfig (id=1, scope='global').
 """
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 async def seed_source_price_factor() -> None:
-    """Upsert source_price_factor=0.35 into global BusinessConfig roi data."""
+    """Upsert source_price_factor=0.40 into global BusinessConfig roi data."""
     from app.core.db import db_manager
     from app.models.business_config import BusinessConfig, DEFAULT_BUSINESS_CONFIG
 
@@ -33,7 +33,7 @@ async def seed_source_price_factor() -> None:
                 # Create global config with source_price_factor included
                 data = dict(DEFAULT_BUSINESS_CONFIG)
                 data.setdefault("roi", {})
-                data["roi"]["source_price_factor"] = 0.35
+                data["roi"]["source_price_factor"] = 0.40
                 config = BusinessConfig(
                     id=1,
                     scope="global",
@@ -42,16 +42,16 @@ async def seed_source_price_factor() -> None:
                     description="Global business configuration",
                 )
                 session.add(config)
-                logger.info("Created global BusinessConfig with source_price_factor=0.35")
+                logger.info("Created global BusinessConfig with source_price_factor=0.40")
             else:
                 # Upsert into existing config
                 data = dict(config.data)
                 data.setdefault("roi", {})
-                data["roi"]["source_price_factor"] = 0.35
+                data["roi"]["source_price_factor"] = 0.40
                 config.data = data
                 config.increment_version()
                 logger.info(
-                    "Updated global BusinessConfig with source_price_factor=0.35 (version=%s)",
+                    "Updated global BusinessConfig with source_price_factor=0.40 (version=%s)",
                     config.version,
                 )
 

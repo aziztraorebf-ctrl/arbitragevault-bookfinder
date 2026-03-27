@@ -298,10 +298,12 @@
       "low": 0
     }
   },
+  "source_price_factor": 0.40,
+  "fba_fee_percentage": 0.22,
   "meta": {
-    "version": "2.0.0",
+    "version": "3.0.0",
     "created_by": "system_seed",
-    "description": "ArbitrageVault business configuration with intrinsic value support for textbook pivot",
-    "last_updated": "2026-01-11T00:00:00Z"
+    "description": "ArbitrageVault business configuration - calibrated for online model 2026",
+    "last_updated": "2026-03-26T00:00:00Z"
   }
 }

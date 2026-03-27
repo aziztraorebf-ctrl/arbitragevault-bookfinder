@@ -17,6 +17,8 @@ from app.services.autosourcing_scoring import (
     compute_rating,
     meets_criteria,
     classify_product_tier,
+    should_reject_by_competition,
+    should_reject_by_profit_floor,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -541,6 +543,26 @@ class AutoSourcingService:
                 current_price, source_price_factor, fba_fee_percentage
             )
 
+            # --- Competition & profit floor filters (read from active strategy) ---
+            strategy_config = business_config.get("strategies", {}).get(
+                business_config.get("active_strategy", "balanced"), {}
+            )
+            max_fba_sellers = strategy_config.get("max_fba_sellers")
+            if should_reject_by_competition(fba_seller_count, max_fba_sellers):
+                logger.info(
+                    "Skipping %s: too many FBA sellers (%s > %s)",
+                    asin, fba_seller_count, max_fba_sellers,
+                )
+                return None
+
+            min_profit_dollars = strategy_config.get("min_profit_dollars")
+            if should_reject_by_profit_floor(profit_net, min_profit_dollars):
+                logger.info(
+                    "Skipping %s: profit $%.2f below floor $%.2f",
+                    asin, profit_net, min_profit_dollars,
+                )
+                return None
+
             used_roi_percentage, condition_signal = evaluate_condition_signal(
                 product_data, estimated_cost, fba_fee_percentage,
                 business_config.get("condition_signals", {}),
@@ -597,8 +619,8 @@ class AutoSourcingService:
                 fba_seller_count=fba_seller_count,
                 amazon_on_listing=amazon_on_listing,
                 # Condition-based scoring signals
-                used_price=used_price,
-                used_offer_count=used_offer_count,
+                used_price=product_data.get("used_price"),
+                used_offer_count=product_data.get("used_offer_count"),
                 used_roi_percentage=used_roi_percentage,
                 condition_signal=condition_signal
             )
@@ -665,6 +687,26 @@ class AutoSourcingService:
                 current_price, source_price_factor, fba_fee_percentage
             )
 
+            # --- Competition & profit floor filters (read from active strategy) ---
+            strategy_config = business_config.get("strategies", {}).get(
+                business_config.get("active_strategy", "balanced"), {}
+            )
+            max_fba_sellers = strategy_config.get("max_fba_sellers")
+            if should_reject_by_competition(fba_seller_count, max_fba_sellers):
+                logger.info(
+                    "Skipping %s: too many FBA sellers (%s > %s)",
+                    asin, fba_seller_count, max_fba_sellers,
+                )
+                return None
+
+            min_profit_dollars = strategy_config.get("min_profit_dollars")
+            if should_reject_by_profit_floor(profit_net, min_profit_dollars):
+                logger.info(
+                    "Skipping %s: profit $%.2f below floor $%.2f",
+                    asin, profit_net, min_profit_dollars,
+                )
+                return None
+
             used_roi_percentage, condition_signal = evaluate_condition_signal(
                 product_data, estimated_cost, fba_fee_percentage,
                 business_config.get("condition_signals", {}),
@@ -721,8 +763,8 @@ class AutoSourcingService:
                 fba_seller_count=fba_seller_count,
                 amazon_on_listing=amazon_on_listing,
                 # Condition-based scoring signals
-                used_price=used_price,
-                used_offer_count=used_offer_count,
+                used_price=product_data.get("used_price"),
+                used_offer_count=product_data.get("used_offer_count"),
                 used_roi_percentage=used_roi_percentage,
                 condition_signal=condition_signal
             )

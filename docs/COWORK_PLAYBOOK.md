@@ -51,8 +51,9 @@ Le token est dans les variables d'environnement Render. Ne jamais l'afficher dan
 
 ```
 POST /api/v1/cowork/fetch-and-score
-Body: {"categories": [283155], "max_results": 50, "roi_min": 30.0}
+Body: {"categories": ["Books"], "max_results": 30, "roi_min": 30.0}
 ```
+Note : "Books" est la categorie generique. Avec les filtres velocity (BSR <75K, profit >$8), seuls les livres a rotation rapide passent.
 
 ### Scan 2 — Midi (12h-13h) : Balanced
 **Strategie** : balanced (BSR max 100K, ROI min 30%, profit min $10, max 6 FBA sellers)
@@ -60,18 +61,25 @@ Body: {"categories": [283155], "max_results": 50, "roi_min": 30.0}
 
 ```
 POST /api/v1/cowork/fetch-and-score
-Body: {"categories": [283155], "max_results": 50, "roi_min": 30.0}
+Body: {"categories": ["Books"], "max_results": 30, "roi_min": 30.0}
 ```
 
 ### Scan 3 — Apres-midi (16h-17h) : Textbook
 **Strategie** : textbook (BSR max 250K, ROI min 35%, profit min $12, max 8 FBA sellers)
 **Objectif** : Textbooks a forte marge, saisonniers. Meilleur pendant les periodes de rentree (aout-sept, janvier).
 
+Lancer 2-3 scans niches au lieu d'un scan generique :
 ```
 POST /api/v1/cowork/fetch-and-score
-Body: {"categories": [173514, 13611, 3508], "max_results": 50, "roi_min": 35.0}
+Body: {"categories": ["Medical Books"], "max_results": 30, "roi_min": 35.0}
+
+POST /api/v1/cowork/fetch-and-score
+Body: {"categories": ["Computer Science"], "max_results": 30, "roi_min": 35.0}
+
+POST /api/v1/cowork/fetch-and-score
+Body: {"categories": ["Engineering"], "max_results": 30, "roi_min": 35.0}
 ```
-Note : categories = Medical/Nursing (173514), Engineering (13611), Computer Science (3508). Ces niches sont moins touchees par les access codes et OpenStax.
+Note : les niches specialisees (Medical, CS, Engineering) sont moins touchees par les access codes et OpenStax. Espacer les requetes de 15 secondes pour respecter le rate limit POST (5/min).
 
 ### Scan 4 — Soir (20h) : Verification + Dashboard
 **Pas de nouveau scan.** Consolider les resultats du jour.
@@ -196,14 +204,15 @@ Encadre en jaune avec avertissement : "Verification manuelle requise — ROI ano
 - **Mai-Juillet** : meilleur moment pour SOURCER (les etudiants revendent, prix bas).
 - **Octobre-Decembre** : mois creux. Les textbooks a BSR > 150K ne se vendent presque pas.
 
-### Categories Keepa pour textbooks niches
-| Niche | Category ID Keepa | Pourquoi cette niche |
-|-------|-------------------|---------------------|
-| Medical/Nursing | 173514 | Peu d'access codes, forte demande |
-| Engineering | 13611 | Editions stables, bonne marge |
-| Computer Science | 3508 | Rotation constante, editions frequentes |
-| Law | 10777 | Prix eleves, niche specialisee |
-| Business | 2766 | Volume eleve, saisonnier |
+### Categories pour textbooks niches (noms API)
+| Niche | Nom API (pour fetch-and-score) | Pourquoi cette niche |
+|-------|-------------------------------|---------------------|
+| Medical/Nursing | `"Medical Books"` | Peu d'access codes, forte demande |
+| Engineering | `"Engineering"` | Editions stables, bonne marge |
+| Computer Science | `"Computer Science"` | Rotation constante, editions frequentes |
+| Law | `"Law"` | Prix eleves, niche specialisee |
+| Business | `"Business & Money"` | Volume eleve, saisonnier |
+| Science | `"Science & Math"` | Large niche, textbooks STEM |
 
 ---
 

@@ -49,7 +49,7 @@ Authorization: Bearer <COWORK_API_TOKEN>
 
 ```
 POST /api/v1/cowork/fetch-and-score
-Body: {"categories": ["Books"], "max_results": 30, "roi_min": 30.0}
+Body: {"categories": ["Books"], "max_results": 100, "roi_min": 30.0}
 ```
 Note : "Books" est la categorie generique. Avec les filtres velocity (BSR <75K, profit >$8), seuls les livres a rotation rapide passent.
 
@@ -59,25 +59,45 @@ Note : "Books" est la categorie generique. Avec les filtres velocity (BSR <75K, 
 
 ```
 POST /api/v1/cowork/fetch-and-score
-Body: {"categories": ["Books"], "max_results": 30, "roi_min": 30.0}
+Body: {"categories": ["Books"], "max_results": 100, "roi_min": 30.0}
 ```
 
-### Scan 3 — Apres-midi (16h-17h) : Textbook
+### Scan 3 — Apres-midi (16h-17h) : Textbook — Rotation niches
 **Strategie** : textbook (BSR max 250K, ROI min 35%, profit min $12, max 8 FBA sellers)
 **Objectif** : Textbooks a forte marge, saisonniers. Meilleur pendant les periodes de rentree (aout-sept, janvier).
 
-Lancer 2-3 scans niches au lieu d'un scan generique :
+Lancer 2-3 scans niches en rotation (changer les niches chaque jour pour couvrir plus de marche) :
+
+**Rotation A (lundi, jeudi) :**
 ```
 POST /api/v1/cowork/fetch-and-score
-Body: {"categories": ["Medical Books"], "max_results": 30, "roi_min": 35.0}
+Body: {"categories": ["Medical Books"], "max_results": 100, "roi_min": 35.0}
 
 POST /api/v1/cowork/fetch-and-score
-Body: {"categories": ["Computer Science"], "max_results": 30, "roi_min": 35.0}
-
-POST /api/v1/cowork/fetch-and-score
-Body: {"categories": ["Engineering"], "max_results": 30, "roi_min": 35.0}
+Body: {"categories": ["Computer Science"], "max_results": 100, "roi_min": 35.0}
 ```
-Note : les niches specialisees (Medical, CS, Engineering) sont moins touchees par les access codes et OpenStax. Espacer les requetes de 15 secondes pour respecter le rate limit POST (5/min).
+
+**Rotation B (mardi, vendredi) :**
+```
+POST /api/v1/cowork/fetch-and-score
+Body: {"categories": ["Engineering"], "max_results": 100, "roi_min": 35.0}
+
+POST /api/v1/cowork/fetch-and-score
+Body: {"categories": ["Law"], "max_results": 100, "roi_min": 35.0}
+```
+
+**Rotation C (mercredi, samedi) :**
+```
+POST /api/v1/cowork/fetch-and-score
+Body: {"categories": ["Business & Money"], "max_results": 100, "roi_min": 35.0}
+
+POST /api/v1/cowork/fetch-and-score
+Body: {"categories": ["Science & Math"], "max_results": 100, "roi_min": 35.0}
+```
+
+Note : les niches specialisees sont moins touchees par les access codes et OpenStax. Espacer les requetes de 15 secondes pour respecter le rate limit POST (5/min).
+
+**Budget tokens Keepa** : ~110 tokens/scan (10 discovery + 100 scoring). Budget journalier 3 scans = ~330 tokens. Sur 20 tokens/min de recharge, c'est <1% du budget mensuel.
 
 ### Scan 4 — Soir (20h) : Verification + Dashboard
 **Pas de nouveau scan.** Consolider les resultats du jour.
@@ -228,6 +248,23 @@ Encadre en jaune avec avertissement : "Verification manuelle requise — ROI ano
 - **REVENANT** : Reapparait apres 24h+. Pattern a surveiller — peut devenir STABLE.
 - **FLUKE** : Premiere apparition. Pas assez de donnees. Ignorer.
 - **REJECT** : Amazon est vendeur, ROI negatif, BSR invalide, ou condition WEAK + ROI faible. Ignorer.
+
+### Pourquoi une fois/jour suffit pour Aziz
+
+Un pick STABLE est concu pour la revue asynchrone — pas pour la course a la montre.
+
+Le statut STABLE signifie que le ROI, le nombre de vendeurs FBA, et le BSR sont restes dans les seuils sur plusieurs observations. Si ces conditions tiennent sur 2+ scans espaces de quelques heures, elles tiennent generalement 48-72h.
+
+**Ce qui change rarement en 24-48h :**
+- Le BSR (se deplace lentement sauf bestseller)
+- Le nombre de vendeurs FBA (les vendeurs n'arrivent pas a 10 en une nuit)
+- Le prix used moyen (marche stable)
+
+**Ce qui peut changer vite (verifier avant d'acheter) :**
+- Amazon devient vendeur = disqualifiant, a verifier au moment de l'achat
+- Un Pick JACKPOT (ROI > 80%) = possiblement une anomalie, verifier manuellement
+
+**Conclusion** : Aziz peut consulter le daily-buy-list le matin pour la veille ou a toutes les 48h. Pas de panique. Les picks STABLE attendent.
 
 ---
 

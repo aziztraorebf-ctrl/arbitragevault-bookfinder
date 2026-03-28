@@ -465,6 +465,16 @@ class AutoSourcingService:
         config = await self.business_config.get_effective_config(domain_id=1, category="books")
         picks = []
 
+        # Enrich scoring_config with strategy thresholds so compute_rating()
+        # and meets_criteria() use calibrated values instead of hardcoded defaults.
+        strategy_name = config.get("active_strategy", "balanced")
+        strategy = config.get("strategies", {}).get(strategy_name, {})
+        enriched_scoring = {**scoring_config}
+        enriched_scoring.setdefault("velocity_min", strategy.get("velocity_min", 40))
+        enriched_scoring.setdefault("stability_min", strategy.get("stability_min", 50))
+        enriched_scoring.setdefault("confidence_min", 50)
+        enriched_scoring.setdefault("rating_required", "FAIR")
+
         # BATCH FETCH: Get all product data in one API call instead of individual queries
         logger.info(f"Fetching {len(asins)} products via batch REST API...")
         products_data = await self._fetch_products_batch(asins)
@@ -481,10 +491,10 @@ class AutoSourcingService:
 
                 # Score product using batch data
                 pick = await self._analyze_product_from_batch(
-                    asin, raw_keepa, scoring_config, job_id, config
+                    asin, raw_keepa, enriched_scoring, job_id, config
                 )
 
-                if pick and meets_criteria(pick, scoring_config):
+                if pick and meets_criteria(pick, enriched_scoring):
                     picks.append(pick)
                     logger.debug(f"PASS {asin}: {pick.overall_rating} (ROI: {pick.roi_percentage}%)")
                 else:
@@ -543,10 +553,19 @@ class AutoSourcingService:
                 current_price, source_price_factor, fba_fee_percentage
             )
 
-            # --- Competition & profit floor filters (read from active strategy) ---
+            # --- Strategy filters (BSR, competition, profit floor) ---
             strategy_config = business_config.get("strategies", {}).get(
                 business_config.get("active_strategy", "balanced"), {}
             )
+
+            max_bsr = strategy_config.get("max_bsr")
+            if max_bsr and bsr > max_bsr:
+                logger.info(
+                    "Skipping %s: BSR %d > max %d",
+                    asin, bsr, max_bsr,
+                )
+                return None
+
             max_fba_sellers = strategy_config.get("max_fba_sellers")
             if should_reject_by_competition(fba_seller_count, max_fba_sellers):
                 logger.info(
@@ -687,10 +706,19 @@ class AutoSourcingService:
                 current_price, source_price_factor, fba_fee_percentage
             )
 
-            # --- Competition & profit floor filters (read from active strategy) ---
+            # --- Strategy filters (BSR, competition, profit floor) ---
             strategy_config = business_config.get("strategies", {}).get(
                 business_config.get("active_strategy", "balanced"), {}
             )
+
+            max_bsr = strategy_config.get("max_bsr")
+            if max_bsr and bsr > max_bsr:
+                logger.info(
+                    "Skipping %s: BSR %d > max %d",
+                    asin, bsr, max_bsr,
+                )
+                return None
+
             max_fba_sellers = strategy_config.get("max_fba_sellers")
             if should_reject_by_competition(fba_seller_count, max_fba_sellers):
                 logger.info(

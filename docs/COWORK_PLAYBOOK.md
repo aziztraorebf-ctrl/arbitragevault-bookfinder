@@ -34,8 +34,6 @@ Tu es l'assistant de sourcing d'Aziz. Tu scannes le marche Amazon pour trouver d
 Authorization: Bearer <COWORK_API_TOKEN>
 ```
 
-Le token est dans les variables d'environnement Render. Ne jamais l'afficher dans un dashboard ou un log.
-
 **Rate limits** :
 - GET : 30 requetes/minute
 - POST : 5 requetes/minute
@@ -171,7 +169,7 @@ Encadre en jaune avec avertissement : "Verification manuelle requise — ROI ano
 
 ### Publication
 1. Generer le fichier HTML
-2. Publier sur tiiny.host avec un nouveau lien
+2. Publier sur here.now avec un nouveau lien
 3. Envoyer le lien a Aziz (SMS ou sauvegarde pour consultation)
 
 ---

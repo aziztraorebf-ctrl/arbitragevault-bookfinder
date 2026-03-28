@@ -76,6 +76,7 @@ class TestSourcePriceFactorUnified:
         files_to_check = [
             "app/services/autosourcing_service.py",
             "app/services/daily_review_service.py",
+            "app/api/v1/routers/cowork.py",
         ]
         for fpath in files_to_check:
             content = pathlib.Path(fpath).read_text()

@@ -407,8 +407,8 @@ async def get_daily_buy_list(
             extra={"error": str(e), "error_type": type(e).__name__},
         )
 
-    # Get source_price_factor from business config (seeded at 0.35)
-    source_price_factor = 0.35
+    # Get source_price_factor from business config (default 0.40 — online arbitrage model)
+    source_price_factor = 0.40
     try:
         from app.models.business_config import BusinessConfig
         config_result = await db.execute(
@@ -416,7 +416,7 @@ async def get_daily_buy_list(
         )
         config = config_result.scalar_one_or_none()
         if config and config.data:
-            source_price_factor = config.data.get("roi", {}).get("source_price_factor", 0.35)
+            source_price_factor = config.data.get("roi", {}).get("source_price_factor", 0.40)
     except Exception as e:
         logger.warning(
             "cowork daily-buy-list: failed to load source_price_factor from config, using default",

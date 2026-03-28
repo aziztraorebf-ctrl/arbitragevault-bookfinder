@@ -1,3 +1,6 @@
+# Daily sourcing notes (local only)
+docs/daily_notes/*.md
+
 # Python
 __pycache__/
 *.py[cod]

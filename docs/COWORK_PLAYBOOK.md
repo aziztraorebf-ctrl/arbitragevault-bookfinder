@@ -101,12 +101,78 @@ POST /api/v1/cowork/fetch-and-score
 Body: {"categories": ["Science & Math"], "max_results": 100, "roi_min": 35.0}
 ```
 
-### Scan 8 — 20h : Consolidation + Dashboard
-**Pas de nouveau scan.** Consolider les resultats du jour.
+### Scan 8 — 20h : Consolidation + Dashboard + Notes
 
+**Pas de nouveau scan.** Consolider les resultats du jour en 3 etapes.
+
+**Etape 1 — Recuperer les donnees**
 ```
 GET /api/v1/cowork/daily-buy-list
 GET /api/v1/cowork/dashboard-summary
+```
+
+**Etape 2 — Rediger les notes quotidiennes**
+
+Creer le fichier `daily_notes/YYYY-MM-DD.md` (ex: `daily_notes/2026-03-28.md`) avec la structure suivante :
+
+```markdown
+# Sourcing Notes — YYYY-MM-DD
+
+## Resultats du jour
+- Scans effectues : X
+- Tokens consommes : ~X (restants : X)
+- Picks STABLE : X | FLUKE : X | REJECT : X
+
+## Picks STABLE — Analyse
+
+### 1. ASIN XXXXXXXXXX — "Titre du livre"
+- **Categorie** : [categorie]
+- **BSR** : X | ROI : X% | Profit : $X | FBA sellers : X
+- **Condition** : STRONG/MODERATE/WEAK/UNKNOWN
+- **Pourquoi STABLE** : [scans ou il est apparu, ce qui confirme la stabilite]
+- **Pattern** : [si deja vu cette semaine ou ce mois — noter la frequence]
+- **Flag** : [si proche d'une limite : FBA sellers max, BSR limite, etc.]
+- **Recommandation** : [1 copie / 2 copies / surveiller / eviter]
+
+(repeter pour chaque pick STABLE)
+
+## Observations du jour
+- [Pattern dominant : quelle categorie surrepresentee ou absente]
+- [Anomalie : JACKPOT suspect, pic de rejets, data_quality degraded]
+- [Signal marche : si 3+ scans vides sur une categorie = marche calme ou seuils trop stricts]
+
+## A surveiller demain
+- [ASINs recurrents cette semaine : si un ASIN apparat 3x = augmenter la quantite]
+- [Categories a ajuster si pattern de 0 picks persistent]
+
+## Sante systeme
+- data_quality : [full/degraded/unavailable par scan]
+- Erreurs detectees : [oui/non, detail si oui]
+- Tokens Keepa restants : [niveau safe/warning/critical]
+```
+
+**Etape 3 — Generer le prompt de session conversationnelle**
+
+Apres avoir ecrit le fichier de notes, generer ce message et l'afficher dans la conversation CoWork :
+
+```
+---
+SESSION BILAN PRETE
+
+Aziz, voici le contexte pour notre session d'analyse ce soir.
+
+Charge ces 2 fichiers dans une nouvelle conversation Claude :
+  - daily_notes/YYYY-MM-DD.md  (notes du jour — ma memoire)
+  - docs/AGENT_CONTEXT.md      (reference API si tu veux que j'appelle Keepa)
+
+Tu peux ensuite me demander :
+  - "Explique-moi le pick X"
+  - "Pourquoi rien en Business & Money aujourd'hui ?"
+  - "Compare avec hier"
+  - "Donne-moi plus de details sur l'ASIN XXXXXXXXXX" (j'appellerai Keepa)
+
+Bonne session.
+---
 ```
 
 ---
@@ -267,6 +333,14 @@ Le statut STABLE signifie que le ROI, le nombre de vendeurs FBA, et le BSR sont 
 - Un Pick JACKPOT (ROI > 80%) = possiblement une anomalie, verifier manuellement
 
 **Conclusion** : Aziz peut consulter le daily-buy-list le matin pour la veille ou a toutes les 48h. Pas de panique. Les picks STABLE attendent.
+
+---
+
+## Persistance des notes quotidiennes
+
+Les notes `daily_notes/YYYY-MM-DD.md` sont conservees **localement uniquement**.
+
+Le dossier `docs/daily_notes/` est le seul endroit ou ces fichiers sont ecrits. Ils s'accumulent jour apres jour — c'est ta memoire de sourcing a long terme.
 
 ---
 
